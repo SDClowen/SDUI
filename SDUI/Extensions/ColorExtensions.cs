@@ -1,4 +1,4 @@
-﻿namespace SDUI.Extensions
+﻿namespace System.Drawing
 {
     public static class ColorExtentions
     {
