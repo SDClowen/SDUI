@@ -1,4 +1,7 @@
 using SDUI.Controls;
+using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace SDUI.Test
 {

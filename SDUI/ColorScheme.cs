@@ -1,4 +1,6 @@
-﻿namespace SDUI
+﻿using System.Drawing;
+
+namespace SDUI
 {
     public class ColorScheme
     {

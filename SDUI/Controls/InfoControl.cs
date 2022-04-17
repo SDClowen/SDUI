@@ -1,10 +1,12 @@
-﻿using System.Drawing.Drawing2D;
+﻿using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public partial class TabDisabledInfo : UserControl
+    public partial class InfoControl : UserControl
     {
-        public TabDisabledInfo()
+        public InfoControl()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
             Font = new Font("Segoe UI Semibold", 13.37f);

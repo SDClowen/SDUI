@@ -1,4 +1,7 @@
-﻿using static SDUI.NativeMethods;
+﻿using System;
+using System.Drawing;
+using System.Windows.Forms;
+using static SDUI.NativeMethods;
 
 namespace SDUI.Controls
 {

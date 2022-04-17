@@ -1,4 +1,7 @@
-﻿namespace SDUI.Controls
+﻿using System.Drawing;
+using System.Windows.Forms;
+
+namespace SDUI.Controls
 {
     public class Separator : Control
     {

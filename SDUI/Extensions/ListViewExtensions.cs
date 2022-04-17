@@ -1,4 +1,6 @@
-﻿namespace System.Windows.Forms
+﻿using System.Linq;
+
+namespace System.Windows.Forms
 {
     public static class ListViewExtensions
     {

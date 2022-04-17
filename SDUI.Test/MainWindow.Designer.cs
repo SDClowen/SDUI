@@ -1,6 +1,9 @@
-﻿namespace SDUI.Test
+﻿using System.Windows.Forms;
+using SDUI;
+
+namespace SDUI.Test
 {
-    partial class MainWindow
+    public partial class MainWindow
     {
         /// <summary>
         ///  Required designer variable.
