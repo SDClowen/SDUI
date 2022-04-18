@@ -33,6 +33,10 @@ namespace SDUI.Test
         {
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.textBox1 = new SDUI.Controls.TextBox();
+            this.button3 = new SDUI.Controls.Button();
+            this.button2 = new SDUI.Controls.Button();
+            this.button1 = new SDUI.Controls.Button();
             this.progressBar1 = new SDUI.Controls.ProgressBar();
             this.buttonRandomColor = new System.Windows.Forms.Button();
             this.buttonOpenInputDialog = new System.Windows.Forms.Button();
@@ -64,6 +68,10 @@ namespace SDUI.Test
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.textBox1);
+            this.tabPage1.Controls.Add(this.button3);
+            this.tabPage1.Controls.Add(this.button2);
+            this.tabPage1.Controls.Add(this.button1);
             this.tabPage1.Controls.Add(this.progressBar1);
             this.tabPage1.Controls.Add(this.buttonRandomColor);
             this.tabPage1.Controls.Add(this.buttonOpenInputDialog);
@@ -77,11 +85,52 @@ namespace SDUI.Test
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // textBox1
+            // 
+            this.textBox1.Location = new System.Drawing.Point(23, 100);
+            this.textBox1.MaxLength = 32767;
+            this.textBox1.MultiLine = false;
+            this.textBox1.Name = "textBox1";
+            this.textBox1.Size = new System.Drawing.Size(134, 26);
+            this.textBox1.TabIndex = 5;
+            this.textBox1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
+            this.textBox1.UseSystemPasswordChar = false;
+            // 
+            // button3
+            // 
+            this.button3.Color = System.Drawing.Color.Maroon;
+            this.button3.ForeColor = System.Drawing.Color.White;
+            this.button3.Location = new System.Drawing.Point(222, 71);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(93, 23);
+            this.button3.TabIndex = 4;
+            this.button3.Text = "button1";
+            // 
+            // button2
+            // 
+            this.button2.Color = System.Drawing.Color.RoyalBlue;
+            this.button2.ForeColor = System.Drawing.Color.White;
+            this.button2.Location = new System.Drawing.Point(23, 71);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(93, 23);
+            this.button2.TabIndex = 4;
+            this.button2.Text = "button1";
+            // 
+            // button1
+            // 
+            this.button1.Color = System.Drawing.Color.Transparent;
+            this.button1.Location = new System.Drawing.Point(122, 71);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(93, 23);
+            this.button1.TabIndex = 4;
+            this.button1.Text = "button1";
+            // 
             // progressBar1
             // 
             this.progressBar1.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar1.BackgroundColorGradiendBegin = System.Drawing.Color.Red;
-            this.progressBar1.BackgroundColorGradiendEnd = System.Drawing.Color.Red;
+            this.progressBar1.Gradient = new System.Drawing.Color[] {
+        System.Drawing.Color.RosyBrown,
+        System.Drawing.Color.Maroon};
             this.progressBar1.Location = new System.Drawing.Point(23, 45);
             this.progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar1.Maximum = ((long)(1000));
@@ -218,5 +267,9 @@ namespace SDUI.Test
         private ColumnHeader columnHeader3;
         private ColumnHeader columnHeader4;
         private Controls.ProgressBar progressBar1;
+        private Controls.Button button2;
+        private Controls.Button button1;
+        private Controls.TextBox textBox1;
+        private Controls.Button button3;
     }
 }

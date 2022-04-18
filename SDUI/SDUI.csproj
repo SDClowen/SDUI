@@ -43,6 +43,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ColorScheme.cs" />
+    <Compile Include="Controls\Button.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\CleanForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -65,6 +68,9 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\TabControl.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\TextBox.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Extensions\ColorExtensions.cs" />

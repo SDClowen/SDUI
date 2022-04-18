@@ -92,7 +92,7 @@ namespace SDUI.Controls
 
         public void ChangeControlsTheme(Control control)
         {
-            if (control.Tag?.ToString() == "private" && !(control is Button))
+            /*if (control.Tag?.ToString() == "private" && !(control is Button))
                 return;
 
             if (control is TextBoxBase txt)
@@ -141,7 +141,7 @@ namespace SDUI.Controls
             foreach (Control subControl in control.Controls)
             {
                 ChangeControlsTheme(subControl);
-            }
+            }*/
         }
 
         protected override void OnLoad(EventArgs e)
