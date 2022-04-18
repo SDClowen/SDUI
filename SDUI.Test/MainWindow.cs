@@ -14,7 +14,23 @@ namespace SDUI.Test
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
+            var group1 = new ListViewGroup("Group 1");
+            var group2 = new ListViewGroup("Group 2 (collapsible)");
+            listView1.Groups.Add(group1);
+            listView1.Groups.Add(group2);
+            for (int i = 0; i <= 5; i++)
+            {
+                string sItem = "Item " + i.ToString();
+                listView1.Items.Add(new ListViewItem(new[] { i.ToString(), sItem + " Column 2", sItem + " Column 3", sItem + " Column 4" }, group1));
+            }
 
+            for (int i = 6; i <= 11; i++)
+            {
+                string sItem = "Item " + i.ToString();
+                listView1.Items.Add(new ListViewItem(new[] { i.ToString(), sItem + " Column 2", sItem + " Column 3", sItem + " Column 4" }, group2));
+            }
+
+            listView1.SetGroupInfo(listView1.Handle, 1, NativeMethods.LVGS_COLLAPSIBLE);
         }
 
         private void buttonOpenInputDialog_Click(object sender, EventArgs e)
@@ -34,7 +50,8 @@ namespace SDUI.Test
             var b = random.Next(0, 256);
 
             ColorScheme.BackColor = Color.FromArgb(r, g, b);
-            ChangeTheme();
+            BackColor = ColorScheme.BackColor;
+            //ChangeTheme();
         }
     }
 }

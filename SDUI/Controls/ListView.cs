@@ -1,0 +1,248 @@
+﻿using SDUI.Helpers;
+using System;
+using System.Drawing;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
+using static SDUI.NativeMethods;
+
+namespace SDUI.Controls
+{
+    public class ListView : System.Windows.Forms.ListView
+    {
+        /// <summary>
+        /// The column sorter
+        /// </summary>
+        private ListViewColumnSorter LvwColumnSorter { get; set; }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="AeroListView"/> class.
+        /// </summary>
+        public ListView()
+            : base()
+        {
+            SetStyle(
+                ControlStyles.Opaque |
+                ControlStyles.AllPaintingInWmPaint |
+                ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer, true);
+
+            LvwColumnSorter = new ListViewColumnSorter();
+            ListViewItemSorter = LvwColumnSorter;
+            View = View.Details;
+            FullRowSelect = true;
+
+            SetStyle(ControlStyles.EnableNotifyMessage, true);
+        }
+
+        protected override void OnSelectedIndexChanged(EventArgs e)
+        {
+            base.OnSelectedIndexChanged(e);
+            Invalidate();
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            Invalidate();
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            Invalidate();
+        }
+
+        protected override void OnParentBackColorChanged(EventArgs e)
+        {
+            base.OnParentBackColorChanged(e);
+            Invalidate();
+
+            BackColor = ColorScheme.BackColor;
+            ForeColor = BackColor.Determine();
+        }
+
+        /// <summary>
+        /// Raises the <see cref="E:HandleCreated" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+
+            if (Environment.OSVersion.Version.Major >= 6)
+            {
+                SetWindowTheme(Handle, "explorer", null);
+
+                SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
+            }
+        }
+
+        protected override void OnNotifyMessage(Message m)
+        {
+            if (m.Msg != 0x14)
+            {
+                base.OnNotifyMessage(m);
+            }
+        }
+
+        /// <summary>
+        /// Raises the <see cref="E:ColumnClick" /> event.
+        /// </summary>
+        /// <param name="e">The <see cref="ColumnClickEventArgs"/> instance containing the event data.</param>
+        protected override void OnColumnClick(ColumnClickEventArgs e)
+        {
+            base.OnColumnClick(e);
+
+            // Determine if clicked column is already the column that is being sorted.
+            if (e.Column == LvwColumnSorter.SortColumn)
+            {
+                // Reverse the current sort direction for this column.
+                LvwColumnSorter.Order = (LvwColumnSorter.Order == SortOrder.Ascending)
+                    ? SortOrder.Descending
+                    : SortOrder.Ascending;
+            }
+            else
+            {
+                // Set the column number that is to be sorted; default to ascending.
+                LvwColumnSorter.SortColumn = e.Column;
+                LvwColumnSorter.Order = SortOrder.Ascending;
+            }
+
+            // Perform the sort with these new sort options.
+            if (!VirtualMode)
+                Sort();
+        }
+
+        /// <summary>
+        /// Select all rows on the given listview
+        /// </summary>
+        /// <param name="list">The listview whose items are to be selected</param>
+        public void SelectAllItems()
+        {
+            var s = System.Diagnostics.Stopwatch.StartNew();
+            Focus();
+            SetItemState(-1, 2, 2);
+            //MessageBox.Show($"Selected in: {s.ElapsedMilliseconds} ms");
+        }
+
+        /// <summary>
+        /// Deselect all rows on the given listview
+        /// </summary>
+        /// <param name="list">The listview whose items are to be deselected</param>
+        public void DeselectAllItems()
+        {
+            SetItemState(-1, 2, 0);
+        }
+
+        /// <summary>
+        /// Set the item state on the given item
+        /// </summary>
+        /// <param name="list">The listview whose item's state is to be changed</param>
+        /// <param name="itemIndex">The index of the item to be changed</param>
+        /// <param name="mask">Which bits of the value are to be set?</param>
+        /// <param name="value">The value to be set</param>
+        public void SetItemState(int itemIndex, int mask, int value)
+        {
+            LVITEM lvItem = new LVITEM();
+            lvItem.stateMask = mask;
+            lvItem.state = value;
+            SendMessageLVItem(Handle, LVM_SETITEMSTATE, itemIndex, ref lvItem);
+
+            EnsureVisible(itemIndex);
+        }
+
+        public int SetGroupInfo(IntPtr hWnd, int nGroupID, uint nSate)
+        {
+            var lvg = new LVGROUP();
+            lvg.cbSize = (uint)Marshal.SizeOf(lvg);
+            lvg.mask = LVGF_STATE | LVGF_GROUPID | LVGF_HEADER;
+            // for test
+            SendMessage(hWnd, LVM_GETGROUPINFO, nGroupID, ref lvg);
+            lvg.state = nSate;
+            lvg.mask = LVGF_STATE;
+            SendMessage(hWnd, LVM_SETGROUPINFO, nGroupID, ref lvg);
+            return -1;
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == WM_REFLECT + WM_NOFITY)
+            {
+                var pnmhdr = (NMHDR)m.GetLParam(typeof(NMHDR));
+                if (pnmhdr.code == NM_CUSTOMDRAW)
+                {
+                    var pnmlv = (NMLVCUSTOMDRAW)m.GetLParam(typeof(NMLVCUSTOMDRAW));
+                    switch (pnmlv.nmcd.dwDrawStage)
+                    {
+                        case (int)CDDS.CDDS_PREPAINTField:
+                            if (pnmlv.dwItemType == LVCDI_GROUP)
+                            {
+                                var rectHeader = new RECT();
+                                rectHeader.top = LVGGR_HEADER;
+                                var nItem = (int)pnmlv.nmcd.dwItemSpec;
+
+                                SendMessage(m.HWnd, LVM_GETGROUPRECT, nItem, ref rectHeader);
+
+                                using (var graphics = Graphics.FromHdc(pnmlv.nmcd.hdc))
+                                {
+                                    var rect = new Rectangle(rectHeader.left, rectHeader.top, rectHeader.right - rectHeader.left, rectHeader.bottom - rectHeader.top);
+
+                                    /*var backgroundBrush = new SolidBrush(_groupHeadingBackColor);
+                                    graphics.FillRectangle(backgroundBrush, rect);*/
+
+                                    var lvg = new LVGROUP();
+                                    lvg.cbSize = (uint)Marshal.SizeOf(lvg);
+                                    lvg.mask = LVGF_STATE | LVGF_GROUPID | LVGF_HEADER;
+
+                                    SendMessage(m.HWnd, LVM_GETGROUPINFO, nItem, ref lvg);
+                                    var sText = Marshal.PtrToStringUni(lvg.pszHeader);
+                                    var textSize = graphics.MeasureString(sText, Font);
+
+                                    var rectHeightMiddle = (int)Math.Round((rect.Height - textSize.Height) / 2f);
+
+                                    rect.Offset(10, rectHeightMiddle);
+
+                                    var color = Color.FromArgb(80, 1, 52, 153).Brightness(ColorScheme.BackColor.Determine().GetBrightness());
+                                    using (var drawBrush = new SolidBrush(color))
+                                    {
+                                        TextRenderer.DrawText(graphics, sText, Font, rect, color, TextFormatFlags.Left);
+
+                                        rect.Offset(0, -rectHeightMiddle);
+
+                                        using (var lineBrush = new SolidBrush(color))
+                                        {
+                                            graphics.DrawLine(new Pen(lineBrush), rect.X + graphics.MeasureString(sText, Font).Width + 10, rect.Y + (int)Math.Round(rect.Height / 2d), rect.X + (int)Math.Round(rect.Width * 95 / 100d), rect.Y + (int)Math.Round(rect.Height / 2d));
+                                        }
+                                    }
+                                }
+
+                                m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULTField);
+                            }
+                            else
+                            {
+                                m.Result = new IntPtr((int)CDRF.CDRF_NOTIFYITEMDRAWField);
+                            }
+
+                            break;
+
+                        case (int)CDDS.CDDS_ITEMPREPAINTField:
+                            m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAWField | CDRF.CDRF_NOTIFYPOSTPAINTField));
+                            break;
+
+                        case (int)CDDS.CDDS_ITEMPOSTPAINTField:
+                            break;
+                    }
+                }
+
+                return;
+            }
+            else if (m.Msg != WM_KILLFOCUS &&
+                (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
+                Invalidate();
+            else
+            {
+                base.WndProc(ref m);
+            }
+        }
+    }
+}

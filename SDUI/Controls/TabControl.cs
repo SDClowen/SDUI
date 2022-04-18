@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
@@ -11,6 +12,12 @@ namespace SDUI.Controls
         public TabControl()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.DoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
+        }
+
+        protected override void OnParentBackColorChanged(EventArgs e)
+        {
+            base.OnParentBackColorChanged(e);
+            Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -46,14 +53,14 @@ namespace SDUI.Controls
 
         private void DrawTab(int index, Graphics graphics)
         {
-            var tp = TabPages[index];
+            var tabpage = TabPages[index];
             var brush = new SolidBrush(ColorScheme.BackColor);
             var pen = new Pen(ColorScheme.BorderColor);
 
             var r = GetTabRect(index);
 
-            brush.Color = tp.BackColor;
-
+            tabpage.BackColor = ColorScheme.BackColor;
+            brush.Color = tabpage.BackColor;
 
             if (index != SelectedIndex)
             {
@@ -66,7 +73,7 @@ namespace SDUI.Controls
                 graphics.DrawRectangle(pen, r);
             }
 
-            brush.Color = tp.ForeColor;
+            brush.Color = ColorScheme.BackColor.Determine();
 
             //Set up rotation for left and right aligned tabs
             if (Alignment == TabAlignment.Left || Alignment == TabAlignment.Right)
@@ -80,14 +87,14 @@ namespace SDUI.Controls
             }
 
             //Draw the Tab Text
-            if (tp.Enabled)
-                TextRenderer.DrawText(graphics, tp.Text, Font, r, brush.Color, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+            if (tabpage.Enabled)
+                TextRenderer.DrawText(graphics, tabpage.Text, Font, r, brush.Color, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
             else
             {
                 var stringFormat = new StringFormat();
                 stringFormat.Alignment = StringAlignment.Center;
                 stringFormat.LineAlignment = StringAlignment.Center;
-                ControlPaint.DrawStringDisabled(graphics, tp.Text, Font, tp.BackColor, (RectangleF)r, stringFormat);
+                ControlPaint.DrawStringDisabled(graphics, tabpage.Text, Font, tabpage.BackColor, (RectangleF)r, stringFormat);
             }
 
             graphics.ResetTransform();

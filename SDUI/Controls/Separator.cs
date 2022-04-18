@@ -31,7 +31,7 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
+            e.Graphics.Clear(ColorScheme.BackColor);
 
             using (var pen = new Pen(ColorScheme.BorderColor))
             {
