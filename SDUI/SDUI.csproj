@@ -58,6 +58,9 @@
     <Compile Include="Controls\ListView.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\ProgressBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\Separator.cs">
       <SubType>Component</SubType>
     </Compile>

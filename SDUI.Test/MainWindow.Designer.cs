@@ -33,6 +33,7 @@ namespace SDUI.Test
         {
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.progressBar1 = new SDUI.Controls.ProgressBar();
             this.buttonRandomColor = new System.Windows.Forms.Button();
             this.buttonOpenInputDialog = new System.Windows.Forms.Button();
             this.separator2 = new SDUI.Controls.Separator();
@@ -54,30 +55,51 @@ namespace SDUI.Test
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(1, 1);
+            this.tabControl1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(684, 388);
+            this.tabControl1.Size = new System.Drawing.Size(695, 404);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.progressBar1);
             this.tabPage1.Controls.Add(this.buttonRandomColor);
             this.tabPage1.Controls.Add(this.buttonOpenInputDialog);
             this.tabPage1.Controls.Add(this.separator2);
             this.tabPage1.Controls.Add(this.separator1);
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
+            this.tabPage1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(676, 359);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.tabPage1.Size = new System.Drawing.Size(687, 375);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // progressBar1
+            // 
+            this.progressBar1.BackColor = System.Drawing.Color.Transparent;
+            this.progressBar1.BackgroundColorGradiendBegin = System.Drawing.Color.Red;
+            this.progressBar1.BackgroundColorGradiendEnd = System.Drawing.Color.Red;
+            this.progressBar1.Location = new System.Drawing.Point(23, 45);
+            this.progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.progressBar1.Maximum = ((long)(1000));
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.PercentIndices = 2;
+            this.progressBar1.ShowAsPercent = true;
+            this.progressBar1.ShowValue = true;
+            this.progressBar1.Size = new System.Drawing.Size(179, 20);
+            this.progressBar1.TabIndex = 3;
+            this.progressBar1.Text = "22.2%";
+            this.progressBar1.Value = ((long)(222));
+            // 
             // buttonRandomColor
             // 
-            this.buttonRandomColor.Location = new System.Drawing.Point(115, 14);
+            this.buttonRandomColor.Location = new System.Drawing.Point(134, 16);
+            this.buttonRandomColor.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.buttonRandomColor.Name = "buttonRandomColor";
-            this.buttonRandomColor.Size = new System.Drawing.Size(131, 20);
+            this.buttonRandomColor.Size = new System.Drawing.Size(153, 23);
             this.buttonRandomColor.TabIndex = 2;
             this.buttonRandomColor.Text = "Random Color";
             this.buttonRandomColor.UseVisualStyleBackColor = true;
@@ -85,9 +107,10 @@ namespace SDUI.Test
             // 
             // buttonOpenInputDialog
             // 
-            this.buttonOpenInputDialog.Location = new System.Drawing.Point(20, 14);
+            this.buttonOpenInputDialog.Location = new System.Drawing.Point(23, 16);
+            this.buttonOpenInputDialog.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.buttonOpenInputDialog.Name = "buttonOpenInputDialog";
-            this.buttonOpenInputDialog.Size = new System.Drawing.Size(90, 20);
+            this.buttonOpenInputDialog.Size = new System.Drawing.Size(105, 23);
             this.buttonOpenInputDialog.TabIndex = 1;
             this.buttonOpenInputDialog.Text = "Input Dialog";
             this.buttonOpenInputDialog.UseVisualStyleBackColor = true;
@@ -96,18 +119,20 @@ namespace SDUI.Test
             // separator2
             // 
             this.separator2.IsVertical = false;
-            this.separator2.Location = new System.Drawing.Point(7, 5);
+            this.separator2.Location = new System.Drawing.Point(8, 6);
+            this.separator2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.separator2.Name = "separator2";
-            this.separator2.Size = new System.Drawing.Size(263, 2);
+            this.separator2.Size = new System.Drawing.Size(307, 2);
             this.separator2.TabIndex = 0;
             this.separator2.Text = "separator1";
             // 
             // separator1
             // 
             this.separator1.IsVertical = true;
-            this.separator1.Location = new System.Drawing.Point(7, 12);
+            this.separator1.Location = new System.Drawing.Point(8, 14);
+            this.separator1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.separator1.Name = "separator1";
-            this.separator1.Size = new System.Drawing.Size(2, 192);
+            this.separator1.Size = new System.Drawing.Size(2, 222);
             this.separator1.TabIndex = 0;
             this.separator1.Text = "separator1";
             // 
@@ -116,9 +141,10 @@ namespace SDUI.Test
             this.tabPage2.BackColor = System.Drawing.Color.White;
             this.tabPage2.Controls.Add(this.listView1);
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
+            this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(676, 359);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.tabPage2.Size = new System.Drawing.Size(687, 375);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
@@ -134,9 +160,10 @@ namespace SDUI.Test
             this.listView1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.listView1.FullRowSelect = true;
             this.listView1.HideSelection = false;
-            this.listView1.Location = new System.Drawing.Point(3, 3);
+            this.listView1.Location = new System.Drawing.Point(4, 3);
+            this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(670, 353);
+            this.listView1.Size = new System.Drawing.Size(679, 369);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -159,10 +186,12 @@ namespace SDUI.Test
             // 
             // MainWindow
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(686, 390);
+            this.ClientSize = new System.Drawing.Size(697, 406);
             this.Controls.Add(this.tabControl1);
+            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.Name = "MainWindow";
             this.Padding = new System.Windows.Forms.Padding(1);
             this.Text = "Form1";
@@ -188,5 +217,6 @@ namespace SDUI.Test
         private ColumnHeader columnHeader2;
         private ColumnHeader columnHeader3;
         private ColumnHeader columnHeader4;
+        private Controls.ProgressBar progressBar1;
     }
 }
