@@ -17,6 +17,6 @@ namespace SDUI
         /// <summary>
         /// Gets theme border color
         /// </summary>
-        public static Color BorderColor => Color.FromArgb(30, ForeColor);
+        public static Color BorderColor => Color.FromArgb(50, ForeColor);
     }
 }

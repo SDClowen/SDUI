@@ -49,6 +49,9 @@
     <Compile Include="Controls\CleanForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Controls\ComboBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\InfoControl.cs">
       <SubType>UserControl</SubType>
     </Compile>

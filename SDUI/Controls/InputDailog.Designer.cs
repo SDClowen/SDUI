@@ -30,11 +30,11 @@
         {
             this.lblTitle = new System.Windows.Forms.Label();
             this.lblMessage = new System.Windows.Forms.Label();
-            this.txtValue = new System.Windows.Forms.TextBox();
+            this.txtValue = new TextBox();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnOK = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
-            this.comboBox = new System.Windows.Forms.ComboBox();
+            this.comboBox = new ComboBox();
             this.numValue = new System.Windows.Forms.NumericUpDown();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numValue)).BeginInit();
@@ -165,11 +165,11 @@
 
         private System.Windows.Forms.Label lblTitle;
         private System.Windows.Forms.Label lblMessage;
-        private System.Windows.Forms.TextBox txtValue;
+        private TextBox txtValue;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Button btnOK;
         private System.Windows.Forms.Button btnCancel;
-        private System.Windows.Forms.ComboBox comboBox;
+        private ComboBox comboBox;
         private System.Windows.Forms.NumericUpDown numValue;
     }
 }

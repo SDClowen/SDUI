@@ -33,6 +33,7 @@ namespace SDUI.Test
         {
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.comboBox1 = new SDUI.Controls.ComboBox();
             this.textBox1 = new SDUI.Controls.TextBox();
             this.button3 = new SDUI.Controls.Button();
             this.button2 = new SDUI.Controls.Button();
@@ -68,6 +69,7 @@ namespace SDUI.Test
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.comboBox1);
             this.tabPage1.Controls.Add(this.textBox1);
             this.tabPage1.Controls.Add(this.button3);
             this.tabPage1.Controls.Add(this.button2);
@@ -85,13 +87,33 @@ namespace SDUI.Test
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // comboBox1
+            // 
+            this.comboBox1.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboBox1.DropDownHeight = 100;
+            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.IntegralHeight = false;
+            this.comboBox1.ItemHeight = 17;
+            this.comboBox1.Items.AddRange(new object[] {
+            "asdfasdfasdfasdf",
+            "asdfasdfasd",
+            "asdfasdfasdfas",
+            "asdfxcvxzcvzx",
+            "1236afsdf"});
+            this.comboBox1.Location = new System.Drawing.Point(180, 100);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(135, 23);
+            this.comboBox1.StartIndex = 0;
+            this.comboBox1.TabIndex = 6;
+            // 
             // textBox1
             // 
             this.textBox1.Location = new System.Drawing.Point(23, 100);
             this.textBox1.MaxLength = 32767;
             this.textBox1.MultiLine = false;
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(134, 26);
+            this.textBox1.Size = new System.Drawing.Size(134, 21);
             this.textBox1.TabIndex = 5;
             this.textBox1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             this.textBox1.UseSystemPasswordChar = false;
@@ -271,5 +293,6 @@ namespace SDUI.Test
         private Controls.Button button1;
         private Controls.TextBox textBox1;
         private Controls.Button button3;
+        private Controls.ComboBox comboBox1;
     }
 }
