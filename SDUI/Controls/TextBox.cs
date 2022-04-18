@@ -97,6 +97,7 @@ namespace SDUI.Controls
             _textbox.Font = Font;
             _textbox.Size = new Size(Width - 10, Height - 11);
             _textbox.UseSystemPasswordChar = UseSystemPasswordChar;
+            _textbox.TextChanged += _textbox_TextChanged;
             Controls.Add(_textbox);
 
             SetStyle(ControlStyles.UserPaint, true);
@@ -104,6 +105,11 @@ namespace SDUI.Controls
 
             Size = new Size(135, 35);
             DoubleBuffered = true;
+        }
+
+        private void _textbox_TextChanged(object sender, System.EventArgs e)
+        {
+            Text = _textbox.Text;
         }
 
         protected override void OnPaint(PaintEventArgs e)
