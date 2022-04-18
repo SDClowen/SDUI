@@ -38,26 +38,15 @@ namespace SDUI.Controls
             }
         }
 
-        private Color _backGradientBegin;
-        public Color BackgroundColorGradiendBegin
-        {
-            get => _backGradientBegin;
-            set
-            {
-                _backGradientBegin = value;
+        private Color[] _gradient = new Color[2];
+        public Color[] Gradient 
+        { 
+            get => _gradient;
+            set 
+            { 
+                _gradient = value;
                 Invalidate();
-            }
-        }
-
-        private Color _backGradientEnd;
-        public Color BackgroundColorGradiendEnd
-        {
-            get => _backGradientEnd;
-            set
-            {
-                _backGradientEnd = value;
-                Invalidate();
-            }
+            } 
         }
 
         private bool _showAsPercent = false;
@@ -111,7 +100,7 @@ namespace SDUI.Controls
             graphics.Clear(ColorScheme.BackColor);
 
             graphics.FillRectangle(new SolidBrush(ColorScheme.BorderColor), 0, 0, Width, Height);
-            var linearGradientBrush = new LinearGradientBrush(new Rectangle(0, 0, (intValue <= 0 ? intValue - 1 : 1), Height - 1), BackgroundColorGradiendBegin, BackgroundColorGradiendEnd, 90);
+            var linearGradientBrush = new LinearGradientBrush(new Rectangle(0, 0, (intValue <= 0 ? intValue - 1 : 1), Height - 1), _gradient[0], _gradient[1], 90);
 
             graphics.FillRectangle(linearGradientBrush, 0, 0, intValue, Height);
             graphics.DrawRectangle(new Pen(ColorScheme.BorderColor), 0, 0, Width - 1, Height - 1);
