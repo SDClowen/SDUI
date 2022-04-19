@@ -55,10 +55,11 @@ namespace SDUI.Controls
         protected override void OnParentBackColorChanged(EventArgs e)
         {
             base.OnParentBackColorChanged(e);
-            Invalidate();
 
             BackColor = ColorScheme.BackColor;
-            ForeColor = BackColor.Determine();
+            ForeColor = ColorScheme.ForeColor;
+
+            Invalidate();
         }
 
         /// <summary>

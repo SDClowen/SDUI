@@ -32,6 +32,12 @@ namespace SDUI.Controls
             this.Padding = new Padding(3, 10, 3, 3);
         }
 
+        protected override void OnParentBackColorChanged(EventArgs e)
+        {
+            base.OnParentBackColorChanged(e);
+            Invalidate();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var rect = ClientRectangle;
@@ -42,7 +48,7 @@ namespace SDUI.Controls
                 rect = new Rectangle(0, 0,
                     rect.Width, Font.Height + 7);
 
-                var color = Color.FromArgb(20, ColorScheme.BorderColor);
+                var color = Color.FromArgb(15, ColorScheme.BackColor.Determine());
                 using (var brush = new SolidBrush(color))
                     e.Graphics.FillPath(brush, path);
 

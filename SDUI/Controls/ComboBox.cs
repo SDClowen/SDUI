@@ -29,6 +29,7 @@ namespace SDUI.Controls
                 catch
                 {
                 }
+
                 Invalidate();
             }
         }
@@ -55,6 +56,12 @@ namespace SDUI.Controls
             }
 
             gradient.Dispose();
+        }
+
+        protected override void OnParentBackColorChanged(EventArgs e)
+        {
+            base.OnParentBackColorChanged(e);
+            Invalidate();
         }
 
         protected override void OnLostFocus(EventArgs e)

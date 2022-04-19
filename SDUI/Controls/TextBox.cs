@@ -63,7 +63,7 @@ namespace SDUI.Controls
         protected override void OnBackColorChanged(System.EventArgs e)
         {
             base.OnBackColorChanged(e);
-            _textbox.BackColor = BackColor;
+            _textbox.BackColor = Color.FromArgb(BackColor.R, BackColor.G, BackColor.B);
             Invalidate();
         }
 

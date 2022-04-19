@@ -23,6 +23,20 @@ namespace SDUI.Controls
             }
         }
 
+        private Padding _border;
+        public Padding Border
+        {
+            get => _border;
+            set
+            {
+                if (_border == value)
+                    return;
+
+                _border = value;
+                Invalidate();
+            }
+        }
+
         public Panel()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
@@ -30,23 +44,45 @@ namespace SDUI.Controls
             this.DoubleBuffered = true;
         }
 
+        protected override void OnParentBackColorChanged(EventArgs e)
+        {
+            base.OnParentBackColorChanged(e);
+
+            BackColor = ColorScheme.BackColor;
+            ForeColor = ColorScheme.ForeColor;
+
+            Invalidate();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
+            e.Graphics.Clear(BackColor);
+
             var rect = ClientRectangle;
 
-            using (var path = rect.Radius(Radius))
+            var color = Color.FromArgb(15, ColorScheme.BackColor.Determine());
+
+            if (_radius > 0)
             {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                rect = new Rectangle(0, 0,
-                    rect.Width, Font.Height + 7);
+                using (var path = rect.Radius(Radius))
+                {
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-                var color = Color.FromArgb(20, ColorScheme.BorderColor);
-                using (var brush = new SolidBrush(color))
-                    e.Graphics.FillPath(brush, path);
+                    using (var brush = new SolidBrush(color))
+                        e.Graphics.FillPath(brush, path);
 
-                using (var pen = new Pen(ColorScheme.BorderColor, 1))
-                    e.Graphics.DrawPath(pen, path);
+                    using (var pen = new Pen(ColorScheme.BorderColor, 1))
+                        e.Graphics.DrawPath(pen, path);
+                }
+
+                return;
             }
+
+            using (var brush = new SolidBrush(color))
+                e.Graphics.FillRectangle(brush, rect);
+
+            using (var pen = new Pen(ColorScheme.BorderColor, 1))
+                e.Graphics.DrawRectangle(pen, rect);
         }
     }
 }

@@ -89,6 +89,12 @@ namespace SDUI.Controls
             BackColor = Color.Transparent;
         }
 
+        protected override void OnParentBackColorChanged(EventArgs e)
+        {
+            base.OnParentBackColorChanged(e);
+            Invalidate();
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             var graphics = e.Graphics;
