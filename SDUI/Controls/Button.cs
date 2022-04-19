@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class Button : Control
+    public class Button : System.Windows.Forms.Button
     {
         /// <summary>
         /// Button raised color
@@ -21,6 +21,7 @@ namespace SDUI.Controls
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
         }
+
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
@@ -51,6 +52,7 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            e.Graphics.Clear(ColorScheme.BackColor);
             var graphics = e.Graphics;
             var clientRectangle = new Rectangle(0, 0, Width - 1, Height - 1);
             var innerRectangle = new Rectangle(1, 1, Width - 3, Height - 3);
