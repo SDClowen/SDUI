@@ -54,10 +54,10 @@ namespace SDUI.Controls
             }
         }
 
-        protected override void OnTextChanged(System.EventArgs e)
+        public new string Text
         {
-            base.OnTextChanged(e);
-            Invalidate();
+            get => _textbox.Text;
+            set => _textbox.Text = value;
         }
 
         protected override void OnBackColorChanged(System.EventArgs e)

@@ -64,5 +64,10 @@ namespace SDUI.Test
             ColorScheme.BackColor = Color.White;
             BackColor = ColorScheme.BackColor;
         }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            textBox1.Text = "Testing";
+        }
     }
 }

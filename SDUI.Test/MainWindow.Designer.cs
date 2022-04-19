@@ -170,19 +170,18 @@ namespace SDUI.Test
             // 
             this.button3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.button3.Color = System.Drawing.Color.Maroon;
-            this.button3.DialogResult = System.Windows.Forms.DialogResult.None;
             this.button3.ForeColor = System.Drawing.Color.White;
             this.button3.Location = new System.Drawing.Point(222, 71);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(93, 23);
             this.button3.TabIndex = 4;
             this.button3.Text = "button1";
+            this.button3.Click += new System.EventHandler(this.button3_Click);
             // 
             // buttonDark
             // 
             this.buttonDark.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.buttonDark.Color = System.Drawing.Color.RoyalBlue;
-            this.buttonDark.DialogResult = System.Windows.Forms.DialogResult.None;
             this.buttonDark.ForeColor = System.Drawing.Color.White;
             this.buttonDark.Location = new System.Drawing.Point(23, 71);
             this.buttonDark.Name = "buttonDark";
@@ -195,7 +194,6 @@ namespace SDUI.Test
             // 
             this.buttonLight.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.buttonLight.Color = System.Drawing.Color.Transparent;
-            this.buttonLight.DialogResult = System.Windows.Forms.DialogResult.None;
             this.buttonLight.Location = new System.Drawing.Point(122, 71);
             this.buttonLight.Name = "buttonLight";
             this.buttonLight.Size = new System.Drawing.Size(93, 23);
