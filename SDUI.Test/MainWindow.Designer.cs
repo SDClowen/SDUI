@@ -108,7 +108,7 @@ namespace SDUI.Test
             // 
             this.label1.Location = new System.Drawing.Point(491, 215);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(161, 15);
+            this.label1.Size = new System.Drawing.Size(114, 15);
             this.label1.TabIndex = 10;
             // 
             // panel2

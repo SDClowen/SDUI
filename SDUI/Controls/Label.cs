@@ -1,4 +1,5 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
@@ -9,18 +10,14 @@ namespace SDUI.Controls
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         }
 
-        private string _text;
-        public new string Text
+        protected override void OnTextChanged(EventArgs e)
         {
-            get => _text;
-            set
-            {
-                _text = value;
-                var size = TextRenderer.MeasureText(value, Font);
-                Size = size;
+            base.OnTextChanged(e);
 
-                Invalidate();
-            }
+            var size = TextRenderer.MeasureText(Text, Font);
+            Size = size;
+
+            Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs e)
