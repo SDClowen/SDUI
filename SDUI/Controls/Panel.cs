@@ -56,7 +56,7 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            e.Graphics.Clear(BackColor);
+            //e.Graphics.Clear(BackColor);
 
             var rect = ClientRectangle;
 

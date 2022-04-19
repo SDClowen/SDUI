@@ -33,9 +33,9 @@ namespace SDUI.Test
         {
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.panel1 = new SDUI.Controls.Panel();
             this.comboBox2 = new SDUI.Controls.ComboBox();
             this.groupBox1 = new SDUI.Controls.GroupBox();
+            this.panel1 = new SDUI.Controls.Panel();
             this.comboBox1 = new SDUI.Controls.ComboBox();
             this.textBox1 = new SDUI.Controls.TextBox();
             this.button3 = new SDUI.Controls.Button();
@@ -52,6 +52,7 @@ namespace SDUI.Test
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.panel2 = new SDUI.Controls.Panel();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.groupBox1.SuspendLayout();
@@ -73,7 +74,7 @@ namespace SDUI.Test
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
-            this.tabPage1.Controls.Add(this.panel1);
+            this.tabPage1.Controls.Add(this.panel2);
             this.tabPage1.Controls.Add(this.comboBox2);
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.textBox1);
@@ -92,14 +93,6 @@ namespace SDUI.Test
             this.tabPage1.Size = new System.Drawing.Size(687, 375);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
-            // 
-            // panel1
-            // 
-            this.panel1.Location = new System.Drawing.Point(350, 168);
-            this.panel1.Name = "panel1";
-            this.panel1.Radius = 12;
-            this.panel1.Size = new System.Drawing.Size(261, 136);
-            this.panel1.TabIndex = 9;
             // 
             // comboBox2
             // 
@@ -124,15 +117,25 @@ namespace SDUI.Test
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.Transparent;
+            this.groupBox1.Controls.Add(this.panel1);
             this.groupBox1.Controls.Add(this.comboBox1);
             this.groupBox1.Location = new System.Drawing.Point(363, 6);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
             this.groupBox1.Radius = 12;
-            this.groupBox1.Size = new System.Drawing.Size(200, 100);
+            this.groupBox1.Size = new System.Drawing.Size(275, 190);
             this.groupBox1.TabIndex = 7;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "groupBox1";
+            // 
+            // panel1
+            // 
+            this.panel1.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            this.panel1.Location = new System.Drawing.Point(6, 65);
+            this.panel1.Name = "panel1";
+            this.panel1.Radius = 12;
+            this.panel1.Size = new System.Drawing.Size(263, 115);
+            this.panel1.TabIndex = 9;
             // 
             // comboBox1
             // 
@@ -151,7 +154,7 @@ namespace SDUI.Test
             "1236afsdf"});
             this.comboBox1.Location = new System.Drawing.Point(3, 26);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(194, 23);
+            this.comboBox1.Size = new System.Drawing.Size(269, 23);
             this.comboBox1.StartIndex = 0;
             this.comboBox1.TabIndex = 6;
             // 
@@ -309,6 +312,15 @@ namespace SDUI.Test
             // 
             this.columnHeader4.Width = 156;
             // 
+            // panel2
+            // 
+            this.panel2.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            this.panel2.Location = new System.Drawing.Point(134, 215);
+            this.panel2.Name = "panel2";
+            this.panel2.Radius = 12;
+            this.panel2.Size = new System.Drawing.Size(263, 115);
+            this.panel2.TabIndex = 9;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -352,5 +364,6 @@ namespace SDUI.Test
         private Controls.GroupBox groupBox1;
         private Controls.ComboBox comboBox2;
         private Controls.Panel panel1;
+        private Controls.Panel panel2;
     }
 }
