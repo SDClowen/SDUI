@@ -17,17 +17,6 @@ namespace SDUI.Controls
         /// </summary>
         private int _mouseState = 0;
 
-        /// <summary>
-        /// Dialog Result
-        /// </summary>
-        public DialogResult DialogResult { get; set; }
-
-        /// <inheritdoc/>
-        public bool UseVisualStyleBackColor { get; set; }
-
-        /// <inheritdoc/>
-        public AutoSizeMode AutoSizeMode { get; set; }
-
         public Button()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
