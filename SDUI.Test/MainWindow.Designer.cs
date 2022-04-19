@@ -31,8 +31,10 @@ namespace SDUI.Test
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label2 = new SDUI.Controls.Label();
             this.label1 = new SDUI.Controls.Label();
             this.panel2 = new SDUI.Controls.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
@@ -83,6 +85,7 @@ namespace SDUI.Test
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.label2);
             this.tabPage1.Controls.Add(this.label1);
             this.tabPage1.Controls.Add(this.panel2);
             this.tabPage1.Controls.Add(this.comboBox2);
@@ -104,6 +107,14 @@ namespace SDUI.Test
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // label2
+            // 
+            this.label2.Location = new System.Drawing.Point(363, 202);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(275, 122);
+            this.label2.TabIndex = 11;
+            this.label2.Text = resources.GetString("label2.Text");
+            // 
             // label1
             // 
             this.label1.Location = new System.Drawing.Point(491, 215);
@@ -117,10 +128,10 @@ namespace SDUI.Test
             this.panel2.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
             this.panel2.Controls.Add(this.panel3);
             this.panel2.Controls.Add(this.separator3);
-            this.panel2.Location = new System.Drawing.Point(134, 215);
+            this.panel2.Location = new System.Drawing.Point(24, 156);
             this.panel2.Name = "panel2";
             this.panel2.Radius = 12;
-            this.panel2.Size = new System.Drawing.Size(339, 134);
+            this.panel2.Size = new System.Drawing.Size(333, 134);
             this.panel2.TabIndex = 9;
             // 
             // panel3
@@ -441,5 +452,6 @@ namespace SDUI.Test
         private Controls.Separator separator4;
         private Controls.Separator separator6;
         private Controls.Label label1;
+        private Controls.Label label2;
     }
 }
