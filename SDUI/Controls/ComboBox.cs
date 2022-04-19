@@ -65,11 +65,6 @@ namespace SDUI.Controls
             ResumeLayout();
         }
 
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            base.OnPaintBackground(e);
-        }
-
         protected override void OnResize(EventArgs e)
         {
             base.OnResize(e);
@@ -81,8 +76,14 @@ namespace SDUI.Controls
 
         public ComboBox()
         {
-            SetStyle((ControlStyles)139286, true);
-            SetStyle(ControlStyles.Selectable, false);
+            //SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            SetStyle(
+                ControlStyles.UserPaint |
+                ControlStyles.ResizeRedraw | 
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.Selectable |
+                ControlStyles.SupportsTransparentBackColor, true
+            );
 
             DrawMode = DrawMode.OwnerDrawFixed;
             DropDownStyle = ComboBoxStyle.DropDownList;
@@ -96,7 +97,7 @@ namespace SDUI.Controls
         {
             base.OnPaint(e);
 
-            e.Graphics.Clear(Parent.BackColor);
+            //e.Graphics.Clear(Parent.BackColor);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             var rectangle = new Rectangle(0, 0, Width - 1, Height - 1);
@@ -108,6 +109,7 @@ namespace SDUI.Controls
             var gradient = new LinearGradientBrush(ClientRectangle, colorBegin, colorEnd, 90f);
 
             e.Graphics.SetClip(rectangle);
+            //e.Graphics.FillRectangle(new SolidBrush(determinedColor), rectangle);
             e.Graphics.FillRectangle(gradient, ClientRectangle);
             e.Graphics.ResetClip();
 
