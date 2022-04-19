@@ -33,9 +33,15 @@ namespace SDUI.Test
         {
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.panel2 = new SDUI.Controls.Panel();
+            this.panel3 = new System.Windows.Forms.Panel();
+            this.separator5 = new SDUI.Controls.Separator();
+            this.separator3 = new SDUI.Controls.Separator();
             this.comboBox2 = new SDUI.Controls.ComboBox();
             this.groupBox1 = new SDUI.Controls.GroupBox();
+            this.separator4 = new SDUI.Controls.Separator();
             this.panel1 = new SDUI.Controls.Panel();
+            this.separator6 = new SDUI.Controls.Separator();
             this.comboBox1 = new SDUI.Controls.ComboBox();
             this.textBox1 = new SDUI.Controls.TextBox();
             this.button3 = new SDUI.Controls.Button();
@@ -52,10 +58,12 @@ namespace SDUI.Test
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.panel2 = new SDUI.Controls.Panel();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.panel2.SuspendLayout();
+            this.panel3.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            this.panel1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -94,6 +102,45 @@ namespace SDUI.Test
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // panel2
+            // 
+            this.panel2.BackColor = System.Drawing.Color.Transparent;
+            this.panel2.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            this.panel2.Controls.Add(this.panel3);
+            this.panel2.Controls.Add(this.separator3);
+            this.panel2.Location = new System.Drawing.Point(134, 215);
+            this.panel2.Name = "panel2";
+            this.panel2.Radius = 12;
+            this.panel2.Size = new System.Drawing.Size(339, 134);
+            this.panel2.TabIndex = 9;
+            // 
+            // panel3
+            // 
+            this.panel3.BackColor = System.Drawing.Color.Transparent;
+            this.panel3.Controls.Add(this.separator5);
+            this.panel3.Location = new System.Drawing.Point(17, 27);
+            this.panel3.Name = "panel3";
+            this.panel3.Size = new System.Drawing.Size(306, 100);
+            this.panel3.TabIndex = 10;
+            // 
+            // separator5
+            // 
+            this.separator5.IsVertical = false;
+            this.separator5.Location = new System.Drawing.Point(16, 15);
+            this.separator5.Name = "separator5";
+            this.separator5.Size = new System.Drawing.Size(120, 10);
+            this.separator5.TabIndex = 0;
+            this.separator5.Text = "separator3";
+            // 
+            // separator3
+            // 
+            this.separator3.IsVertical = false;
+            this.separator3.Location = new System.Drawing.Point(17, 11);
+            this.separator3.Name = "separator3";
+            this.separator3.Size = new System.Drawing.Size(120, 10);
+            this.separator3.TabIndex = 0;
+            this.separator3.Text = "separator3";
+            // 
             // comboBox2
             // 
             this.comboBox2.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
@@ -117,6 +164,7 @@ namespace SDUI.Test
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.Transparent;
+            this.groupBox1.Controls.Add(this.separator4);
             this.groupBox1.Controls.Add(this.panel1);
             this.groupBox1.Controls.Add(this.comboBox1);
             this.groupBox1.Location = new System.Drawing.Point(363, 6);
@@ -128,14 +176,33 @@ namespace SDUI.Test
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "groupBox1";
             // 
+            // separator4
+            // 
+            this.separator4.IsVertical = false;
+            this.separator4.Location = new System.Drawing.Point(17, 51);
+            this.separator4.Name = "separator4";
+            this.separator4.Size = new System.Drawing.Size(120, 10);
+            this.separator4.TabIndex = 0;
+            this.separator4.Text = "separator3";
+            // 
             // panel1
             // 
             this.panel1.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            this.panel1.Controls.Add(this.separator6);
             this.panel1.Location = new System.Drawing.Point(6, 65);
             this.panel1.Name = "panel1";
             this.panel1.Radius = 12;
             this.panel1.Size = new System.Drawing.Size(263, 115);
             this.panel1.TabIndex = 9;
+            // 
+            // separator6
+            // 
+            this.separator6.IsVertical = false;
+            this.separator6.Location = new System.Drawing.Point(21, 29);
+            this.separator6.Name = "separator6";
+            this.separator6.Size = new System.Drawing.Size(120, 10);
+            this.separator6.TabIndex = 0;
+            this.separator6.Text = "separator3";
             // 
             // comboBox1
             // 
@@ -312,15 +379,6 @@ namespace SDUI.Test
             // 
             this.columnHeader4.Width = 156;
             // 
-            // panel2
-            // 
-            this.panel2.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
-            this.panel2.Location = new System.Drawing.Point(134, 215);
-            this.panel2.Name = "panel2";
-            this.panel2.Radius = 12;
-            this.panel2.Size = new System.Drawing.Size(263, 115);
-            this.panel2.TabIndex = 9;
-            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -335,7 +393,10 @@ namespace SDUI.Test
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.panel2.ResumeLayout(false);
+            this.panel3.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
+            this.panel1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -365,5 +426,10 @@ namespace SDUI.Test
         private Controls.ComboBox comboBox2;
         private Controls.Panel panel1;
         private Controls.Panel panel2;
+        private Panel panel3;
+        private Controls.Separator separator5;
+        private Controls.Separator separator3;
+        private Controls.Separator separator4;
+        private Controls.Separator separator6;
     }
 }
