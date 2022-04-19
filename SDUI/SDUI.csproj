@@ -64,6 +64,9 @@
     <Compile Include="Controls\InputDailog.Designer.cs">
       <DependentUpon>InputDailog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Controls\Label.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\ListView.cs">
       <SubType>Component</SubType>
     </Compile>

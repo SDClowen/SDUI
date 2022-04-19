@@ -33,6 +33,7 @@ namespace SDUI.Test
         {
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label1 = new SDUI.Controls.Label();
             this.panel2 = new SDUI.Controls.Panel();
             this.panel3 = new System.Windows.Forms.Panel();
             this.separator5 = new SDUI.Controls.Separator();
@@ -82,6 +83,7 @@ namespace SDUI.Test
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.label1);
             this.tabPage1.Controls.Add(this.panel2);
             this.tabPage1.Controls.Add(this.comboBox2);
             this.tabPage1.Controls.Add(this.groupBox1);
@@ -101,6 +103,13 @@ namespace SDUI.Test
             this.tabPage1.Size = new System.Drawing.Size(687, 375);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
+            // 
+            // label1
+            // 
+            this.label1.Location = new System.Drawing.Point(491, 215);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(161, 15);
+            this.label1.TabIndex = 10;
             // 
             // panel2
             // 
@@ -266,7 +275,7 @@ namespace SDUI.Test
             this.buttonLight.Color = System.Drawing.Color.Transparent;
             this.buttonLight.Location = new System.Drawing.Point(122, 71);
             this.buttonLight.Name = "buttonLight";
-            this.buttonLight.Size = new System.Drawing.Size(93, 23);
+            this.buttonLight.Size = new System.Drawing.Size(93, 20);
             this.buttonLight.TabIndex = 4;
             this.buttonLight.Text = "Light";
             this.buttonLight.Click += new System.EventHandler(this.buttonLight_Click);
@@ -431,5 +440,6 @@ namespace SDUI.Test
         private Controls.Separator separator3;
         private Controls.Separator separator4;
         private Controls.Separator separator6;
+        private Controls.Label label1;
     }
 }
