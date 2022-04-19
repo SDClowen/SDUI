@@ -11,7 +11,8 @@ namespace SDUI.Controls
                 ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.ResizeRedraw |
                 ControlStyles.UserPaint |
-                ControlStyles.SupportsTransparentBackColor,
+                ControlStyles.SupportsTransparentBackColor |
+                ControlStyles.OptimizedDoubleBuffer,
                 true
             );
 

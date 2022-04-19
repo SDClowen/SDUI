@@ -52,6 +52,9 @@
     <Compile Include="Controls\ComboBox.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\GroupBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\InfoControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -62,6 +65,9 @@
       <DependentUpon>InputDailog.cs</DependentUpon>
     </Compile>
     <Compile Include="Controls\ListView.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\Panel.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\ProgressBar.cs">
@@ -78,6 +84,7 @@
     </Compile>
     <Compile Include="Extensions\ColorExtensions.cs" />
     <Compile Include="Extensions\ListViewExtensions.cs" />
+    <Compile Include="Extensions\RectangleExtensions.cs" />
     <Compile Include="Extensions\TextBoxBaseExtensions.cs" />
     <Compile Include="Helpers\ListViewColumnSorter.cs" />
     <Compile Include="MoveDirection.cs" />

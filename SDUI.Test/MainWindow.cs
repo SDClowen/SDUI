@@ -51,7 +51,18 @@ namespace SDUI.Test
 
             ColorScheme.BackColor = Color.FromArgb(r, g, b);
             BackColor = ColorScheme.BackColor;
-            //ChangeTheme();
+        }
+
+        private void buttonDark_Click(object sender, EventArgs e)
+        {
+            ColorScheme.BackColor = Color.Black;
+            BackColor = ColorScheme.BackColor;
+        }
+
+        private void buttonLight_Click(object sender, EventArgs e)
+        {
+            ColorScheme.BackColor = Color.White;
+            BackColor = ColorScheme.BackColor;
         }
     }
 }

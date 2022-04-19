@@ -76,7 +76,6 @@ namespace SDUI.Controls
 
         public ComboBox()
         {
-            //SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
             SetStyle(
                 ControlStyles.UserPaint |
                 ControlStyles.ResizeRedraw | 
@@ -95,25 +94,20 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
-
-            //e.Graphics.Clear(Parent.BackColor);
+            e.Graphics.Clear(ColorScheme.BackColor);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            var rectangle = new Rectangle(0, 0, Width - 1, Height - 1);
             var textRectangle = new Rectangle(3, 0, Width - 20, Height);
 
-            var determinedColor = ColorScheme.BackColor.Determine();
-            var colorBegin = Color.FromArgb(60, determinedColor.Brightness(.5f));
-            var colorEnd = Color.FromArgb(30, determinedColor.Brightness(-.5f));
+            var backColor = ColorScheme.BackColor;
+            var colorBegin = backColor.Brightness(.1f);
+            var colorEnd = backColor.Brightness(-.1f);
             var gradient = new LinearGradientBrush(ClientRectangle, colorBegin, colorEnd, 90f);
 
-            e.Graphics.SetClip(rectangle);
-            //e.Graphics.FillRectangle(new SolidBrush(determinedColor), rectangle);
             e.Graphics.FillRectangle(gradient, ClientRectangle);
-            e.Graphics.ResetClip();
 
-            e.Graphics.DrawRectangle(new Pen(ColorScheme.BorderColor), rectangle);
+            var borderRectangle = new Rectangle(0, 0, Width - 2, Height - 2);
+            e.Graphics.DrawRectangle(new Pen(ColorScheme.BorderColor), borderRectangle);
 
             var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
             TextRenderer.DrawText(e.Graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);
@@ -124,7 +118,7 @@ namespace SDUI.Controls
                 Alignment = StringAlignment.Far
             });
 
-            e.Graphics.DrawLine(new Pen(colorEnd), Width - 24, 4, Width - 24, this.Height - 5);
+            e.Graphics.DrawLine(new Pen(ColorScheme.BorderColor), Width - 24, 4, Width - 24, this.Height - 5);
             gradient.Dispose();
         }
     }

@@ -119,7 +119,7 @@ namespace SDUI.Controls
             gfx.SmoothingMode = SmoothingMode.HighQuality;
 
             var determinedColor = ColorScheme.BackColor.Determine();
-            var backColor = ColorScheme.BackColor.Brightness(-.2f);
+            var backColor = ColorScheme.BackColor.Brightness(-.1f);
 
             Height = _textbox.Height + 5;
             var _with2 = _textbox;
@@ -132,13 +132,13 @@ namespace SDUI.Controls
             gfx.Clear(Color.Transparent);
             gfx.FillRectangle(new SolidBrush(backColor), new Rectangle(0, 0, Width - 1, Height - 1));
 
-            var colorBegin = Color.FromArgb(90, determinedColor.Brightness(.5f));
-            var colorEnd = Color.FromArgb(60, determinedColor.Brightness(-.5f));
+            var colorBegin = Color.FromArgb(90, determinedColor.Brightness(.1f));
+            var colorEnd = Color.FromArgb(60, determinedColor.Brightness(-.1f));
 
-            var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 3, Height - 3), colorBegin, colorEnd, 90);
+            var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 2, Height - 2), colorBegin, colorEnd, 90);
             var innerBorderPen = new Pen(innerBorderBrush);
 
-            gfx.DrawRectangle(innerBorderPen, new Rectangle(1, 1, Width - 3, Height - 3));
+            gfx.DrawRectangle(innerBorderPen, new Rectangle(1, 1, Width - 2, Height - 2));
             gfx.DrawLine(new Pen(ColorScheme.BorderColor), new Point(1, 1), new Point(Width - 3, 1));
 
             e.Graphics.DrawImage((Bitmap)bitmap.Clone(), 0, 0);

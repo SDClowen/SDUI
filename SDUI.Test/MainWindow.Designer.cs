@@ -33,11 +33,14 @@ namespace SDUI.Test
         {
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.panel1 = new SDUI.Controls.Panel();
+            this.comboBox2 = new SDUI.Controls.ComboBox();
+            this.groupBox1 = new SDUI.Controls.GroupBox();
             this.comboBox1 = new SDUI.Controls.ComboBox();
             this.textBox1 = new SDUI.Controls.TextBox();
             this.button3 = new SDUI.Controls.Button();
-            this.button2 = new SDUI.Controls.Button();
-            this.button1 = new SDUI.Controls.Button();
+            this.buttonDark = new SDUI.Controls.Button();
+            this.buttonLight = new SDUI.Controls.Button();
             this.progressBar1 = new SDUI.Controls.ProgressBar();
             this.buttonRandomColor = new System.Windows.Forms.Button();
             this.buttonOpenInputDialog = new System.Windows.Forms.Button();
@@ -51,6 +54,7 @@ namespace SDUI.Test
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.groupBox1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -69,11 +73,13 @@ namespace SDUI.Test
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
-            this.tabPage1.Controls.Add(this.comboBox1);
+            this.tabPage1.Controls.Add(this.panel1);
+            this.tabPage1.Controls.Add(this.comboBox2);
+            this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.textBox1);
             this.tabPage1.Controls.Add(this.button3);
-            this.tabPage1.Controls.Add(this.button2);
-            this.tabPage1.Controls.Add(this.button1);
+            this.tabPage1.Controls.Add(this.buttonDark);
+            this.tabPage1.Controls.Add(this.buttonLight);
             this.tabPage1.Controls.Add(this.progressBar1);
             this.tabPage1.Controls.Add(this.buttonRandomColor);
             this.tabPage1.Controls.Add(this.buttonOpenInputDialog);
@@ -87,8 +93,50 @@ namespace SDUI.Test
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // panel1
+            // 
+            this.panel1.Location = new System.Drawing.Point(350, 168);
+            this.panel1.Name = "panel1";
+            this.panel1.Radius = 12;
+            this.panel1.Size = new System.Drawing.Size(261, 136);
+            this.panel1.TabIndex = 9;
+            // 
+            // comboBox2
+            // 
+            this.comboBox2.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboBox2.DropDownHeight = 100;
+            this.comboBox2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox2.FormattingEnabled = true;
+            this.comboBox2.IntegralHeight = false;
+            this.comboBox2.ItemHeight = 17;
+            this.comboBox2.Items.AddRange(new object[] {
+            "asdfasdfasdfasdf",
+            "asdfasdfasd",
+            "asdfasdfasdfas",
+            "asdfxcvxzcvzx",
+            "1236afsdf"});
+            this.comboBox2.Location = new System.Drawing.Point(23, 127);
+            this.comboBox2.Name = "comboBox2";
+            this.comboBox2.Size = new System.Drawing.Size(194, 23);
+            this.comboBox2.StartIndex = 0;
+            this.comboBox2.TabIndex = 8;
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.BackColor = System.Drawing.Color.Transparent;
+            this.groupBox1.Controls.Add(this.comboBox1);
+            this.groupBox1.Location = new System.Drawing.Point(363, 6);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
+            this.groupBox1.Radius = 12;
+            this.groupBox1.Size = new System.Drawing.Size(200, 100);
+            this.groupBox1.TabIndex = 7;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "groupBox1";
+            // 
             // comboBox1
             // 
+            this.comboBox1.Dock = System.Windows.Forms.DockStyle.Top;
             this.comboBox1.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             this.comboBox1.DropDownHeight = 100;
             this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
@@ -101,9 +149,9 @@ namespace SDUI.Test
             "asdfasdfasdfas",
             "asdfxcvxzcvzx",
             "1236afsdf"});
-            this.comboBox1.Location = new System.Drawing.Point(180, 100);
+            this.comboBox1.Location = new System.Drawing.Point(3, 26);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(135, 23);
+            this.comboBox1.Size = new System.Drawing.Size(194, 23);
             this.comboBox1.StartIndex = 0;
             this.comboBox1.TabIndex = 6;
             // 
@@ -128,24 +176,26 @@ namespace SDUI.Test
             this.button3.TabIndex = 4;
             this.button3.Text = "button1";
             // 
-            // button2
+            // buttonDark
             // 
-            this.button2.Color = System.Drawing.Color.RoyalBlue;
-            this.button2.ForeColor = System.Drawing.Color.White;
-            this.button2.Location = new System.Drawing.Point(23, 71);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(93, 23);
-            this.button2.TabIndex = 4;
-            this.button2.Text = "button1";
+            this.buttonDark.Color = System.Drawing.Color.RoyalBlue;
+            this.buttonDark.ForeColor = System.Drawing.Color.White;
+            this.buttonDark.Location = new System.Drawing.Point(23, 71);
+            this.buttonDark.Name = "buttonDark";
+            this.buttonDark.Size = new System.Drawing.Size(93, 23);
+            this.buttonDark.TabIndex = 4;
+            this.buttonDark.Text = "Dark";
+            this.buttonDark.Click += new System.EventHandler(this.buttonDark_Click);
             // 
-            // button1
+            // buttonLight
             // 
-            this.button1.Color = System.Drawing.Color.Transparent;
-            this.button1.Location = new System.Drawing.Point(122, 71);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(93, 23);
-            this.button1.TabIndex = 4;
-            this.button1.Text = "button1";
+            this.buttonLight.Color = System.Drawing.Color.Transparent;
+            this.buttonLight.Location = new System.Drawing.Point(122, 71);
+            this.buttonLight.Name = "buttonLight";
+            this.buttonLight.Size = new System.Drawing.Size(93, 23);
+            this.buttonLight.TabIndex = 4;
+            this.buttonLight.Text = "Light";
+            this.buttonLight.Click += new System.EventHandler(this.buttonLight_Click);
             // 
             // progressBar1
             // 
@@ -269,6 +319,7 @@ namespace SDUI.Test
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.groupBox1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -289,10 +340,13 @@ namespace SDUI.Test
         private ColumnHeader columnHeader3;
         private ColumnHeader columnHeader4;
         private Controls.ProgressBar progressBar1;
-        private Controls.Button button2;
-        private Controls.Button button1;
+        private Controls.Button buttonDark;
+        private Controls.Button buttonLight;
         private Controls.TextBox textBox1;
         private Controls.Button button3;
         private Controls.ComboBox comboBox1;
+        private Controls.GroupBox groupBox1;
+        private Controls.ComboBox comboBox2;
+        private Controls.Panel panel1;
     }
 }

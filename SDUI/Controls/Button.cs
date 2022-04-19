@@ -1,10 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
@@ -21,6 +17,10 @@ namespace SDUI.Controls
         /// </summary>
         private int _mouseState = 0;
 
+        public Button()
+        {
+            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        }
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
@@ -47,11 +47,6 @@ namespace SDUI.Controls
             base.OnMouseLeave(e);
             _mouseState = 0;
             Invalidate();
-        }
-
-        public Button()
-        {
-            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
         }
 
         protected override void OnPaint(PaintEventArgs e)
