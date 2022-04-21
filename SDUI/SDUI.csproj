@@ -46,6 +46,9 @@
     <Compile Include="Controls\Button.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\CheckBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\CleanForm.cs">
       <SubType>Form</SubType>
     </Compile>

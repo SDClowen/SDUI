@@ -8,11 +8,9 @@ namespace SDUI.Controls
         public Separator()
         {
             SetStyle(
-                ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.ResizeRedraw |
                 ControlStyles.UserPaint |
-                ControlStyles.SupportsTransparentBackColor |
-                ControlStyles.OptimizedDoubleBuffer,
+                ControlStyles.SupportsTransparentBackColor,
                 true
             );
 
@@ -32,8 +30,6 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            //e.Graphics.Clear(BackColor);
-
             using (var pen = new Pen(ColorScheme.BorderColor))
             {
                 if (_isVertical)

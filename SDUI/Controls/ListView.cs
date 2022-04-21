@@ -24,14 +24,13 @@ namespace SDUI.Controls
                 ControlStyles.Opaque |
                 ControlStyles.AllPaintingInWmPaint |
                 ControlStyles.ResizeRedraw |
-                ControlStyles.OptimizedDoubleBuffer, true);
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.EnableNotifyMessage, true);
 
             LvwColumnSorter = new ListViewColumnSorter();
             ListViewItemSorter = LvwColumnSorter;
             View = View.Details;
             FullRowSelect = true;
-
-            SetStyle(ControlStyles.EnableNotifyMessage, true);
         }
 
         protected override void OnSelectedIndexChanged(EventArgs e)

@@ -10,7 +10,7 @@ using SDUI.Extensions;
 
 namespace SDUI.Controls
 {
-    public class Panel : System.Windows.Forms.Panel
+    public class Panel : System.Windows.Forms.Control
     {
         private int _radius = 12;
         public int Radius
@@ -37,27 +37,29 @@ namespace SDUI.Controls
             }
         }
 
+        public override Color BackColor 
+        { 
+            get => Color.Transparent; 
+            set => base.BackColor = value; 
+        }
+
         public Panel()
         {
-            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
-
-            this.DoubleBuffered = true;
+            SetStyle(ControlStyles.SupportsTransparentBackColor |
+                     ControlStyles.OptimizedDoubleBuffer |
+                     ControlStyles.ResizeRedraw |
+                     ControlStyles.UserPaint, true);
         }
 
         protected override void OnParentBackColorChanged(EventArgs e)
         {
             base.OnParentBackColorChanged(e);
 
-            BackColor = ColorScheme.BackColor;
-            ForeColor = ColorScheme.ForeColor;
-
             Invalidate();
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            //e.Graphics.Clear(BackColor);
-
             var rect = ClientRectangle;
 
             var color = Color.FromArgb(15, ColorScheme.BackColor.Determine());
@@ -81,8 +83,11 @@ namespace SDUI.Controls
             using (var brush = new SolidBrush(color))
                 e.Graphics.FillRectangle(brush, rect);
 
-            using (var pen = new Pen(ColorScheme.BorderColor, 1))
-                e.Graphics.DrawRectangle(pen, rect);
+            ControlPaint.DrawBorder(e.Graphics, ClientRectangle,
+                                  ColorScheme.BorderColor, _border.Left, ButtonBorderStyle.Solid,
+                                  ColorScheme.BorderColor, _border.Top, ButtonBorderStyle.Solid,
+                                  ColorScheme.BorderColor, _border.Right, ButtonBorderStyle.Solid,
+                                  ColorScheme.BorderColor, _border.Bottom, ButtonBorderStyle.Solid);
         }
     }
 }

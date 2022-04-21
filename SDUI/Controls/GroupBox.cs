@@ -23,9 +23,18 @@ namespace SDUI.Controls
             }
         }
 
+        public override Color BackColor
+        {
+            get => Color.Transparent;
+            set => base.BackColor = value;
+        }
+
         public GroupBox()
         {
-            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            SetStyle(ControlStyles.SupportsTransparentBackColor |
+                      ControlStyles.OptimizedDoubleBuffer |
+                      ControlStyles.ResizeRedraw |
+                      ControlStyles.UserPaint, true);
 
             this.DoubleBuffered = true;
             this.BackColor = Color.Transparent;
@@ -49,6 +58,8 @@ namespace SDUI.Controls
                     rect.Width, Font.Height + 7);
 
                 var color = Color.FromArgb(15, ColorScheme.BackColor.Determine());
+                BackColor = Color.Transparent;
+
                 using (var brush = new SolidBrush(color))
                     e.Graphics.FillPath(brush, path);
 
