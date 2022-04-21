@@ -34,6 +34,7 @@ namespace SDUI.Test
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.checkBox6 = new SDUI.Controls.CheckBox();
             this.checkBox2 = new SDUI.Controls.CheckBox();
             this.checkBox1 = new SDUI.Controls.CheckBox();
@@ -75,7 +76,6 @@ namespace SDUI.Test
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.panel8.SuspendLayout();
@@ -88,6 +88,7 @@ namespace SDUI.Test
             // 
             // tabControl1
             // 
+            this.tabControl1.Border = new System.Windows.Forms.Padding(1);
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -131,6 +132,14 @@ namespace SDUI.Test
             this.tabPage1.Size = new System.Drawing.Size(922, 527);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
+            // 
+            // richTextBox1
+            // 
+            this.richTextBox1.Location = new System.Drawing.Point(505, 330);
+            this.richTextBox1.Name = "richTextBox1";
+            this.richTextBox1.Size = new System.Drawing.Size(133, 155);
+            this.richTextBox1.TabIndex = 15;
+            this.richTextBox1.Text = "";
             // 
             // checkBox6
             // 
@@ -388,7 +397,7 @@ namespace SDUI.Test
             // 
             // checkBox4
             // 
-            this.checkBox4.Checked = false;
+            this.checkBox4.Checked = true;
             this.checkBox4.Location = new System.Drawing.Point(21, 56);
             this.checkBox4.Name = "checkBox4";
             this.checkBox4.Size = new System.Drawing.Size(120, 23);
@@ -578,14 +587,6 @@ namespace SDUI.Test
             // columnHeader4
             // 
             this.columnHeader4.Width = 156;
-            // 
-            // richTextBox1
-            // 
-            this.richTextBox1.Location = new System.Drawing.Point(505, 330);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(133, 155);
-            this.richTextBox1.TabIndex = 15;
-            this.richTextBox1.Text = "";
             // 
             // MainWindow
             // 

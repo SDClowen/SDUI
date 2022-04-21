@@ -82,14 +82,6 @@ namespace SDUI.Controls
 
         }
 
-        /// <summary>
-        /// Change ui theme
-        /// </summary>
-        public void ChangeTheme()
-        {
-            ChangeControlsTheme(this);
-        }
-
         public void ChangeControlsTheme(Control control)
         {
             if (control is RichTextBox txt)
@@ -112,7 +104,7 @@ namespace SDUI.Controls
             if (DesignMode)
                 return;
 
-            ChangeTheme();
+            ChangeControlsTheme(this);
         }
 
         protected override void OnLoad(EventArgs e)
@@ -122,7 +114,7 @@ namespace SDUI.Controls
             if (DesignMode)
                 return;
 
-            ChangeTheme();
+            ChangeControlsTheme(this);
         }
     }
 }

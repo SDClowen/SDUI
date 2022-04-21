@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
-using SDUI.Extensions;
 
 namespace SDUI.Controls
 {
@@ -13,6 +12,20 @@ namespace SDUI.Controls
         public TabControl()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+        }
+
+        private Padding _border = new Padding(1);
+        public Padding Border
+        {
+            get => _border;
+            set
+            {
+                if (_border == value)
+                    return;
+
+                _border = value;
+                Invalidate();
+            }
         }
 
         protected override void OnParentBackColorChanged(EventArgs e)
@@ -30,17 +43,20 @@ namespace SDUI.Controls
                 return;
 
             //Draw a custom background for Transparent TabPages
-            var r = SelectedTab.Bounds;
+            var bounds = SelectedTab.Bounds;
 
             //Draw a border around TabPage
-            r.Inflate(3, 3);
+            bounds.Inflate(3, 3);
 
             var brush = new SolidBrush(Color.FromArgb(200, ColorScheme.BackColor));
-            var pen = new Pen(ColorScheme.BorderColor);
 
-            e.Graphics.FillRectangle(brush, r);
-            e.Graphics.DrawRectangle(pen, r);
+            e.Graphics.FillRectangle(brush, bounds);
 
+            ControlPaint.DrawBorder(e.Graphics, bounds,
+                                  ColorScheme.BorderColor, _border.Left, ButtonBorderStyle.Solid,
+                                  ColorScheme.BorderColor, _border.Top, ButtonBorderStyle.Solid,
+                                  ColorScheme.BorderColor, _border.Right, ButtonBorderStyle.Solid,
+                                  ColorScheme.BorderColor, _border.Bottom, ButtonBorderStyle.Solid);
 
             for (int index = 0; index <= TabCount - 1; index++)
                 if (index != SelectedIndex)
@@ -48,7 +64,6 @@ namespace SDUI.Controls
 
             DrawTab(SelectedIndex, e.Graphics);
 
-            pen.Dispose();
             brush.Dispose();
         }
 
