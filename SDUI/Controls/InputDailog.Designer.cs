@@ -28,21 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.lblTitle = new System.Windows.Forms.Label();
-            this.lblMessage = new System.Windows.Forms.Label();
-            this.txtValue = new TextBox();
-            this.panel1 = new System.Windows.Forms.Panel();
-            this.btnOK = new System.Windows.Forms.Button();
-            this.btnCancel = new System.Windows.Forms.Button();
-            this.comboBox = new ComboBox();
+            this.lblTitle = new SDUI.Controls.Label();
+            this.lblMessage = new SDUI.Controls.Label();
+            this.txtValue = new SDUI.Controls.TextBox();
+            this.btnOK = new SDUI.Controls.Button();
+            this.btnCancel = new SDUI.Controls.Button();
+            this.comboBox = new SDUI.Controls.ComboBox();
             this.numValue = new System.Windows.Forms.NumericUpDown();
-            this.panel1.SuspendLayout();
+            this.panel1 = new SDUI.Controls.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.numValue)).BeginInit();
+            this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // lblTitle
             // 
-            this.lblTitle.AutoSize = true;
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblTitle.Location = new System.Drawing.Point(7, 9);
             this.lblTitle.Name = "lblTitle";
@@ -62,26 +61,21 @@
             // txtValue
             // 
             this.txtValue.Location = new System.Drawing.Point(11, 69);
+            this.txtValue.MaxLength = 32767;
+            this.txtValue.MultiLine = false;
             this.txtValue.Name = "txtValue";
-            this.txtValue.Size = new System.Drawing.Size(299, 23);
+            this.txtValue.Size = new System.Drawing.Size(299, 21);
             this.txtValue.TabIndex = 0;
+            this.txtValue.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
+            this.txtValue.UseSystemPasswordChar = false;
             this.txtValue.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.txtValue_PreviewKeyDown);
-            // 
-            // panel1
-            // 
-            this.panel1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(240)))), ((int)(((byte)(240)))));
-            this.panel1.Controls.Add(this.btnOK);
-            this.panel1.Controls.Add(this.btnCancel);
-            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 105);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(321, 32);
-            this.panel1.TabIndex = 3;
             // 
             // btnOK
             // 
+            this.btnOK.Color = System.Drawing.Color.DodgerBlue;
             this.btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            this.btnOK.Location = new System.Drawing.Point(158, 4);
+            this.btnOK.ForeColor = System.Drawing.Color.White;
+            this.btnOK.Location = new System.Drawing.Point(11, 8);
             this.btnOK.Name = "btnOK";
             this.btnOK.Size = new System.Drawing.Size(75, 23);
             this.btnOK.TabIndex = 0;
@@ -91,8 +85,10 @@
             // 
             // btnCancel
             // 
+            this.btnCancel.Color = System.Drawing.Color.Firebrick;
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.btnCancel.Location = new System.Drawing.Point(239, 4);
+            this.btnCancel.ForeColor = System.Drawing.Color.White;
+            this.btnCancel.Location = new System.Drawing.Point(235, 8);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 1;
@@ -101,11 +97,16 @@
             // 
             // comboBox
             // 
+            this.comboBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboBox.DropDownHeight = 100;
             this.comboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBox.FormattingEnabled = true;
+            this.comboBox.IntegralHeight = false;
+            this.comboBox.ItemHeight = 17;
             this.comboBox.Location = new System.Drawing.Point(12, 69);
             this.comboBox.Name = "comboBox";
             this.comboBox.Size = new System.Drawing.Size(298, 23);
+            this.comboBox.StartIndex = 0;
             this.comboBox.TabIndex = 4;
             this.comboBox.Visible = false;
             // 
@@ -133,29 +134,40 @@
             0});
             this.numValue.KeyUp += new System.Windows.Forms.KeyEventHandler(this.numValue_KeyUp);
             // 
+            // panel1
+            // 
+            this.panel1.Border = new System.Windows.Forms.Padding(0, 1, 0, 0);
+            this.panel1.Controls.Add(this.btnOK);
+            this.panel1.Controls.Add(this.btnCancel);
+            this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.panel1.Location = new System.Drawing.Point(0, 98);
+            this.panel1.Name = "panel1";
+            this.panel1.Radius = 0;
+            this.panel1.Size = new System.Drawing.Size(321, 39);
+            this.panel1.TabIndex = 6;
+            // 
             // InputDialog
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(321, 137);
+            this.Controls.Add(this.panel1);
             this.Controls.Add(this.numValue);
             this.Controls.Add(this.comboBox);
-            this.Controls.Add(this.panel1);
             this.Controls.Add(this.txtValue);
             this.Controls.Add(this.lblMessage);
             this.Controls.Add(this.lblTitle);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.Black;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "InputDialog";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Input";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.InputDialog_FormClosing);
-            this.panel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.numValue)).EndInit();
+            this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -163,13 +175,13 @@
 
         #endregion
 
-        private System.Windows.Forms.Label lblTitle;
-        private System.Windows.Forms.Label lblMessage;
+        private SDUI.Controls.Label lblTitle;
+        private SDUI.Controls.Label lblMessage;
         private TextBox txtValue;
-        private System.Windows.Forms.Panel panel1;
-        private System.Windows.Forms.Button btnOK;
-        private System.Windows.Forms.Button btnCancel;
+        private SDUI.Controls.Button btnOK;
+        private SDUI.Controls.Button btnCancel;
         private ComboBox comboBox;
         private System.Windows.Forms.NumericUpDown numValue;
+        private Panel panel1;
     }
 }
