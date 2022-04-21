@@ -92,56 +92,27 @@ namespace SDUI.Controls
 
         public void ChangeControlsTheme(Control control)
         {
-            /*if (control.Tag?.ToString() == "private" && !(control is Button))
-                return;
-
-            if (control is TextBoxBase txt)
+            if (control is RichTextBox txt)
             {
                 txt.BorderStyle = BorderStyle.FixedSingle;
-            }
-
-            if (control is ComboBox comboBox)
-            {
-                comboBox.FlatStyle = FlatStyle.Flat;
-            }
-
-            if (control is Button btn)
-            {
-                btn.FlatStyle = FlatStyle.Flat;
-                if (control.Tag?.ToString() != "private")
-                {
-                    var determinedColor = ColorScheme.BackColor.Determine();
-
-                    var color = Color.FromArgb(20, determinedColor);
-                    var borderColor = Color.FromArgb(50, determinedColor);
-                    var mouseOverBackColor = Color.FromArgb(50, determinedColor);
-                    var mouseDownBackColor = Color.FromArgb(10, determinedColor);
-
-                    btn.FlatAppearance.BorderColor = borderColor;
-                    btn.FlatAppearance.MouseOverBackColor = mouseOverBackColor;
-                    btn.FlatAppearance.MouseDownBackColor = mouseDownBackColor;
-                    control.BackColor = color;
-                    control.ForeColor = determinedColor;
-                }
-                else
-                {
-                    btn.FlatAppearance.BorderColor = Color.FromArgb(80, btn.BackColor);
-                    btn.FlatAppearance.MouseOverBackColor = Color.FromArgb(100, btn.BackColor);
-                    btn.FlatAppearance.MouseDownBackColor = Color.FromArgb(150, btn.BackColor);
-                }
-
-                return;
-            }
-            else
                 control.BackColor = ColorScheme.BackColor;
-
-            if (!(control is ProgressBar))
-                control.ForeColor = control.BackColor.Determine();
+                control.ForeColor = ColorScheme.ForeColor;
+            }
 
             foreach (Control subControl in control.Controls)
             {
                 ChangeControlsTheme(subControl);
-            }*/
+            }
+        }
+
+        protected override void OnBackColorChanged(EventArgs e)
+        {
+            base.OnBackColorChanged(e);
+
+            if (DesignMode)
+                return;
+
+            ChangeTheme();
         }
 
         protected override void OnLoad(EventArgs e)
