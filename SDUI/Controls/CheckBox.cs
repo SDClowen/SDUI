@@ -79,14 +79,7 @@ namespace SDUI.Controls
                         e.Graphics.FillPath(brush, path);
                     }
 
-                    var points = new PointF[3]
-                    {
-                        new PointF(1, 12),
-                        new PointF(4, 15),
-                        new PointF(11, 9)
-                    };
-
-                    e.Graphics.DrawLines(new Pen(Color.White, 1), points);
+                    TextRenderer.DrawText(e.Graphics, "a", new Font("Marlett", 11), boxRect, Color.White);
                 }
 
                 using (var p = new Pen(borderColor))

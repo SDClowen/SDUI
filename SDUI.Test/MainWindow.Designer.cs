@@ -34,6 +34,7 @@ namespace SDUI.Test
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.label8 = new SDUI.Controls.Label();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.checkBox6 = new SDUI.Controls.CheckBox();
             this.checkBox2 = new SDUI.Controls.CheckBox();
@@ -102,6 +103,7 @@ namespace SDUI.Test
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.Controls.Add(this.label8);
             this.tabPage1.Controls.Add(this.richTextBox1);
             this.tabPage1.Controls.Add(this.checkBox6);
             this.tabPage1.Controls.Add(this.checkBox2);
@@ -133,6 +135,17 @@ namespace SDUI.Test
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
+            // label8
+            // 
+            this.label8.Enabled = false;
+            this.label8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
+            this.label8.Location = new System.Drawing.Point(66, 439);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(333, 39);
+            this.label8.TabIndex = 23;
+            this.label8.Text = "If activated, when the bot is minimized, \r\nthe bot will automatically switch to t" +
+    "ray mode \r\nand continue to run there.";
+            // 
             // richTextBox1
             // 
             this.richTextBox1.Location = new System.Drawing.Point(505, 330);
@@ -154,7 +167,7 @@ namespace SDUI.Test
             // 
             this.checkBox2.Checked = false;
             this.checkBox2.Enabled = false;
-            this.checkBox2.Location = new System.Drawing.Point(308, 449);
+            this.checkBox2.Location = new System.Drawing.Point(239, 408);
             this.checkBox2.Name = "checkBox2";
             this.checkBox2.Size = new System.Drawing.Size(148, 25);
             this.checkBox2.TabIndex = 13;
@@ -659,5 +672,6 @@ namespace SDUI.Test
         private Controls.CheckBox checkBox6;
         private CheckBox checkBox5;
         private RichTextBox richTextBox1;
+        private Controls.Label label8;
     }
 }

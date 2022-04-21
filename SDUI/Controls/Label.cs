@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class Label : Control
+    public class Label : System.Windows.Forms.Label
     {
         public Label()
         {
