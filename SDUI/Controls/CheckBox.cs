@@ -8,7 +8,7 @@ namespace SDUI.Controls
 {
     public class CheckBox : Control
     {
-        public event EventHandler OnCheckedChanged;
+        public event EventHandler CheckedChanged;
 
         private bool isHovered = false;
         private bool isPressed = false;
@@ -22,7 +22,7 @@ namespace SDUI.Controls
             {
                 isChecked = value;
                 Invalidate();
-                OnCheckedChanged?.Invoke(this, EventArgs.Empty);
+                CheckedChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
