@@ -1,4 +1,5 @@
 ﻿using SDUI.Renderers;
+using System;
 
 namespace SDUI.Controls
 {
@@ -7,6 +8,12 @@ namespace SDUI.Controls
         public ContextMenuStrip()
         {
             Renderer = new MenuRenderer();
+        }
+
+        protected override void OnParentBackColorChanged(EventArgs e)
+        {
+            base.OnParentBackColorChanged(e);
+            Invalidate();
         }
     }
 }
