@@ -433,7 +433,7 @@ namespace SDUI.Test
             this.panel8.Dock = System.Windows.Forms.DockStyle.Right;
             this.panel8.Location = new System.Drawing.Point(956, 3);
             this.panel8.Name = "panel8";
-            this.panel8.Radius = 1;
+            this.panel8.Radius = 0;
             this.panel8.Size = new System.Drawing.Size(233, 537);
             this.panel8.TabIndex = 12;
             // 
@@ -471,6 +471,7 @@ namespace SDUI.Test
             this.button1.Color = System.Drawing.Color.Transparent;
             this.button1.Location = new System.Drawing.Point(39, 97);
             this.button1.Name = "button1";
+            this.button1.Radius = 4;
             this.button1.Size = new System.Drawing.Size(93, 20);
             this.button1.TabIndex = 4;
             this.button1.Text = "Light";
@@ -607,7 +608,7 @@ namespace SDUI.Test
             this.groupBox2.Location = new System.Drawing.Point(660, 6);
             this.groupBox2.Name = "groupBox2";
             this.groupBox2.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
-            this.groupBox2.Radius = 1;
+            this.groupBox2.Radius = 2;
             this.groupBox2.Size = new System.Drawing.Size(275, 190);
             this.groupBox2.TabIndex = 7;
             this.groupBox2.TabStop = false;
@@ -665,7 +666,7 @@ namespace SDUI.Test
             this.groupBox1.Location = new System.Drawing.Point(363, 6);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
-            this.groupBox1.Radius = 1;
+            this.groupBox1.Radius = 2;
             this.groupBox1.Size = new System.Drawing.Size(275, 190);
             this.groupBox1.TabIndex = 7;
             this.groupBox1.TabStop = false;
@@ -752,6 +753,7 @@ namespace SDUI.Test
             this.button3.ForeColor = System.Drawing.Color.White;
             this.button3.Location = new System.Drawing.Point(222, 71);
             this.button3.Name = "button3";
+            this.button3.Radius = 2;
             this.button3.Size = new System.Drawing.Size(93, 23);
             this.button3.TabIndex = 4;
             this.button3.Text = "button1";
@@ -764,6 +766,7 @@ namespace SDUI.Test
             this.buttonDark.ForeColor = System.Drawing.Color.White;
             this.buttonDark.Location = new System.Drawing.Point(23, 71);
             this.buttonDark.Name = "buttonDark";
+            this.buttonDark.Radius = 2;
             this.buttonDark.Size = new System.Drawing.Size(93, 23);
             this.buttonDark.TabIndex = 4;
             this.buttonDark.Text = "Dark";
@@ -775,6 +778,7 @@ namespace SDUI.Test
             this.buttonLight.Color = System.Drawing.Color.Transparent;
             this.buttonLight.Location = new System.Drawing.Point(122, 71);
             this.buttonLight.Name = "buttonLight";
+            this.buttonLight.Radius = 2;
             this.buttonLight.Size = new System.Drawing.Size(93, 23);
             this.buttonLight.TabIndex = 4;
             this.buttonLight.Text = "Light";

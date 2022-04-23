@@ -8,16 +8,13 @@ namespace SDUI.Controls
 {
     public class Panel : System.Windows.Forms.Panel
     {
-        private int _radius = 12;
+        private int _radius = 1;
         public int Radius
         {
             get => _radius;
             set
             {
-                if (_radius > 1)
-                    _radius = 1;
-                else
-                    _radius = value;
+                _radius = value;
 
                 Invalidate();
             }
@@ -61,7 +58,7 @@ namespace SDUI.Controls
         {
             var rect = ClientRectangle;
 
-            var color = Color.FromArgb(15, ColorScheme.BackColor.Determine());
+            var color = Color.FromArgb(15, ColorScheme.ForeColor);
 
             if (_radius > 0)
             {

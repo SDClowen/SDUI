@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SDUI.Extensions;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -20,6 +21,18 @@ namespace SDUI.Controls
         public Button()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        }
+
+        private int _radius = 2;
+        public int Radius
+        {
+            get => _radius;
+            set
+            {
+                _radius = value;
+
+                Invalidate();
+            }
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -53,11 +66,12 @@ namespace SDUI.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             e.Graphics.Clear(ColorScheme.BackColor);
+
             var graphics = e.Graphics;
             var clientRectangle = new Rectangle(0, 0, Width - 1, Height - 1);
             var innerRectangle = new Rectangle(1, 1, Width - 3, Height - 3);
 
-            graphics.SmoothingMode = SmoothingMode.HighQuality;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
             var color = ColorScheme.BackColor.Determine();
 
@@ -79,11 +93,14 @@ namespace SDUI.Controls
 
             var outerPen = new Pen(Color == Color.Transparent ? ColorScheme.BorderColor : Color.FromArgb(95, Color.Determine()));
 
-            graphics.FillRectangle(gradient, clientRectangle);
-            gradient.Dispose();
+            using (var path = clientRectangle.Radius(_radius))
+            {
+                graphics.FillPath(gradient, path);
+                gradient.Dispose();
 
-            graphics.DrawRectangle(outerPen, clientRectangle);
-            outerPen.Dispose();
+                graphics.DrawPath(outerPen, path);
+                outerPen.Dispose();
+            }
 
             var textRectangle = new Rectangle(0, 1, Width - 1, Height - 1);
             TextRenderer.DrawText(graphics, Text, Font, textRectangle, Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor, TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);

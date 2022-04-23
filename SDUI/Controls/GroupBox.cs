@@ -8,16 +8,13 @@ namespace SDUI.Controls
 {
     public class GroupBox : System.Windows.Forms.GroupBox
     {
-        private int _radius = 12;
+        private int _radius = 2;
         public int Radius
         {
             get => _radius;
             set
             {
-                if(_radius > 1)
-                    _radius = 1;
-                else
-                    _radius = value;
+                _radius = 2;
 
                 Invalidate();
             }
