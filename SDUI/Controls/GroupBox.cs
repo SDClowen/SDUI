@@ -14,7 +14,11 @@ namespace SDUI.Controls
             get => _radius;
             set
             {
-                _radius = 1;
+                if(_radius > 1)
+                    _radius = 1;
+                else
+                    _radius = value;
+
                 Invalidate();
             }
         }

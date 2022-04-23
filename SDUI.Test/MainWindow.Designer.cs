@@ -57,6 +57,7 @@ namespace SDUI.Test
             this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.radio2 = new SDUI.Controls.Radio();
             this.radio1 = new SDUI.Controls.Radio();
             this.label8 = new SDUI.Controls.Label();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
@@ -95,6 +96,9 @@ namespace SDUI.Test
             this.button3 = new SDUI.Controls.Button();
             this.buttonDark = new SDUI.Controls.Button();
             this.buttonLight = new SDUI.Controls.Button();
+            this.progressBar4 = new SDUI.Controls.ProgressBar();
+            this.progressBar3 = new SDUI.Controls.ProgressBar();
+            this.progressBar2 = new SDUI.Controls.ProgressBar();
             this.progressBar1 = new SDUI.Controls.ProgressBar();
             this.buttonRandomColor = new System.Windows.Forms.Button();
             this.buttonOpenInputDialog = new System.Windows.Forms.Button();
@@ -136,7 +140,6 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.radio2 = new SDUI.Controls.Radio();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -189,6 +192,9 @@ namespace SDUI.Test
             this.tabPage1.Controls.Add(this.button3);
             this.tabPage1.Controls.Add(this.buttonDark);
             this.tabPage1.Controls.Add(this.buttonLight);
+            this.tabPage1.Controls.Add(this.progressBar4);
+            this.tabPage1.Controls.Add(this.progressBar3);
+            this.tabPage1.Controls.Add(this.progressBar2);
             this.tabPage1.Controls.Add(this.progressBar1);
             this.tabPage1.Controls.Add(this.buttonRandomColor);
             this.tabPage1.Controls.Add(this.buttonOpenInputDialog);
@@ -329,6 +335,15 @@ namespace SDUI.Test
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
+            // 
+            // radio2
+            // 
+            this.radio2.Checked = false;
+            this.radio2.Location = new System.Drawing.Point(663, 370);
+            this.radio2.Name = "radio2";
+            this.radio2.Size = new System.Drawing.Size(103, 29);
+            this.radio2.TabIndex = 24;
+            this.radio2.Text = "radio1";
             // 
             // radio1
             // 
@@ -765,23 +780,77 @@ namespace SDUI.Test
             this.buttonLight.Text = "Light";
             this.buttonLight.Click += new System.EventHandler(this.buttonLight_Click);
             // 
+            // progressBar4
+            // 
+            this.progressBar4.BackColor = System.Drawing.Color.Transparent;
+            this.progressBar4.Gradient = new System.Drawing.Color[] {
+        System.Drawing.Color.Gold,
+        System.Drawing.Color.Yellow};
+            this.progressBar4.Location = new System.Drawing.Point(753, 304);
+            this.progressBar4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.progressBar4.Maximum = ((long)(1000));
+            this.progressBar4.Name = "progressBar4";
+            this.progressBar4.PercentIndices = 2;
+            this.progressBar4.ShowAsPercent = true;
+            this.progressBar4.ShowValue = true;
+            this.progressBar4.Size = new System.Drawing.Size(179, 16);
+            this.progressBar4.TabIndex = 3;
+            this.progressBar4.Text = "77.7%";
+            this.progressBar4.Value = ((long)(777));
+            // 
+            // progressBar3
+            // 
+            this.progressBar3.BackColor = System.Drawing.Color.Transparent;
+            this.progressBar3.Gradient = new System.Drawing.Color[] {
+        System.Drawing.Color.DarkGreen,
+        System.Drawing.Color.Lime};
+            this.progressBar3.Location = new System.Drawing.Point(753, 282);
+            this.progressBar3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.progressBar3.Maximum = ((long)(1000));
+            this.progressBar3.Name = "progressBar3";
+            this.progressBar3.PercentIndices = 2;
+            this.progressBar3.ShowAsPercent = true;
+            this.progressBar3.ShowValue = true;
+            this.progressBar3.Size = new System.Drawing.Size(179, 16);
+            this.progressBar3.TabIndex = 3;
+            this.progressBar3.Text = "4.4%";
+            this.progressBar3.Value = ((long)(44));
+            // 
+            // progressBar2
+            // 
+            this.progressBar2.BackColor = System.Drawing.Color.Transparent;
+            this.progressBar2.Gradient = new System.Drawing.Color[] {
+        System.Drawing.Color.MidnightBlue,
+        System.Drawing.Color.RoyalBlue};
+            this.progressBar2.Location = new System.Drawing.Point(753, 260);
+            this.progressBar2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.progressBar2.Maximum = ((long)(100));
+            this.progressBar2.Name = "progressBar2";
+            this.progressBar2.PercentIndices = 2;
+            this.progressBar2.ShowAsPercent = true;
+            this.progressBar2.ShowValue = true;
+            this.progressBar2.Size = new System.Drawing.Size(179, 16);
+            this.progressBar2.TabIndex = 3;
+            this.progressBar2.Text = "33%";
+            this.progressBar2.Value = ((long)(33));
+            // 
             // progressBar1
             // 
             this.progressBar1.BackColor = System.Drawing.Color.Transparent;
             this.progressBar1.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.RosyBrown,
-        System.Drawing.Color.Maroon};
-            this.progressBar1.Location = new System.Drawing.Point(23, 45);
+        System.Drawing.Color.Maroon,
+        System.Drawing.Color.Red};
+            this.progressBar1.Location = new System.Drawing.Point(753, 238);
             this.progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar1.Maximum = ((long)(1000));
+            this.progressBar1.Maximum = ((long)(100));
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.PercentIndices = 2;
             this.progressBar1.ShowAsPercent = true;
             this.progressBar1.ShowValue = true;
-            this.progressBar1.Size = new System.Drawing.Size(179, 20);
+            this.progressBar1.Size = new System.Drawing.Size(179, 16);
             this.progressBar1.TabIndex = 3;
-            this.progressBar1.Text = "22.2%";
-            this.progressBar1.Value = ((long)(222));
+            this.progressBar1.Text = "70%";
+            this.progressBar1.Value = ((long)(70));
             // 
             // buttonRandomColor
             // 
@@ -1125,15 +1194,6 @@ namespace SDUI.Test
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             // 
-            // radio2
-            // 
-            this.radio2.Checked = false;
-            this.radio2.Location = new System.Drawing.Point(663, 370);
-            this.radio2.Name = "radio2";
-            this.radio2.Size = new System.Drawing.Size(103, 29);
-            this.radio2.TabIndex = 24;
-            this.radio2.Text = "radio1";
-            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1149,7 +1209,6 @@ namespace SDUI.Test
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
-            this.tabPage1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
@@ -1266,5 +1325,8 @@ namespace SDUI.Test
         private ColumnHeader columnHeader6;
         private Controls.ComboBox comboBox4;
         private Controls.Radio radio2;
+        private Controls.ProgressBar progressBar4;
+        private Controls.ProgressBar progressBar3;
+        private Controls.ProgressBar progressBar2;
     }
 }

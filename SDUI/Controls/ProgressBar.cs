@@ -120,8 +120,8 @@ namespace SDUI.Controls
 
                 if (percent > 50)
                 {
-                    textColor = textColor.Determine();
-                    shadowColor = shadowColor.Determine();
+                    textColor = Color.White;
+                    shadowColor = Color.Black;
                 }
 
                 // draw shadow
