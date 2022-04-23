@@ -14,7 +14,7 @@ namespace SDUI.Controls
             get => _radius;
             set
             {
-                _radius = value;
+                _radius = 1;
                 Invalidate();
             }
         }
@@ -50,7 +50,6 @@ namespace SDUI.Controls
         protected override void OnParentBackColorChanged(EventArgs e)
         {
             base.OnParentBackColorChanged(e);
-
             Invalidate();
         }
 

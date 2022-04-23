@@ -84,9 +84,8 @@ namespace SDUI.Controls
 
         public void ChangeControlsTheme(Control control)
         {
-            if (control is RichTextBox txt)
+            if (control is RichTextBox || control is ListView)
             {
-                txt.BorderStyle = BorderStyle.FixedSingle;
                 control.BackColor = ColorScheme.BackColor;
                 control.ForeColor = ColorScheme.ForeColor;
             }

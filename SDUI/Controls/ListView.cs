@@ -51,16 +51,6 @@ namespace SDUI.Controls
             Invalidate();
         }
 
-        protected override void OnParentBackColorChanged(EventArgs e)
-        {
-            base.OnParentBackColorChanged(e);
-
-            BackColor = ColorScheme.BackColor;
-            ForeColor = ColorScheme.ForeColor;
-
-            Invalidate();
-        }
-
         /// <summary>
         /// Raises the <see cref="E:HandleCreated" /> event.
         /// </summary>
@@ -172,9 +162,9 @@ namespace SDUI.Controls
                 if (pnmhdr.code == NM_CUSTOMDRAW)
                 {
                     var pnmlv = (NMLVCUSTOMDRAW)m.GetLParam(typeof(NMLVCUSTOMDRAW));
-                    switch (pnmlv.nmcd.dwDrawStage)
+                    switch ((CDDS)pnmlv.nmcd.dwDrawStage)
                     {
-                        case (int)CDDS.CDDS_PREPAINTField:
+                        case CDDS.CDDS_PREPAINTField:
                             if (pnmlv.dwItemType == LVCDI_GROUP)
                             {
                                 var rectHeader = new RECT();
@@ -225,11 +215,11 @@ namespace SDUI.Controls
 
                             break;
 
-                        case (int)CDDS.CDDS_ITEMPREPAINTField:
+                        case CDDS.CDDS_ITEMPREPAINTField:
                             m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAWField | CDRF.CDRF_NOTIFYPOSTPAINTField));
                             break;
 
-                        case (int)CDDS.CDDS_ITEMPOSTPAINTField:
+                        case CDDS.CDDS_ITEMPOSTPAINTField:
                             break;
                     }
                 }

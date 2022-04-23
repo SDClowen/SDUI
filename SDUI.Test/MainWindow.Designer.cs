@@ -32,8 +32,32 @@ namespace SDUI.Test
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("123412341234");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("123412341234");
+            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem("123412341324");
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.contextMenuStrip1 = new SDUI.Controls.ContextMenuStrip();
+            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem8 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem9 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripMenuItem10 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem11 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem12 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem13 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem14 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.radio1 = new SDUI.Controls.Radio();
             this.label8 = new SDUI.Controls.Label();
             this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.checkBox6 = new SDUI.Controls.CheckBox();
@@ -42,6 +66,8 @@ namespace SDUI.Test
             this.panel6 = new SDUI.Controls.Panel();
             this.panel5 = new SDUI.Controls.Panel();
             this.panel8 = new SDUI.Controls.Panel();
+            this.separator6 = new SDUI.Controls.Separator();
+            this.checkBox4 = new SDUI.Controls.CheckBox();
             this.checkBox3 = new SDUI.Controls.CheckBox();
             this.button1 = new SDUI.Controls.Button();
             this.label3 = new SDUI.Controls.Label();
@@ -55,12 +81,15 @@ namespace SDUI.Test
             this.comboBox3 = new SDUI.Controls.ComboBox();
             this.separator3 = new SDUI.Controls.Separator();
             this.comboBox2 = new SDUI.Controls.ComboBox();
+            this.groupBox2 = new SDUI.Controls.GroupBox();
+            this.listView3 = new SDUI.Controls.ListView();
+            this.columnHeader6 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.comboBox4 = new SDUI.Controls.ComboBox();
             this.groupBox1 = new SDUI.Controls.GroupBox();
             this.separator4 = new SDUI.Controls.Separator();
             this.panel1 = new SDUI.Controls.Panel();
-            this.checkBox5 = new System.Windows.Forms.CheckBox();
-            this.checkBox4 = new SDUI.Controls.CheckBox();
-            this.separator6 = new SDUI.Controls.Separator();
+            this.listView2 = new SDUI.Controls.ListView();
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.comboBox1 = new SDUI.Controls.ComboBox();
             this.textBox1 = new SDUI.Controls.TextBox();
             this.button3 = new SDUI.Controls.Button();
@@ -107,31 +136,18 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.contextMenuStrip1 = new SDUI.Controls.ContextMenuStrip();
-            this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem8 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem9 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem10 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem11 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem12 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem13 = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem14 = new System.Windows.Forms.ToolStripMenuItem();
+            this.radio2 = new SDUI.Controls.Radio();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.contextMenuStrip1.SuspendLayout();
             this.panel8.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
-            this.contextMenuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -139,17 +155,20 @@ namespace SDUI.Test
             this.tabControl1.Border = new System.Windows.Forms.Padding(1);
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Location = new System.Drawing.Point(1, 23);
+            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl1.Location = new System.Drawing.Point(1, 25);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(930, 534);
+            this.tabControl1.Size = new System.Drawing.Size(1201, 572);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.radio2);
+            this.tabPage1.Controls.Add(this.radio1);
             this.tabPage1.Controls.Add(this.label8);
             this.tabPage1.Controls.Add(this.richTextBox1);
             this.tabPage1.Controls.Add(this.checkBox6);
@@ -164,6 +183,7 @@ namespace SDUI.Test
             this.tabPage1.Controls.Add(this.label1);
             this.tabPage1.Controls.Add(this.panel2);
             this.tabPage1.Controls.Add(this.comboBox2);
+            this.tabPage1.Controls.Add(this.groupBox2);
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Controls.Add(this.textBox1);
             this.tabPage1.Controls.Add(this.button3);
@@ -178,9 +198,146 @@ namespace SDUI.Test
             this.tabPage1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage1.Size = new System.Drawing.Size(922, 505);
+            this.tabPage1.Size = new System.Drawing.Size(1193, 543);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
+            // 
+            // contextMenuStrip1
+            // 
+            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem1,
+            this.toolStripMenuItem2,
+            this.toolStripMenuItem3,
+            this.toolStripMenuItem4,
+            this.toolStripMenuItem5,
+            this.toolStripMenuItem6,
+            this.toolStripMenuItem7,
+            this.toolStripSeparator6});
+            this.contextMenuStrip1.Name = "contextMenuStrip1";
+            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 164);
+            // 
+            // toolStripMenuItem1
+            // 
+            this.toolStripMenuItem1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem1.Text = "toolStripMenuItem1";
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem2.Text = "toolStripMenuItem2";
+            // 
+            // toolStripMenuItem3
+            // 
+            this.toolStripMenuItem3.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem8,
+            this.toolStripMenuItem9,
+            this.toolStripSeparator7,
+            this.toolStripMenuItem10});
+            this.toolStripMenuItem3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem3.Text = "toolStripMenuItem3";
+            // 
+            // toolStripMenuItem8
+            // 
+            this.toolStripMenuItem8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem8.Name = "toolStripMenuItem8";
+            this.toolStripMenuItem8.Size = new System.Drawing.Size(186, 22);
+            this.toolStripMenuItem8.Text = "toolStripMenuItem8";
+            // 
+            // toolStripMenuItem9
+            // 
+            this.toolStripMenuItem9.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem9.Name = "toolStripMenuItem9";
+            this.toolStripMenuItem9.Size = new System.Drawing.Size(186, 22);
+            this.toolStripMenuItem9.Text = "toolStripMenuItem9";
+            // 
+            // toolStripSeparator7
+            // 
+            this.toolStripSeparator7.Name = "toolStripSeparator7";
+            this.toolStripSeparator7.Size = new System.Drawing.Size(183, 6);
+            // 
+            // toolStripMenuItem10
+            // 
+            this.toolStripMenuItem10.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripMenuItem11,
+            this.toolStripMenuItem12,
+            this.toolStripMenuItem13,
+            this.toolStripMenuItem14});
+            this.toolStripMenuItem10.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem10.Name = "toolStripMenuItem10";
+            this.toolStripMenuItem10.Size = new System.Drawing.Size(186, 22);
+            this.toolStripMenuItem10.Text = "toolStripMenuItem10";
+            // 
+            // toolStripMenuItem11
+            // 
+            this.toolStripMenuItem11.Name = "toolStripMenuItem11";
+            this.toolStripMenuItem11.Size = new System.Drawing.Size(186, 22);
+            this.toolStripMenuItem11.Text = "toolStripMenuItem11";
+            // 
+            // toolStripMenuItem12
+            // 
+            this.toolStripMenuItem12.Name = "toolStripMenuItem12";
+            this.toolStripMenuItem12.Size = new System.Drawing.Size(186, 22);
+            this.toolStripMenuItem12.Text = "toolStripMenuItem12";
+            // 
+            // toolStripMenuItem13
+            // 
+            this.toolStripMenuItem13.Name = "toolStripMenuItem13";
+            this.toolStripMenuItem13.Size = new System.Drawing.Size(186, 22);
+            this.toolStripMenuItem13.Text = "toolStripMenuItem13";
+            // 
+            // toolStripMenuItem14
+            // 
+            this.toolStripMenuItem14.Name = "toolStripMenuItem14";
+            this.toolStripMenuItem14.Size = new System.Drawing.Size(186, 22);
+            this.toolStripMenuItem14.Text = "toolStripMenuItem14";
+            // 
+            // toolStripMenuItem4
+            // 
+            this.toolStripMenuItem4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem4.Text = "toolStripMenuItem4";
+            // 
+            // toolStripMenuItem5
+            // 
+            this.toolStripMenuItem5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem5.Text = "toolStripMenuItem5";
+            // 
+            // toolStripMenuItem6
+            // 
+            this.toolStripMenuItem6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
+            this.toolStripMenuItem6.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem6.Text = "toolStripMenuItem6";
+            // 
+            // toolStripMenuItem7
+            // 
+            this.toolStripMenuItem7.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolStripMenuItem7.Name = "toolStripMenuItem7";
+            this.toolStripMenuItem7.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem7.Text = "toolStripMenuItem7";
+            // 
+            // toolStripSeparator6
+            // 
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
+            // 
+            // radio1
+            // 
+            this.radio1.Checked = false;
+            this.radio1.Location = new System.Drawing.Point(663, 342);
+            this.radio1.Name = "radio1";
+            this.radio1.Size = new System.Drawing.Size(103, 29);
+            this.radio1.TabIndex = 24;
+            this.radio1.Text = "radio1";
             // 
             // label8
             // 
@@ -188,10 +345,10 @@ namespace SDUI.Test
             this.label8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
             this.label8.Location = new System.Drawing.Point(66, 439);
             this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(333, 39);
+            this.label8.Size = new System.Drawing.Size(281, 46);
             this.label8.TabIndex = 23;
-            this.label8.Text = "If activated, when the bot is minimized, \r\nthe bot will automatically switch to t" +
-    "ray mode \r\nand continue to run there.";
+            this.label8.Text = "If activated, when the bot is minimized, the bot will automatically switch to tra" +
+    "y mode \r\nand continue to run there.";
             // 
             // richTextBox1
             // 
@@ -235,7 +392,7 @@ namespace SDUI.Test
             this.panel6.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
             this.panel6.Location = new System.Drawing.Point(24, 326);
             this.panel6.Name = "panel6";
-            this.panel6.Radius = 0;
+            this.panel6.Radius = 1;
             this.panel6.Size = new System.Drawing.Size(87, 45);
             this.panel6.TabIndex = 12;
             // 
@@ -245,7 +402,7 @@ namespace SDUI.Test
             this.panel5.Border = new System.Windows.Forms.Padding(0, 0, 1, 0);
             this.panel5.Location = new System.Drawing.Point(130, 326);
             this.panel5.Name = "panel5";
-            this.panel5.Radius = 0;
+            this.panel5.Radius = 1;
             this.panel5.Size = new System.Drawing.Size(87, 45);
             this.panel5.TabIndex = 12;
             // 
@@ -253,15 +410,35 @@ namespace SDUI.Test
             // 
             this.panel8.BackColor = System.Drawing.Color.Transparent;
             this.panel8.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
+            this.panel8.Controls.Add(this.separator6);
+            this.panel8.Controls.Add(this.checkBox4);
             this.panel8.Controls.Add(this.checkBox3);
             this.panel8.Controls.Add(this.button1);
             this.panel8.Controls.Add(this.label3);
             this.panel8.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel8.Location = new System.Drawing.Point(685, 3);
+            this.panel8.Location = new System.Drawing.Point(956, 3);
             this.panel8.Name = "panel8";
-            this.panel8.Radius = 0;
-            this.panel8.Size = new System.Drawing.Size(233, 499);
+            this.panel8.Radius = 1;
+            this.panel8.Size = new System.Drawing.Size(233, 537);
             this.panel8.TabIndex = 12;
+            // 
+            // separator6
+            // 
+            this.separator6.IsVertical = false;
+            this.separator6.Location = new System.Drawing.Point(16, 54);
+            this.separator6.Name = "separator6";
+            this.separator6.Size = new System.Drawing.Size(120, 10);
+            this.separator6.TabIndex = 0;
+            this.separator6.Text = "separator3";
+            // 
+            // checkBox4
+            // 
+            this.checkBox4.Checked = true;
+            this.checkBox4.Location = new System.Drawing.Point(81, 367);
+            this.checkBox4.Name = "checkBox4";
+            this.checkBox4.Size = new System.Drawing.Size(120, 23);
+            this.checkBox4.TabIndex = 13;
+            this.checkBox4.Text = "checkBox1";
             // 
             // checkBox3
             // 
@@ -298,7 +475,7 @@ namespace SDUI.Test
             this.panel7.Border = new System.Windows.Forms.Padding(0, 0, 0, 1);
             this.panel7.Location = new System.Drawing.Point(344, 326);
             this.panel7.Name = "panel7";
-            this.panel7.Radius = 0;
+            this.panel7.Radius = 1;
             this.panel7.Size = new System.Drawing.Size(87, 45);
             this.panel7.TabIndex = 12;
             // 
@@ -308,7 +485,7 @@ namespace SDUI.Test
             this.panel4.Border = new System.Windows.Forms.Padding(0, 1, 0, 0);
             this.panel4.Location = new System.Drawing.Point(239, 326);
             this.panel4.Name = "panel4";
-            this.panel4.Radius = 0;
+            this.panel4.Radius = 1;
             this.panel4.Size = new System.Drawing.Size(87, 45);
             this.panel4.TabIndex = 12;
             // 
@@ -335,7 +512,7 @@ namespace SDUI.Test
             this.panel2.Controls.Add(this.separator3);
             this.panel2.Location = new System.Drawing.Point(24, 156);
             this.panel2.Name = "panel2";
-            this.panel2.Radius = 12;
+            this.panel2.Radius = 1;
             this.panel2.Size = new System.Drawing.Size(333, 134);
             this.panel2.TabIndex = 9;
             // 
@@ -407,6 +584,63 @@ namespace SDUI.Test
             this.comboBox2.StartIndex = 0;
             this.comboBox2.TabIndex = 8;
             // 
+            // groupBox2
+            // 
+            this.groupBox2.BackColor = System.Drawing.Color.Transparent;
+            this.groupBox2.Controls.Add(this.listView3);
+            this.groupBox2.Controls.Add(this.comboBox4);
+            this.groupBox2.Location = new System.Drawing.Point(660, 6);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
+            this.groupBox2.Radius = 1;
+            this.groupBox2.Size = new System.Drawing.Size(275, 190);
+            this.groupBox2.TabIndex = 7;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "groupBox1";
+            // 
+            // listView3
+            // 
+            this.listView3.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader6});
+            this.listView3.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.listView3.FullRowSelect = true;
+            this.listView3.HideSelection = false;
+            this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
+            listViewItem1,
+            listViewItem2,
+            listViewItem3});
+            this.listView3.Location = new System.Drawing.Point(3, 58);
+            this.listView3.Name = "listView3";
+            this.listView3.Size = new System.Drawing.Size(269, 129);
+            this.listView3.TabIndex = 0;
+            this.listView3.UseCompatibleStateImageBehavior = false;
+            this.listView3.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader6
+            // 
+            this.columnHeader6.Width = 220;
+            // 
+            // comboBox4
+            // 
+            this.comboBox4.Dock = System.Windows.Forms.DockStyle.Top;
+            this.comboBox4.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboBox4.DropDownHeight = 100;
+            this.comboBox4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox4.FormattingEnabled = true;
+            this.comboBox4.IntegralHeight = false;
+            this.comboBox4.ItemHeight = 17;
+            this.comboBox4.Items.AddRange(new object[] {
+            "asdfasdfasdfasdf",
+            "asdfasdfasd",
+            "asdfasdfasdfas",
+            "asdfxcvxzcvzx",
+            "1236afsdf"});
+            this.comboBox4.Location = new System.Drawing.Point(3, 26);
+            this.comboBox4.Name = "comboBox4";
+            this.comboBox4.Size = new System.Drawing.Size(269, 23);
+            this.comboBox4.StartIndex = 0;
+            this.comboBox4.TabIndex = 6;
+            // 
             // groupBox1
             // 
             this.groupBox1.BackColor = System.Drawing.Color.Transparent;
@@ -416,7 +650,7 @@ namespace SDUI.Test
             this.groupBox1.Location = new System.Drawing.Point(363, 6);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
-            this.groupBox1.Radius = 12;
+            this.groupBox1.Radius = 1;
             this.groupBox1.Size = new System.Drawing.Size(275, 190);
             this.groupBox1.TabIndex = 7;
             this.groupBox1.TabStop = false;
@@ -435,43 +669,34 @@ namespace SDUI.Test
             // 
             this.panel1.BackColor = System.Drawing.Color.Transparent;
             this.panel1.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
-            this.panel1.Controls.Add(this.checkBox5);
-            this.panel1.Controls.Add(this.checkBox4);
-            this.panel1.Controls.Add(this.separator6);
+            this.panel1.Controls.Add(this.listView2);
             this.panel1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.panel1.Location = new System.Drawing.Point(6, 65);
             this.panel1.Name = "panel1";
-            this.panel1.Radius = 12;
+            this.panel1.Radius = 1;
             this.panel1.Size = new System.Drawing.Size(263, 115);
             this.panel1.TabIndex = 9;
             // 
-            // checkBox5
+            // listView2
             // 
-            this.checkBox5.AutoSize = true;
-            this.checkBox5.Location = new System.Drawing.Point(103, 86);
-            this.checkBox5.Name = "checkBox5";
-            this.checkBox5.Size = new System.Drawing.Size(83, 19);
-            this.checkBox5.TabIndex = 14;
-            this.checkBox5.Text = "checkBox5";
-            this.checkBox5.UseVisualStyleBackColor = true;
+            this.listView2.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader5});
+            this.listView2.FullRowSelect = true;
+            this.listView2.HideSelection = false;
+            this.listView2.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
+            listViewItem4,
+            listViewItem5,
+            listViewItem6});
+            this.listView2.Location = new System.Drawing.Point(10, 9);
+            this.listView2.Name = "listView2";
+            this.listView2.Size = new System.Drawing.Size(240, 97);
+            this.listView2.TabIndex = 0;
+            this.listView2.UseCompatibleStateImageBehavior = false;
+            this.listView2.View = System.Windows.Forms.View.Details;
             // 
-            // checkBox4
+            // columnHeader5
             // 
-            this.checkBox4.Checked = true;
-            this.checkBox4.Location = new System.Drawing.Point(21, 56);
-            this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Size = new System.Drawing.Size(120, 23);
-            this.checkBox4.TabIndex = 13;
-            this.checkBox4.Text = "checkBox1";
-            // 
-            // separator6
-            // 
-            this.separator6.IsVertical = false;
-            this.separator6.Location = new System.Drawing.Point(21, 29);
-            this.separator6.Name = "separator6";
-            this.separator6.Size = new System.Drawing.Size(120, 10);
-            this.separator6.TabIndex = 0;
-            this.separator6.Text = "separator3";
+            this.columnHeader5.Width = 220;
             // 
             // comboBox1
             // 
@@ -535,7 +760,7 @@ namespace SDUI.Test
             this.buttonLight.Color = System.Drawing.Color.Transparent;
             this.buttonLight.Location = new System.Drawing.Point(122, 71);
             this.buttonLight.Name = "buttonLight";
-            this.buttonLight.Size = new System.Drawing.Size(93, 20);
+            this.buttonLight.Size = new System.Drawing.Size(93, 23);
             this.buttonLight.TabIndex = 4;
             this.buttonLight.Text = "Light";
             this.buttonLight.Click += new System.EventHandler(this.buttonLight_Click);
@@ -608,7 +833,7 @@ namespace SDUI.Test
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage2.Size = new System.Drawing.Size(922, 505);
+            this.tabPage2.Size = new System.Drawing.Size(1193, 543);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
@@ -627,7 +852,7 @@ namespace SDUI.Test
             this.listView1.Location = new System.Drawing.Point(4, 3);
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(914, 499);
+            this.listView1.Size = new System.Drawing.Size(1185, 537);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -658,7 +883,7 @@ namespace SDUI.Test
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(1, 1);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(930, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1201, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -769,6 +994,7 @@ namespace SDUI.Test
             // 
             // undoToolStripMenuItem
             // 
+            this.undoToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.undoToolStripMenuItem.Name = "undoToolStripMenuItem";
             this.undoToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Z)));
             this.undoToolStripMenuItem.Size = new System.Drawing.Size(144, 22);
@@ -776,6 +1002,7 @@ namespace SDUI.Test
             // 
             // redoToolStripMenuItem
             // 
+            this.redoToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.redoToolStripMenuItem.Name = "redoToolStripMenuItem";
             this.redoToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Y)));
             this.redoToolStripMenuItem.Size = new System.Drawing.Size(144, 22);
@@ -788,6 +1015,7 @@ namespace SDUI.Test
             // 
             // cutToolStripMenuItem
             // 
+            this.cutToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.cutToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("cutToolStripMenuItem.Image")));
             this.cutToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.cutToolStripMenuItem.Name = "cutToolStripMenuItem";
@@ -797,6 +1025,7 @@ namespace SDUI.Test
             // 
             // copyToolStripMenuItem
             // 
+            this.copyToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.copyToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("copyToolStripMenuItem.Image")));
             this.copyToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.copyToolStripMenuItem.Name = "copyToolStripMenuItem";
@@ -806,6 +1035,7 @@ namespace SDUI.Test
             // 
             // pasteToolStripMenuItem
             // 
+            this.pasteToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.pasteToolStripMenuItem.Image = ((System.Drawing.Image)(resources.GetObject("pasteToolStripMenuItem.Image")));
             this.pasteToolStripMenuItem.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.pasteToolStripMenuItem.Name = "pasteToolStripMenuItem";
@@ -820,6 +1050,7 @@ namespace SDUI.Test
             // 
             // selectAllToolStripMenuItem
             // 
+            this.selectAllToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
             this.selectAllToolStripMenuItem.Size = new System.Drawing.Size(144, 22);
             this.selectAllToolStripMenuItem.Text = "Select &All";
@@ -836,12 +1067,14 @@ namespace SDUI.Test
             // 
             // customizeToolStripMenuItem
             // 
+            this.customizeToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.customizeToolStripMenuItem.Name = "customizeToolStripMenuItem";
             this.customizeToolStripMenuItem.Size = new System.Drawing.Size(130, 22);
             this.customizeToolStripMenuItem.Text = "&Customize";
             // 
             // optionsToolStripMenuItem
             // 
+            this.optionsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(130, 22);
             this.optionsToolStripMenuItem.Text = "&Options";
@@ -861,18 +1094,21 @@ namespace SDUI.Test
             // 
             // contentsToolStripMenuItem
             // 
+            this.contentsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.contentsToolStripMenuItem.Name = "contentsToolStripMenuItem";
             this.contentsToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.contentsToolStripMenuItem.Text = "&Contents";
             // 
             // indexToolStripMenuItem
             // 
+            this.indexToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.indexToolStripMenuItem.Name = "indexToolStripMenuItem";
             this.indexToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.indexToolStripMenuItem.Text = "&Index";
             // 
             // searchToolStripMenuItem
             // 
+            this.searchToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.searchToolStripMenuItem.Name = "searchToolStripMenuItem";
             this.searchToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.searchToolStripMenuItem.Text = "&Search";
@@ -884,128 +1120,25 @@ namespace SDUI.Test
             // 
             // aboutToolStripMenuItem
             // 
+            this.aboutToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             // 
-            // contextMenuStrip1
+            // radio2
             // 
-            this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItem1,
-            this.toolStripMenuItem2,
-            this.toolStripMenuItem3,
-            this.toolStripMenuItem4,
-            this.toolStripMenuItem5,
-            this.toolStripMenuItem6,
-            this.toolStripMenuItem7});
-            this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(181, 158);
-            // 
-            // toolStripMenuItem1
-            // 
-            this.toolStripMenuItem1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem1.Text = "toolStripMenuItem1";
-            // 
-            // toolStripMenuItem2
-            // 
-            this.toolStripMenuItem2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem2.Text = "toolStripMenuItem2";
-            // 
-            // toolStripMenuItem3
-            // 
-            this.toolStripMenuItem3.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItem8,
-            this.toolStripMenuItem9,
-            this.toolStripMenuItem10});
-            this.toolStripMenuItem3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem3.Text = "toolStripMenuItem3";
-            // 
-            // toolStripMenuItem4
-            // 
-            this.toolStripMenuItem4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.toolStripMenuItem4.Name = "toolStripMenuItem4";
-            this.toolStripMenuItem4.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem4.Text = "toolStripMenuItem4";
-            // 
-            // toolStripMenuItem5
-            // 
-            this.toolStripMenuItem5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem5.Text = "toolStripMenuItem5";
-            // 
-            // toolStripMenuItem6
-            // 
-            this.toolStripMenuItem6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
-            this.toolStripMenuItem6.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem6.Text = "toolStripMenuItem6";
-            // 
-            // toolStripMenuItem7
-            // 
-            this.toolStripMenuItem7.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.toolStripMenuItem7.Name = "toolStripMenuItem7";
-            this.toolStripMenuItem7.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem7.Text = "toolStripMenuItem7";
-            // 
-            // toolStripMenuItem8
-            // 
-            this.toolStripMenuItem8.Name = "toolStripMenuItem8";
-            this.toolStripMenuItem8.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem8.Text = "toolStripMenuItem8";
-            // 
-            // toolStripMenuItem9
-            // 
-            this.toolStripMenuItem9.Name = "toolStripMenuItem9";
-            this.toolStripMenuItem9.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem9.Text = "toolStripMenuItem9";
-            // 
-            // toolStripMenuItem10
-            // 
-            this.toolStripMenuItem10.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripMenuItem11,
-            this.toolStripMenuItem12,
-            this.toolStripMenuItem13,
-            this.toolStripMenuItem14});
-            this.toolStripMenuItem10.Name = "toolStripMenuItem10";
-            this.toolStripMenuItem10.Size = new System.Drawing.Size(186, 22);
-            this.toolStripMenuItem10.Text = "toolStripMenuItem10";
-            // 
-            // toolStripMenuItem11
-            // 
-            this.toolStripMenuItem11.Name = "toolStripMenuItem11";
-            this.toolStripMenuItem11.Size = new System.Drawing.Size(186, 22);
-            this.toolStripMenuItem11.Text = "toolStripMenuItem11";
-            // 
-            // toolStripMenuItem12
-            // 
-            this.toolStripMenuItem12.Name = "toolStripMenuItem12";
-            this.toolStripMenuItem12.Size = new System.Drawing.Size(186, 22);
-            this.toolStripMenuItem12.Text = "toolStripMenuItem12";
-            // 
-            // toolStripMenuItem13
-            // 
-            this.toolStripMenuItem13.Name = "toolStripMenuItem13";
-            this.toolStripMenuItem13.Size = new System.Drawing.Size(186, 22);
-            this.toolStripMenuItem13.Text = "toolStripMenuItem13";
-            // 
-            // toolStripMenuItem14
-            // 
-            this.toolStripMenuItem14.Name = "toolStripMenuItem14";
-            this.toolStripMenuItem14.Size = new System.Drawing.Size(186, 22);
-            this.toolStripMenuItem14.Text = "toolStripMenuItem14";
+            this.radio2.Checked = false;
+            this.radio2.Location = new System.Drawing.Point(663, 370);
+            this.radio2.Name = "radio2";
+            this.radio2.Size = new System.Drawing.Size(103, 29);
+            this.radio2.TabIndex = 24;
+            this.radio2.Text = "radio1";
             // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(932, 558);
+            this.ClientSize = new System.Drawing.Size(1203, 598);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -1016,16 +1149,17 @@ namespace SDUI.Test
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
+            this.contextMenuStrip1.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.panel1.ResumeLayout(false);
-            this.panel1.PerformLayout();
             this.tabPage2.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
-            this.contextMenuStrip1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1075,7 +1209,6 @@ namespace SDUI.Test
         private Controls.ComboBox comboBox3;
         private Controls.Label label3;
         private Controls.CheckBox checkBox6;
-        private CheckBox checkBox5;
         private RichTextBox richTextBox1;
         private Controls.Label label8;
         private Controls.MenuStrip menuStrip1;
@@ -1123,5 +1256,15 @@ namespace SDUI.Test
         private ToolStripMenuItem toolStripMenuItem5;
         private ToolStripMenuItem toolStripMenuItem6;
         private ToolStripMenuItem toolStripMenuItem7;
+        private ToolStripSeparator toolStripSeparator7;
+        private ToolStripSeparator toolStripSeparator6;
+        private Controls.Radio radio1;
+        private Controls.ListView listView2;
+        private ColumnHeader columnHeader5;
+        private Controls.GroupBox groupBox2;
+        private Controls.ListView listView3;
+        private ColumnHeader columnHeader6;
+        private Controls.ComboBox comboBox4;
+        private Controls.Radio radio2;
     }
 }

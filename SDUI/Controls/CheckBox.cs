@@ -33,22 +33,17 @@ namespace SDUI.Controls
                      ControlStyles.UserPaint, true);
         }
 
-        protected override void OnPaintBackground(PaintEventArgs pevent)
-        {
-            base.OnPaintBackground(pevent);
-        }
-
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
+            //base.OnPaint(e);
             //e.Graphics.Clear(Parent.BackColor);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             Color borderColor, foreColor;
 
             if (isHovered && !isPressed && Enabled)
             {
-                foreColor = ColorScheme.ForeColor.Brightness(.05f);
-                borderColor = ColorScheme.BorderColor.Brightness(.05f);
+                foreColor = Color.FromArgb(150, ColorScheme.ForeColor);
+                borderColor = Color.FromArgb(150, ColorScheme.BorderColor);
             }
             else if (isHovered && isPressed && Enabled)
             {
@@ -57,8 +52,8 @@ namespace SDUI.Controls
             }
             else if (!Enabled)
             {
-                foreColor = ColorScheme.ForeColor.Brightness(-1f);
-                borderColor = ColorScheme.BorderColor.Brightness(-1f);
+                foreColor = Color.Gray;
+                borderColor = Color.FromArgb(50, ColorScheme.BorderColor);
             }
             else
             {
@@ -68,7 +63,7 @@ namespace SDUI.Controls
 
             var boxRect = new Rectangle(0, Height / 2 - 6, 14, 14);
 
-            using (var path = boxRect.Radius(4))
+            using (var path = boxRect.Radius(1))
             {
                 e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
 

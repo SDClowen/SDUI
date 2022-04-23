@@ -1,11 +1,7 @@
 ﻿using SDUI.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
@@ -18,7 +14,7 @@ namespace SDUI.Controls
             get => _radius;
             set
             {
-                _radius = value;
+                _radius = 1;
                 Invalidate();
             }
         }
@@ -49,6 +45,9 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            if (BackColor != ColorScheme.BackColor)
+                BackColor = ColorScheme.BackColor;
+
             var rect = ClientRectangle;
 
             using (var path = rect.Radius(Radius))
