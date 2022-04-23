@@ -13,6 +13,8 @@ namespace SDUI.Controls
     [DefaultEvent("CheckedChanged")]
     public class Radio : Control
     {
+        public event EventHandler CheckedChanged;
+
         private bool isHovered = false;
         private bool isPressed = false;
         private bool isFocused = false;
@@ -26,17 +28,11 @@ namespace SDUI.Controls
             {
                 isChecked = value;
                 InvalidateControls();
-                if (CheckedChanged != null)
-                {
-                    CheckedChanged(this);
-                }
+                CheckedChanged?.Invoke(this, EventArgs.Empty);
+
                 Invalidate();
             }
         }
-
-        public event CheckedChangedEventHandler CheckedChanged;
-
-        public delegate void CheckedChangedEventHandler(object sender);
 
         private void InvalidateControls()
         {
