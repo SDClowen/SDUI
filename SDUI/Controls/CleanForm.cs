@@ -113,6 +113,8 @@ namespace SDUI.Controls
             if (DesignMode)
                 return;
 
+            BackColor = ColorScheme.BackColor;
+            ForeColor = ColorScheme.ForeColor;
             ChangeControlsTheme(this);
         }
     }
