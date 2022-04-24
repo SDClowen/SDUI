@@ -54,7 +54,7 @@ namespace SDUI.Controls
             }
         }
 
-        public new string Text
+        public override string Text
         {
             get => _textbox.Text;
             set => _textbox.Text = value;
@@ -110,6 +110,7 @@ namespace SDUI.Controls
         private void _textbox_TextChanged(object sender, System.EventArgs e)
         {
             Text = _textbox.Text;
+            OnTextChanged(e);
         }
 
         protected override void OnPaint(PaintEventArgs e)

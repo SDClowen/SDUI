@@ -69,5 +69,10 @@ namespace SDUI.Test
         {
             textBox1.Text = "Testing";
         }
+
+        private void textBox1_TextChanged(object sender, EventArgs e)
+        {
+            MessageBox.Show("Changed!");
+        }
     }
 }

@@ -140,6 +140,7 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.textBox21 = new SDUI.Controls.TextBox2();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -170,6 +171,7 @@ namespace SDUI.Test
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.textBox21);
             this.tabPage1.Controls.Add(this.radio2);
             this.tabPage1.Controls.Add(this.radio1);
             this.tabPage1.Controls.Add(this.label8);
@@ -745,6 +747,7 @@ namespace SDUI.Test
             this.textBox1.TabIndex = 5;
             this.textBox1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             this.textBox1.UseSystemPasswordChar = false;
+            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
             // 
             // button3
             // 
@@ -1198,6 +1201,18 @@ namespace SDUI.Test
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             // 
+            // textBox21
+            // 
+            this.textBox21.Location = new System.Drawing.Point(689, 423);
+            this.textBox21.MaxLength = 32767;
+            this.textBox21.MultiLine = false;
+            this.textBox21.Name = "textBox21";
+            this.textBox21.Size = new System.Drawing.Size(135, 21);
+            this.textBox21.TabIndex = 25;
+            this.textBox21.Text = "textBox21";
+            this.textBox21.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
+            this.textBox21.UseSystemPasswordChar = false;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1332,5 +1347,6 @@ namespace SDUI.Test
         private Controls.ProgressBar progressBar4;
         private Controls.ProgressBar progressBar3;
         private Controls.ProgressBar progressBar2;
+        private Controls.TextBox2 textBox21;
     }
 }
