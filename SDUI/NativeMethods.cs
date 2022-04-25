@@ -242,29 +242,29 @@ namespace SDUI
         [Flags]
         public enum CDRF
         {
-            CDRF_DODEFAULTField = 0x0,
-            CDRF_NEWFONTField = 0x2,
-            CDRF_SKIPDEFAULTField = 0x4,
-            CDRF_DOERASEField = 0x8,
-            CDRF_SKIPPOSTPAINTField = 0x100,
-            CDRF_NOTIFYPOSTPAINTField = 0x10,
-            CDRF_NOTIFYITEMDRAWField = 0x20,
-            CDRF_NOTIFYSUBITEMDRAWField = 0x20,
-            CDRF_NOTIFYPOSTERASEField = 0x40
+            CDRF_DODEFAULT = 0x0,
+            CDRF_NEWFONT = 0x2,
+            CDRF_SKIPDEFAULT = 0x4,
+            CDRF_DOERASE = 0x8,
+            CDRF_SKIPPOSTPAINT = 0x100,
+            CDRF_NOTIFYPOSTPAINT = 0x10,
+            CDRF_NOTIFYITEMDRAW = 0x20,
+            CDRF_NOTIFYSUBITEMDRAW = 0x20,
+            CDRF_NOTIFYPOSTERASE = 0x40
         }
 
         [Flags]
         public enum CDDS
         {
-            CDDS_PREPAINTField = 0x1,
-            CDDS_POSTPAINTField = 0x2,
-            CDDS_PREERASEField = 0x3,
-            CDDS_POSTERASEField = 0x4,
-            CDDS_ITEMField = 0x10000,
-            CDDS_ITEMPREPAINTField = CDDS_ITEMField | CDDS_PREPAINTField,
-            CDDS_ITEMPOSTPAINTField = CDDS_ITEMField | CDDS_POSTPAINTField,
-            CDDS_ITEMPREERASEField = CDDS_ITEMField | CDDS_PREERASEField,
-            CDDS_ITEMPOSTERASEField = CDDS_ITEMField | CDDS_POSTERASEField,
+            CDDS_PREPAINT = 0x1,
+            CDDS_POSTPAINT = 0x2,
+            CDDS_PREERASE = 0x3,
+            CDDS_POSTERASE = 0x4,
+            CDDS_ITEM = 0x10000,
+            CDDS_ITEMPREPAINT = CDDS_ITEM | CDDS_PREPAINT,
+            CDDS_ITEMPOSTPAINT = CDDS_ITEM | CDDS_POSTPAINT,
+            CDDS_ITEMPREERASE = CDDS_ITEM | CDDS_PREERASE,
+            CDDS_ITEMPOSTERASE = CDDS_ITEM | CDDS_POSTERASE,
             CDDS_SUBITEMField = 0x20000
         }
     }

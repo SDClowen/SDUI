@@ -164,7 +164,7 @@ namespace SDUI.Controls
                     var pnmlv = (NMLVCUSTOMDRAW)m.GetLParam(typeof(NMLVCUSTOMDRAW));
                     switch ((CDDS)pnmlv.nmcd.dwDrawStage)
                     {
-                        case CDDS.CDDS_PREPAINTField:
+                        case CDDS.CDDS_PREPAINT:
                             if (pnmlv.dwItemType == LVCDI_GROUP)
                             {
                                 var rectHeader = new RECT();
@@ -177,8 +177,8 @@ namespace SDUI.Controls
                                 {
                                     var rect = new Rectangle(rectHeader.left, rectHeader.top, rectHeader.right - rectHeader.left, rectHeader.bottom - rectHeader.top);
 
-                                    /*var backgroundBrush = new SolidBrush(_groupHeadingBackColor);
-                                    graphics.FillRectangle(backgroundBrush, rect);*/
+                                    //var backgroundBrush = new SolidBrush(_groupHeadingBackColor);
+                                    //graphics.FillRectangle(backgroundBrush, rect);
 
                                     var lvg = new LVGROUP();
                                     lvg.cbSize = (uint)Marshal.SizeOf(lvg);
@@ -206,33 +206,31 @@ namespace SDUI.Controls
                                     }
                                 }
 
-                                m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULTField);
+                                m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULT);return;
                             }
-                            else
+                            /*else
                             {
-                                m.Result = new IntPtr((int)CDRF.CDRF_NOTIFYITEMDRAWField);
-                            }
+                                m.Result = new IntPtr((int)CDRF.CDRF_NOTIFYITEMDRAW);
+                            }*/
 
                             break;
-
-                        case CDDS.CDDS_ITEMPREPAINTField:
-                            m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAWField | CDRF.CDRF_NOTIFYPOSTPAINTField));
+                            /*
+                        case CDDS.CDDS_ITEMPREPAINT:
+                            m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
                             break;
 
-                        case CDDS.CDDS_ITEMPOSTPAINTField:
-                            break;
+                        case CDDS.CDDS_ITEMPOSTPAINT:
+                            break;*/
                     }
-                }
 
-                return;
+                    
+                }
             }
             else if (m.Msg != WM_KILLFOCUS &&
                 (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
                 Invalidate();
-            else
-            {
-                base.WndProc(ref m);
-            }
+
+            base.WndProc(ref m);
         }
     }
 }

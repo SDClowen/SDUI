@@ -42,6 +42,7 @@
             // 
             // lblTitle
             // 
+            this.lblTitle.AutoSize = true;
             this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblTitle.Location = new System.Drawing.Point(7, 9);
             this.lblTitle.Name = "lblTitle";
@@ -54,7 +55,7 @@
             this.lblMessage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMessage.Location = new System.Drawing.Point(7, 24);
             this.lblMessage.Name = "lblMessage";
-            this.lblMessage.Size = new System.Drawing.Size(299, 31);
+            this.lblMessage.Size = new System.Drawing.Size(299, 42);
             this.lblMessage.TabIndex = 2;
             this.lblMessage.Text = "Please enter a value";
             // 
@@ -77,6 +78,7 @@
             this.btnOK.ForeColor = System.Drawing.Color.White;
             this.btnOK.Location = new System.Drawing.Point(11, 8);
             this.btnOK.Name = "btnOK";
+            this.btnOK.Radius = 2;
             this.btnOK.Size = new System.Drawing.Size(75, 23);
             this.btnOK.TabIndex = 0;
             this.btnOK.Text = "OK";
@@ -90,6 +92,7 @@
             this.btnCancel.ForeColor = System.Drawing.Color.White;
             this.btnCancel.Location = new System.Drawing.Point(235, 8);
             this.btnCancel.Name = "btnCancel";
+            this.btnCancel.Radius = 2;
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
             this.btnCancel.TabIndex = 1;
             this.btnCancel.Text = "Cancel";

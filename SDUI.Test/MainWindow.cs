@@ -20,8 +20,22 @@ namespace SDUI.Test
             listView1.Groups.Add(group2);
             for (int i = 0; i <= 5; i++)
             {
-                string sItem = "Item " + i.ToString();
-                listView1.Items.Add(new ListViewItem(new[] { i.ToString(), sItem + " Column 2", sItem + " Column 3", sItem + " Column 4" }, group1));
+                var title = "Item " + i.ToString();
+                var item = new ListViewItem(new[] { i.ToString(), title + " Column 2", title + " Column 3", title + " Column 4" }, group1);
+                
+                listView1.Items.Add(item);
+
+                var item2 = new ListViewItem(new[] { title });
+
+                if (i == 5)
+                {
+                    item2.ToolTipText = "Test tooltip";
+                    item2.Font = new Font("Arial", 12, FontStyle.Bold);
+                    item2.BackColor = Color.FromArgb(20, Color.Black);
+                    item2.ForeColor = Color.White;
+                }
+
+                listView2.Items.Add(item2);
             }
 
             for (int i = 6; i <= 11; i++)
