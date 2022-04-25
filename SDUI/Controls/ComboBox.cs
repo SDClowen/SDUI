@@ -7,29 +7,6 @@ namespace SDUI.Controls
 {
     public class ComboBox : System.Windows.Forms.ComboBox
     {
-        private int _startIndex = 0;
-
-        public int StartIndex
-        {
-            get
-            {
-                return _startIndex;
-            }
-            set
-            {
-                _startIndex = value;
-                try
-                {
-                    base.SelectedIndex = value;
-                }
-                catch
-                {
-                }
-
-                Invalidate();
-            }
-        }
-
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
             base.OnDrawItem(e);

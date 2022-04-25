@@ -140,7 +140,6 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.textBox21 = new SDUI.Controls.TextBox2();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -171,7 +170,6 @@ namespace SDUI.Test
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
-            this.tabPage1.Controls.Add(this.textBox21);
             this.tabPage1.Controls.Add(this.radio2);
             this.tabPage1.Controls.Add(this.radio1);
             this.tabPage1.Controls.Add(this.label8);
@@ -570,7 +568,6 @@ namespace SDUI.Test
             this.comboBox3.Location = new System.Drawing.Point(3, 32);
             this.comboBox3.Name = "comboBox3";
             this.comboBox3.Size = new System.Drawing.Size(194, 23);
-            this.comboBox3.StartIndex = 0;
             this.comboBox3.TabIndex = 8;
             // 
             // separator3
@@ -590,16 +587,9 @@ namespace SDUI.Test
             this.comboBox2.FormattingEnabled = true;
             this.comboBox2.IntegralHeight = false;
             this.comboBox2.ItemHeight = 17;
-            this.comboBox2.Items.AddRange(new object[] {
-            "asdfasdfasdfasdf",
-            "asdfasdfasd",
-            "asdfasdfasdfas",
-            "asdfxcvxzcvzx",
-            "1236afsdf"});
             this.comboBox2.Location = new System.Drawing.Point(23, 127);
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(194, 23);
-            this.comboBox2.StartIndex = 0;
             this.comboBox2.TabIndex = 8;
             // 
             // groupBox2
@@ -656,7 +646,6 @@ namespace SDUI.Test
             this.comboBox4.Location = new System.Drawing.Point(3, 26);
             this.comboBox4.Name = "comboBox4";
             this.comboBox4.Size = new System.Drawing.Size(269, 23);
-            this.comboBox4.StartIndex = 0;
             this.comboBox4.TabIndex = 6;
             // 
             // groupBox1
@@ -734,7 +723,6 @@ namespace SDUI.Test
             this.comboBox1.Location = new System.Drawing.Point(3, 26);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(269, 23);
-            this.comboBox1.StartIndex = 0;
             this.comboBox1.TabIndex = 6;
             // 
             // textBox1
@@ -1201,18 +1189,6 @@ namespace SDUI.Test
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             // 
-            // textBox21
-            // 
-            this.textBox21.Location = new System.Drawing.Point(689, 423);
-            this.textBox21.MaxLength = 32767;
-            this.textBox21.MultiLine = false;
-            this.textBox21.Name = "textBox21";
-            this.textBox21.Size = new System.Drawing.Size(135, 21);
-            this.textBox21.TabIndex = 25;
-            this.textBox21.Text = "textBox21";
-            this.textBox21.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
-            this.textBox21.UseSystemPasswordChar = false;
-            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1347,6 +1323,5 @@ namespace SDUI.Test
         private Controls.ProgressBar progressBar4;
         private Controls.ProgressBar progressBar3;
         private Controls.ProgressBar progressBar2;
-        private Controls.TextBox2 textBox21;
     }
 }

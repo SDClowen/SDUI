@@ -106,7 +106,6 @@
             this.comboBox.Location = new System.Drawing.Point(12, 69);
             this.comboBox.Name = "comboBox";
             this.comboBox.Size = new System.Drawing.Size(298, 23);
-            this.comboBox.StartIndex = 0;
             this.comboBox.TabIndex = 4;
             this.comboBox.Visible = false;
             // 
