@@ -55,6 +55,7 @@ namespace SDUI.Test
             this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.groupBox3 = new SDUI.Controls.GroupBox();
             this.radio2 = new SDUI.Controls.Radio();
             this.radio1 = new SDUI.Controls.Radio();
             this.label8 = new SDUI.Controls.Label();
@@ -138,6 +139,7 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.label4 = new SDUI.Controls.Label();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -168,6 +170,8 @@ namespace SDUI.Test
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.label4);
+            this.tabPage1.Controls.Add(this.groupBox3);
             this.tabPage1.Controls.Add(this.radio2);
             this.tabPage1.Controls.Add(this.radio1);
             this.tabPage1.Controls.Add(this.label8);
@@ -333,6 +337,18 @@ namespace SDUI.Test
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.BackColor = System.Drawing.Color.Transparent;
+            this.groupBox3.Location = new System.Drawing.Point(663, 405);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Padding = new System.Windows.Forms.Padding(8, 10, 3, 10);
+            this.groupBox3.Radius = 2;
+            this.groupBox3.Size = new System.Drawing.Size(287, 123);
+            this.groupBox3.TabIndex = 25;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "groupBox3";
             // 
             // radio2
             // 
@@ -731,6 +747,7 @@ namespace SDUI.Test
             this.textBox1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             this.textBox1.UseSystemPasswordChar = false;
             this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
+            this.textBox1.PreviewKeyDown += new System.Windows.Forms.PreviewKeyDownEventHandler(this.textBox1_PreviewKeyDown);
             // 
             // button3
             // 
@@ -1185,6 +1202,15 @@ namespace SDUI.Test
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(163, 103);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(38, 15);
+            this.label4.TabIndex = 26;
+            this.label4.Text = "label4";
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1200,6 +1226,7 @@ namespace SDUI.Test
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.tabPage1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
@@ -1319,5 +1346,7 @@ namespace SDUI.Test
         private Controls.ProgressBar progressBar4;
         private Controls.ProgressBar progressBar3;
         private Controls.ProgressBar progressBar2;
+        private Controls.GroupBox groupBox3;
+        private Controls.Label label4;
     }
 }

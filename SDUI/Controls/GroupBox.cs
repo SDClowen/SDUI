@@ -44,6 +44,12 @@ namespace SDUI.Controls
             Invalidate();
         }
 
+        protected override void OnControlAdded(ControlEventArgs e)
+        {
+            base.OnControlAdded(e);
+            Invalidate(true);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             if (BackColor != ColorScheme.BackColor)

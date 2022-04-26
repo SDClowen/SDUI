@@ -98,6 +98,7 @@ namespace SDUI.Controls
             _textbox.Size = new Size(Width - 10, Height - 11);
             _textbox.UseSystemPasswordChar = UseSystemPasswordChar;
             _textbox.TextChanged += _textbox_TextChanged;
+            _textbox.PreviewKeyDown += _textbox_PreviewKeyDown;
             Controls.Add(_textbox);
 
             SetStyle(ControlStyles.UserPaint, true);
@@ -105,6 +106,11 @@ namespace SDUI.Controls
 
             Size = new Size(135, 35);
             DoubleBuffered = true;
+        }
+
+        private void _textbox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {
+            OnPreviewKeyDown(e);
         }
 
         private void _textbox_TextChanged(object sender, System.EventArgs e)
