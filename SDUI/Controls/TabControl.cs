@@ -48,7 +48,7 @@ namespace SDUI.Controls
             //Draw a border around TabPage
             bounds.Inflate(3, 3);
 
-            var brush = new SolidBrush(Color.FromArgb(200, ColorScheme.BackColor));
+            var brush = new SolidBrush(ColorScheme.BackColor.Alpha(200));
 
             e.Graphics.FillRectangle(brush, bounds);
 
@@ -86,7 +86,7 @@ namespace SDUI.Controls
                 }
                 else
                 {
-                    brush.Color = Color.FromArgb(20, ColorScheme.ForeColor);
+                    brush.Color = ColorScheme.ForeColor.Alpha(20);
                     graphics.FillRectangle(brush, tabRect);
                 }
 

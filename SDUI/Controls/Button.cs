@@ -65,11 +65,9 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            e.Graphics.Clear(ColorScheme.BackColor);
-
             var graphics = e.Graphics;
-            var clientRectangle = new Rectangle(0, 0, Width - 1, Height - 1);
-            var innerRectangle = new Rectangle(1, 1, Width - 3, Height - 3);
+            graphics.Clear(ColorScheme.BackColor);
+            var clientRectangle = ClientRectangle;
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
@@ -79,19 +77,20 @@ namespace SDUI.Controls
             switch (_mouseState)
             {
                 case 0:
-                    gradient = new SolidBrush(Color == Color.Transparent ? Color.FromArgb(45, color) : Color);
+                    gradient = new SolidBrush(Color == Color.Transparent ? color.Alpha(30) : Color);
                     break;
 
                 case 1:
-                    gradient = new SolidBrush(Color == Color.Transparent ? Color.FromArgb(60, color) : Color.FromArgb(180, Color));
+
+                    gradient = new SolidBrush(Color == Color.Transparent ? color.Alpha(40) : Enabled ? Color.Alpha(220) : Color);
                     break;
 
                 case 2:
-                    gradient = new SolidBrush(Color == Color.Transparent ? Color.FromArgb(80, color) : Color.FromArgb(220, Color));
+                    gradient = new SolidBrush(Color == Color.Transparent ? color.Alpha(50) : Enabled ? Color.Alpha(200) : Color);
                     break;
             }
 
-            var outerPen = new Pen(Color == Color.Transparent ? ColorScheme.BorderColor : Color.FromArgb(95, Color.Determine()));
+            var outerPen = new Pen(Color == Color.Transparent ? ColorScheme.BorderColor : Color.Determine().Alpha(95));
 
             using (var path = clientRectangle.Radius(_radius))
             {
@@ -102,8 +101,14 @@ namespace SDUI.Controls
                 outerPen.Dispose();
             }
 
+            var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
+            if (!Enabled)
+            {
+                foreColor = Color.Gray;
+            }
+
             var textRectangle = new Rectangle(0, 1, Width - 1, Height - 1);
-            TextRenderer.DrawText(graphics, Text, Font, textRectangle, Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor, TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+            TextRenderer.DrawText(graphics, Text, Font, textRectangle, foreColor, TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
         }
     }
 }

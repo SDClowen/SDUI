@@ -90,6 +90,8 @@ namespace SDUI.Controls
                 control.ForeColor = ColorScheme.ForeColor;
             }
 
+            Helpers.WindowsHelper.UseImmersiveDarkMode(control.Handle, ColorScheme.BackColor.IsDark());
+
             foreach (Control subControl in control.Controls)
             {
                 ChangeControlsTheme(subControl);
@@ -104,6 +106,13 @@ namespace SDUI.Controls
                 return;
 
             ChangeControlsTheme(this);
+
+            Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        }
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
         }
 
         protected override void OnLoad(EventArgs e)
@@ -116,6 +125,8 @@ namespace SDUI.Controls
             BackColor = ColorScheme.BackColor;
             ForeColor = ColorScheme.ForeColor;
             ChangeControlsTheme(this);
+
+            Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
         }
     }
 }

@@ -42,8 +42,8 @@ namespace SDUI.Controls
 
             if (isHovered && !isPressed && Enabled)
             {
-                foreColor = Color.FromArgb(150, ColorScheme.ForeColor);
-                borderColor = Color.FromArgb(150, ColorScheme.BorderColor);
+                foreColor = ColorScheme.ForeColor.Alpha(150);
+                borderColor = ColorScheme.BorderColor.Alpha(150);
             }
             else if (isHovered && isPressed && Enabled)
             {
@@ -53,7 +53,7 @@ namespace SDUI.Controls
             else if (!Enabled)
             {
                 foreColor = Color.Gray;
-                borderColor = Color.FromArgb(50, ColorScheme.BorderColor);
+                borderColor = ColorScheme.BorderColor.Alpha(50);
             }
             else
             {

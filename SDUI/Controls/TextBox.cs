@@ -139,8 +139,8 @@ namespace SDUI.Controls
             gfx.Clear(Color.Transparent);
             gfx.FillRectangle(new SolidBrush(backColor), new Rectangle(0, 0, Width - 1, Height - 1));
 
-            var colorBegin = Color.FromArgb(90, determinedColor.Brightness(.1f));
-            var colorEnd = Color.FromArgb(60, determinedColor.Brightness(-.1f));
+            var colorBegin = determinedColor.Brightness(.1f).Alpha(90);
+            var colorEnd = determinedColor.Brightness(-.1f).Alpha(60);
 
             var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 2, Height - 2), colorBegin, colorEnd, 90);
             var innerBorderPen = new Pen(innerBorderBrush);

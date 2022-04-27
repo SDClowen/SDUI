@@ -58,7 +58,7 @@ namespace SDUI.Controls
         {
             var rect = ClientRectangle;
 
-            var color = Color.FromArgb(15, ColorScheme.ForeColor);
+            var color = ColorScheme.ForeColor.Alpha(15);
 
             if (_radius > 0)
             {

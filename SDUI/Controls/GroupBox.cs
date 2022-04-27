@@ -63,7 +63,7 @@ namespace SDUI.Controls
                 rect = new Rectangle(0, 0,
                     rect.Width, Font.Height + 7);
 
-                var color = Color.FromArgb(15, ColorScheme.BackColor.Determine());
+                var color = ColorScheme.ForeColor.Alpha(15);
                 BackColor = Color.Transparent;
 
                 using (var brush = new SolidBrush(color))

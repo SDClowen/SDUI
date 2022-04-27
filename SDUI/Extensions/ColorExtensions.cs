@@ -47,5 +47,26 @@
 
             return Color.FromArgb(color.A, (int)red, (int)green, (int)blue);
         }
+
+        /// <summary>
+        /// Is the color dark <c>true</c>; otherwise <c>false</c>
+        /// </summary>
+        /// <param name="color">The color</param>
+        public static bool IsDark(this Color color)
+        {
+            return (384 - color.R - color.G - color.B) > 0;
+        }
+
+        /// <summary>
+        /// Set alpha value for this color
+        /// </summary>
+        /// <param name="color">The color</param>
+        /// <param name="alpha">The alpha</param>
+        public static Color Alpha(this Color color, int alpha)
+        {
+            alpha = Math.Max(0, alpha);
+            alpha = Math.Min(255, alpha);
+            return Color.FromArgb(alpha, color);
+        }
     }
 }

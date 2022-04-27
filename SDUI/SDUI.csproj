@@ -20,6 +20,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -29,6 +30,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup />
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -97,11 +99,15 @@
     <Compile Include="Controls\TextBox.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\ToolStrip.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Extensions\ColorExtensions.cs" />
     <Compile Include="Extensions\ListViewExtensions.cs" />
     <Compile Include="Extensions\RectangleExtensions.cs" />
     <Compile Include="Extensions\TextBoxBaseExtensions.cs" />
     <Compile Include="Helpers\ListViewColumnSorter.cs" />
+    <Compile Include="Helpers\WindowsHelper.cs" />
     <Compile Include="MoveDirection.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

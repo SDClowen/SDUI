@@ -55,6 +55,10 @@ namespace SDUI.Test
             this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.button4 = new SDUI.Controls.Button();
+            this.button2 = new SDUI.Controls.Button();
+            this.label4 = new SDUI.Controls.Label();
+            this.button5 = new SDUI.Controls.Button();
             this.groupBox3 = new SDUI.Controls.GroupBox();
             this.radio2 = new SDUI.Controls.Radio();
             this.radio1 = new SDUI.Controls.Radio();
@@ -99,8 +103,6 @@ namespace SDUI.Test
             this.progressBar3 = new SDUI.Controls.ProgressBar();
             this.progressBar2 = new SDUI.Controls.ProgressBar();
             this.progressBar1 = new SDUI.Controls.ProgressBar();
-            this.buttonRandomColor = new System.Windows.Forms.Button();
-            this.buttonOpenInputDialog = new System.Windows.Forms.Button();
             this.separator2 = new SDUI.Controls.Separator();
             this.separator1 = new SDUI.Controls.Separator();
             this.tabPage2 = new System.Windows.Forms.TabPage();
@@ -139,7 +141,17 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.label4 = new SDUI.Controls.Label();
+            this.toolStrip1 = new SDUI.Controls.ToolStrip();
+            this.newToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.openToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.saveToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.printToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
+            this.cutToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.copyToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.pasteToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.helpToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -151,6 +163,7 @@ namespace SDUI.Test
             this.panel1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
+            this.toolStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -168,9 +181,12 @@ namespace SDUI.Test
             // 
             // tabPage1
             // 
-            this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.BackColor = System.Drawing.Color.Black;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.button4);
+            this.tabPage1.Controls.Add(this.button2);
             this.tabPage1.Controls.Add(this.label4);
+            this.tabPage1.Controls.Add(this.button5);
             this.tabPage1.Controls.Add(this.groupBox3);
             this.tabPage1.Controls.Add(this.radio2);
             this.tabPage1.Controls.Add(this.radio1);
@@ -198,8 +214,6 @@ namespace SDUI.Test
             this.tabPage1.Controls.Add(this.progressBar3);
             this.tabPage1.Controls.Add(this.progressBar2);
             this.tabPage1.Controls.Add(this.progressBar1);
-            this.tabPage1.Controls.Add(this.buttonRandomColor);
-            this.tabPage1.Controls.Add(this.buttonOpenInputDialog);
             this.tabPage1.Controls.Add(this.separator2);
             this.tabPage1.Controls.Add(this.separator1);
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
@@ -337,6 +351,52 @@ namespace SDUI.Test
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
+            // 
+            // button4
+            // 
+            this.button4.Color = System.Drawing.Color.Transparent;
+            this.button4.Location = new System.Drawing.Point(20, 14);
+            this.button4.Name = "button4";
+            this.button4.Radius = 6;
+            this.button4.Size = new System.Drawing.Size(104, 23);
+            this.button4.TabIndex = 27;
+            this.button4.Text = "Input Dialog";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.buttonOpenInputDialog_Click);
+            // 
+            // button2
+            // 
+            this.button2.Color = System.Drawing.Color.Transparent;
+            this.button2.Location = new System.Drawing.Point(130, 14);
+            this.button2.Name = "button2";
+            this.button2.Radius = 6;
+            this.button2.Size = new System.Drawing.Size(153, 23);
+            this.button2.TabIndex = 27;
+            this.button2.Text = "Random Color";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.buttonRandomColor_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(163, 103);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(38, 15);
+            this.label4.TabIndex = 26;
+            this.label4.Text = "label4";
+            // 
+            // button5
+            // 
+            this.button5.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.button5.Color = System.Drawing.Color.Transparent;
+            this.button5.Enabled = false;
+            this.button5.Location = new System.Drawing.Point(660, 199);
+            this.button5.Name = "button5";
+            this.button5.Radius = 4;
+            this.button5.Size = new System.Drawing.Size(93, 20);
+            this.button5.TabIndex = 4;
+            this.button5.Text = "Disabled";
+            this.button5.Click += new System.EventHandler(this.buttonLight_Click);
             // 
             // groupBox3
             // 
@@ -477,16 +537,17 @@ namespace SDUI.Test
             this.checkBox3.Name = "checkBox3";
             this.checkBox3.Size = new System.Drawing.Size(233, 25);
             this.checkBox3.TabIndex = 13;
-            this.checkBox3.Text = "checkBox1";
+            this.checkBox3.Text = "Toggle Title";
+            this.checkBox3.Click += new System.EventHandler(this.checkBox3_Click);
             // 
             // button1
             // 
             this.button1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.button1.Color = System.Drawing.Color.Transparent;
-            this.button1.Location = new System.Drawing.Point(39, 97);
+            this.button1.Location = new System.Drawing.Point(16, 71);
             this.button1.Name = "button1";
-            this.button1.Radius = 4;
-            this.button1.Size = new System.Drawing.Size(93, 20);
+            this.button1.Radius = 6;
+            this.button1.Size = new System.Drawing.Size(120, 23);
             this.button1.TabIndex = 4;
             this.button1.Text = "Light";
             this.button1.Click += new System.EventHandler(this.buttonLight_Click);
@@ -859,28 +920,6 @@ namespace SDUI.Test
             this.progressBar1.Text = "70%";
             this.progressBar1.Value = ((long)(70));
             // 
-            // buttonRandomColor
-            // 
-            this.buttonRandomColor.Location = new System.Drawing.Point(134, 16);
-            this.buttonRandomColor.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.buttonRandomColor.Name = "buttonRandomColor";
-            this.buttonRandomColor.Size = new System.Drawing.Size(153, 23);
-            this.buttonRandomColor.TabIndex = 2;
-            this.buttonRandomColor.Text = "Random Color";
-            this.buttonRandomColor.UseVisualStyleBackColor = true;
-            this.buttonRandomColor.Click += new System.EventHandler(this.buttonRandomColor_Click);
-            // 
-            // buttonOpenInputDialog
-            // 
-            this.buttonOpenInputDialog.Location = new System.Drawing.Point(23, 16);
-            this.buttonOpenInputDialog.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.buttonOpenInputDialog.Name = "buttonOpenInputDialog";
-            this.buttonOpenInputDialog.Size = new System.Drawing.Size(105, 23);
-            this.buttonOpenInputDialog.TabIndex = 1;
-            this.buttonOpenInputDialog.Text = "Input Dialog";
-            this.buttonOpenInputDialog.UseVisualStyleBackColor = true;
-            this.buttonOpenInputDialog.Click += new System.EventHandler(this.buttonOpenInputDialog_Click);
-            // 
             // separator2
             // 
             this.separator2.IsVertical = false;
@@ -903,7 +942,7 @@ namespace SDUI.Test
             // 
             // tabPage2
             // 
-            this.tabPage2.BackColor = System.Drawing.Color.White;
+            this.tabPage2.BackColor = System.Drawing.Color.Black;
             this.tabPage2.Controls.Add(this.listView1);
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -977,7 +1016,7 @@ namespace SDUI.Test
             this.printPreviewToolStripMenuItem,
             this.toolStripSeparator2,
             this.exitToolStripMenuItem});
-            this.fileToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.fileToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "&File";
@@ -1064,7 +1103,7 @@ namespace SDUI.Test
             this.pasteToolStripMenuItem,
             this.toolStripSeparator4,
             this.selectAllToolStripMenuItem});
-            this.editToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.editToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
             this.editToolStripMenuItem.Text = "&Edit";
@@ -1137,7 +1176,7 @@ namespace SDUI.Test
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.customizeToolStripMenuItem,
             this.optionsToolStripMenuItem});
-            this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsToolStripMenuItem.Text = "&Tools";
@@ -1164,7 +1203,7 @@ namespace SDUI.Test
             this.searchToolStripMenuItem,
             this.toolStripSeparator5,
             this.aboutToolStripMenuItem});
-            this.helpToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.helpToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "&Help";
@@ -1202,20 +1241,115 @@ namespace SDUI.Test
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             // 
-            // label4
+            // toolStrip1
             // 
-            this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(163, 103);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(38, 15);
-            this.label4.TabIndex = 26;
-            this.label4.Text = "label4";
+            this.toolStrip1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.newToolStripButton,
+            this.openToolStripButton,
+            this.saveToolStripButton,
+            this.printToolStripButton,
+            this.toolStripSeparator8,
+            this.cutToolStripButton,
+            this.copyToolStripButton,
+            this.pasteToolStripButton,
+            this.toolStripSeparator9,
+            this.helpToolStripButton});
+            this.toolStrip1.Location = new System.Drawing.Point(1, 572);
+            this.toolStrip1.Name = "toolStrip1";
+            this.toolStrip1.Size = new System.Drawing.Size(1201, 25);
+            this.toolStrip1.TabIndex = 2;
+            this.toolStrip1.Text = "toolStrip1";
+            // 
+            // newToolStripButton
+            // 
+            this.newToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.newToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("newToolStripButton.Image")));
+            this.newToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.newToolStripButton.Name = "newToolStripButton";
+            this.newToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.newToolStripButton.Text = "&New";
+            // 
+            // openToolStripButton
+            // 
+            this.openToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.openToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("openToolStripButton.Image")));
+            this.openToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.openToolStripButton.Name = "openToolStripButton";
+            this.openToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.openToolStripButton.Text = "&Open";
+            // 
+            // saveToolStripButton
+            // 
+            this.saveToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.saveToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("saveToolStripButton.Image")));
+            this.saveToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.saveToolStripButton.Name = "saveToolStripButton";
+            this.saveToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.saveToolStripButton.Text = "&Save";
+            // 
+            // printToolStripButton
+            // 
+            this.printToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.printToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("printToolStripButton.Image")));
+            this.printToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.printToolStripButton.Name = "printToolStripButton";
+            this.printToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.printToolStripButton.Text = "&Print";
+            // 
+            // toolStripSeparator8
+            // 
+            this.toolStripSeparator8.Name = "toolStripSeparator8";
+            this.toolStripSeparator8.Size = new System.Drawing.Size(6, 25);
+            // 
+            // cutToolStripButton
+            // 
+            this.cutToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.cutToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("cutToolStripButton.Image")));
+            this.cutToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.cutToolStripButton.Name = "cutToolStripButton";
+            this.cutToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.cutToolStripButton.Text = "C&ut";
+            // 
+            // copyToolStripButton
+            // 
+            this.copyToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.copyToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("copyToolStripButton.Image")));
+            this.copyToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.copyToolStripButton.Name = "copyToolStripButton";
+            this.copyToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.copyToolStripButton.Text = "&Copy";
+            // 
+            // pasteToolStripButton
+            // 
+            this.pasteToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.pasteToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("pasteToolStripButton.Image")));
+            this.pasteToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.pasteToolStripButton.Name = "pasteToolStripButton";
+            this.pasteToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.pasteToolStripButton.Text = "&Paste";
+            // 
+            // toolStripSeparator9
+            // 
+            this.toolStripSeparator9.Name = "toolStripSeparator9";
+            this.toolStripSeparator9.Size = new System.Drawing.Size(6, 25);
+            // 
+            // helpToolStripButton
+            // 
+            this.helpToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.helpToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("helpToolStripButton.Image")));
+            this.helpToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.helpToolStripButton.Name = "helpToolStripButton";
+            this.helpToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.helpToolStripButton.Text = "He&lp";
             // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1203, 598);
+            this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -1237,6 +1371,8 @@ namespace SDUI.Test
             this.tabPage2.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.toolStrip1.ResumeLayout(false);
+            this.toolStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1249,8 +1385,6 @@ namespace SDUI.Test
         private TabPage tabPage2;
         private Controls.Separator separator1;
         private Controls.Separator separator2;
-        private Button buttonOpenInputDialog;
-        private Button buttonRandomColor;
         private Controls.ListView listView1;
         private ColumnHeader columnHeader1;
         private ColumnHeader columnHeader2;
@@ -1348,5 +1482,19 @@ namespace SDUI.Test
         private Controls.ProgressBar progressBar2;
         private Controls.GroupBox groupBox3;
         private Controls.Label label4;
+        private Controls.Button button4;
+        private Controls.Button button2;
+        private Controls.Button button5;
+        private Controls.ToolStrip toolStrip1;
+        private ToolStripButton newToolStripButton;
+        private ToolStripButton openToolStripButton;
+        private ToolStripButton saveToolStripButton;
+        private ToolStripButton printToolStripButton;
+        private ToolStripSeparator toolStripSeparator8;
+        private ToolStripButton cutToolStripButton;
+        private ToolStripButton copyToolStripButton;
+        private ToolStripButton pasteToolStripButton;
+        private ToolStripSeparator toolStripSeparator9;
+        private ToolStripButton helpToolStripButton;
     }
 }

@@ -31,7 +31,7 @@ namespace SDUI.Test
                 {
                     item2.ToolTipText = "Test tooltip";
                     item2.Font = new Font("Arial", 12, FontStyle.Bold);
-                    item2.BackColor = Color.FromArgb(20, Color.Black);
+                    item2.BackColor = Color.Aquamarine;
                     item2.ForeColor = Color.White;
                 }
 
@@ -108,6 +108,18 @@ namespace SDUI.Test
                 return;
 
             MessageBox.Show(textBox1.Text);
+        }
+
+        private void checkBox3_Click(object sender, EventArgs e)
+        {
+            if (checkBox3.Checked)
+            {
+                FormBorderStyle = FormBorderStyle.Sizable;
+            }
+            else
+            {
+                FormBorderStyle = FormBorderStyle.None;
+            }
         }
     }
 }
