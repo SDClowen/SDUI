@@ -11,7 +11,6 @@ namespace SDUI.Test
         [STAThread]
         static void Main()
         {
-            //NativeMethods.AllowDarkModeForApp(true);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainWindow());
