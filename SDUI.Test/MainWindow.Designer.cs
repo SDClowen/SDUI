@@ -32,9 +32,9 @@ namespace SDUI.Test
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("123412341234");
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("123412341234");
+            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem(new string[] {
             "123412341324"}, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -60,16 +60,17 @@ namespace SDUI.Test
             this.label4 = new SDUI.Controls.Label();
             this.button5 = new SDUI.Controls.Button();
             this.groupBox3 = new SDUI.Controls.GroupBox();
+            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.radio2 = new SDUI.Controls.Radio();
             this.radio1 = new SDUI.Controls.Radio();
-            this.label8 = new SDUI.Controls.Label();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
             this.checkBox6 = new SDUI.Controls.CheckBox();
             this.checkBox2 = new SDUI.Controls.CheckBox();
             this.checkBox1 = new SDUI.Controls.CheckBox();
             this.panel6 = new SDUI.Controls.Panel();
             this.panel5 = new SDUI.Controls.Panel();
             this.panel8 = new SDUI.Controls.Panel();
+            this.chatBubble2 = new SDUI.Controls.ChatBubble();
+            this.chatBubble1 = new SDUI.Controls.ChatBubble();
             this.separator6 = new SDUI.Controls.Separator();
             this.checkBox4 = new SDUI.Controls.CheckBox();
             this.checkBox3 = new SDUI.Controls.CheckBox();
@@ -155,6 +156,7 @@ namespace SDUI.Test
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
+            this.groupBox3.SuspendLayout();
             this.panel8.SuspendLayout();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
@@ -176,7 +178,7 @@ namespace SDUI.Test
             this.tabControl1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1201, 572);
+            this.tabControl1.Size = new System.Drawing.Size(1201, 591);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
@@ -190,8 +192,6 @@ namespace SDUI.Test
             this.tabPage1.Controls.Add(this.groupBox3);
             this.tabPage1.Controls.Add(this.radio2);
             this.tabPage1.Controls.Add(this.radio1);
-            this.tabPage1.Controls.Add(this.label8);
-            this.tabPage1.Controls.Add(this.richTextBox1);
             this.tabPage1.Controls.Add(this.checkBox6);
             this.tabPage1.Controls.Add(this.checkBox2);
             this.tabPage1.Controls.Add(this.checkBox1);
@@ -220,7 +220,7 @@ namespace SDUI.Test
             this.tabPage1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage1.Size = new System.Drawing.Size(1193, 543);
+            this.tabPage1.Size = new System.Drawing.Size(1193, 562);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
@@ -379,7 +379,7 @@ namespace SDUI.Test
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(163, 103);
+            this.label4.Location = new System.Drawing.Point(163, 78);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(38, 15);
             this.label4.TabIndex = 26;
@@ -401,19 +401,30 @@ namespace SDUI.Test
             // groupBox3
             // 
             this.groupBox3.BackColor = System.Drawing.Color.Transparent;
-            this.groupBox3.Location = new System.Drawing.Point(663, 405);
+            this.groupBox3.Controls.Add(this.richTextBox1);
+            this.groupBox3.Location = new System.Drawing.Point(660, 405);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Padding = new System.Windows.Forms.Padding(8, 10, 3, 10);
+            this.groupBox3.Padding = new System.Windows.Forms.Padding(1, 8, 1, 1);
             this.groupBox3.Radius = 2;
             this.groupBox3.Size = new System.Drawing.Size(287, 123);
             this.groupBox3.TabIndex = 25;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "groupBox3";
             // 
+            // richTextBox1
+            // 
+            this.richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.richTextBox1.Location = new System.Drawing.Point(1, 24);
+            this.richTextBox1.Name = "richTextBox1";
+            this.richTextBox1.Size = new System.Drawing.Size(285, 98);
+            this.richTextBox1.TabIndex = 15;
+            this.richTextBox1.Text = "";
+            // 
             // radio2
             // 
             this.radio2.Checked = false;
-            this.radio2.Location = new System.Drawing.Point(663, 370);
+            this.radio2.Location = new System.Drawing.Point(829, 342);
             this.radio2.Name = "radio2";
             this.radio2.Size = new System.Drawing.Size(103, 29);
             this.radio2.TabIndex = 24;
@@ -428,29 +439,10 @@ namespace SDUI.Test
             this.radio1.TabIndex = 24;
             this.radio1.Text = "radio1";
             // 
-            // label8
-            // 
-            this.label8.Enabled = false;
-            this.label8.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(90)))), ((int)(((byte)(90)))), ((int)(((byte)(90)))));
-            this.label8.Location = new System.Drawing.Point(66, 439);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(281, 46);
-            this.label8.TabIndex = 23;
-            this.label8.Text = "If activated, when the bot is minimized, the bot will automatically switch to tra" +
-    "y mode \r\nand continue to run there.";
-            // 
-            // richTextBox1
-            // 
-            this.richTextBox1.Location = new System.Drawing.Point(505, 330);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(133, 155);
-            this.richTextBox1.TabIndex = 15;
-            this.richTextBox1.Text = "";
-            // 
             // checkBox6
             // 
             this.checkBox6.Checked = false;
-            this.checkBox6.Location = new System.Drawing.Point(130, 408);
+            this.checkBox6.Location = new System.Drawing.Point(515, 370);
             this.checkBox6.Name = "checkBox6";
             this.checkBox6.Size = new System.Drawing.Size(87, 25);
             this.checkBox6.TabIndex = 14;
@@ -460,18 +452,18 @@ namespace SDUI.Test
             // 
             this.checkBox2.Checked = false;
             this.checkBox2.Enabled = false;
-            this.checkBox2.Location = new System.Drawing.Point(239, 408);
+            this.checkBox2.Location = new System.Drawing.Point(515, 342);
             this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(148, 25);
+            this.checkBox2.Size = new System.Drawing.Size(142, 25);
             this.checkBox2.TabIndex = 13;
             this.checkBox2.Text = "checkBox1";
             // 
             // checkBox1
             // 
             this.checkBox1.Checked = false;
-            this.checkBox1.Location = new System.Drawing.Point(417, 408);
+            this.checkBox1.Location = new System.Drawing.Point(663, 370);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(148, 25);
+            this.checkBox1.Size = new System.Drawing.Size(202, 25);
             this.checkBox1.TabIndex = 13;
             this.checkBox1.Text = "checkBox1";
             // 
@@ -479,26 +471,28 @@ namespace SDUI.Test
             // 
             this.panel6.BackColor = System.Drawing.Color.Transparent;
             this.panel6.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
-            this.panel6.Location = new System.Drawing.Point(24, 326);
+            this.panel6.Location = new System.Drawing.Point(23, 275);
             this.panel6.Name = "panel6";
             this.panel6.Radius = 1;
-            this.panel6.Size = new System.Drawing.Size(87, 45);
+            this.panel6.Size = new System.Drawing.Size(63, 45);
             this.panel6.TabIndex = 12;
             // 
             // panel5
             // 
             this.panel5.BackColor = System.Drawing.Color.Transparent;
             this.panel5.Border = new System.Windows.Forms.Padding(0, 0, 1, 0);
-            this.panel5.Location = new System.Drawing.Point(130, 326);
+            this.panel5.Location = new System.Drawing.Point(113, 275);
             this.panel5.Name = "panel5";
             this.panel5.Radius = 1;
-            this.panel5.Size = new System.Drawing.Size(87, 45);
+            this.panel5.Size = new System.Drawing.Size(63, 45);
             this.panel5.TabIndex = 12;
             // 
             // panel8
             // 
             this.panel8.BackColor = System.Drawing.Color.Transparent;
             this.panel8.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
+            this.panel8.Controls.Add(this.chatBubble2);
+            this.panel8.Controls.Add(this.chatBubble1);
             this.panel8.Controls.Add(this.separator6);
             this.panel8.Controls.Add(this.checkBox4);
             this.panel8.Controls.Add(this.checkBox3);
@@ -508,8 +502,34 @@ namespace SDUI.Test
             this.panel8.Location = new System.Drawing.Point(956, 3);
             this.panel8.Name = "panel8";
             this.panel8.Radius = 0;
-            this.panel8.Size = new System.Drawing.Size(233, 537);
+            this.panel8.Size = new System.Drawing.Size(233, 556);
             this.panel8.TabIndex = 12;
+            // 
+            // chatBubble2
+            // 
+            this.chatBubble2.ArrowPosition = System.Windows.Forms.AnchorStyles.Right;
+            this.chatBubble2.BackColor = System.Drawing.Color.Transparent;
+            this.chatBubble2.BubbleColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
+            this.chatBubble2.DrawBubbleArrow = true;
+            this.chatBubble2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(52)))), ((int)(((byte)(52)))), ((int)(((byte)(52)))));
+            this.chatBubble2.Location = new System.Drawing.Point(16, 326);
+            this.chatBubble2.Name = "chatBubble2";
+            this.chatBubble2.Size = new System.Drawing.Size(175, 38);
+            this.chatBubble2.TabIndex = 28;
+            this.chatBubble2.Text = "Hello Bob i am fine, Thanks";
+            // 
+            // chatBubble1
+            // 
+            this.chatBubble1.ArrowPosition = System.Windows.Forms.AnchorStyles.Left;
+            this.chatBubble1.BackColor = System.Drawing.Color.Transparent;
+            this.chatBubble1.BubbleColor = System.Drawing.Color.FromArgb(((int)(((byte)(217)))), ((int)(((byte)(217)))), ((int)(((byte)(217)))));
+            this.chatBubble1.DrawBubbleArrow = true;
+            this.chatBubble1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(52)))), ((int)(((byte)(52)))), ((int)(((byte)(52)))));
+            this.chatBubble1.Location = new System.Drawing.Point(43, 279);
+            this.chatBubble1.Name = "chatBubble1";
+            this.chatBubble1.Size = new System.Drawing.Size(175, 38);
+            this.chatBubble1.TabIndex = 28;
+            this.chatBubble1.Text = "Hello Jean How are you?";
             // 
             // separator6
             // 
@@ -523,7 +543,7 @@ namespace SDUI.Test
             // checkBox4
             // 
             this.checkBox4.Checked = true;
-            this.checkBox4.Location = new System.Drawing.Point(81, 367);
+            this.checkBox4.Location = new System.Drawing.Point(16, 238);
             this.checkBox4.Name = "checkBox4";
             this.checkBox4.Size = new System.Drawing.Size(120, 23);
             this.checkBox4.TabIndex = 13;
@@ -554,7 +574,7 @@ namespace SDUI.Test
             // 
             // label3
             // 
-            this.label3.Location = new System.Drawing.Point(13, 195);
+            this.label3.Location = new System.Drawing.Point(13, 111);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(205, 122);
             this.label3.TabIndex = 11;
@@ -564,20 +584,20 @@ namespace SDUI.Test
             // 
             this.panel7.BackColor = System.Drawing.Color.Transparent;
             this.panel7.Border = new System.Windows.Forms.Padding(0, 0, 0, 1);
-            this.panel7.Location = new System.Drawing.Point(344, 326);
+            this.panel7.Location = new System.Drawing.Point(293, 275);
             this.panel7.Name = "panel7";
             this.panel7.Radius = 1;
-            this.panel7.Size = new System.Drawing.Size(87, 45);
+            this.panel7.Size = new System.Drawing.Size(63, 45);
             this.panel7.TabIndex = 12;
             // 
             // panel4
             // 
             this.panel4.BackColor = System.Drawing.Color.Transparent;
             this.panel4.Border = new System.Windows.Forms.Padding(0, 1, 0, 0);
-            this.panel4.Location = new System.Drawing.Point(239, 326);
+            this.panel4.Location = new System.Drawing.Point(203, 275);
             this.panel4.Name = "panel4";
             this.panel4.Radius = 1;
-            this.panel4.Size = new System.Drawing.Size(87, 45);
+            this.panel4.Size = new System.Drawing.Size(63, 45);
             this.panel4.TabIndex = 12;
             // 
             // label2
@@ -601,7 +621,7 @@ namespace SDUI.Test
             this.panel2.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
             this.panel2.Controls.Add(this.panel3);
             this.panel2.Controls.Add(this.separator3);
-            this.panel2.Location = new System.Drawing.Point(24, 156);
+            this.panel2.Location = new System.Drawing.Point(23, 130);
             this.panel2.Name = "panel2";
             this.panel2.Radius = 1;
             this.panel2.Size = new System.Drawing.Size(333, 134);
@@ -662,7 +682,7 @@ namespace SDUI.Test
             this.comboBox2.FormattingEnabled = true;
             this.comboBox2.IntegralHeight = false;
             this.comboBox2.ItemHeight = 17;
-            this.comboBox2.Location = new System.Drawing.Point(23, 127);
+            this.comboBox2.Location = new System.Drawing.Point(24, 101);
             this.comboBox2.Name = "comboBox2";
             this.comboBox2.Size = new System.Drawing.Size(194, 23);
             this.comboBox2.TabIndex = 8;
@@ -689,9 +709,9 @@ namespace SDUI.Test
             this.listView3.FullRowSelect = true;
             this.listView3.HideSelection = false;
             this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1,
-            listViewItem2,
-            listViewItem3});
+            listViewItem4,
+            listViewItem5,
+            listViewItem6});
             this.listView3.Location = new System.Drawing.Point(3, 58);
             this.listView3.Name = "listView3";
             this.listView3.Size = new System.Drawing.Size(269, 129);
@@ -799,7 +819,7 @@ namespace SDUI.Test
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(23, 100);
+            this.textBox1.Location = new System.Drawing.Point(23, 74);
             this.textBox1.MaxLength = 32767;
             this.textBox1.MultiLine = false;
             this.textBox1.Name = "textBox1";
@@ -815,7 +835,7 @@ namespace SDUI.Test
             this.button3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.button3.Color = System.Drawing.Color.Maroon;
             this.button3.ForeColor = System.Drawing.Color.White;
-            this.button3.Location = new System.Drawing.Point(222, 71);
+            this.button3.Location = new System.Drawing.Point(222, 44);
             this.button3.Name = "button3";
             this.button3.Radius = 2;
             this.button3.Size = new System.Drawing.Size(93, 23);
@@ -828,7 +848,7 @@ namespace SDUI.Test
             this.buttonDark.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.buttonDark.Color = System.Drawing.Color.RoyalBlue;
             this.buttonDark.ForeColor = System.Drawing.Color.White;
-            this.buttonDark.Location = new System.Drawing.Point(23, 71);
+            this.buttonDark.Location = new System.Drawing.Point(23, 44);
             this.buttonDark.Name = "buttonDark";
             this.buttonDark.Radius = 2;
             this.buttonDark.Size = new System.Drawing.Size(93, 23);
@@ -840,7 +860,7 @@ namespace SDUI.Test
             // 
             this.buttonLight.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.buttonLight.Color = System.Drawing.Color.Transparent;
-            this.buttonLight.Location = new System.Drawing.Point(122, 71);
+            this.buttonLight.Location = new System.Drawing.Point(122, 44);
             this.buttonLight.Name = "buttonLight";
             this.buttonLight.Radius = 2;
             this.buttonLight.Size = new System.Drawing.Size(93, 23);
@@ -948,7 +968,7 @@ namespace SDUI.Test
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage2.Size = new System.Drawing.Size(1193, 543);
+            this.tabPage2.Size = new System.Drawing.Size(1193, 562);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
@@ -968,7 +988,7 @@ namespace SDUI.Test
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
             this.listView1.ShowItemToolTips = true;
-            this.listView1.Size = new System.Drawing.Size(1185, 537);
+            this.listView1.Size = new System.Drawing.Size(1185, 556);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -1256,7 +1276,7 @@ namespace SDUI.Test
             this.pasteToolStripButton,
             this.toolStripSeparator9,
             this.helpToolStripButton});
-            this.toolStrip1.Location = new System.Drawing.Point(1, 572);
+            this.toolStrip1.Location = new System.Drawing.Point(1, 591);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1201, 25);
             this.toolStrip1.TabIndex = 2;
@@ -1348,7 +1368,7 @@ namespace SDUI.Test
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1203, 598);
+            this.ClientSize = new System.Drawing.Size(1203, 617);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.menuStrip1);
@@ -1362,6 +1382,7 @@ namespace SDUI.Test
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
+            this.groupBox3.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
@@ -1421,7 +1442,6 @@ namespace SDUI.Test
         private Controls.Label label3;
         private Controls.CheckBox checkBox6;
         private RichTextBox richTextBox1;
-        private Controls.Label label8;
         private Controls.MenuStrip menuStrip1;
         private ToolStripMenuItem fileToolStripMenuItem;
         private ToolStripMenuItem newToolStripMenuItem;
@@ -1496,5 +1516,7 @@ namespace SDUI.Test
         private ToolStripButton pasteToolStripButton;
         private ToolStripSeparator toolStripSeparator9;
         private ToolStripButton helpToolStripButton;
+        private Controls.ChatBubble chatBubble1;
+        private Controls.ChatBubble chatBubble2;
     }
 }
