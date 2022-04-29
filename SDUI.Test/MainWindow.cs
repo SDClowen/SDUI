@@ -12,8 +12,13 @@ namespace SDUI.Test
             InitializeComponent();
         }
 
-        private void MainWindow_Load(object sender, EventArgs e)
+        protected override void OnBackColorChanged(EventArgs e)
         {
+            base.OnBackColorChanged(e);
+            
+            listView1.Items.Clear();
+            listView2.Items.Clear();
+
             var group1 = new ListViewGroup("Group 1");
             var group2 = new ListViewGroup("Group 2 (collapsible)");
             listView1.Groups.Add(group1);
@@ -21,9 +26,13 @@ namespace SDUI.Test
             for (int i = 0; i <= 5; i++)
             {
                 var title = "Item " + i.ToString();
-                var item = new ListViewItem(new[] { i.ToString(), title + " Column 2", title + " Column 3", title + " Column 4" }, group1);
-                
-                listView1.Items.Add(item);
+                var listItem = new ListViewItem(new[] { i.ToString(), title + " Column 2", title + " Column 3", title + " Column 4" }, group1);
+                if (i == 0)
+                {
+                    listItem.BackColor = ControlPaint.Light(ColorScheme.BackColor, .15f);
+                    listItem.Font = new Font(Font.FontFamily, 10.25f, FontStyle.Bold);
+                }
+                listView1.Items.Add(listItem);
 
                 var item2 = new ListViewItem(new[] { title });
 
@@ -52,12 +61,17 @@ namespace SDUI.Test
                 var size = TextRenderer.MeasureText(text, Font);
                 //var checkbox = new System.Windows.Forms.CheckBox();
                 var checkbox = new SDUI.Controls.CheckBox();
-                checkbox.Name = "checkBox5"+i;
+                checkbox.Name = "checkBox5" + i;
                 checkbox.Size = new System.Drawing.Size(groupBox3.Width, 24);
                 checkbox.Text = text;
                 checkbox.Dock = DockStyle.Top;
                 groupBox3.Controls.Add(checkbox);
             }
+        }
+
+        private void MainWindow_Load(object sender, EventArgs e)
+        {
+            
         }
 
         private void buttonOpenInputDialog_Click(object sender, EventArgs e)
