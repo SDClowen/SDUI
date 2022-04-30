@@ -32,9 +32,9 @@ namespace SDUI.Test
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("123412341234");
-            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem("123412341324");
-            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("123412341234");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
             "123412341324"}, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -55,6 +55,8 @@ namespace SDUI.Test
             this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.toggleButton1 = new SDUI.Controls.ToggleButton();
+            this.numUpDown1 = new SDUI.Controls.NumUpDown();
             this.button4 = new SDUI.Controls.Button();
             this.button2 = new SDUI.Controls.Button();
             this.label4 = new SDUI.Controls.Label();
@@ -153,10 +155,11 @@ namespace SDUI.Test
             this.pasteToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.helpToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.numUpDown1 = new SDUI.Controls.NumUpDown();
+            this.shapeProgressBar1 = new SDUI.Controls.ShapeProgressBar();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).BeginInit();
             this.groupBox3.SuspendLayout();
             this.panel8.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -167,7 +170,6 @@ namespace SDUI.Test
             this.tabPage2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -187,6 +189,8 @@ namespace SDUI.Test
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.shapeProgressBar1);
+            this.tabPage1.Controls.Add(this.toggleButton1);
             this.tabPage1.Controls.Add(this.numUpDown1);
             this.tabPage1.Controls.Add(this.button4);
             this.tabPage1.Controls.Add(this.button2);
@@ -354,6 +358,26 @@ namespace SDUI.Test
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
+            // 
+            // toggleButton1
+            // 
+            this.toggleButton1.BackColor = System.Drawing.SystemColors.WindowText;
+            this.toggleButton1.Location = new System.Drawing.Point(363, 405);
+            this.toggleButton1.Name = "toggleButton1";
+            this.toggleButton1.Size = new System.Drawing.Size(72, 38);
+            this.toggleButton1.TabIndex = 29;
+            this.toggleButton1.Text = "toggleButton1";
+            this.toggleButton1.Toggled = false;
+            // 
+            // numUpDown1
+            // 
+            this.numUpDown1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
+            this.numUpDown1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numUpDown1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.numUpDown1.Location = new System.Drawing.Point(222, 372);
+            this.numUpDown1.Name = "numUpDown1";
+            this.numUpDown1.Size = new System.Drawing.Size(73, 23);
+            this.numUpDown1.TabIndex = 28;
             // 
             // button4
             // 
@@ -712,9 +736,9 @@ namespace SDUI.Test
             this.listView3.FullRowSelect = true;
             this.listView3.HideSelection = false;
             this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem4,
-            listViewItem5,
-            listViewItem6});
+            listViewItem1,
+            listViewItem2,
+            listViewItem3});
             this.listView3.Location = new System.Drawing.Point(3, 58);
             this.listView3.Name = "listView3";
             this.listView3.Size = new System.Drawing.Size(269, 129);
@@ -1367,15 +1391,19 @@ namespace SDUI.Test
             this.helpToolStripButton.Size = new System.Drawing.Size(23, 22);
             this.helpToolStripButton.Text = "He&lp";
             // 
-            // numUpDown1
+            // shapeProgressBar1
             // 
-            this.numUpDown1.BackColor = System.Drawing.Color.White;
-            this.numUpDown1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.numUpDown1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.numUpDown1.Location = new System.Drawing.Point(222, 372);
-            this.numUpDown1.Name = "numUpDown1";
-            this.numUpDown1.Size = new System.Drawing.Size(73, 23);
-            this.numUpDown1.TabIndex = 28;
+            this.shapeProgressBar1.Font = new System.Drawing.Font("Segoe UI", 15F);
+            this.shapeProgressBar1.GradientBegin = System.Drawing.Color.Maroon;
+            this.shapeProgressBar1.GradientEnd = System.Drawing.Color.Red;
+            this.shapeProgressBar1.Location = new System.Drawing.Point(489, 405);
+            this.shapeProgressBar1.Maximum = ((long)(100));
+            this.shapeProgressBar1.MinimumSize = new System.Drawing.Size(100, 100);
+            this.shapeProgressBar1.Name = "shapeProgressBar1";
+            this.shapeProgressBar1.Size = new System.Drawing.Size(130, 130);
+            this.shapeProgressBar1.TabIndex = 30;
+            this.shapeProgressBar1.Text = "shapeProgressBar1";
+            this.shapeProgressBar1.Value = ((long)(52));
             // 
             // MainWindow
             // 
@@ -1395,6 +1423,7 @@ namespace SDUI.Test
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).EndInit();
             this.groupBox3.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
             this.panel2.ResumeLayout(false);
@@ -1407,7 +1436,6 @@ namespace SDUI.Test
             this.menuStrip1.PerformLayout();
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1533,5 +1561,7 @@ namespace SDUI.Test
         private Controls.ChatBubble chatBubble1;
         private Controls.ChatBubble chatBubble2;
         private Controls.NumUpDown numUpDown1;
+        private Controls.ToggleButton toggleButton1;
+        private Controls.ShapeProgressBar shapeProgressBar1;
     }
 }

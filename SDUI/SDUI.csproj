@@ -99,10 +99,16 @@
     <Compile Include="Controls\Separator.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\ShapeProgressBar.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\TabControl.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\TextBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Controls\ToggleButton.cs">
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\ToolStrip.cs">
