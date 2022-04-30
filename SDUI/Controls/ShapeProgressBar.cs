@@ -80,7 +80,8 @@ namespace SDUI.Controls
             Size = new Size(130, 130);
             Font = new Font("Segoe UI", 15);
             MinimumSize = new Size(100, 100);
-            DoubleBuffered = true;
+            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
         }
 
         private void SetStandardSize()
@@ -91,14 +92,12 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
-
             using (var bitmap = new Bitmap(Width, Height))
             {
                 using (var graphics = Graphics.FromImage(bitmap))
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    graphics.Clear(BackColor);
+                    graphics.Clear(Color.Transparent);
 
                     using (var brush = new LinearGradientBrush(ClientRectangle, _gradientBegin, _gradientEnd, LinearGradientMode.ForwardDiagonal))
                     {
@@ -121,11 +120,9 @@ namespace SDUI.Controls
 
                     using (var textBrush = new SolidBrush(ColorScheme.ForeColor))
                         graphics.DrawString(percentString, Font, textBrush, Width / 2 - stringSize.Width / 2, Height / 2 - stringSize.Height / 2);
-                    
-                    e.Graphics.DrawImage(bitmap, 0, 0);
-                    graphics.Dispose();
-                    bitmap.Dispose();
                 }
+
+                e.Graphics.DrawImage(bitmap, 0, 0);
             }
         }
     }

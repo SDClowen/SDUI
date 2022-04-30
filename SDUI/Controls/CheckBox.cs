@@ -28,15 +28,12 @@ namespace SDUI.Controls
 
         public CheckBox()
         {
-            SetStyle(ControlStyles.SupportsTransparentBackColor |
-                ControlStyles.OptimizedDoubleBuffer |
-                     ControlStyles.UserPaint, true);
+            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            //base.OnPaint(e);
-            //e.Graphics.Clear(Parent.BackColor);
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             Color borderColor, foreColor;
 
@@ -63,10 +60,8 @@ namespace SDUI.Controls
 
             var boxRect = new Rectangle(0, Height / 2 - 6, 14, 14);
 
-            using (var path = boxRect.Radius(1))
+            using (var path = boxRect.Radius(4))
             {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
                 if (Checked)
                 {
                     using (var brush = new LinearGradientBrush(boxRect, Color.Blue, Color.DarkBlue, 90f))

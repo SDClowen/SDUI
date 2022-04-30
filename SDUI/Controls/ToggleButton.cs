@@ -1,48 +1,191 @@
 ﻿using SDUI.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
     public class ToggleButton : Control
     {
-        public delegate void ToggledChangedEventHandler();
-        private ToggledChangedEventHandler ToggledChangedEvent;
+        public event EventHandler CheckedChanged;
 
-        public event ToggledChangedEventHandler ToggledChanged
+        private bool isHovered = false;
+        private bool isPressed = false;
+        private bool isFocused = false;
+
+        private bool isChecked = false;
+        public bool Checked
         {
-            add
+            get => isChecked;
+            set
             {
-                ToggledChangedEvent = (ToggledChangedEventHandler)System.Delegate.Combine(ToggledChangedEvent, value);
-            }
-            remove
-            {
-                ToggledChangedEvent = (ToggledChangedEventHandler)System.Delegate.Remove(ToggledChangedEvent, value);
+                isChecked = value;
+                Invalidate();
+                CheckedChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
-        private bool _toggled;
-
-        public bool Toggled
+        public ToggleButton()
         {
-            get
+            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            using (var bitmap = new Bitmap(Width, Height))
             {
-                return _toggled;
+                using (var graphics = Graphics.FromImage(bitmap))
+                {
+                    graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    graphics.Clear(Color.Transparent);
+
+                    //var clientRectangle = new Rectangle(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width - 1, ClientRectangle.Height - 1);
+                    //graphics.DrawRectangle(Pens.Red, clientRectangle);
+
+                    var boxRectangle = new Rectangle(4, 5, 62, 27);
+                    var radius = boxRectangle.Radius(24);
+
+                    if (!Checked)
+                    {
+                        using (var pen = new Pen(ColorScheme.BorderColor))
+                        {
+                            graphics.FillPath(new SolidBrush(ColorScheme.ForeColor.Alpha(5)), radius);
+                            graphics.DrawPath(pen, radius);
+
+                            graphics.FillEllipse(new SolidBrush(pen.Color), 7, 7, 22, 22);
+                            graphics.DrawEllipse(pen, 7, 7, 22, 22);
+
+                            if (isPressed)
+                            {
+                                for (int i = 0; i < 17; i++)
+                                {
+                                    graphics.FillEllipse(new SolidBrush(pen.Color), 7, 7, 22 + i, 22);
+                                    graphics.DrawEllipse(pen, 7, 7, 22 + i, 22);
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        using (var pen = new Pen(ColorScheme.ForeColor))
+                        {
+                            graphics.DrawPath(pen, radius);
+
+                            graphics.FillEllipse(new SolidBrush(pen.Color), 40, 7, 22, 22);
+                            graphics.DrawEllipse(pen, 40, 7, 22, 22);
+
+                            if (isPressed)
+                            {
+                                for (int i = 0; i < 17; i++)
+                                {
+                                    graphics.FillEllipse(new SolidBrush(pen.Color), 40 - i, 7, 22 + i, 22);
+                                    graphics.DrawEllipse(pen, 40 - i, 7, 22 + i, 22);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                e.Graphics.DrawImage(bitmap, 0, 0);
             }
-            set
+        }
+
+        protected override void OnGotFocus(EventArgs e)
+        {
+            isFocused = true;
+            Invalidate();
+
+            base.OnGotFocus(e);
+        }
+
+        protected override void OnLostFocus(EventArgs e)
+        {
+            isFocused = false;
+            isHovered = false;
+            isPressed = false;
+            Invalidate();
+
+            base.OnLostFocus(e);
+        }
+
+        protected override void OnEnter(EventArgs e)
+        {
+            isFocused = true;
+            Invalidate();
+
+            base.OnEnter(e);
+        }
+
+        protected override void OnLeave(EventArgs e)
+        {
+            isFocused = false;
+            isHovered = false;
+            isPressed = false;
+            Invalidate();
+
+            base.OnLeave(e);
+        }
+
+        protected override void OnKeyDown(KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Space)
             {
-                _toggled = value;
+                isHovered = true;
+                isPressed = true;
                 Invalidate();
-                if (ToggledChangedEvent != null)
-                    ToggledChangedEvent();
             }
+
+            base.OnKeyDown(e);
+        }
+
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            isHovered = false;
+            isPressed = false;
+            Invalidate();
+
+            base.OnKeyUp(e);
+        }
+
+        protected override void OnMouseEnter(EventArgs e)
+        {
+            isHovered = true;
+            Invalidate();
+
+            base.OnMouseEnter(e);
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Left)
+            {
+                isPressed = true;
+                //Checked = !Checked;
+                Invalidate();
+            }
+
+            base.OnMouseDown(e);
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            if (isPressed)
+                Checked = !Checked;
+
+            isPressed = false;
+            Invalidate();
+
+            base.OnMouseUp(e);
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            isHovered = false;
+            Invalidate();
+
+            base.OnMouseLeave(e);
         }
 
         protected override void OnResize(EventArgs e)
@@ -52,59 +195,25 @@ namespace SDUI.Controls
             Height = 38;
         }
 
-        protected override void OnMouseUp(System.Windows.Forms.MouseEventArgs e)
+        protected override void OnEnabledChanged(EventArgs e)
         {
-            base.OnMouseUp(e);
-            Toggled = !Toggled;
-            Focus();
+            base.OnEnabledChanged(e);
+            Invalidate();
         }
 
-        public ToggleButton()
+        public override Size GetPreferredSize(Size proposedSize)
         {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.DoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.UserPaint, true);
-        }
+            Size preferredSize;
+            base.GetPreferredSize(proposedSize);
 
-
-        protected override void OnPaint(System.Windows.Forms.PaintEventArgs e)
-        {
-            base.OnPaint(e);
-
-            var clientRectangle = new Rectangle(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width - 1, ClientRectangle.Height - 1);
-
-            var graphics = e.Graphics;
-
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            graphics.Clear(Parent.BackColor);
-
-            //graphics.DrawRectangle(Pens.Red, clientRectangle);
-
-            var boxRectangle = new Rectangle(4, 5, 62, 27);
-            var radius = boxRectangle.Radius(24);
-
-            if (!_toggled)
+            using (var g = CreateGraphics())
             {
-                using (var pen = new Pen(ColorScheme.BorderColor))
-                {
-                    graphics.FillPath(new SolidBrush(ColorScheme.ForeColor.Alpha(5)), radius);
-                    graphics.DrawPath(pen, radius);
-
-                    graphics.FillEllipse(new SolidBrush(pen.Color), 7, 7, 22, 22);
-                    graphics.DrawEllipse(pen, 7, 7, 22, 22);
-                }
-            }
-            else
-            {
-                using (var pen = new Pen(ColorScheme.ForeColor))
-                {
-                    graphics.DrawPath(pen, radius);
-                    graphics.FillEllipse(new SolidBrush(pen.Color), 40, 7, 22, 22);
-                    graphics.DrawEllipse(pen, 40, 7, 22, 22);
-                }
+                proposedSize = new Size(int.MaxValue, int.MaxValue);
+                preferredSize = TextRenderer.MeasureText(g, Text, Font, proposedSize, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+                preferredSize.Width += 16;
             }
 
-            
-            
-
+            return preferredSize;
         }
     }
 }
