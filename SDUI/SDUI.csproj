@@ -84,6 +84,9 @@
     <Compile Include="Controls\MenuStrip.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Controls\NumUpDown.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Controls\Panel.cs">
       <SubType>Component</SubType>
     </Compile>

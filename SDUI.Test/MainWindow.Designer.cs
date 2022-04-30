@@ -153,6 +153,7 @@ namespace SDUI.Test
             this.pasteToolStripButton = new System.Windows.Forms.ToolStripButton();
             this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.helpToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.numUpDown1 = new SDUI.Controls.NumUpDown();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -166,6 +167,7 @@ namespace SDUI.Test
             this.tabPage2.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.toolStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl1
@@ -185,6 +187,7 @@ namespace SDUI.Test
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.numUpDown1);
             this.tabPage1.Controls.Add(this.button4);
             this.tabPage1.Controls.Add(this.button2);
             this.tabPage1.Controls.Add(this.label4);
@@ -1364,6 +1367,16 @@ namespace SDUI.Test
             this.helpToolStripButton.Size = new System.Drawing.Size(23, 22);
             this.helpToolStripButton.Text = "He&lp";
             // 
+            // numUpDown1
+            // 
+            this.numUpDown1.BackColor = System.Drawing.Color.White;
+            this.numUpDown1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numUpDown1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.numUpDown1.Location = new System.Drawing.Point(222, 372);
+            this.numUpDown1.Name = "numUpDown1";
+            this.numUpDown1.Size = new System.Drawing.Size(73, 23);
+            this.numUpDown1.TabIndex = 28;
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -1394,6 +1407,7 @@ namespace SDUI.Test
             this.menuStrip1.PerformLayout();
             this.toolStrip1.ResumeLayout(false);
             this.toolStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1518,5 +1532,6 @@ namespace SDUI.Test
         private ToolStripButton helpToolStripButton;
         private Controls.ChatBubble chatBubble1;
         private Controls.ChatBubble chatBubble2;
+        private Controls.NumUpDown numUpDown1;
     }
 }
