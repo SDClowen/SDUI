@@ -130,6 +130,10 @@ namespace SDUI.Controls
             if (DesignMode)
                 return;
 
+            // Otherwise, it will not be applied.
+            if (StartPosition == FormStartPosition.CenterScreen)
+                CenterToScreen();
+
             BackColor = ColorScheme.BackColor;
             ForeColor = ColorScheme.ForeColor;
             ChangeControlsTheme(this);

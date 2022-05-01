@@ -32,9 +32,9 @@ namespace SDUI.Test
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
-            System.Windows.Forms.ListViewItem listViewItem4 = new System.Windows.Forms.ListViewItem("123412341234");
-            System.Windows.Forms.ListViewItem listViewItem5 = new System.Windows.Forms.ListViewItem("123412341324");
-            System.Windows.Forms.ListViewItem listViewItem6 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("123412341234");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
             "123412341324"}, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -446,19 +446,21 @@ namespace SDUI.Test
             // 
             // radio2
             // 
+            this.radio2.AutoSize = true;
             this.radio2.Checked = false;
             this.radio2.Location = new System.Drawing.Point(829, 342);
             this.radio2.Name = "radio2";
-            this.radio2.Size = new System.Drawing.Size(103, 29);
+            this.radio2.Size = new System.Drawing.Size(65, 15);
             this.radio2.TabIndex = 24;
             this.radio2.Text = "radio1";
             // 
             // radio1
             // 
+            this.radio1.AutoSize = true;
             this.radio1.Checked = false;
             this.radio1.Location = new System.Drawing.Point(663, 342);
             this.radio1.Name = "radio1";
-            this.radio1.Size = new System.Drawing.Size(103, 22);
+            this.radio1.Size = new System.Drawing.Size(65, 15);
             this.radio1.TabIndex = 24;
             this.radio1.Text = "radio1";
             // 
@@ -631,22 +633,24 @@ namespace SDUI.Test
             // 
             // checkBox4
             // 
+            this.checkBox4.AutoSize = true;
             this.checkBox4.BackColor = System.Drawing.Color.Transparent;
             this.checkBox4.Checked = true;
             this.checkBox4.Location = new System.Drawing.Point(16, 238);
             this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Size = new System.Drawing.Size(120, 23);
+            this.checkBox4.Size = new System.Drawing.Size(80, 15);
             this.checkBox4.TabIndex = 13;
             this.checkBox4.Text = "checkBox1";
             // 
             // checkBox3
             // 
+            this.checkBox3.AutoSize = true;
             this.checkBox3.BackColor = System.Drawing.Color.Transparent;
             this.checkBox3.Checked = false;
             this.checkBox3.Dock = System.Windows.Forms.DockStyle.Top;
             this.checkBox3.Location = new System.Drawing.Point(0, 0);
             this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Size = new System.Drawing.Size(233, 25);
+            this.checkBox3.Size = new System.Drawing.Size(83, 15);
             this.checkBox3.TabIndex = 13;
             this.checkBox3.Text = "Toggle Title";
             this.checkBox3.Click += new System.EventHandler(this.checkBox3_Click);
@@ -800,16 +804,16 @@ namespace SDUI.Test
             this.listView3.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.listView3.FullRowSelect = true;
             this.listView3.HideSelection = false;
-            listViewItem4.Checked = true;
-            listViewItem4.StateImageIndex = 1;
-            listViewItem5.Checked = true;
-            listViewItem5.StateImageIndex = 1;
-            listViewItem6.Checked = true;
-            listViewItem6.StateImageIndex = 1;
+            listViewItem1.Checked = true;
+            listViewItem1.StateImageIndex = 1;
+            listViewItem2.Checked = true;
+            listViewItem2.StateImageIndex = 1;
+            listViewItem3.Checked = true;
+            listViewItem3.StateImageIndex = 1;
             this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem4,
-            listViewItem5,
-            listViewItem6});
+            listViewItem1,
+            listViewItem2,
+            listViewItem3});
             this.listView3.Location = new System.Drawing.Point(3, 58);
             this.listView3.Name = "listView3";
             this.listView3.Size = new System.Drawing.Size(269, 129);
@@ -1580,6 +1584,7 @@ namespace SDUI.Test
             this.contextMenuStrip1.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
+            this.panel8.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
