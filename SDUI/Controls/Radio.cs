@@ -47,11 +47,11 @@ namespace SDUI.Controls
 
         public Radio()
         {
-            AutoSize = true;
-
             SetStyle(ControlStyles.SupportsTransparentBackColor |
                 ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.UserPaint, true);
+
+            AutoSize = true;
         }
 
         protected override void OnPaint(PaintEventArgs e)

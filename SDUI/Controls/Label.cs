@@ -8,6 +8,7 @@ namespace SDUI.Controls
         public Label()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+            AutoSize = true;
         }
 
         protected override void OnSizeChanged(EventArgs e)
