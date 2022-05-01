@@ -79,7 +79,6 @@ namespace SDUI.Controls
 
             if (m.Msg == WM_NCHITTEST && (int)m.Result == HTCLIENT)     // drag the form
                 m.Result = (IntPtr)HTCAPTION;
-
         }
 
         public void ChangeControlsTheme(Control control)
@@ -113,19 +112,36 @@ namespace SDUI.Controls
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
+            if (DesignMode)
+                return;
+            
+            if (FormBorderStyle == FormBorderStyle.Sizable)
+                return;
+
+            _tempBorderStyle = this.FormBorderStyle;
+            FormBorderStyle = FormBorderStyle.Sizable;
+
         }
 
+        private FormBorderStyle _tempBorderStyle;
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-
             if (DesignMode)
                 return;
 
             BackColor = ColorScheme.BackColor;
             ForeColor = ColorScheme.ForeColor;
             ChangeControlsTheme(this);
+        }
 
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            if (DesignMode)
+                return;
+
+            FormBorderStyle = _tempBorderStyle;
             Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
         }
     }

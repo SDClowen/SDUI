@@ -23,7 +23,7 @@ namespace SDUI.Controls
         public override Color BackColor
         {
             get => Color.Transparent;
-            set => base.BackColor = value;
+            set => base.BackColor = Color.Transparent;
         }
 
         public GroupBox()

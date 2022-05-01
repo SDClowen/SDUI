@@ -26,6 +26,12 @@ namespace SDUI.Controls
             }
         }
 
+        public override Color BackColor 
+        { 
+            get => Color.Transparent; 
+            set => base.BackColor = Color.Transparent; 
+        }
+
         public ToggleButton()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
@@ -39,7 +45,7 @@ namespace SDUI.Controls
                 using (var graphics = Graphics.FromImage(bitmap))
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    graphics.Clear(Color.Transparent);
+                    graphics.Clear(BackColor);
 
                     //var clientRectangle = new Rectangle(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width - 1, ClientRectangle.Height - 1);
                     //graphics.DrawRectangle(Pens.Red, clientRectangle);

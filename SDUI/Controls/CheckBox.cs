@@ -60,7 +60,7 @@ namespace SDUI.Controls
 
             var boxRect = new Rectangle(0, Height / 2 - 6, 14, 14);
 
-            using (var path = boxRect.Radius(4))
+            using (var path = boxRect.Radius(1))
             {
                 if (Checked)
                 {

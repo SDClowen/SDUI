@@ -83,7 +83,7 @@ namespace SDUI.Controls
             }
         }
 
-        private int _radius = 5;
+        private int _radius = 0;
         public int Radius
         {
             get
@@ -122,6 +122,12 @@ namespace SDUI.Controls
             }
         }
 
+        public override Color BackColor 
+        { 
+            get => Color.Transparent; 
+            set => base.BackColor = Color.Transparent; 
+        }
+
         public ProgressBar()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
@@ -144,7 +150,7 @@ namespace SDUI.Controls
                 using (var graphics = Graphics.FromImage(bitmap))
                 {
                     graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    graphics.Clear(Color.Transparent);
+                    graphics.Clear(BackColor);
 
                     var linearGradientBrush = new LinearGradientBrush(new Rectangle(0, 0, (intValue <= 0 ? intValue - 1 : 1), Height - 1), _gradient[0], _gradient[1], 90);
                     var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));

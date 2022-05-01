@@ -71,7 +71,6 @@ namespace SDUI.Test
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
-            
         }
 
         private void buttonOpenInputDialog_Click(object sender, EventArgs e)
@@ -134,6 +133,16 @@ namespace SDUI.Test
             {
                 FormBorderStyle = FormBorderStyle.None;
             }
+        }
+
+        private void listView3_ItemCheck(object sender, ItemCheckEventArgs e)
+        {
+            //MessageBox.Show($"Current Value: {e.CurrentValue} New Value: {e.NewValue}");
+        }
+
+        private void listView3_ItemChecked(object sender, ItemCheckedEventArgs e)
+        {
+            //MessageBox.Show($"{e} \n Text: {e.Item.Text}");
         }
     }
 }

@@ -71,7 +71,7 @@ namespace SDUI.Controls
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            var color = ColorScheme.BackColor.Determine();
+            var color = ColorScheme.ForeColor;
 
             Brush gradient = null;
             switch (_mouseState)
