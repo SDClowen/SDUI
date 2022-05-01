@@ -34,7 +34,7 @@
             this.btnOK = new SDUI.Controls.Button();
             this.btnCancel = new SDUI.Controls.Button();
             this.comboBox = new SDUI.Controls.ComboBox();
-            this.numValue = new System.Windows.Forms.NumericUpDown();
+            this.numValue = new NumUpDown();
             this.panel1 = new SDUI.Controls.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.numValue)).BeginInit();
             this.panel1.SuspendLayout();
