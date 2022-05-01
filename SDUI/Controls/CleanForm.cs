@@ -72,8 +72,6 @@ namespace SDUI.Controls
 
                     }
                     break;
-                default:
-                    break;
             }
             base.WndProc(ref m);
 
@@ -109,21 +107,21 @@ namespace SDUI.Controls
             Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
         }
 
+        private FormBorderStyle _tempBorderStyle;
+
         protected override void OnHandleCreated(EventArgs e)
         {
             base.OnHandleCreated(e);
             if (DesignMode)
                 return;
             
-            if (FormBorderStyle == FormBorderStyle.Sizable)
-                return;
+            BackColor = ColorScheme.BackColor;
+            ForeColor = ColorScheme.ForeColor;
 
             _tempBorderStyle = this.FormBorderStyle;
             FormBorderStyle = FormBorderStyle.Sizable;
-
         }
 
-        private FormBorderStyle _tempBorderStyle;
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
@@ -134,9 +132,9 @@ namespace SDUI.Controls
             if (StartPosition == FormStartPosition.CenterScreen)
                 CenterToScreen();
 
-            BackColor = ColorScheme.BackColor;
+            /*BackColor = ColorScheme.BackColor;
             ForeColor = ColorScheme.ForeColor;
-            ChangeControlsTheme(this);
+            ChangeControlsTheme(this);*/
         }
 
         protected override void OnShown(EventArgs e)
@@ -147,6 +145,12 @@ namespace SDUI.Controls
 
             FormBorderStyle = _tempBorderStyle;
             Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            //FormBorderStyle = FormBorderStyle.Sizable;
         }
     }
 }
