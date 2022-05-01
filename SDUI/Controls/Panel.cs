@@ -46,6 +46,8 @@ namespace SDUI.Controls
                      ControlStyles.OptimizedDoubleBuffer |
                      ControlStyles.ResizeRedraw |
                      ControlStyles.UserPaint, true);
+
+            UpdateStyles();
         }
 
         protected override void OnParentBackColorChanged(EventArgs e)

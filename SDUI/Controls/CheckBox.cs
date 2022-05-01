@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class CheckBox : Control
+    public class CheckBox : Label
     {
         public event EventHandler CheckedChanged;
 
@@ -30,6 +30,7 @@ namespace SDUI.Controls
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
+            AutoSize = true;
         }
 
         protected override void OnPaint(PaintEventArgs e)
@@ -58,7 +59,7 @@ namespace SDUI.Controls
                 borderColor = ColorScheme.BorderColor;
             }
 
-            var boxRect = new Rectangle(0, Height / 2 - 6, 14, 14);
+            var boxRect = new Rectangle(0, Height / 2 - 7, 14, 14);
 
             using (var path = boxRect.Radius(1))
             {
@@ -78,9 +79,8 @@ namespace SDUI.Controls
                 }
             }
 
-            var textRect = new Rectangle(16, 0, Width - 16, Height);
+            var textRect = new Rectangle(16, -1, Width - 16, Height);
             TextRenderer.DrawText(e.Graphics, Text, Font, textRect, foreColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
-
         }
 
         protected override void OnGotFocus(EventArgs e)

@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public partial class InfoControl : UserControl
+    public partial class InfoControl : Control
     {
         public InfoControl()
         {

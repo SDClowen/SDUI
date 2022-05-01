@@ -31,6 +31,8 @@ namespace SDUI.Controls
             ListViewItemSorter = LvwColumnSorter;
             View = View.Details;
             FullRowSelect = true;
+
+            UpdateStyles();
         }
 
         protected override void OnSelectedIndexChanged(EventArgs e)

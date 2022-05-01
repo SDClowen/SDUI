@@ -7,7 +7,7 @@ namespace SDUI.Controls
     {
         public Label()
         {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
+            SetStyle(ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor, true);
         }
 
         protected override void OnSizeChanged(EventArgs e)

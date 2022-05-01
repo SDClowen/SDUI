@@ -67,7 +67,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\InfoControl.cs">
-      <SubType>UserControl</SubType>
+      <SubType>Component</SubType>
     </Compile>
     <Compile Include="Controls\InputDailog.cs">
       <SubType>Form</SubType>

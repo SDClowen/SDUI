@@ -33,6 +33,7 @@ namespace SDUI.Controls
                       ControlStyles.ResizeRedraw |
                       ControlStyles.UserPaint, true);
 
+            UpdateStyles();
             this.DoubleBuffered = true;
             this.BackColor = Color.Transparent;
             this.Padding = new Padding(3, 10, 3, 3);

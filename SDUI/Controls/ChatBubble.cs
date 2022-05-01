@@ -63,6 +63,8 @@ namespace SDUI.Controls
             BackColor = Color.Transparent;
             ForeColor = Color.FromArgb(52, 52, 52);
             InitializeShape();
+
+            UpdateStyles();
         }
 
         private void InitializeShape()

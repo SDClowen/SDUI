@@ -55,6 +55,7 @@ namespace SDUI.Test
             this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.infoControl1 = new SDUI.Controls.InfoControl();
             this.button4 = new SDUI.Controls.Button();
             this.button2 = new SDUI.Controls.Button();
             this.label4 = new SDUI.Controls.Label();
@@ -70,6 +71,7 @@ namespace SDUI.Test
             this.panel5 = new SDUI.Controls.Panel();
             this.panel8 = new SDUI.Controls.Panel();
             this.toggleButton1 = new SDUI.Controls.ToggleButton();
+            this.shapeProgressBar2 = new SDUI.Controls.ShapeProgressBar();
             this.shapeProgressBar1 = new SDUI.Controls.ShapeProgressBar();
             this.chatBubble2 = new SDUI.Controls.ChatBubble();
             this.chatBubble1 = new SDUI.Controls.ChatBubble();
@@ -79,7 +81,6 @@ namespace SDUI.Test
             this.checkBox3 = new SDUI.Controls.CheckBox();
             this.button1 = new SDUI.Controls.Button();
             this.label3 = new SDUI.Controls.Label();
-            this.progressBar9 = new SDUI.Controls.ProgressBar();
             this.panel7 = new SDUI.Controls.Panel();
             this.panel4 = new SDUI.Controls.Panel();
             this.label2 = new SDUI.Controls.Label();
@@ -183,17 +184,18 @@ namespace SDUI.Test
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl1.Location = new System.Drawing.Point(1, 25);
+            this.tabControl1.Location = new System.Drawing.Point(1, 50);
             this.tabControl1.Margin = new System.Windows.Forms.Padding(0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1271, 652);
+            this.tabControl1.Size = new System.Drawing.Size(1271, 627);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
             // 
-            this.tabPage1.BackColor = System.Drawing.Color.Black;
+            this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.infoControl1);
             this.tabPage1.Controls.Add(this.button4);
             this.tabPage1.Controls.Add(this.button2);
             this.tabPage1.Controls.Add(this.label4);
@@ -232,7 +234,7 @@ namespace SDUI.Test
             this.tabPage1.Location = new System.Drawing.Point(4, 25);
             this.tabPage1.Margin = new System.Windows.Forms.Padding(0);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Size = new System.Drawing.Size(1263, 623);
+            this.tabPage1.Size = new System.Drawing.Size(1263, 598);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
@@ -364,6 +366,15 @@ namespace SDUI.Test
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
             // 
+            // infoControl1
+            // 
+            this.infoControl1.Font = new System.Drawing.Font("Segoe UI Semibold", 13.37F);
+            this.infoControl1.Location = new System.Drawing.Point(20, 431);
+            this.infoControl1.Name = "infoControl1";
+            this.infoControl1.Size = new System.Drawing.Size(280, 75);
+            this.infoControl1.TabIndex = 28;
+            this.infoControl1.Text = "This is a info control";
+            // 
             // button4
             // 
             this.button4.Color = System.Drawing.Color.Transparent;
@@ -447,40 +458,43 @@ namespace SDUI.Test
             this.radio1.Checked = false;
             this.radio1.Location = new System.Drawing.Point(663, 342);
             this.radio1.Name = "radio1";
-            this.radio1.Size = new System.Drawing.Size(103, 29);
+            this.radio1.Size = new System.Drawing.Size(103, 22);
             this.radio1.TabIndex = 24;
             this.radio1.Text = "radio1";
             // 
             // checkBox6
             // 
+            this.checkBox6.AutoSize = true;
             this.checkBox6.BackColor = System.Drawing.Color.Transparent;
             this.checkBox6.Checked = false;
             this.checkBox6.Location = new System.Drawing.Point(515, 370);
             this.checkBox6.Name = "checkBox6";
-            this.checkBox6.Size = new System.Drawing.Size(87, 25);
+            this.checkBox6.Size = new System.Drawing.Size(80, 15);
             this.checkBox6.TabIndex = 14;
             this.checkBox6.Text = "checkBox6";
             // 
             // checkBox2
             // 
+            this.checkBox2.AutoSize = true;
             this.checkBox2.BackColor = System.Drawing.Color.Transparent;
             this.checkBox2.Checked = false;
             this.checkBox2.Enabled = false;
-            this.checkBox2.Location = new System.Drawing.Point(515, 342);
+            this.checkBox2.Location = new System.Drawing.Point(515, 349);
             this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(142, 25);
+            this.checkBox2.Size = new System.Drawing.Size(80, 15);
             this.checkBox2.TabIndex = 13;
             this.checkBox2.Text = "checkBox1";
             // 
             // checkBox1
             // 
+            this.checkBox1.AutoSize = true;
             this.checkBox1.BackColor = System.Drawing.Color.Transparent;
             this.checkBox1.Checked = false;
             this.checkBox1.Location = new System.Drawing.Point(663, 370);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(202, 25);
+            this.checkBox1.Size = new System.Drawing.Size(133, 15);
             this.checkBox1.TabIndex = 13;
-            this.checkBox1.Text = "checkBox1";
+            this.checkBox1.Text = "checkBox1 asdfadfas";
             // 
             // panel6
             // 
@@ -507,6 +521,7 @@ namespace SDUI.Test
             this.panel8.BackColor = System.Drawing.Color.Transparent;
             this.panel8.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
             this.panel8.Controls.Add(this.toggleButton1);
+            this.panel8.Controls.Add(this.shapeProgressBar2);
             this.panel8.Controls.Add(this.shapeProgressBar1);
             this.panel8.Controls.Add(this.chatBubble2);
             this.panel8.Controls.Add(this.chatBubble1);
@@ -516,12 +531,11 @@ namespace SDUI.Test
             this.panel8.Controls.Add(this.checkBox3);
             this.panel8.Controls.Add(this.button1);
             this.panel8.Controls.Add(this.label3);
-            this.panel8.Controls.Add(this.progressBar9);
             this.panel8.Dock = System.Windows.Forms.DockStyle.Right;
             this.panel8.Location = new System.Drawing.Point(1030, 0);
             this.panel8.Name = "panel8";
             this.panel8.Radius = 0;
-            this.panel8.Size = new System.Drawing.Size(233, 623);
+            this.panel8.Size = new System.Drawing.Size(233, 598);
             this.panel8.TabIndex = 12;
             // 
             // toggleButton1
@@ -534,17 +548,38 @@ namespace SDUI.Test
             this.toggleButton1.TabIndex = 28;
             this.toggleButton1.Text = "toggleButton1";
             // 
+            // shapeProgressBar2
+            // 
+            this.shapeProgressBar2.BackColor = System.Drawing.Color.Transparent;
+            this.shapeProgressBar2.DrawHatch = true;
+            this.shapeProgressBar2.Font = new System.Drawing.Font("Segoe UI", 15F);
+            this.shapeProgressBar2.Gradient = new System.Drawing.Color[] {
+        System.Drawing.Color.Maroon,
+        System.Drawing.Color.Red};
+            this.shapeProgressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
+            this.shapeProgressBar2.Location = new System.Drawing.Point(122, 453);
+            this.shapeProgressBar2.Maximum = ((long)(100));
+            this.shapeProgressBar2.MinimumSize = new System.Drawing.Size(100, 100);
+            this.shapeProgressBar2.Name = "shapeProgressBar2";
+            this.shapeProgressBar2.Size = new System.Drawing.Size(100, 100);
+            this.shapeProgressBar2.TabIndex = 30;
+            this.shapeProgressBar2.Text = "shapeProgressBar1";
+            this.shapeProgressBar2.Value = ((long)(52));
+            // 
             // shapeProgressBar1
             // 
             this.shapeProgressBar1.BackColor = System.Drawing.Color.Transparent;
+            this.shapeProgressBar1.DrawHatch = false;
             this.shapeProgressBar1.Font = new System.Drawing.Font("Segoe UI", 15F);
-            this.shapeProgressBar1.GradientBegin = System.Drawing.Color.Maroon;
-            this.shapeProgressBar1.GradientEnd = System.Drawing.Color.Red;
+            this.shapeProgressBar1.Gradient = new System.Drawing.Color[] {
+        System.Drawing.Color.Maroon,
+        System.Drawing.Color.Red};
+            this.shapeProgressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
             this.shapeProgressBar1.Location = new System.Drawing.Point(16, 453);
             this.shapeProgressBar1.Maximum = ((long)(100));
             this.shapeProgressBar1.MinimumSize = new System.Drawing.Size(100, 100);
             this.shapeProgressBar1.Name = "shapeProgressBar1";
-            this.shapeProgressBar1.Size = new System.Drawing.Size(130, 130);
+            this.shapeProgressBar1.Size = new System.Drawing.Size(100, 100);
             this.shapeProgressBar1.TabIndex = 30;
             this.shapeProgressBar1.Text = "shapeProgressBar1";
             this.shapeProgressBar1.Value = ((long)(52));
@@ -577,9 +612,9 @@ namespace SDUI.Test
             // 
             // numUpDown1
             // 
-            this.numUpDown1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(25)))), ((int)(((byte)(25)))));
+            this.numUpDown1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
             this.numUpDown1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.numUpDown1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.numUpDown1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.numUpDown1.Location = new System.Drawing.Point(16, 402);
             this.numUpDown1.Name = "numUpDown1";
             this.numUpDown1.Size = new System.Drawing.Size(73, 23);
@@ -635,27 +670,6 @@ namespace SDUI.Test
             this.label3.Size = new System.Drawing.Size(205, 122);
             this.label3.TabIndex = 11;
             this.label3.Text = resources.GetString("label3.Text");
-            // 
-            // progressBar9
-            // 
-            this.progressBar9.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar9.DrawHatch = false;
-            this.progressBar9.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Maroon,
-        System.Drawing.Color.Red};
-            this.progressBar9.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
-            this.progressBar9.Location = new System.Drawing.Point(19, 431);
-            this.progressBar9.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar9.Maximum = ((long)(100));
-            this.progressBar9.Name = "progressBar9";
-            this.progressBar9.PercentIndices = 2;
-            this.progressBar9.Radius = 8;
-            this.progressBar9.ShowAsPercent = true;
-            this.progressBar9.ShowValue = true;
-            this.progressBar9.Size = new System.Drawing.Size(179, 16);
-            this.progressBar9.TabIndex = 3;
-            this.progressBar9.Text = "70%";
-            this.progressBar9.Value = ((long)(70));
             // 
             // panel7
             // 
@@ -1144,13 +1158,13 @@ namespace SDUI.Test
             // 
             // tabPage2
             // 
-            this.tabPage2.BackColor = System.Drawing.Color.Black;
+            this.tabPage2.BackColor = System.Drawing.Color.White;
             this.tabPage2.Controls.Add(this.listView1);
             this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage2.Size = new System.Drawing.Size(1263, 623);
+            this.tabPage2.Size = new System.Drawing.Size(1263, 598);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
@@ -1170,7 +1184,7 @@ namespace SDUI.Test
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
             this.listView1.ShowItemToolTips = true;
-            this.listView1.Size = new System.Drawing.Size(1255, 617);
+            this.listView1.Size = new System.Drawing.Size(1255, 592);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -1218,7 +1232,7 @@ namespace SDUI.Test
             this.printPreviewToolStripMenuItem,
             this.toolStripSeparator2,
             this.exitToolStripMenuItem});
-            this.fileToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.fileToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "&File";
@@ -1305,7 +1319,7 @@ namespace SDUI.Test
             this.pasteToolStripMenuItem,
             this.toolStripSeparator4,
             this.selectAllToolStripMenuItem});
-            this.editToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.editToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.editToolStripMenuItem.Name = "editToolStripMenuItem";
             this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
             this.editToolStripMenuItem.Text = "&Edit";
@@ -1378,7 +1392,7 @@ namespace SDUI.Test
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.customizeToolStripMenuItem,
             this.optionsToolStripMenuItem});
-            this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.toolsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(46, 20);
             this.toolsToolStripMenuItem.Text = "&Tools";
@@ -1405,7 +1419,7 @@ namespace SDUI.Test
             this.searchToolStripMenuItem,
             this.toolStripSeparator5,
             this.aboutToolStripMenuItem});
-            this.helpToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(255)))), ((int)(((byte)(255)))));
+            this.helpToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.helpToolStripMenuItem.Text = "&Help";
@@ -1445,7 +1459,6 @@ namespace SDUI.Test
             // 
             // toolStrip1
             // 
-            this.toolStrip1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
             this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.newToolStripButton,
@@ -1458,7 +1471,7 @@ namespace SDUI.Test
             this.pasteToolStripButton,
             this.toolStripSeparator9,
             this.helpToolStripButton});
-            this.toolStrip1.Location = new System.Drawing.Point(1, 652);
+            this.toolStrip1.Location = new System.Drawing.Point(1, 25);
             this.toolStrip1.Name = "toolStrip1";
             this.toolStrip1.Size = new System.Drawing.Size(1271, 25);
             this.toolStrip1.TabIndex = 2;
@@ -1551,8 +1564,8 @@ namespace SDUI.Test
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1273, 678);
-            this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.tabControl1);
+            this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -1708,7 +1721,8 @@ namespace SDUI.Test
         private Controls.ProgressBar progressBar7;
         private Controls.ProgressBar progressBar6;
         private Controls.ProgressBar progressBar5;
-        private Controls.ProgressBar progressBar9;
         private Controls.ToggleButton toggleButton1;
+        private Controls.InfoControl infoControl1;
+        private Controls.ShapeProgressBar shapeProgressBar2;
     }
 }

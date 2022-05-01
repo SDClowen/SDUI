@@ -12,6 +12,8 @@ namespace SDUI.Controls
         public TabControl()
         {
             SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+
+            UpdateStyles();
         }
 
         private Padding _border = new Padding(1);
