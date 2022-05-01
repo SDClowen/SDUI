@@ -54,19 +54,6 @@ namespace SDUI.Test
             }
 
             listView1.SetGroupInfo(listView1.Handle, 1, NativeMethods.LVGS_COLLAPSIBLE);
-
-            for (int i = 0; i < 3; i++)
-            {
-                var text = "checkBox5" + i;
-                var size = TextRenderer.MeasureText(text, Font);
-                //var checkbox = new System.Windows.Forms.CheckBox();
-                var checkbox = new SDUI.Controls.CheckBox();
-                checkbox.Name = "checkBox5" + i;
-                checkbox.Size = new System.Drawing.Size(groupBox3.Width, 24);
-                checkbox.Text = text;
-                checkbox.Dock = DockStyle.Top;
-                groupBox3.Controls.Add(checkbox);
-            }
         }
 
         private void MainWindow_Load(object sender, EventArgs e)

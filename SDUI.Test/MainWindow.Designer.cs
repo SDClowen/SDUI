@@ -32,9 +32,9 @@ namespace SDUI.Test
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
-            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("123412341234");
-            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem10 = new System.Windows.Forms.ListViewItem("123412341234");
+            System.Windows.Forms.ListViewItem listViewItem11 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem12 = new System.Windows.Forms.ListViewItem(new string[] {
             "123412341324"}, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -425,7 +425,7 @@ namespace SDUI.Test
             // 
             this.groupBox3.BackColor = System.Drawing.Color.Transparent;
             this.groupBox3.Controls.Add(this.richTextBox1);
-            this.groupBox3.Location = new System.Drawing.Point(660, 405);
+            this.groupBox3.Location = new System.Drawing.Point(737, 453);
             this.groupBox3.Name = "groupBox3";
             this.groupBox3.Padding = new System.Windows.Forms.Padding(1, 8, 1, 1);
             this.groupBox3.Radius = 2;
@@ -504,7 +504,7 @@ namespace SDUI.Test
             this.panel6.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
             this.panel6.Location = new System.Drawing.Point(23, 275);
             this.panel6.Name = "panel6";
-            this.panel6.Radius = 1;
+            this.panel6.Radius = 0;
             this.panel6.Size = new System.Drawing.Size(63, 45);
             this.panel6.TabIndex = 12;
             // 
@@ -514,7 +514,7 @@ namespace SDUI.Test
             this.panel5.Border = new System.Windows.Forms.Padding(0, 0, 1, 0);
             this.panel5.Location = new System.Drawing.Point(113, 275);
             this.panel5.Name = "panel5";
-            this.panel5.Radius = 1;
+            this.panel5.Radius = 0;
             this.panel5.Size = new System.Drawing.Size(63, 45);
             this.panel5.TabIndex = 12;
             // 
@@ -669,9 +669,10 @@ namespace SDUI.Test
             // 
             // label3
             // 
+            this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(13, 111);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(205, 122);
+            this.label3.Size = new System.Drawing.Size(1957, 15);
             this.label3.TabIndex = 11;
             this.label3.Text = resources.GetString("label3.Text");
             // 
@@ -681,7 +682,7 @@ namespace SDUI.Test
             this.panel7.Border = new System.Windows.Forms.Padding(0, 0, 0, 1);
             this.panel7.Location = new System.Drawing.Point(293, 275);
             this.panel7.Name = "panel7";
-            this.panel7.Radius = 1;
+            this.panel7.Radius = 0;
             this.panel7.Size = new System.Drawing.Size(63, 45);
             this.panel7.TabIndex = 12;
             // 
@@ -691,23 +692,25 @@ namespace SDUI.Test
             this.panel4.Border = new System.Windows.Forms.Padding(0, 1, 0, 0);
             this.panel4.Location = new System.Drawing.Point(203, 275);
             this.panel4.Name = "panel4";
-            this.panel4.Radius = 1;
+            this.panel4.Radius = 0;
             this.panel4.Size = new System.Drawing.Size(63, 45);
             this.panel4.TabIndex = 12;
             // 
             // label2
             // 
-            this.label2.Location = new System.Drawing.Point(363, 202);
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(491, 238);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(275, 122);
+            this.label2.Size = new System.Drawing.Size(444, 75);
             this.label2.TabIndex = 11;
             this.label2.Text = resources.GetString("label2.Text");
             // 
             // label1
             // 
+            this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(491, 215);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(114, 15);
+            this.label1.Size = new System.Drawing.Size(0, 15);
             this.label1.TabIndex = 10;
             // 
             // panel2
@@ -804,16 +807,16 @@ namespace SDUI.Test
             this.listView3.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.listView3.FullRowSelect = true;
             this.listView3.HideSelection = false;
-            listViewItem1.Checked = true;
-            listViewItem1.StateImageIndex = 1;
-            listViewItem2.Checked = true;
-            listViewItem2.StateImageIndex = 1;
-            listViewItem3.Checked = true;
-            listViewItem3.StateImageIndex = 1;
+            listViewItem10.Checked = true;
+            listViewItem10.StateImageIndex = 1;
+            listViewItem11.Checked = true;
+            listViewItem11.StateImageIndex = 1;
+            listViewItem12.Checked = true;
+            listViewItem12.StateImageIndex = 1;
             this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1,
-            listViewItem2,
-            listViewItem3});
+            listViewItem10,
+            listViewItem11,
+            listViewItem12});
             this.listView3.Location = new System.Drawing.Point(3, 58);
             this.listView3.Name = "listView3";
             this.listView3.Size = new System.Drawing.Size(269, 129);
@@ -1573,6 +1576,7 @@ namespace SDUI.Test
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.MinimumSize = new System.Drawing.Size(1273, 678);
             this.Name = "MainWindow";
             this.Padding = new System.Windows.Forms.Padding(1);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
