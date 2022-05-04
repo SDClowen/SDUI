@@ -55,8 +55,8 @@ namespace SDUI.Controls
 
             if (_aeroEnabled)
             {
-                var v = 2;
-                DwmSetWindowAttribute(this.Handle, 2, ref v, 4);
+                //var v = 2;
+                //DwmSetWindowAttribute(this.Handle, 2, ref v, 4);
                 var _glassMargins = new MARGINS()
                 {
                     Top = 2,
