@@ -146,10 +146,10 @@
             this.panel1.Controls.Add(this.btnOK);
             this.panel1.Controls.Add(this.btnCancel);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 105);
+            this.panel1.Location = new System.Drawing.Point(0, 99);
             this.panel1.Name = "panel1";
             this.panel1.Radius = 0;
-            this.panel1.Size = new System.Drawing.Size(323, 39);
+            this.panel1.Size = new System.Drawing.Size(317, 39);
             this.panel1.TabIndex = 6;
             // 
             // InputDialog
@@ -157,7 +157,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(323, 144);
+            this.ClientSize = new System.Drawing.Size(317, 138);
+            this.ControlBox = false;
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.numValue);
             this.Controls.Add(this.comboBox);
@@ -166,14 +167,16 @@
             this.Controls.Add(this.lblTitle);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.Black;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.MaximumSize = new System.Drawing.Size(323, 144);
             this.MinimizeBox = false;
             this.MinimumSize = new System.Drawing.Size(323, 144);
             this.Name = "InputDialog";
+            this.ShowIcon = false;
+            this.ShowInTaskbar = false;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Input";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.InputDialog_FormClosing);
             ((System.ComponentModel.ISupportInitialize)(this.numValue)).EndInit();
             this.panel1.ResumeLayout(false);

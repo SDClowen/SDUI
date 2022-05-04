@@ -52,21 +52,6 @@ namespace SDUI.Controls
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
-
-            if (_aeroEnabled)
-            {
-                //var v = 2;
-                //DwmSetWindowAttribute(this.Handle, 2, ref v, 4);
-                var _glassMargins = new MARGINS()
-                {
-                    Top = 2,
-                    Left = 2,
-                    Bottom = 2,
-                    Right = 2
-                };
-                DwmExtendFrameIntoClientArea(this.Handle, ref _glassMargins);
-            }
-
             if (DesignMode)
                 return;
 
@@ -80,12 +65,15 @@ namespace SDUI.Controls
             switch (m.Msg)
             {
                 case WM_NCCALCSIZE:
-                    return;
-                /*case WM_NCPAINT:                        // box shadow
+                    if (!DesignMode && FormBorderStyle == FormBorderStyle.FixedSingle)
+                        return;
+                    else
+                        break;
+                case WM_NCPAINT:                        // box shadow
                     if (_aeroEnabled)
                     {
-                        //var v = 2;
-                        //DwmSetWindowAttribute(this.Handle, 2, ref v, 4);
+                        var v = 2;
+                        DwmSetWindowAttribute(Handle, 2, ref v, 4);
                         var margins = new MARGINS()
                         {
                             Bottom = 1,
@@ -97,7 +85,7 @@ namespace SDUI.Controls
                         DwmExtendFrameIntoClientArea(this.Handle, ref margins);
     
                     }
-                    break;*/
+                    break;
             }
 
             base.WndProc(ref m);
