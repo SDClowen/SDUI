@@ -14,7 +14,6 @@ namespace SDUI.Controls
 
         public CleanForm()
         {
-            this.FormBorderStyle = FormBorderStyle.None;
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -36,43 +35,71 @@ namespace SDUI.Controls
                 if (!_aeroEnabled)
                     cp.ClassStyle |= CS_DROPSHADOW;
 
+                cp.Style |= WS_MINIMIZEBOX;
+                cp.ClassStyle |= CS_DBLCLKS;
+
                 return cp;
             }
         }
 
         private bool CheckAeroEnabled()
         {
-            if (Environment.OSVersion.Version.Major >= 6)
+            int enabled = 0;
+            DwmIsCompositionEnabled(ref enabled);
+            return enabled == 1;
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+
+            if (_aeroEnabled)
             {
-                int enabled = 0;
-                DwmIsCompositionEnabled(ref enabled);
-                return (enabled == 1) ? true : false;
+                var v = 2;
+                DwmSetWindowAttribute(this.Handle, 2, ref v, 4);
+                var _glassMargins = new MARGINS()
+                {
+                    Top = 2,
+                    Left = 2,
+                    Bottom = 2,
+                    Right = 2
+                };
+                DwmExtendFrameIntoClientArea(this.Handle, ref _glassMargins);
             }
-            return false;
+
+            if (DesignMode)
+                return;
+
+            // Otherwise, it will not be applied.
+            if (StartPosition == FormStartPosition.CenterScreen)
+                CenterToScreen();
         }
 
         protected override void WndProc(ref Message m)
         {
             switch (m.Msg)
             {
-                case WM_NCPAINT:                        // box shadow
+                case WM_NCCALCSIZE:
+                    return;
+                /*case WM_NCPAINT:                        // box shadow
                     if (_aeroEnabled)
                     {
-                        var v = 2;
-                        DwmSetWindowAttribute(this.Handle, 2, ref v, 4);
+                        //var v = 2;
+                        //DwmSetWindowAttribute(this.Handle, 2, ref v, 4);
                         var margins = new MARGINS()
                         {
-                            bottomHeight = 1,
-                            leftWidth = 1,
-                            rightWidth = 1,
-                            topHeight = 1
+                            Bottom = 1,
+                            Left = 1,
+                            Right = 1,
+                            Top = 1
                         };
 
                         DwmExtendFrameIntoClientArea(this.Handle, ref margins);
-
+    
                     }
-                    break;
+                    break;*/
             }
+
             base.WndProc(ref m);
 
             if (m.Msg == WM_NCHITTEST && (int)m.Result == HTCLIENT)     // drag the form
@@ -103,11 +130,11 @@ namespace SDUI.Controls
                 return;
 
             ChangeControlsTheme(this);
+            ForeColor = ColorScheme.ForeColor;
 
             Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
         }
 
-        private FormBorderStyle _tempBorderStyle;
 
         protected override void OnHandleCreated(EventArgs e)
         {
@@ -116,41 +143,6 @@ namespace SDUI.Controls
                 return;
             
             BackColor = ColorScheme.BackColor;
-            ForeColor = ColorScheme.ForeColor;
-
-            _tempBorderStyle = this.FormBorderStyle;
-            FormBorderStyle = FormBorderStyle.Sizable;
-        }
-
-        protected override void OnLoad(EventArgs e)
-        {
-            base.OnLoad(e);
-            if (DesignMode)
-                return;
-
-            // Otherwise, it will not be applied.
-            if (StartPosition == FormStartPosition.CenterScreen)
-                CenterToScreen();
-
-            /*BackColor = ColorScheme.BackColor;
-            ForeColor = ColorScheme.ForeColor;
-            ChangeControlsTheme(this);*/
-        }
-
-        protected override void OnShown(EventArgs e)
-        {
-            base.OnShown(e);
-            if (DesignMode)
-                return;
-
-            FormBorderStyle = _tempBorderStyle;
-            Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            base.OnFormClosing(e);
-            //FormBorderStyle = FormBorderStyle.Sizable;
         }
     }
 }

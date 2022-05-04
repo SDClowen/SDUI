@@ -34,7 +34,7 @@
             this.btnOK = new SDUI.Controls.Button();
             this.btnCancel = new SDUI.Controls.Button();
             this.comboBox = new SDUI.Controls.ComboBox();
-            this.numValue = new NumUpDown();
+            this.numValue = new SDUI.Controls.NumUpDown();
             this.panel1 = new SDUI.Controls.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.numValue)).BeginInit();
             this.panel1.SuspendLayout();
@@ -52,10 +52,11 @@
             // 
             // lblMessage
             // 
+            this.lblMessage.AutoSize = true;
             this.lblMessage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblMessage.Location = new System.Drawing.Point(7, 24);
             this.lblMessage.Name = "lblMessage";
-            this.lblMessage.Size = new System.Drawing.Size(299, 42);
+            this.lblMessage.Size = new System.Drawing.Size(110, 15);
             this.lblMessage.TabIndex = 2;
             this.lblMessage.Text = "Please enter a value";
             // 
@@ -90,7 +91,7 @@
             this.btnCancel.Color = System.Drawing.Color.Firebrick;
             this.btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btnCancel.ForeColor = System.Drawing.Color.White;
-            this.btnCancel.Location = new System.Drawing.Point(235, 8);
+            this.btnCancel.Location = new System.Drawing.Point(239, 8);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Radius = 2;
             this.btnCancel.Size = new System.Drawing.Size(75, 23);
@@ -114,6 +115,9 @@
             // 
             // numValue
             // 
+            this.numValue.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
+            this.numValue.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.numValue.Location = new System.Drawing.Point(12, 69);
             this.numValue.Maximum = new decimal(new int[] {
             32765,
@@ -142,10 +146,10 @@
             this.panel1.Controls.Add(this.btnOK);
             this.panel1.Controls.Add(this.btnCancel);
             this.panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.panel1.Location = new System.Drawing.Point(0, 98);
+            this.panel1.Location = new System.Drawing.Point(0, 105);
             this.panel1.Name = "panel1";
             this.panel1.Radius = 0;
-            this.panel1.Size = new System.Drawing.Size(321, 39);
+            this.panel1.Size = new System.Drawing.Size(323, 39);
             this.panel1.TabIndex = 6;
             // 
             // InputDialog
@@ -153,7 +157,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(321, 137);
+            this.ClientSize = new System.Drawing.Size(323, 144);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.numValue);
             this.Controls.Add(this.comboBox);
@@ -163,8 +167,11 @@
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.Black;
             this.MaximizeBox = false;
+            this.MaximumSize = new System.Drawing.Size(323, 144);
             this.MinimizeBox = false;
+            this.MinimumSize = new System.Drawing.Size(323, 144);
             this.Name = "InputDialog";
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Input";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.InputDialog_FormClosing);
@@ -183,7 +190,7 @@
         private SDUI.Controls.Button btnOK;
         private SDUI.Controls.Button btnCancel;
         private ComboBox comboBox;
-        private System.Windows.Forms.NumericUpDown numValue;
         private Panel panel1;
+        private NumUpDown numValue;
     }
 }

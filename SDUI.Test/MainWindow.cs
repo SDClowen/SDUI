@@ -58,6 +58,19 @@ namespace SDUI.Test
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
+            var info = new InfoControl
+            {
+                Name = "overlay",
+                Text = "Hello this is centered overlay",
+                Width = 150,
+                Height = 150
+            };
+
+            info.Location = new Point(tabPage2.Width / 2 - info.Width, 0);
+            
+            tabPage1.Controls.Add(info);
+
+            info.BringToFront();
         }
 
         private void buttonOpenInputDialog_Click(object sender, EventArgs e)
@@ -130,6 +143,31 @@ namespace SDUI.Test
         private void listView3_ItemChecked(object sender, ItemCheckedEventArgs e)
         {
             //MessageBox.Show($"{e} \n Text: {e.Item.Text}");
+        }
+
+        private void newToolStripButton_Click(object sender, EventArgs e)
+        {
+            tabControl1.SelectedIndex = 0;
+        }
+
+        private void openToolStripButton_Click(object sender, EventArgs e)
+        {
+            tabControl1.SelectedIndex = 1;
+        }
+
+        private void saveToolStripButton_Click(object sender, EventArgs e)
+        {
+            tabControl1.SelectedIndex = 2;
+        }
+
+        private void buttonAddTab_Click(object sender, EventArgs e)
+        {
+            //multiPageControl1.Collection.Add(new MultiPageControlItem { Text = "New Tab " + (multiPageControl1.Collection.Count + 1) });
+        }
+
+        private void buttonRemoveTab_Click(object sender, EventArgs e)
+        {
+            //multiPageControl1.Collection.RemoveAt(multiPageControl1.SelectedIndex);
         }
     }
 }

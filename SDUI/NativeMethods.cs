@@ -13,8 +13,11 @@ namespace SDUI
         public const int WM_NCLBUTTONDOWN = 0xA1;
         public const int HT_CAPTION = 0x2;
         public const int CS_DROPSHADOW = 0x00020000;
+        public const int WS_MINIMIZEBOX = 0x20000;
+        public const int CS_DBLCLKS = 0x8;
         public const int WM_NCPAINT = 0x0085;
         public const int WM_NCHITTEST = 0x84;
+        public const int WM_NCCALCSIZE = 0x0083;
         public const int HTCAPTION = 0x2;
         public const int HTCLIENT = 0x1;
         public const int LVCDI_ITEM = 0x0;
@@ -84,10 +87,10 @@ namespace SDUI
 
         public struct MARGINS                           // struct for box shadow
         {
-            public int leftWidth;
-            public int rightWidth;
-            public int topHeight;
-            public int bottomHeight;
+            public int Left;
+            public int Right;
+            public int Top;
+            public int Bottom;
         }
 
         [DllImport(user32)]

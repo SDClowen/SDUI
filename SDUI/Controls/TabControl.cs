@@ -16,6 +16,8 @@ namespace SDUI.Controls
             UpdateStyles();
         }
 
+        public bool HideTabArea { get; set; }
+
         private Padding _border = new Padding(1);
         public Padding Border
         {
@@ -74,6 +76,7 @@ namespace SDUI.Controls
             try
             {
                 var tabpage = TabPages[index];
+
                 var brush = new SolidBrush(ColorScheme.BackColor);
                 var pen = new Pen(ColorScheme.BorderColor);
                
@@ -130,6 +133,14 @@ namespace SDUI.Controls
             catch
             {
             }
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            if (m.Msg == 0x1328 && !DesignMode && HideTabArea) 
+                m.Result = (IntPtr)1;
+            else
+                base.WndProc(ref m);
         }
     }
 }
