@@ -52,6 +52,9 @@ namespace SDUI.Controls
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+
+            BackColor = ColorScheme.BackColor;
+
             if (DesignMode)
                 return;
 
@@ -121,16 +124,6 @@ namespace SDUI.Controls
             ForeColor = ColorScheme.ForeColor;
 
             Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
-        }
-
-
-        protected override void OnHandleCreated(EventArgs e)
-        {
-            base.OnHandleCreated(e);
-            if (DesignMode)
-                return;
-            
-            BackColor = ColorScheme.BackColor;
         }
     }
 }

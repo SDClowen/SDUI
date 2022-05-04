@@ -76,7 +76,7 @@ namespace SDUI.Test
         private void buttonOpenInputDialog_Click(object sender, EventArgs e)
         {
             var dialog = new InputDialog("The input dialog", "This is a input dialog", "Please set the value!");
-            if (dialog.ShowDialog(this) == DialogResult.OK)
+            if (dialog.ShowDialog() == DialogResult.OK)
             {
                 MessageBox.Show($"The value: {dialog.Value}");
             }

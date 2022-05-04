@@ -7,7 +7,7 @@ namespace SDUI
         /// <summary>
         /// Gets or Sets to the theme back color
         /// </summary>
-        public static Color BackColor = Color.White;
+        public static Color BackColor = Color.Black;
 
         /// <summary>
         /// Get Determined theme forecolor from backcolor
