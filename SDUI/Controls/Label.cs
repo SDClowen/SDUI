@@ -26,8 +26,10 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var flags = TextFormatFlags.Left | TextFormatFlags.WordBreak | TextFormatFlags.WordEllipsis;
-            TextRenderer.DrawText(e.Graphics, Text, Font, ClientRectangle, ColorScheme.ForeColor, flags);
+            if(ForeColor != ColorScheme.ForeColor)
+                ForeColor = ColorScheme.ForeColor;
+
+            base.OnPaint(e);
         }
     }
 }

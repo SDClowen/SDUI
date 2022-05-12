@@ -32,9 +32,9 @@ namespace SDUI.Test
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
-            System.Windows.Forms.ListViewItem listViewItem7 = new System.Windows.Forms.ListViewItem("123412341234");
-            System.Windows.Forms.ListViewItem listViewItem8 = new System.Windows.Forms.ListViewItem("123412341324");
-            System.Windows.Forms.ListViewItem listViewItem9 = new System.Windows.Forms.ListViewItem(new string[] {
+            System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("123412341234");
+            System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
             "123412341324"}, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0))));
             this.tabControl1 = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
@@ -403,6 +403,7 @@ namespace SDUI.Test
             // label4
             // 
             this.label4.AutoSize = true;
+            this.label4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.label4.Location = new System.Drawing.Point(159, 75);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(38, 15);
@@ -671,11 +672,12 @@ namespace SDUI.Test
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(13, 111);
+            this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.label3.Location = new System.Drawing.Point(8, 104);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(1957, 15);
+            this.label3.Size = new System.Drawing.Size(220, 30);
             this.label3.TabIndex = 11;
-            this.label3.Text = resources.GetString("label3.Text");
+            this.label3.Text = "Lorem Ipsum is simply dummy text \r\nof the printing and typesetting industry. ";
             // 
             // panel7
             // 
@@ -699,10 +701,11 @@ namespace SDUI.Test
             // 
             // label2
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(491, 238);
+            this.label2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.label2.Location = new System.Drawing.Point(377, 230);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(444, 75);
+            this.label2.Size = new System.Drawing.Size(618, 75);
             this.label2.TabIndex = 11;
             this.label2.Text = resources.GetString("label2.Text");
             // 
@@ -808,16 +811,16 @@ namespace SDUI.Test
             this.listView3.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.listView3.FullRowSelect = true;
             this.listView3.HideSelection = false;
-            listViewItem7.Checked = true;
-            listViewItem7.StateImageIndex = 1;
-            listViewItem8.Checked = true;
-            listViewItem8.StateImageIndex = 1;
-            listViewItem9.Checked = true;
-            listViewItem9.StateImageIndex = 1;
+            listViewItem1.Checked = true;
+            listViewItem1.StateImageIndex = 1;
+            listViewItem2.Checked = true;
+            listViewItem2.StateImageIndex = 1;
+            listViewItem3.Checked = true;
+            listViewItem3.StateImageIndex = 1;
             this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem7,
-            listViewItem8,
-            listViewItem9});
+            listViewItem1,
+            listViewItem2,
+            listViewItem3});
             this.listView3.Location = new System.Drawing.Point(3, 58);
             this.listView3.Name = "listView3";
             this.listView3.Size = new System.Drawing.Size(269, 129);
@@ -1172,7 +1175,7 @@ namespace SDUI.Test
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage2.Size = new System.Drawing.Size(1326, 793);
+            this.tabPage2.Size = new System.Drawing.Size(1247, 559);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
@@ -1192,7 +1195,7 @@ namespace SDUI.Test
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
             this.listView1.ShowItemToolTips = true;
-            this.listView1.Size = new System.Drawing.Size(1318, 787);
+            this.listView1.Size = new System.Drawing.Size(1239, 553);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
