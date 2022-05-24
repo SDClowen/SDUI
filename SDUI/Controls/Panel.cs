@@ -34,6 +34,20 @@ namespace SDUI.Controls
             }
         }
 
+        private Color _borderColor = Color.Transparent;
+        public Color BorderColor
+        {
+            get => _borderColor;
+            set
+            {
+                if (_borderColor == value)
+                    return;
+
+                _borderColor = value;
+                Invalidate();
+            }
+        }
+
         public override Color BackColor 
         { 
             get => Color.Transparent; 
@@ -61,6 +75,7 @@ namespace SDUI.Controls
             var rect = ClientRectangle;
 
             var color = ColorScheme.ForeColor.Alpha(15);
+            var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
 
             if (_radius > 0)
             {
@@ -71,7 +86,7 @@ namespace SDUI.Controls
                     using (var brush = new SolidBrush(color))
                         e.Graphics.FillPath(brush, path);
 
-                    using (var pen = new Pen(ColorScheme.BorderColor, 1))
+                    using (var pen = new Pen(borderColor, 1))
                         e.Graphics.DrawPath(pen, path);
                 }
 
@@ -82,10 +97,10 @@ namespace SDUI.Controls
                 e.Graphics.FillRectangle(brush, rect);
 
             ControlPaint.DrawBorder(e.Graphics, ClientRectangle,
-                                  ColorScheme.BorderColor, _border.Left, ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, _border.Top, ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, _border.Right, ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, _border.Bottom, ButtonBorderStyle.Solid);
+                                  borderColor, _border.Left, ButtonBorderStyle.Solid,
+                                  borderColor, _border.Top, ButtonBorderStyle.Solid,
+                                  borderColor, _border.Right, ButtonBorderStyle.Solid,
+                                  borderColor, _border.Bottom, ButtonBorderStyle.Solid);
         }
     }
 }
