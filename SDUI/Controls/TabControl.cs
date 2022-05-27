@@ -43,13 +43,8 @@ namespace SDUI.Controls
             //base.OnPaint(e);
             e.Graphics.Clear(ColorScheme.BackColor);
 
-            if (TabCount <= 0)
+            if (TabCount <= 0 || SelectedTab == null)
                 return;
-
-            if (SelectedTab == null)
-            {
-                return;
-            }
 
             //Draw a custom background for Transparent TabPages
             var bounds = SelectedTab.Bounds;
