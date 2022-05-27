@@ -13,13 +13,13 @@ namespace SDUI.Controls
             if (e.Index < 0)
                 return;
 
-            var gradient = new LinearGradientBrush(e.Bounds, Color.Blue, Color.DarkBlue, 90.0F);
+            var gradient = new LinearGradientBrush(e.Bounds, ColorScheme.BorderColor, ColorScheme.BackColor, 90.0F);
             var text = GetItemText(Items[e.Index]);
 
             if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
             {
                 e.Graphics.FillRectangle(gradient, e.Bounds);
-                TextRenderer.DrawText(e.Graphics, text, e.Font, e.Bounds, Color.White, TextFormatFlags.Left);
+                TextRenderer.DrawText(e.Graphics, text, e.Font, e.Bounds, ColorScheme.ForeColor, TextFormatFlags.Left);
 
             }
             else
@@ -58,7 +58,7 @@ namespace SDUI.Controls
         {
             SetStyle(
                 ControlStyles.UserPaint |
-                ControlStyles.ResizeRedraw | 
+                ControlStyles.ResizeRedraw |
                 ControlStyles.OptimizedDoubleBuffer |
                 ControlStyles.Selectable |
                 ControlStyles.SupportsTransparentBackColor, true
@@ -66,10 +66,6 @@ namespace SDUI.Controls
 
             DrawMode = DrawMode.OwnerDrawFixed;
             DropDownStyle = ComboBoxStyle.DropDownList;
-
-            Size = new Size(135, 26);
-            ItemHeight = 17;
-            DropDownHeight = 100;
         }
 
         protected override void OnPaint(PaintEventArgs e)

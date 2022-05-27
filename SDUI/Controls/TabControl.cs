@@ -46,6 +46,11 @@ namespace SDUI.Controls
             if (TabCount <= 0)
                 return;
 
+            if (SelectedTab == null)
+            {
+                return;
+            }
+
             //Draw a custom background for Transparent TabPages
             var bounds = SelectedTab.Bounds;
 
