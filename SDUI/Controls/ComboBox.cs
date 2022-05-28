@@ -9,26 +9,16 @@ namespace SDUI.Controls
     {
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
-            base.OnDrawItem(e);
-            if (e.Index < 0)
+            var index = e.Index;
+            if (index < 0 || index >= Items.Count)
                 return;
 
-            var gradient = new LinearGradientBrush(e.Bounds, ColorScheme.BorderColor, ColorScheme.BackColor, 90.0F);
-            var text = GetItemText(Items[e.Index]);
-
+            var backColor = ColorScheme.BackColor;
             if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
-            {
-                e.Graphics.FillRectangle(gradient, e.Bounds);
-                TextRenderer.DrawText(e.Graphics, text, e.Font, e.Bounds, ColorScheme.ForeColor, TextFormatFlags.Left);
+                backColor = ColorScheme.ForeColor.Alpha(15);
 
-            }
-            else
-            {
-                e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor.Brightness(-.16f)), e.Bounds);
-                TextRenderer.DrawText(e.Graphics, text, e.Font, e.Bounds, ColorScheme.ForeColor, TextFormatFlags.Left);
-            }
-
-            gradient.Dispose();
+            e.Graphics.FillRectangle(new SolidBrush(backColor), e.Bounds);
+            TextRenderer.DrawText(e.Graphics, GetItemText(Items[index]), e.Font, e.Bounds, ColorScheme.ForeColor, TextFormatFlags.Left);
         }
 
         protected override void OnParentBackColorChanged(EventArgs e)
