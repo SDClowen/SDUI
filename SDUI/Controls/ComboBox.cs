@@ -9,16 +9,22 @@ namespace SDUI.Controls
     {
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
+            base.OnDrawItem(e);
+
             var index = e.Index;
             if (index < 0 || index >= Items.Count)
                 return;
 
-            var backColor = ColorScheme.BackColor;
+            var foreColor = ColorScheme.ForeColor;
             if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
-                backColor = ColorScheme.ForeColor.Alpha(15);
+            {
+                foreColor = Color.White;
+                e.DrawBackground();
+            }    
+            else
+                e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), e.Bounds);
 
-            e.Graphics.FillRectangle(new SolidBrush(backColor), e.Bounds);
-            TextRenderer.DrawText(e.Graphics, GetItemText(Items[index]), e.Font, e.Bounds, ColorScheme.ForeColor, TextFormatFlags.Left);
+            TextRenderer.DrawText(e.Graphics, GetItemText(Items[index]), e.Font, e.Bounds, foreColor, TextFormatFlags.Left);
         }
 
         protected override void OnParentBackColorChanged(EventArgs e)
