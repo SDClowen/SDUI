@@ -9,6 +9,8 @@ namespace SDUI.Controls
     {
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
+            base.OnDrawItem(e);
+
             var index = e.Index;
             if (index < 0 || index >= Items.Count)
                 return;
