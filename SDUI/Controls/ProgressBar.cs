@@ -118,7 +118,6 @@ namespace SDUI.Controls
             }
             set
             {
-                return;
                 _hatchType = value;
                 Invalidate();
             }
