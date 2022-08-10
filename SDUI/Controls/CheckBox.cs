@@ -6,23 +6,22 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class CheckBox : Label
+    public class CheckBox : System.Windows.Forms.CheckBox
     {
-        public event EventHandler CheckedChanged;
-
         private bool isHovered = false;
         private bool isPressed = false;
-        private bool isFocused = false;
 
-        private bool isChecked = false;
-        public bool Checked
+        private int _shadowDepth = 1;
+        public int ShadowDepth
         {
-            get => isChecked;
+            get => _shadowDepth;
             set
             {
-                isChecked = value;
+                if (_shadowDepth == value)
+                    return;
+
+                _shadowDepth = value;
                 Invalidate();
-                CheckedChanged?.Invoke(this, EventArgs.Empty);
             }
         }
 
@@ -35,18 +34,29 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            CheckBoxRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+
+            if (ColorScheme.DrawDebugBorders)
+            {
+                var redPen = new Pen(Color.Red, 1);
+                redPen.Alignment = PenAlignment.Outset;
+                graphics.DrawRectangle(redPen, 0, 0, Width - 1, Height - 1);
+            }
+
             Color borderColor, foreColor;
 
             if (isHovered && !isPressed && Enabled)
             {
-                foreColor = ColorScheme.ForeColor.Alpha(150);
-                borderColor = ColorScheme.BorderColor.Alpha(150);
+                foreColor = ColorScheme.ForeColor.Alpha(100);
+                borderColor = ColorScheme.BorderColor.Alpha(100);
             }
             else if (isHovered && isPressed && Enabled)
             {
-                foreColor = ColorScheme.ForeColor.Brightness(-.05f);
-                borderColor = ColorScheme.BorderColor.Brightness(-.05f);
+                foreColor = ColorScheme.ForeColor.Alpha(150);
+                borderColor = ColorScheme.BorderColor.Alpha(150);
             }
             else if (!Enabled)
             {
@@ -67,33 +77,24 @@ namespace SDUI.Controls
                 {
                     using (var brush = new LinearGradientBrush(boxRect, Color.Blue, Color.DarkBlue, 90f))
                     {
-                        e.Graphics.FillPath(brush, path);
+                        graphics.FillPath(brush, path);
                     }
 
                     TextRenderer.DrawText(e.Graphics, "a", new Font("Marlett", 11), boxRect, Color.White);
                 }
 
+                Helpers.ControlPaintHelper.DrawShadow(graphics, boxRect, _shadowDepth, 1);
+
                 using (var p = new Pen(borderColor))
-                {
-                    e.Graphics.DrawPath(p, path);
-                }
+                    graphics.DrawPath(p, path);
             }
 
             var textRect = new Rectangle(16, -1, Width - 16, Height);
-            TextRenderer.DrawText(e.Graphics, Text, Font, textRect, foreColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
-        }
-
-        protected override void OnGotFocus(EventArgs e)
-        {
-            isFocused = true;
-            Invalidate();
-
-            base.OnGotFocus(e);
+            TextRenderer.DrawText(graphics, Text, Font, textRect, foreColor, TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
         }
 
         protected override void OnLostFocus(EventArgs e)
         {
-            isFocused = false;
             isHovered = false;
             isPressed = false;
             Invalidate();
@@ -101,43 +102,13 @@ namespace SDUI.Controls
             base.OnLostFocus(e);
         }
 
-        protected override void OnEnter(EventArgs e)
-        {
-            isFocused = true;
-            Invalidate();
-
-            base.OnEnter(e);
-        }
-
         protected override void OnLeave(EventArgs e)
         {
-            isFocused = false;
             isHovered = false;
             isPressed = false;
             Invalidate();
 
             base.OnLeave(e);
-        }
-
-        protected override void OnKeyDown(KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Space)
-            {
-                isHovered = true;
-                isPressed = true;
-                Invalidate();
-            }
-
-            base.OnKeyDown(e);
-        }
-
-        protected override void OnKeyUp(KeyEventArgs e)
-        {
-            isHovered = false;
-            isPressed = false;
-            Invalidate();
-
-            base.OnKeyUp(e);
         }
 
         protected override void OnMouseEnter(EventArgs e)
@@ -151,9 +122,8 @@ namespace SDUI.Controls
         protected override void OnMouseDown(MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
-            {
+            { 
                 isPressed = true;
-                Checked = !Checked;
                 Invalidate();
             }
 

@@ -162,12 +162,34 @@ namespace SDUI.Test
 
         private void buttonAddTab_Click(object sender, EventArgs e)
         {
-            //multiPageControl1.Collection.Add(new MultiPageControlItem { Text = "New Tab " + (multiPageControl1.Collection.Count + 1) });
+            multiPageControl.Collection.Add(new MultiPageControlItem { Text = "New Tab " + (multiPageControl.Collection.Count + 1) });
         }
 
         private void buttonRemoveTab_Click(object sender, EventArgs e)
         {
-            //multiPageControl1.Collection.RemoveAt(multiPageControl1.SelectedIndex);
+            multiPageControl.Collection.RemoveAt(multiPageControl.SelectedIndex);
+        }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            panel2.ShadowDepth = trackBar1.Value;
+            progressBar6.Maximum = trackBar1.Maximum;
+            progressBar6.Value = trackBar1.Value;
+        }
+
+        private void trackBar2_Scroll(object sender, EventArgs e)
+        {
+            panel2.Radius = trackBar2.Value;
+            progressBar7.Maximum = trackBar2.Maximum;
+            progressBar7.Value = trackBar2.Value;
+        }
+
+        private void checkBox6_CheckedChanged(object sender, EventArgs e)
+        {
+            ColorScheme.DrawDebugBorders = checkBox6.Checked;
+            var backup = BackColor;
+            BackColor = BackColor.Determine();
+            BackColor = backup;
         }
     }
 }

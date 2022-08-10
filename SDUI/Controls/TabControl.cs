@@ -40,8 +40,7 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            //base.OnPaint(e);
-            e.Graphics.Clear(ColorScheme.BackColor);
+            GroupBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
 
             if (TabCount <= 0 || SelectedTab == null)
                 return;

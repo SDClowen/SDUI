@@ -8,40 +8,23 @@ using System.Windows.Forms;
 namespace SDUI.Controls
 {
     [DefaultEvent("CheckedChanged")]
-    public class Radio : Label
+    public class Radio : RadioButton
     {
-        public event EventHandler CheckedChanged;
-
         private bool isHovered = false;
         private bool isPressed = false;
         private bool isFocused = false;
 
-        private bool isChecked = false;
-
-        public bool Checked
+        private int _shadowDepth = 0;
+        public int ShadowDepth
         {
-            get { return isChecked; }
+            get => _shadowDepth;
             set
             {
-                isChecked = value;
-                InvalidateControls();
-                CheckedChanged?.Invoke(this, EventArgs.Empty);
+                if (_shadowDepth == value)
+                    return;
 
+                _shadowDepth = value;
                 Invalidate();
-            }
-        }
-
-        private void InvalidateControls()
-        {
-            if (!IsHandleCreated || !isChecked)
-                return;
-
-            foreach (Control C in Parent.Controls)
-            {
-                if (!object.ReferenceEquals(C, this) && C is Radio)
-                {
-                    ((Radio)C).Checked = false;
-                }
             }
         }
 
@@ -54,20 +37,41 @@ namespace SDUI.Controls
             AutoSize = true;
         }
 
+        protected override void OnCheckedChanged(EventArgs e)
+        {
+            base.OnCheckedChanged(e);
+
+            if (!IsHandleCreated || !Checked)
+                return;
+
+            foreach (Control C in Parent.Controls)
+            {
+                if (!object.ReferenceEquals(C, this) && C is Radio)
+                {
+                    ((Radio)C).Checked = false;
+                }
+            }
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            GroupBoxRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+
             e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
             Color borderColor, foreColor;
 
             if (isHovered && !isPressed && Enabled)
             {
-                foreColor = ColorScheme.ForeColor.Alpha(150);
-                borderColor = ColorScheme.BorderColor.Alpha(150);
+                foreColor = ColorScheme.ForeColor.Alpha(100);
+                borderColor = ColorScheme.BorderColor.Alpha(100);
             }
             else if (isHovered && isPressed && Enabled)
             {
-                foreColor = ColorScheme.ForeColor.Brightness(-.05f);
-                borderColor = ColorScheme.BorderColor.Brightness(-.05f);
+                foreColor = ColorScheme.ForeColor.Alpha(150);
+                borderColor = ColorScheme.BorderColor.Alpha(150);
             }
             else if (!Enabled)
             {
@@ -93,6 +97,8 @@ namespace SDUI.Controls
 
                     TextRenderer.DrawText(e.Graphics, "h", new Font("Marlett", 11), boxRect, Color.White);
                 }
+
+                Helpers.ControlPaintHelper.DrawShadow(graphics, boxRect, _shadowDepth, 1);
 
                 using (var p = new Pen(borderColor))
                 {
@@ -156,7 +162,6 @@ namespace SDUI.Controls
             if (e.Button == MouseButtons.Left)
             {
                 isPressed = true;
-                Checked = !Checked;
                 Invalidate();
             }
 

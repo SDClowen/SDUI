@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SDUI.Extensions;
+using SDUI.Helpers;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -7,6 +9,46 @@ namespace SDUI.Controls
 {
     public class ComboBox : System.Windows.Forms.ComboBox
     {
+        private int _radius = 5;
+        public int Radius
+        {
+            get => _radius;
+            set
+            {
+                _radius = value;
+
+                Invalidate();
+            }
+        }
+
+        private float _shadowDepth = 4f;
+        public float ShadowDepth
+        {
+            get => _shadowDepth;
+            set
+            {
+                if (_shadowDepth == value)
+                    return;
+
+                _shadowDepth = value;
+                Invalidate();
+            }
+        }
+
+        public ComboBox()
+        {
+            SetStyle(
+                ControlStyles.UserPaint |
+                ControlStyles.ResizeRedraw |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.Selectable |
+                ControlStyles.SupportsTransparentBackColor, true
+            );
+
+            DrawMode = DrawMode.OwnerDrawFixed;
+            DropDownStyle = ComboBoxStyle.DropDownList;
+        }
+
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
             base.OnDrawItem(e);
@@ -20,7 +62,7 @@ namespace SDUI.Controls
             {
                 foreColor = Color.White;
                 e.DrawBackground();
-            }    
+            }
             else
                 e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), e.Bounds);
 
@@ -50,48 +92,56 @@ namespace SDUI.Controls
             }
         }
 
-        public ComboBox()
-        {
-            SetStyle(
-                ControlStyles.UserPaint |
-                ControlStyles.ResizeRedraw |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.Selectable |
-                ControlStyles.SupportsTransparentBackColor, true
-            );
-
-            DrawMode = DrawMode.OwnerDrawFixed;
-            DropDownStyle = ComboBoxStyle.DropDownList;
-        }
-
         protected override void OnPaint(PaintEventArgs e)
         {
-            e.Graphics.Clear(ColorScheme.BackColor);
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            var textRectangle = new Rectangle(3, 0, Width - 20, Height);
+            ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+
+            var rectf = ClientRectangle.ToRectangleF();
+
+            if (ColorScheme.DrawDebugBorders)
+            {
+                var redPen = new Pen(Color.Red, 1);
+                redPen.Alignment = PenAlignment.Outset;
+                graphics.DrawRectangle(redPen, 0, 0, rectf.Width - 1, rectf.Height - 1);
+            }
+
+            var inflate = _shadowDepth / 4f;
+            rectf.Inflate(-inflate, -inflate);
+
+            var textRectangle = new Rectangle(3, 0, Width - 18, Height);
 
             var backColor = ColorScheme.BackColor;
-            var colorBegin = backColor.Brightness(.1f);
-            var colorEnd = backColor.Brightness(-.1f);
-            var gradient = new LinearGradientBrush(ClientRectangle, colorBegin, colorEnd, 90f);
+            var borderColor = ColorScheme.ForeColor.Alpha(60);
 
-            e.Graphics.FillRectangle(gradient, ClientRectangle);
-
-            var borderRectangle = new Rectangle(0, 0, Width - 2, Height - 2);
-            e.Graphics.DrawRectangle(new Pen(ColorScheme.BorderColor), borderRectangle);
-
-            var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
-            TextRenderer.DrawText(e.Graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);
-
-            e.Graphics.DrawString("6", new Font("Marlett", 13, FontStyle.Regular), new SolidBrush(ColorScheme.BorderColor), new Rectangle(3, 0, Width - 4, Height), new StringFormat
+            using (var path = rectf.Radius(_radius))
             {
-                LineAlignment = StringAlignment.Center,
-                Alignment = StringAlignment.Far
-            });
+                e.Graphics.FillPath(new SolidBrush(backColor), path);
 
-            e.Graphics.DrawLine(new Pen(ColorScheme.BorderColor), Width - 24, 4, Width - 24, this.Height - 5);
-            gradient.Dispose();
+                var borderPen = new Pen(borderColor);
+                var _extendBoxRect = new RectangleF(rectf.Width - 24f, 0, 16, rectf.Height -  4 + _shadowDepth);
+
+                var symbolPen = new Pen(ColorScheme.ForeColor);
+                graphics.DrawLine(symbolPen,
+                        _extendBoxRect.Left + _extendBoxRect.Width / 2 - 5 - 1,
+                        _extendBoxRect.Top + _extendBoxRect.Height / 2 - 2,
+                        _extendBoxRect.Left + _extendBoxRect.Width / 2 - 1,
+                        _extendBoxRect.Top + _extendBoxRect.Height / 2 + 3);
+
+                graphics.DrawLine(symbolPen,
+                    _extendBoxRect.Left + _extendBoxRect.Width / 2 + 5 - 1,
+                    _extendBoxRect.Top + _extendBoxRect.Height / 2 - 2,
+                    _extendBoxRect.Left + _extendBoxRect.Width / 2 - 1,
+                    _extendBoxRect.Top + _extendBoxRect.Height / 2 + 3);
+
+                ControlPaintHelper.DrawShadow(graphics, rectf, _shadowDepth, _radius);
+                e.Graphics.DrawPath(borderPen, path);
+
+                var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
+                TextRenderer.DrawText(graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);
+            }
         }
     }
 }

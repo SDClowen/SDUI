@@ -17,6 +17,21 @@ namespace SDUI
         /// <summary>
         /// Gets theme border color
         /// </summary>
-        public static Color BorderColor => ForeColor.Alpha(40);
+        public static Color BorderColor => ForeColor.Alpha(20);
+
+        /// <summary>
+        /// Gets theme back color 2
+        /// </summary>
+        public static Color BackColor2 => ForeColor.Alpha(6);
+
+        /// <summary>
+        /// Gets theme back color 2
+        /// </summary>
+        public static Color ShadowColor => ForeColor.Alpha(10);
+
+        /// <summary>
+        /// Gets or sets the debug borders
+        /// </summary>
+        public static bool DrawDebugBorders;
     }
 }

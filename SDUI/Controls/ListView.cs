@@ -31,7 +31,6 @@ namespace SDUI.Controls
             ListViewItemSorter = LvwColumnSorter;
             View = View.Details;
             FullRowSelect = true;
-
             UpdateStyles();
         }
 
@@ -208,7 +207,7 @@ namespace SDUI.Controls
                                     }
                                 }
 
-                                m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULT);return;
+                                m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULT); return;
                             }
                             /*else
                             {
@@ -219,20 +218,46 @@ namespace SDUI.Controls
                             /*
                         case CDDS.CDDS_ITEMPREPAINT:
                             m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
-                            break;
 
-                        case CDDS.CDDS_ITEMPOSTPAINT:
-                            break;*/
+                            ListView lv = this;
+                            IntPtr headerControl = GetHeaderControl(lv);
+                            IntPtr hdc = GetDC(headerControl);
+
+                            using (var graphics = Graphics.FromHdc(hdc))
+                            {
+                                graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), graphics.ClipBounds);
+
+                                var width = 0;
+                                foreach (ColumnHeader column in Columns)
+                                {
+                                    var size = TextRenderer.MeasureText(column.Text, Font);
+                                    var bounds = new Rectangle(new Point(width, 0), new Size(column.Width + 5, 24));
+
+                                    if(column.TextAlign == HorizontalAlignment.Left)
+                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis);
+                                    else if (column.TextAlign == HorizontalAlignment.Right)
+                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right);
+                                    else
+                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter);
+
+                                    var x = bounds.X - 2;
+                                    graphics.DrawLine(new Pen(ColorScheme.BorderColor), x, 0, x, Height);
+
+                                    width += column.Width;
+                                }
+                            }
+
+                            ReleaseDC(headerControl, hdc);
+
+                                break;*/
                     }
-
-                    
+                    }
                 }
-            }
-            else if (m.Msg != WM_KILLFOCUS &&
-                (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
-                Invalidate();
+                else if (m.Msg != WM_KILLFOCUS &&
+                    (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
+                    Invalidate();
 
-            base.WndProc(ref m);
+                base.WndProc(ref m);
+            }
         }
     }
-}

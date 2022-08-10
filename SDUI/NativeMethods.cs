@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using System.Security;
+using System.Windows.Forms;
 
 namespace SDUI
 {
@@ -155,7 +156,18 @@ namespace SDUI
 
         [SecurityCritical]
         [DllImport("ntdll.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern NTSTATUS RtlGetVersion(ref OSVERSIONINFOEX versionInfo);
+        public static extern NTSTATUS RtlGetVersion(ref OSVERSIONINFOEX versionInfo); 
+        
+        [DllImport("user32")]
+        public static extern IntPtr GetDC(IntPtr hwnd);
+        [DllImport("user32")]
+        public static extern IntPtr ReleaseDC(IntPtr hwnd, IntPtr hdc);
+
+        public static IntPtr GetHeaderControl(ListView list)
+        {
+            const int LVM_GETHEADER = 0x1000 + 31;
+            return SendMessage(list.Handle, LVM_GETHEADER, 0, 0);
+        }
 
         public enum NTSTATUS : uint
         {

@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -8,22 +9,30 @@ namespace SDUI.Controls
 {
     public class GroupBox : System.Windows.Forms.GroupBox
     {
-        private int _radius = 2;
+        private int _shadowDepth = 4;
+        public int ShadowDepth
+        {
+            get => _shadowDepth;
+            set
+            {
+                if (_shadowDepth == value)
+                    return;
+
+                _shadowDepth = value;
+                Invalidate();
+            }
+        }
+
+        private int _radius = 10;
         public int Radius
         {
             get => _radius;
             set
             {
-                _radius = 2;
+                _radius = value;
 
                 Invalidate();
             }
-        }
-
-        public override Color BackColor
-        {
-            get => Color.Transparent;
-            set => base.BackColor = Color.Transparent;
         }
 
         public GroupBox()
@@ -36,7 +45,7 @@ namespace SDUI.Controls
             UpdateStyles();
             this.DoubleBuffered = true;
             this.BackColor = Color.Transparent;
-            this.Padding = new Padding(3, 10, 3, 3);
+            this.Padding = new Padding(3, 8, 3, 3);
         }
 
         protected override void OnParentBackColorChanged(EventArgs e)
@@ -53,34 +62,53 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            if (BackColor != ColorScheme.BackColor)
-                BackColor = ColorScheme.BackColor;
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            var rect = ClientRectangle;
-
-            using (var path = rect.Radius(Radius))
+            GroupBoxRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+            if (ColorScheme.DrawDebugBorders)
             {
-                e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                rect = new Rectangle(0, 0,
-                    rect.Width, Font.Height + 7);
+                var redPen = new Pen(Color.Red, 1);
+                redPen.Alignment = PenAlignment.Inset;
+                e.Graphics.DrawRectangle(redPen, new Rectangle(0, 0, Width - 1, Height - 1));
+            }
 
-                var color = ColorScheme.ForeColor.Alpha(15);
+            var rect = ClientRectangle.ToRectangleF();
+            var inflate = _shadowDepth / 4f;
+            rect.Inflate(-inflate, -inflate);
+            var shadowRect = rect;
+
+            using (var path = rect.Radius(_radius))
+            {
+                rect = new RectangleF(0, 0, rect.Width, Font.Height + 7);
+
+                var color = ColorScheme.BorderColor;
                 BackColor = Color.Transparent;
 
-                using (var brush = new SolidBrush(color))
+                using (var brush = new SolidBrush(ColorScheme.BackColor2))
                     e.Graphics.FillPath(brush, path);
 
                 var clip = e.Graphics.ClipBounds;
                 e.Graphics.SetClip(rect);
                 e.Graphics.DrawLine(new Pen(color), 0, rect.Height - 1, rect.Width, rect.Height - 1);
-                e.Graphics.FillPath(new SolidBrush(color), path);
-                
-                TextRenderer.DrawText(e.Graphics, Text, Font, rect, ColorScheme.ForeColor);
+
+                TextRenderer.DrawText(e.Graphics, Text, Font, rect.ToRectangle(), ColorScheme.ForeColor);
                 e.Graphics.SetClip(clip);
+
+                ControlPaintHelper.DrawShadow(e.Graphics, shadowRect, _shadowDepth, _radius);
 
                 using (var pen = new Pen(ColorScheme.BorderColor, 1))
                     e.Graphics.DrawPath(pen, path);
             }
+        }
+
+        public override Size GetPreferredSize(Size proposedSize)
+        {
+            var preferredSize = base.GetPreferredSize(proposedSize);
+            preferredSize.Width += _shadowDepth;
+            preferredSize.Height += _shadowDepth;
+
+            return preferredSize;
         }
     }
 }

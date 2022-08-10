@@ -12,6 +12,7 @@ namespace SDUI.Test
         static void Main()
         {
             Application.EnableVisualStyles();
+            Application.SetHighDpiMode(HighDpiMode.DpiUnawareGdiScaled);
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainWindow());
         }

@@ -18,12 +18,12 @@ namespace SDUI.Controls
 
             var brush = new SolidBrush(Color.FromArgb(33, 150, 243));
             var pen = new Pen(Color.FromArgb(33, 100, 210));
-            pen.Width = 4;
+            pen.Width = 2;
             pen.DashCap = DashCap.Triangle;
-            pen.DashStyle = DashStyle.DashDotDot;
+            pen.DashStyle = DashStyle.Dot;
 
             e.Graphics.FillRectangle(brush, 0, 0, Width, Height);
-            e.Graphics.DrawRectangle(pen, 0, 0, Width, Height);
+            e.Graphics.DrawRectangle(pen, 0, 0, Width - 2, Height - 2);
 
             var size = TextRenderer.MeasureText(Text, Font);
             size.Width += 100;

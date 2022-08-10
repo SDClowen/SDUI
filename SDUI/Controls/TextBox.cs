@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using SDUI.Extensions;
+using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
@@ -6,7 +7,18 @@ namespace SDUI.Controls
 {
     public class TextBox : Control
     {
-        private System.Windows.Forms.TextBox _textbox;
+        private int _radius = 2;
+        public int Radius
+        {
+            get => _radius;
+            set
+            {
+                _radius = value;
+
+                Invalidate();
+            }
+        }
+        private System.Windows.Forms.TextBox _textBox;
 
         private bool _passmask = false;
         public bool UseSystemPasswordChar
@@ -14,7 +26,7 @@ namespace SDUI.Controls
             get { return _passmask; }
             set
             {
-                _textbox.UseSystemPasswordChar = UseSystemPasswordChar;
+                _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
                 _passmask = value;
                 Invalidate();
             }
@@ -27,7 +39,7 @@ namespace SDUI.Controls
             set
             {
                 _maxchars = value;
-                _textbox.MaxLength = MaxLength;
+                _textBox.MaxLength = MaxLength;
                 Invalidate();
             }
         }
@@ -56,50 +68,50 @@ namespace SDUI.Controls
 
         public override string Text
         {
-            get => _textbox.Text;
-            set => _textbox.Text = value;
+            get => _textBox.Text;
+            set => _textBox.Text = value;
         }
 
         protected override void OnBackColorChanged(System.EventArgs e)
         {
             base.OnBackColorChanged(e);
-            _textbox.BackColor = Color.FromArgb(BackColor.R, BackColor.G, BackColor.B);
+            _textBox.BackColor = Color.FromArgb(BackColor.R, BackColor.G, BackColor.B);
             Invalidate();
         }
 
         protected override void OnForeColorChanged(System.EventArgs e)
         {
             base.OnForeColorChanged(e);
-            _textbox.ForeColor = ForeColor;
+            _textBox.ForeColor = ForeColor;
             Invalidate();
         }
 
         protected override void OnFontChanged(System.EventArgs e)
         {
             base.OnFontChanged(e);
-            _textbox.Font = Font;
+            _textBox.Font = Font;
         }
 
         protected override void OnGotFocus(System.EventArgs e)
         {
             base.OnGotFocus(e);
-            _textbox.Focus();
+            _textBox.Focus();
         }
 
         public TextBox()
         {
-            _textbox = new System.Windows.Forms.TextBox();
-            _textbox.Multiline = false;
-            _textbox.Text = string.Empty;
-            _textbox.TextAlign = HorizontalAlignment.Center;
-            _textbox.BorderStyle = BorderStyle.None;
-            _textbox.Location = new Point(3, 2);
-            _textbox.Font = Font;
-            _textbox.Size = new Size(Width - 10, Height - 11);
-            _textbox.UseSystemPasswordChar = UseSystemPasswordChar;
-            _textbox.TextChanged += _textbox_TextChanged;
-            _textbox.PreviewKeyDown += _textbox_PreviewKeyDown;
-            Controls.Add(_textbox);
+            _textBox = new System.Windows.Forms.TextBox();
+            _textBox.Multiline = false;
+            _textBox.Text = string.Empty;
+            _textBox.TextAlign = HorizontalAlignment.Center;
+            _textBox.BorderStyle = BorderStyle.None;
+            _textBox.Location = new Point(3, 2);
+            _textBox.Font = Font;
+            _textBox.Size = new Size(Width - 10, Height - 11);
+            _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
+            _textBox.TextChanged += _textbox_TextChanged;
+            _textBox.PreviewKeyDown += _textbox_PreviewKeyDown;
+            Controls.Add(_textBox);
 
             SetStyle(ControlStyles.UserPaint, true);
             SetStyle(ControlStyles.SupportsTransparentBackColor, true);
@@ -115,29 +127,31 @@ namespace SDUI.Controls
 
         private void _textbox_TextChanged(object sender, System.EventArgs e)
         {
-            Text = _textbox.Text;
+            Text = _textBox.Text;
             OnTextChanged(e);
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var bitmap = new Bitmap(Width, Height);
-            var gfx = Graphics.FromImage(bitmap);
-            gfx.SmoothingMode = SmoothingMode.HighQuality;
+            ButtonRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+
+            var color = Color.CornflowerBlue;
+
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = SmoothingMode.HighQuality;
 
             var determinedColor = ColorScheme.BackColor.Determine();
             var backColor = ColorScheme.BackColor.Brightness(-.1f);
 
-            Height = _textbox.Height + 5;
-            var _with2 = _textbox;
-            _with2.Width = Width - 10;
-            _with2.TextAlign = TextAlignment;
-            _with2.UseSystemPasswordChar = UseSystemPasswordChar;
-            _with2.ForeColor = ColorScheme.ForeColor;
-            _with2.BackColor = backColor;
+            Height = _textBox.Height + 5;
+            var textbox = _textBox;
+            textbox.Width = Width - 10;
+            textbox.TextAlign = TextAlignment;
+            textbox.UseSystemPasswordChar = UseSystemPasswordChar;
+            textbox.ForeColor = ColorScheme.ForeColor;
+            textbox.BackColor = backColor;
 
-            gfx.Clear(Color.Transparent);
-            gfx.FillRectangle(new SolidBrush(backColor), new Rectangle(0, 0, Width - 1, Height - 1));
+            graphics.FillPath(new SolidBrush(backColor), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
 
             var colorBegin = determinedColor.Brightness(.1f).Alpha(90);
             var colorEnd = determinedColor.Brightness(-.1f).Alpha(60);
@@ -145,13 +159,8 @@ namespace SDUI.Controls
             var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 2, Height - 2), colorBegin, colorEnd, 90);
             var innerBorderPen = new Pen(innerBorderBrush);
 
-            gfx.DrawRectangle(innerBorderPen, new Rectangle(1, 1, Width - 2, Height - 2));
-            gfx.DrawLine(new Pen(ColorScheme.BorderColor), new Point(1, 1), new Point(Width - 3, 1));
-
-            e.Graphics.DrawImage((Bitmap)bitmap.Clone(), 0, 0);
-
-            gfx.Dispose();
-            bitmap.Dispose();
+            graphics.DrawPath(innerBorderPen, new Rectangle(1, 1, Width - _radius, Height - _radius).Radius(_radius));
+            graphics.DrawLine(new Pen(ColorScheme.BorderColor), new Point(1, 1), new Point(Width - 3, 1));
         }
     }
 }

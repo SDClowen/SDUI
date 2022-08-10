@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -18,21 +19,37 @@ namespace SDUI.Controls
         /// </summary>
         private int _mouseState = 0;
 
-        public Button()
+        private float _shadowDepth = 4f;
+        public float ShadowDepth
         {
-            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            get => _shadowDepth;
+            set
+            {
+                if (_shadowDepth == value)
+                    return;
+
+                _shadowDepth = value;
+                Invalidate();
+            }
         }
 
-        private int _radius = 2;
+        private int _radius = 5;
         public int Radius
         {
             get => _radius;
             set
             {
-                _radius = value;
+                if (_radius == value)
+                    return;
 
+                _radius = value;
                 Invalidate();
             }
+        }
+
+        public Button()
+        {
+            SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -66,36 +83,52 @@ namespace SDUI.Controls
         protected override void OnPaint(PaintEventArgs e)
         {
             var graphics = e.Graphics;
-            graphics.Clear(ColorScheme.BackColor);
-            var clientRectangle = ClientRectangle;
-
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+
+            var me = TextRenderer.MeasureText(Text, Font);
+
+            var rectf = new RectangleF(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, ClientRectangle.Height); 
+            
+            if (ColorScheme.DrawDebugBorders)
+            {
+                var redPen = new Pen(Color.Red, 1);
+                redPen.Alignment = PenAlignment.Outset;
+                graphics.DrawRectangle(redPen, 0, 0, rectf.Width - 1, rectf.Height - 1);
+            }
+
+            var inflate = _shadowDepth / 4f;
+            rectf.Inflate(-inflate, -inflate);
 
             var color = ColorScheme.ForeColor;
 
-            Brush gradient = null;
+            Brush brush = null;
             switch (_mouseState)
             {
                 case 0:
-                    gradient = new SolidBrush(Color == Color.Transparent ? color.Alpha(30) : Color);
+                    brush = new SolidBrush(Color == Color.Transparent ? color.Alpha(30) : Color);
                     break;
 
                 case 1:
 
-                    gradient = new SolidBrush(Color == Color.Transparent ? color.Alpha(40) : Enabled ? Color.Alpha(220) : Color);
+                    brush = new SolidBrush(Color == Color.Transparent ? color.Alpha(40) : Enabled ? Color.Alpha(220) : Color);
                     break;
 
                 case 2:
-                    gradient = new SolidBrush(Color == Color.Transparent ? color.Alpha(50) : Enabled ? Color.Alpha(200) : Color);
+                    brush = new SolidBrush(Color == Color.Transparent ? color.Alpha(50) : Enabled ? Color.Alpha(200) : Color);
                     break;
             }
 
-            var outerPen = new Pen(Color == Color.Transparent ? ColorScheme.BorderColor : Color.Determine().Alpha(95));
+            var borderColor = Color == Color.Transparent ? ColorScheme.BorderColor : Color.Determine().Alpha(95);
+            var outerPen = new Pen(borderColor);
 
-            using (var path = clientRectangle.Radius(_radius))
+            using (var path = rectf.Radius(_radius))
             {
-                graphics.FillPath(gradient, path);
-                gradient.Dispose();
+                graphics.FillPath(brush, path);
+                brush.Dispose();
+
+                ControlPaintHelper.DrawShadow(graphics, rectf, _shadowDepth, _radius);
 
                 graphics.DrawPath(outerPen, path);
                 outerPen.Dispose();
@@ -103,12 +136,9 @@ namespace SDUI.Controls
 
             var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
             if (!Enabled)
-            {
                 foreColor = Color.Gray;
-            }
-
-            var textRectangle = new Rectangle(0, 1, Width - 1, Height - 1);
-            TextRenderer.DrawText(graphics, Text, Font, textRectangle, foreColor, TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+            
+            TextRenderer.DrawText(graphics, Text, Font, rectf.ToRectangle(), foreColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
         }
     }
 }

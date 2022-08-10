@@ -30,6 +30,8 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            ButtonRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+
             using (var pen = new Pen(ColorScheme.BorderColor))
             {
                 if (_isVertical)

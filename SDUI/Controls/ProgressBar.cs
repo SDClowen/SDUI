@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -83,7 +84,7 @@ namespace SDUI.Controls
             }
         }
 
-        private int _radius = 0;
+        private int _radius = 1;
         public int Radius
         {
             get
@@ -92,7 +93,7 @@ namespace SDUI.Controls
             }
             set
             {
-                _radius = value;
+                _radius = value <= 0 ? 1 : value;
                 Invalidate();
             }
         }
@@ -122,12 +123,6 @@ namespace SDUI.Controls
             }
         }
 
-        public override Color BackColor 
-        { 
-            get => Color.Transparent; 
-            set => base.BackColor = Color.Transparent; 
-        }
-
         public ProgressBar()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
@@ -142,82 +137,65 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            var intValue = (int)((1.0 * _value / _maximum) * Width);
-            var percent = Math.Round((100.0 * Value) / Maximum, _percentIndices);
+            var graphics = e.Graphics;
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-            using (var bitmap = new Bitmap(Width, Height))
+            ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+
+            var intValue = ((1.0f * _value / _maximum) * Width);
+            var percent = ((100.0f * Value) / Maximum);
+
+            var linearGradientBrush = new LinearGradientBrush(new RectangleF(0, 0, (intValue <= 0 ? intValue - 1 : 1), Height), _gradient[0], _gradient[1], 90);
+            var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));
+
+            var rect = ClientRectangle.ToRectangleF();
+
+            using (var path = rect.Radius(_radius))
+                graphics.FillPath(new SolidBrush(ColorScheme.BorderColor), path);
+
+            var rectValue = new RectangleF(rect.X, rect.Y, intValue, rect.Height - 1);
+            using (var path = rectValue.Radius(_radius))
             {
-                using (var graphics = Graphics.FromImage(bitmap))
-                {
-                    graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    graphics.Clear(BackColor);
-
-                    var linearGradientBrush = new LinearGradientBrush(new Rectangle(0, 0, (intValue <= 0 ? intValue - 1 : 1), Height - 1), _gradient[0], _gradient[1], 90);
-                    var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));
-
-                    if (Radius > 0)
-                    {
-                        var backPath = new Rectangle(0, 0, Width, Height).Radius(_radius);
-                        var valuePath = new Rectangle(0, 0, intValue, Height).Radius(_radius);
-
-                        graphics.FillPath(new SolidBrush(ColorScheme.BorderColor), backPath);
-                        graphics.FillPath(linearGradientBrush, valuePath);
-                        backPath.Dispose();
-                        valuePath.Dispose();
-
-                        graphics.FillPath(hatchBrush, new Rectangle(0, 0, intValue - 1, Height - 2).Radius(_radius));
-                        graphics.DrawPath(new Pen(Color.FromArgb(40, Parent.BackColor.Determine())), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
-                    }
-                    else
-                    {
-
-                        graphics.FillRectangle(new SolidBrush(ColorScheme.BorderColor), 0, 0, Width, Height);
-                        graphics.FillRectangle(linearGradientBrush, 0, 0, intValue, Height);
-                        graphics.FillRectangle(linearGradientBrush, 0, 0, intValue - 1, Height - 2);
-
-                        if (_drawHatch)
-                            graphics.FillRectangle(hatchBrush, 0, 0, intValue, Height);
-
-                        graphics.DrawRectangle(new Pen(ColorScheme.BorderColor), 0, 0, Width - 1, Height - 1);
-                    }
-                }
-
-                e.Graphics.DrawImage(bitmap, 0, 0);
-
-
-
-                if (ShowValue)
-                {
-                    e.Graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
-                    var shadowColor = ColorScheme.ForeColor.Determine();
-                    var textColor = ColorScheme.ForeColor;
-                    Text = _showAsPercent ? $"{percent}%" : $"{_value} / {_maximum}";
-
-                    if (percent > 50)
-                    {
-                        textColor = Color.White;
-                        shadowColor = Color.Black;
-                    }
-
-                    // draw shadow
-                    var shadowBrush = new SolidBrush(shadowColor);
-                    e.Graphics.DrawString(Text, Font, shadowBrush, new Rectangle(1, 1, Width, Height), new StringFormat
-                    {
-                        Alignment = StringAlignment.Center,
-                        LineAlignment = StringAlignment.Center
-                    });
-
-                    shadowBrush.Dispose();
-                    // draw text
-                    var textBrush = new SolidBrush(textColor);
-                    e.Graphics.DrawString(Text, Font, textBrush, new Rectangle(0, 0, Width, Height), new StringFormat
-                    {
-                        Alignment = StringAlignment.Center,
-                        LineAlignment = StringAlignment.Center
-                    });
-                }
+                graphics.FillPath(linearGradientBrush, path);
+                graphics.FillPath(hatchBrush, path);
             }
 
+            graphics.DrawPath(new Pen(Color.FromArgb(10, Parent.BackColor.Determine())), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
+
+            if (ShowValue)
+            {
+                e.Graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
+                var textShadowColor = ColorScheme.ForeColor.Determine();
+                var textColor = ColorScheme.ForeColor;
+
+                Text = _showAsPercent ?
+                    percent.ToString($"0.{"0".PadRight(_percentIndices, '0')}") + "%" :
+                    $"{_value} / {_maximum}";
+
+                if (percent > 50)
+                {
+                    textColor = Color.White;
+                    textShadowColor = Color.Black;
+                }
+
+                // draw shadow
+                var shadowBrush = new SolidBrush(textShadowColor);
+                e.Graphics.DrawString(Text, Font, shadowBrush, new Rectangle(1, 1, Width, Height), new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                });
+
+                shadowBrush.Dispose();
+                // draw text
+                var textBrush = new SolidBrush(textColor);
+                e.Graphics.DrawString(Text, Font, textBrush, new Rectangle(0, 0, Width, Height), new StringFormat
+                {
+                    Alignment = StringAlignment.Center,
+                    LineAlignment = StringAlignment.Center
+                });
+            }
         }
+
     }
 }

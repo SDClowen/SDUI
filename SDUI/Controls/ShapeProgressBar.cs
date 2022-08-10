@@ -100,51 +100,47 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            using (var bitmap = new Bitmap(Width, Height))
+            var graphics = e.Graphics;
+
+            ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+
+            var calc = (int)Math.Round((double)((360.0 / _maximum) * _value));
+
+            using (var brush = new LinearGradientBrush(ClientRectangle, _gradient[0], _gradient[1], LinearGradientMode.ForwardDiagonal))
             {
-                using (var graphics = Graphics.FromImage(bitmap))
+                using (var pen = new Pen(brush, 14f))
                 {
-                    graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                    graphics.Clear(Color.Transparent);
-
-                    var calc = (int)Math.Round((double)((360.0 / _maximum) * _value));
-
-                    using (var brush = new LinearGradientBrush(ClientRectangle, _gradient[0], _gradient[1], LinearGradientMode.ForwardDiagonal))
-                    {
-                        using (var pen = new Pen(brush, 14f))
-                        {
-                            pen.StartCap = LineCap.Round;
-                            pen.EndCap = LineCap.Round;
-                            graphics.DrawArc(pen, 18, 18, (Width - 35) - 2, (Height - 35) - 2, -90, calc);
-                        }
-                    }
-
-                    if (_drawHatch)
-                    {
-                        using (var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1])))
-                        {
-                            using (var pen = new Pen(hatchBrush, 14f))
-                            {
-                                pen.StartCap = LineCap.Round;
-                                pen.EndCap = LineCap.Round;
-                                graphics.DrawArc(pen, 18, 18, (Width - 35) - 2, (Height - 35) - 2, -90, calc);
-                            }
-                        }
-                    }
-
-                    using (var brush = new LinearGradientBrush(ClientRectangle, ColorScheme.BackColor, ColorScheme.BorderColor, LinearGradientMode.Vertical))
-                        graphics.FillEllipse(brush, 24, 24, (Width - 48) - 1, (Height - 48) - 1);
-
-                    var percent = (100 / _maximum) * _value;
-                    var percentString = percent.ToString();
-                    var stringSize = graphics.MeasureString(percentString, Font);
-
-                    using (var textBrush = new SolidBrush(ColorScheme.ForeColor))
-                        graphics.DrawString(percentString, Font, textBrush, Width / 2 - stringSize.Width / 2, Height / 2 - stringSize.Height / 2);
+                    pen.StartCap = LineCap.Round;
+                    pen.EndCap = LineCap.Round;
+                    graphics.DrawArc(pen, 18, 18, (Width - 35) - 2, (Height - 35) - 2, -90, calc);
                 }
-
-                e.Graphics.DrawImage(bitmap, 0, 0);
             }
+
+            if (_drawHatch)
+            {
+                using (var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1])))
+                {
+                    using (var pen = new Pen(hatchBrush, 14f))
+                    {
+                        pen.StartCap = LineCap.Round;
+                        pen.EndCap = LineCap.Round;
+                        graphics.DrawArc(pen, 18, 18, (Width - 35) - 2, (Height - 35) - 2, -90, calc);
+                    }
+                }
+            }
+
+            using (var brush = new LinearGradientBrush(ClientRectangle, ColorScheme.BackColor, ColorScheme.BorderColor, LinearGradientMode.Vertical))
+                graphics.FillEllipse(brush, 24, 24, (Width - 48) - 1, (Height - 48) - 1);
+
+            var percent = (100 / _maximum) * _value;
+            var percentString = percent.ToString();
+            var stringSize = graphics.MeasureString(percentString, Font);
+
+            using (var textBrush = new SolidBrush(ColorScheme.ForeColor))
+                graphics.DrawString(percentString, Font, textBrush, Width / 2 - stringSize.Width / 2, Height / 2 - stringSize.Height / 2);
+
         }
     }
 }
