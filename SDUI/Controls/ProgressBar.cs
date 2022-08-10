@@ -93,7 +93,6 @@ namespace SDUI.Controls
             }
             set
             {
-                return;
                 _radius = value <= 0 ? 1 : value;
                 Invalidate();
             }
@@ -110,7 +109,7 @@ namespace SDUI.Controls
             }
         }
 
-        private HatchStyle _hatchType = HatchStyle.Min;
+        private HatchStyle _hatchType = HatchStyle.Percent80;
         public HatchStyle HatchType
         {
             get
@@ -119,6 +118,7 @@ namespace SDUI.Controls
             }
             set
             {
+                return;
                 _hatchType = value;
                 Invalidate();
             }

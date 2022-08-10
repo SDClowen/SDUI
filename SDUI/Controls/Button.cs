@@ -39,7 +39,6 @@ namespace SDUI.Controls
             get => _radius;
             set
             {
-                return;
                 if (_radius == value)
                     return;
 
