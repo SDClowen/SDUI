@@ -33,12 +33,13 @@ namespace SDUI.Controls
             }
         }
 
-        private int _radius = 5;
+        private int _radius = 6;
         public int Radius
         {
             get => _radius;
             set
             {
+                return;
                 if (_radius == value)
                     return;
 

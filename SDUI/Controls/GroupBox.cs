@@ -29,6 +29,7 @@ namespace SDUI.Controls
             get => _radius;
             set
             {
+                return;
                 _radius = value;
 
                 Invalidate();

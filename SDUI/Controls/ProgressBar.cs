@@ -84,7 +84,7 @@ namespace SDUI.Controls
             }
         }
 
-        private int _radius = 1;
+        private int _radius = 4;
         public int Radius
         {
             get
@@ -93,6 +93,7 @@ namespace SDUI.Controls
             }
             set
             {
+                return;
                 _radius = value <= 0 ? 1 : value;
                 Invalidate();
             }
