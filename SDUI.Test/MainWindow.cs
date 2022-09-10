@@ -1,6 +1,7 @@
 using SDUI.Controls;
 using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SDUI.Test
@@ -10,6 +11,7 @@ namespace SDUI.Test
         public MainWindow()
         {
             InitializeComponent();
+            comboBox6.Items.AddRange(Enum.GetNames<HatchStyle>());
         }
 
         protected override void OnBackColorChanged(EventArgs e)
@@ -190,6 +192,19 @@ namespace SDUI.Test
             var backup = BackColor;
             BackColor = BackColor.Determine();
             BackColor = backup;
+        }
+
+        private void comboBox6_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!Enum.TryParse<HatchStyle>(comboBox6.SelectedItem.ToString(), out var value))
+                return;
+
+            progressBar1.HatchType = value;
+            progressBar1.Invalidate();
+            progressBar2.HatchType = value;
+            progressBar2.Invalidate();
+            progressBar3.HatchType = value;
+            progressBar3.Invalidate();
         }
     }
 }

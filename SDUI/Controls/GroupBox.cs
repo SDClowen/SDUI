@@ -29,7 +29,8 @@ namespace SDUI.Controls
             get => _radius;
             set
             {
-                _radius = value;
+                //_radius = value;
+                _radius = 10;
 
                 Invalidate();
             }
@@ -85,12 +86,13 @@ namespace SDUI.Controls
                 var color = ColorScheme.BorderColor;
                 BackColor = Color.Transparent;
 
-                using (var brush = new SolidBrush(ColorScheme.BackColor2))
+                using (var brush = new SolidBrush(ColorScheme.BackColor))
                     e.Graphics.FillPath(brush, path);
 
                 var clip = e.Graphics.ClipBounds;
                 e.Graphics.SetClip(rect);
                 e.Graphics.DrawLine(new Pen(color), 0, rect.Height - 1, rect.Width, rect.Height - 1);
+                e.Graphics.FillPath(new SolidBrush(ColorScheme.BackColor2), path);
 
                 TextRenderer.DrawText(e.Graphics, Text, Font, rect.ToRectangle(), ColorScheme.ForeColor);
                 e.Graphics.SetClip(clip);

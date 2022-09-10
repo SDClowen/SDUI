@@ -109,16 +109,14 @@ namespace SDUI.Controls
             }
         }
 
-        private HatchStyle _hatchType = HatchStyle.Percent80;
+        private HatchStyle _hatchType = HatchStyle.Percent10;
         public HatchStyle HatchType
         {
-            get
-            {
-                return _hatchType;
-            }
+            get => _hatchType;
             set
             {
-                _hatchType = value;
+                _hatchType = HatchStyle.Percent10;
+                //_hatchType = value;
                 Invalidate();
             }
         }
@@ -127,6 +125,11 @@ namespace SDUI.Controls
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
             BackColor = Color.Transparent;
+        }
+
+        private void Timer_Tick(object? sender, EventArgs e)
+        {
+            this.Invalidate();
         }
 
         protected override void OnParentBackColorChanged(EventArgs e)
@@ -142,10 +145,10 @@ namespace SDUI.Controls
 
             ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
 
-            var intValue = ((1.0f * _value / _maximum) * Width);
+            var intValue = ((_value / (float)_maximum) * Width);
             var percent = ((100.0f * Value) / Maximum);
 
-            var linearGradientBrush = new LinearGradientBrush(new RectangleF(0, 0, (intValue <= 0 ? intValue - 1 : 1), Height), _gradient[0], _gradient[1], 90);
+            var linearGradientBrush = new LinearGradientBrush(new RectangleF(0, 0, Width, Height), _gradient[0], _gradient[1], 90);
             var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));
 
             var rect = ClientRectangle.ToRectangleF();
@@ -153,11 +156,14 @@ namespace SDUI.Controls
             using (var path = rect.Radius(_radius))
                 graphics.FillPath(new SolidBrush(ColorScheme.BorderColor), path);
 
-            var rectValue = new RectangleF(rect.X, rect.Y, intValue, rect.Height - 1);
-            using (var path = rectValue.Radius(_radius))
+            if (intValue != 0)
             {
-                graphics.FillPath(linearGradientBrush, path);
-                graphics.FillPath(hatchBrush, path);
+                var rectValue = new RectangleF(rect.X, rect.Y, intValue, rect.Height - 1);
+                using (var path = rectValue.Radius(_radius))
+                {
+                    graphics.FillPath(linearGradientBrush, path);
+                    graphics.FillPath(hatchBrush, path);
+                }
             }
 
             graphics.DrawPath(new Pen(Color.FromArgb(10, Parent.BackColor.Determine())), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));

@@ -22,7 +22,7 @@ namespace SDUI
         /// <summary>
         /// Gets theme back color 2
         /// </summary>
-        public static Color BackColor2 => ForeColor.Alpha(6);
+        public static Color BackColor2 => ForeColor.Alpha(10);
 
         /// <summary>
         /// Gets theme back color 2

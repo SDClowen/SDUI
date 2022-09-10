@@ -56,6 +56,7 @@ namespace SDUI.Test
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
             this.groupBox4 = new SDUI.Controls.GroupBox();
+            this.comboBox6 = new SDUI.Controls.ComboBox();
             this.trackBar2 = new System.Windows.Forms.TrackBar();
             this.comboBox5 = new SDUI.Controls.ComboBox();
             this.trackBar1 = new System.Windows.Forms.TrackBar();
@@ -109,6 +110,7 @@ namespace SDUI.Test
             this.button3 = new SDUI.Controls.Button();
             this.buttonDark = new SDUI.Controls.Button();
             this.buttonLight = new SDUI.Controls.Button();
+            this.progressBar9 = new SDUI.Controls.ProgressBar();
             this.progressBar8 = new SDUI.Controls.ProgressBar();
             this.progressBar4 = new SDUI.Controls.ProgressBar();
             this.progressBar7 = new SDUI.Controls.ProgressBar();
@@ -208,6 +210,7 @@ namespace SDUI.Test
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
             this.tabPage1.Controls.Add(this.groupBox4);
+            this.tabPage1.Controls.Add(this.comboBox6);
             this.tabPage1.Controls.Add(this.trackBar2);
             this.tabPage1.Controls.Add(this.comboBox5);
             this.tabPage1.Controls.Add(this.trackBar1);
@@ -236,6 +239,7 @@ namespace SDUI.Test
             this.tabPage1.Controls.Add(this.button3);
             this.tabPage1.Controls.Add(this.buttonDark);
             this.tabPage1.Controls.Add(this.buttonLight);
+            this.tabPage1.Controls.Add(this.progressBar9);
             this.tabPage1.Controls.Add(this.progressBar8);
             this.tabPage1.Controls.Add(this.progressBar4);
             this.tabPage1.Controls.Add(this.progressBar7);
@@ -393,6 +397,22 @@ namespace SDUI.Test
             this.groupBox4.TabIndex = 30;
             this.groupBox4.TabStop = false;
             this.groupBox4.Text = "groupBox4";
+            // 
+            // comboBox6
+            // 
+            this.comboBox6.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboBox6.DropDownHeight = 100;
+            this.comboBox6.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox6.FormattingEnabled = true;
+            this.comboBox6.IntegralHeight = false;
+            this.comboBox6.ItemHeight = 17;
+            this.comboBox6.Location = new System.Drawing.Point(24, 542);
+            this.comboBox6.Name = "comboBox6";
+            this.comboBox6.Radius = 5;
+            this.comboBox6.ShadowDepth = 4F;
+            this.comboBox6.Size = new System.Drawing.Size(194, 23);
+            this.comboBox6.TabIndex = 8;
+            this.comboBox6.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
             // 
             // trackBar2
             // 
@@ -768,7 +788,7 @@ namespace SDUI.Test
             this.progressBar5.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.Maroon,
         System.Drawing.Color.Red};
-            this.progressBar5.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
+            this.progressBar5.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             this.progressBar5.Location = new System.Drawing.Point(16, 417);
             this.progressBar5.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar5.Maximum = ((long)(100));
@@ -1102,6 +1122,27 @@ namespace SDUI.Test
             this.buttonLight.Text = "Light";
             this.buttonLight.Click += new System.EventHandler(this.buttonLight_Click);
             // 
+            // progressBar9
+            // 
+            this.progressBar9.BackColor = System.Drawing.Color.Transparent;
+            this.progressBar9.DrawHatch = true;
+            this.progressBar9.Gradient = new System.Drawing.Color[] {
+        System.Drawing.Color.Red,
+        System.Drawing.Color.Yellow};
+            this.progressBar9.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            this.progressBar9.Location = new System.Drawing.Point(260, 440);
+            this.progressBar9.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            this.progressBar9.Maximum = ((long)(1000));
+            this.progressBar9.Name = "progressBar9";
+            this.progressBar9.PercentIndices = 2;
+            this.progressBar9.Radius = 4;
+            this.progressBar9.ShowAsPercent = false;
+            this.progressBar9.ShowValue = true;
+            this.progressBar9.Size = new System.Drawing.Size(165, 25);
+            this.progressBar9.TabIndex = 3;
+            this.progressBar9.Text = "0 / 1000";
+            this.progressBar9.Value = ((long)(0));
+            // 
             // progressBar8
             // 
             this.progressBar8.BackColor = System.Drawing.Color.Transparent;
@@ -1109,8 +1150,8 @@ namespace SDUI.Test
             this.progressBar8.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.Gold,
         System.Drawing.Color.Yellow};
-            this.progressBar8.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
-            this.progressBar8.Location = new System.Drawing.Point(222, 408);
+            this.progressBar8.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            this.progressBar8.Location = new System.Drawing.Point(222, 385);
             this.progressBar8.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar8.Maximum = ((long)(1000));
             this.progressBar8.Name = "progressBar8";
@@ -1130,7 +1171,7 @@ namespace SDUI.Test
             this.progressBar4.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.Gold,
         System.Drawing.Color.Yellow};
-            this.progressBar4.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
+            this.progressBar4.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             this.progressBar4.Location = new System.Drawing.Point(20, 408);
             this.progressBar4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar4.Maximum = ((long)(1000));
@@ -1151,8 +1192,8 @@ namespace SDUI.Test
             this.progressBar7.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.DarkGreen,
         System.Drawing.Color.Lime};
-            this.progressBar7.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
-            this.progressBar7.Location = new System.Drawing.Point(222, 386);
+            this.progressBar7.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            this.progressBar7.Location = new System.Drawing.Point(222, 363);
             this.progressBar7.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar7.Maximum = ((long)(1000));
             this.progressBar7.Name = "progressBar7";
@@ -1172,7 +1213,7 @@ namespace SDUI.Test
             this.progressBar3.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.DarkGreen,
         System.Drawing.Color.Lime};
-            this.progressBar3.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
+            this.progressBar3.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             this.progressBar3.Location = new System.Drawing.Point(20, 386);
             this.progressBar3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar3.Maximum = ((long)(1000));
@@ -1193,8 +1234,8 @@ namespace SDUI.Test
             this.progressBar6.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.MidnightBlue,
         System.Drawing.Color.RoyalBlue};
-            this.progressBar6.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
-            this.progressBar6.Location = new System.Drawing.Point(222, 364);
+            this.progressBar6.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            this.progressBar6.Location = new System.Drawing.Point(222, 341);
             this.progressBar6.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar6.Maximum = ((long)(100));
             this.progressBar6.Name = "progressBar6";
@@ -1214,7 +1255,7 @@ namespace SDUI.Test
             this.progressBar2.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.MidnightBlue,
         System.Drawing.Color.RoyalBlue};
-            this.progressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
+            this.progressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             this.progressBar2.Location = new System.Drawing.Point(20, 364);
             this.progressBar2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar2.Maximum = ((long)(100));
@@ -1235,7 +1276,7 @@ namespace SDUI.Test
             this.progressBar1.Gradient = new System.Drawing.Color[] {
         System.Drawing.Color.Maroon,
         System.Drawing.Color.Red};
-            this.progressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent80;
+            this.progressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             this.progressBar1.Location = new System.Drawing.Point(20, 342);
             this.progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar1.Maximum = ((long)(100));
@@ -1911,5 +1952,7 @@ namespace SDUI.Test
         private ToolStripButton pasteToolStripButton;
         private ToolStripSeparator toolStripSeparator9;
         private ToolStripButton helpToolStripButton;
+        private Controls.ComboBox comboBox6;
+        private Controls.ProgressBar progressBar9;
     }
 }
