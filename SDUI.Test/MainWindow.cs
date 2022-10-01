@@ -1,4 +1,5 @@
 using SDUI.Controls;
+using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -60,6 +61,7 @@ namespace SDUI.Test
 
         private void MainWindow_Load(object sender, EventArgs e)
         {
+            bool dark = WindowsHelper.IsDark();
             var info = new InfoControl
             {
                 Name = "overlay",

@@ -97,19 +97,21 @@ namespace SDUI.Helpers
         /// <returns></returns>
         public static bool IsDark()
         {
-            if (!TenOrHigher)
-                return false;
+            int value = 1;
+            if (TenOrHigher || ElevenOrHigher)
+            {
+                try
+                {
+                    var personalize = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
+                    value = (int)Registry.GetValue(personalize, "AppsUseLightTheme", 1);
+                }
+                catch
+                {
+                    return false;
+                }
+            }
 
-            try
-            {
-                var personalize = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
-                var value = Registry.GetValue(personalize, "AppsUseLightTheme", null).ToString();
-                return (value == "0");
-            }
-            catch
-            {
-                return false;
-            }
+            return value == 0;
         }
 
         /// <summary>
