@@ -47,7 +47,7 @@ namespace SDUI.Controls
         /// <param name="title">The title.</param>
         /// <param name="message">The message.</param>
         /// <param name="selector">If you want to active the selector instead of textbox <c>true</c>; otherwise <c>false</c></param>
-        public InputDialog(string formTitle, string title, string message, InputType inputType = InputType.Textbox)
+        public InputDialog(string formTitle, string title, string message, InputType inputType = InputType.Textbox, object defaultValue = null)
         {
             InitializeComponent();
             BackColor = ColorScheme.BackColor;
@@ -61,19 +61,36 @@ namespace SDUI.Controls
             switch (_inputType)
             {
                 case InputType.Combobox:
+
                     comboBox.Visible = true;
                     txtValue.Visible = false;
                     numValue.Visible = false;
+
+                    if (defaultValue != null)
+                        comboBox.SelectedIndex = (int)defaultValue;
+
                     break;
+
                 case InputType.Textbox:
+
                     comboBox.Visible = false;
                     txtValue.Visible = true;
                     numValue.Visible = false;
+
+                    if (defaultValue != null)
+                        txtValue.Text = defaultValue.ToString();
+
                     break;
+
                 case InputType.Numeric:
+
                     comboBox.Visible = false;
                     txtValue.Visible = false;
                     numValue.Visible = true;
+                    
+                    if (defaultValue != null)
+                        numValue.Value = (decimal)defaultValue;
+
                     break;
             }
         }
