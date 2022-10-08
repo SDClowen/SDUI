@@ -3,6 +3,7 @@ using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace SDUI.Test
@@ -13,6 +14,7 @@ namespace SDUI.Test
         {
             InitializeComponent();
             comboBox6.Items.AddRange(Enum.GetNames<HatchStyle>());
+            button6.SetUseAsync(true);
         }
 
         protected override void OnBackColorChanged(EventArgs e)
@@ -207,6 +209,11 @@ namespace SDUI.Test
             progressBar2.Invalidate();
             progressBar3.HatchType = value;
             progressBar3.Invalidate();
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            Thread.Sleep(5000);
         }
     }
 }

@@ -171,6 +171,7 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.button6 = new SDUI.Controls.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -209,6 +210,7 @@ namespace SDUI.Test
             // 
             this.tabPage1.BackColor = System.Drawing.Color.White;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.button6);
             this.tabPage1.Controls.Add(this.groupBox4);
             this.tabPage1.Controls.Add(this.comboBox6);
             this.tabPage1.Controls.Add(this.trackBar2);
@@ -1314,11 +1316,11 @@ namespace SDUI.Test
             // 
             this.tabPage2.BackColor = System.Drawing.Color.White;
             this.tabPage2.Controls.Add(this.listView1);
-            this.tabPage2.Location = new System.Drawing.Point(4, 24);
+            this.tabPage2.Location = new System.Drawing.Point(4, 25);
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage2.Size = new System.Drawing.Size(1243, 581);
+            this.tabPage2.Size = new System.Drawing.Size(1243, 580);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
@@ -1337,7 +1339,7 @@ namespace SDUI.Test
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
             this.listView1.ShowItemToolTips = true;
-            this.listView1.Size = new System.Drawing.Size(1235, 575);
+            this.listView1.Size = new System.Drawing.Size(1235, 574);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -1369,10 +1371,10 @@ namespace SDUI.Test
             this.tabPage3.Controls.Add(this.buttonRemoveTab);
             this.tabPage3.Controls.Add(this.buttonAddTab);
             this.tabPage3.Controls.Add(this.multiPageControl);
-            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Location = new System.Drawing.Point(4, 25);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(1243, 581);
+            this.tabPage3.Size = new System.Drawing.Size(1243, 580);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "tabPage3";
             // 
@@ -1773,6 +1775,19 @@ namespace SDUI.Test
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
             // 
+            // button6
+            // 
+            this.button6.Color = System.Drawing.Color.Transparent;
+            this.button6.Location = new System.Drawing.Point(819, 385);
+            this.button6.Name = "button6";
+            this.button6.Radius = 6;
+            this.button6.ShadowDepth = 4F;
+            this.button6.Size = new System.Drawing.Size(99, 23);
+            this.button6.TabIndex = 31;
+            this.button6.Text = "Async Button";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
+            // 
             // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -1954,5 +1969,6 @@ namespace SDUI.Test
         private ToolStripButton helpToolStripButton;
         private Controls.ComboBox comboBox6;
         private Controls.ProgressBar progressBar9;
+        private Controls.Button button6;
     }
 }

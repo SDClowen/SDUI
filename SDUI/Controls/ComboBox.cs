@@ -51,11 +51,11 @@ namespace SDUI.Controls
 
         protected override void OnDrawItem(DrawItemEventArgs e)
         {
-            base.OnDrawItem(e);
-
             var index = e.Index;
             if (index < 0 || index >= Items.Count)
                 return;
+
+            base.OnDrawItem(e);
 
             var foreColor = ColorScheme.ForeColor;
             if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
@@ -81,15 +81,6 @@ namespace SDUI.Controls
             SuspendLayout();
             Update();
             ResumeLayout();
-        }
-
-        protected override void OnResize(EventArgs e)
-        {
-            base.OnResize(e);
-            if (!Focused)
-            {
-                SelectionLength = 0;
-            }
         }
 
         protected override void OnPaint(PaintEventArgs e)

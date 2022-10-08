@@ -3,6 +3,7 @@ using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
@@ -48,9 +49,58 @@ namespace SDUI.Controls
             }
         }
 
+        private bool _useAsync;
+        private bool _animating;
+
         public Button()
         {
             SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        }
+
+        public void SetUseAsync(bool value)
+        {
+            _useAsync = value;
+        }
+
+        private async void LoadingAnimate()
+        {
+            var slashes = new string[] { "\\", "/", "-" };
+            _animating = true;
+            var _ = -1;
+            var tempText = Text;
+            CheckForIllegalCrossThreadCalls = false;
+            while (_animating)
+            {
+                if (++_ > 2)
+                    _ = 0;
+
+                Text = slashes[_];
+                await Task.Delay(100);
+            }
+            Text = tempText;
+            Enabled = true;
+            CheckForIllegalCrossThreadCalls = true;
+        }
+
+        protected override async void OnClick(EventArgs e)
+        {
+            if (_useAsync)
+            {
+                Enabled = false;
+                var text = Text;
+
+                LoadingAnimate();
+                await Task.Run(new Action(() =>
+                {
+                    base.OnClick(e);
+                }));
+                
+                _animating = false;
+
+                return;
+            }
+
+            base.OnClick(e);
         }
 
         protected override void OnMouseDown(MouseEventArgs e)
@@ -90,8 +140,8 @@ namespace SDUI.Controls
 
             var me = TextRenderer.MeasureText(Text, Font);
 
-            var rectf = new RectangleF(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, ClientRectangle.Height); 
-            
+            var rectf = new RectangleF(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, ClientRectangle.Height);
+
             if (ColorScheme.DrawDebugBorders)
             {
                 var redPen = new Pen(Color.Red, 1);
@@ -138,7 +188,7 @@ namespace SDUI.Controls
             var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
             if (!Enabled)
                 foreColor = Color.Gray;
-            
+
             TextRenderer.DrawText(graphics, Text, Font, rectf.ToRectangle(), foreColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
         }
     }
