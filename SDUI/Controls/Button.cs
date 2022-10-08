@@ -68,7 +68,6 @@ namespace SDUI.Controls
             _animating = true;
             var _ = -1;
             var tempText = Text;
-            CheckForIllegalCrossThreadCalls = false;
             while (_animating)
             {
                 if (++_ > 2)
@@ -79,7 +78,6 @@ namespace SDUI.Controls
             }
             Text = tempText;
             Enabled = true;
-            CheckForIllegalCrossThreadCalls = true;
         }
 
         protected override async void OnClick(EventArgs e)
