@@ -13,10 +13,7 @@ namespace SDUI.Controls
         private long _value = 0;
         public long Value
         {
-            get
-            {
-                return _value;
-            }
+            get => _value;
             set
             {
                 _value = value;
@@ -27,7 +24,7 @@ namespace SDUI.Controls
         private long _maximum = 100;
         public long Maximum
         {
-            get { return _maximum; }
+            get => _maximum;
             set
             {
                 _maximum = value;
@@ -54,7 +51,7 @@ namespace SDUI.Controls
         private bool _showAsPercent = false;
         public bool ShowAsPercent
         {
-            get { return _showAsPercent; }
+            get => _showAsPercent;
             set
             {
                 _showAsPercent = value;
@@ -69,6 +66,17 @@ namespace SDUI.Controls
             set
             {
                 _percentIndices = value;
+                Invalidate();
+            }
+        }
+
+        private float _maxPercentShowValue = 100;
+        public float MaxPercentShowValue
+        {
+            get => _maxPercentShowValue;
+            set
+            {
+                _maxPercentShowValue = value;
                 Invalidate();
             }
         }
@@ -173,6 +181,16 @@ namespace SDUI.Controls
                 e.Graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
                 var textShadowColor = ColorScheme.ForeColor.Determine();
                 var textColor = ColorScheme.ForeColor;
+
+                if (_showAsPercent)
+                {
+                    if (percent == 100)
+                        percent = _maxPercentShowValue;
+
+                    Text = percent.ToString($"0.{"0".PadRight(_percentIndices, '0')}") + "%";
+                }
+                else
+                    Text = $"{_value} / {_maximum}";
 
                 Text = _showAsPercent ?
                     percent.ToString($"0.{"0".PadRight(_percentIndices, '0')}") + "%" :

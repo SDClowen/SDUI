@@ -55,6 +55,7 @@ namespace SDUI.Test
             this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.button6 = new SDUI.Controls.Button();
             this.groupBox4 = new SDUI.Controls.GroupBox();
             this.comboBox6 = new SDUI.Controls.ComboBox();
             this.trackBar2 = new System.Windows.Forms.TrackBar();
@@ -171,7 +172,6 @@ namespace SDUI.Test
             this.searchToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.button6 = new SDUI.Controls.Button();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -386,6 +386,19 @@ namespace SDUI.Test
             // 
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
+            // 
+            // button6
+            // 
+            this.button6.Color = System.Drawing.Color.Transparent;
+            this.button6.Location = new System.Drawing.Point(819, 385);
+            this.button6.Name = "button6";
+            this.button6.Radius = 6;
+            this.button6.ShadowDepth = 4F;
+            this.button6.Size = new System.Drawing.Size(99, 23);
+            this.button6.TabIndex = 31;
+            this.button6.Text = "Async Button";
+            this.button6.UseVisualStyleBackColor = true;
+            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // groupBox4
             // 
@@ -794,6 +807,7 @@ namespace SDUI.Test
             this.progressBar5.Location = new System.Drawing.Point(16, 417);
             this.progressBar5.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar5.Maximum = ((long)(100));
+            this.progressBar5.MaxPercentShowValue = 100F;
             this.progressBar5.Name = "progressBar5";
             this.progressBar5.PercentIndices = 2;
             this.progressBar5.Radius = 4;
@@ -1135,6 +1149,7 @@ namespace SDUI.Test
             this.progressBar9.Location = new System.Drawing.Point(260, 440);
             this.progressBar9.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar9.Maximum = ((long)(1000));
+            this.progressBar9.MaxPercentShowValue = 100F;
             this.progressBar9.Name = "progressBar9";
             this.progressBar9.PercentIndices = 2;
             this.progressBar9.Radius = 4;
@@ -1156,6 +1171,7 @@ namespace SDUI.Test
             this.progressBar8.Location = new System.Drawing.Point(222, 385);
             this.progressBar8.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar8.Maximum = ((long)(1000));
+            this.progressBar8.MaxPercentShowValue = 100F;
             this.progressBar8.Name = "progressBar8";
             this.progressBar8.PercentIndices = 2;
             this.progressBar8.Radius = 4;
@@ -1177,6 +1193,7 @@ namespace SDUI.Test
             this.progressBar4.Location = new System.Drawing.Point(20, 408);
             this.progressBar4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar4.Maximum = ((long)(1000));
+            this.progressBar4.MaxPercentShowValue = 100F;
             this.progressBar4.Name = "progressBar4";
             this.progressBar4.PercentIndices = 2;
             this.progressBar4.Radius = 4;
@@ -1198,15 +1215,16 @@ namespace SDUI.Test
             this.progressBar7.Location = new System.Drawing.Point(222, 363);
             this.progressBar7.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar7.Maximum = ((long)(1000));
+            this.progressBar7.MaxPercentShowValue = 99.99F;
             this.progressBar7.Name = "progressBar7";
             this.progressBar7.PercentIndices = 2;
             this.progressBar7.Radius = 4;
-            this.progressBar7.ShowAsPercent = false;
+            this.progressBar7.ShowAsPercent = true;
             this.progressBar7.ShowValue = true;
             this.progressBar7.Size = new System.Drawing.Size(179, 16);
             this.progressBar7.TabIndex = 3;
-            this.progressBar7.Text = "623 / 1000";
-            this.progressBar7.Value = ((long)(623));
+            this.progressBar7.Text = "99.99%";
+            this.progressBar7.Value = ((long)(1000));
             // 
             // progressBar3
             // 
@@ -1219,6 +1237,7 @@ namespace SDUI.Test
             this.progressBar3.Location = new System.Drawing.Point(20, 386);
             this.progressBar3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar3.Maximum = ((long)(1000));
+            this.progressBar3.MaxPercentShowValue = 100F;
             this.progressBar3.Name = "progressBar3";
             this.progressBar3.PercentIndices = 2;
             this.progressBar3.Radius = 4;
@@ -1240,6 +1259,7 @@ namespace SDUI.Test
             this.progressBar6.Location = new System.Drawing.Point(222, 341);
             this.progressBar6.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar6.Maximum = ((long)(100));
+            this.progressBar6.MaxPercentShowValue = 100F;
             this.progressBar6.Name = "progressBar6";
             this.progressBar6.PercentIndices = 2;
             this.progressBar6.Radius = 4;
@@ -1261,6 +1281,7 @@ namespace SDUI.Test
             this.progressBar2.Location = new System.Drawing.Point(20, 364);
             this.progressBar2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar2.Maximum = ((long)(100));
+            this.progressBar2.MaxPercentShowValue = 100F;
             this.progressBar2.Name = "progressBar2";
             this.progressBar2.PercentIndices = 2;
             this.progressBar2.Radius = 4;
@@ -1282,6 +1303,7 @@ namespace SDUI.Test
             this.progressBar1.Location = new System.Drawing.Point(20, 342);
             this.progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.progressBar1.Maximum = ((long)(100));
+            this.progressBar1.MaxPercentShowValue = 100F;
             this.progressBar1.Name = "progressBar1";
             this.progressBar1.PercentIndices = 2;
             this.progressBar1.Radius = 4;
@@ -1774,19 +1796,6 @@ namespace SDUI.Test
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(122, 22);
             this.aboutToolStripMenuItem.Text = "&About...";
-            // 
-            // button6
-            // 
-            this.button6.Color = System.Drawing.Color.Transparent;
-            this.button6.Location = new System.Drawing.Point(819, 385);
-            this.button6.Name = "button6";
-            this.button6.Radius = 6;
-            this.button6.ShadowDepth = 4F;
-            this.button6.Size = new System.Drawing.Size(99, 23);
-            this.button6.TabIndex = 31;
-            this.button6.Text = "Async Button";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
             // 
             // MainWindow
             // 
