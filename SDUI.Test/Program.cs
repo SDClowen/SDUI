@@ -1,20 +1,19 @@
 ﻿using System;
 using System.Windows.Forms;
 
-namespace SDUI.Test
+namespace SDUI.Test;
+
+internal static class Program
 {
-    internal static class Program
+    /// <summary>
+    /// The main entry point for the application.
+    /// </summary>
+    [STAThread]
+    static void Main()
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        [STAThread]
-        static void Main()
-        {
-            Application.EnableVisualStyles();
-            Application.SetHighDpiMode(HighDpiMode.DpiUnawareGdiScaled);
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainWindow());
-        }
+        Application.EnableVisualStyles();
+        Application.SetHighDpiMode(HighDpiMode.DpiUnawareGdiScaled);
+        Application.SetCompatibleTextRenderingDefault(false);
+        Application.Run(new MainWindow());
     }
 }

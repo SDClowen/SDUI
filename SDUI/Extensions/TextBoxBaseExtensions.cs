@@ -1,60 +1,59 @@
 ﻿using System.IO;
 using System.Text;
 
-namespace System.Windows.Forms
+namespace System.Windows.Forms;
+
+public static class TextBoxBaseExtensions
 {
-    public static class TextBoxBaseExtensions
+    /// <summary>
+    /// Sync lock object
+    /// </summary>
+    private static object _lock = new object();
+
+    /// <summary>
+    /// Append string to type in the text controls
+    /// </summary>
+    /// <param name="value">The TextBoxBase</param>
+    /// <param name="str">The string to type in the <seealso cref="TextBoxBase"/></param>
+    /// <param name="time">The time</param>
+    public static void Write(this TextBoxBase value, string str, bool time = true, bool writeToFile = false, string filePath = "")
     {
-        /// <summary>
-        /// Sync lock object
-        /// </summary>
-        private static object _lock = new object();
+        var stringBuilder = new StringBuilder();
+        if (time)
+            stringBuilder.Append(DateTime.Now.ToString("[hh:mm:ss]\t"));
 
-        /// <summary>
-        /// Append string to type in the text controls
-        /// </summary>
-        /// <param name="value">The TextBoxBase</param>
-        /// <param name="str">The string to type in the <seealso cref="TextBoxBase"/></param>
-        /// <param name="time">The time</param>
-        public static void Write(this TextBoxBase value, string str, bool time = true, bool writeToFile = false, string filePath = "")
+        stringBuilder.Append(str);
+        stringBuilder.Append(Environment.NewLine);
+
+        value.RunInUIThread(() =>
         {
-            var stringBuilder = new StringBuilder();
-            if (time)
-                stringBuilder.Append(DateTime.Now.ToString("[hh:mm:ss]\t"));
+            value.AppendText(stringBuilder.ToString());
+            value.ScrollToCaret();
+        });
 
-            stringBuilder.Append(str);
-            stringBuilder.Append(Environment.NewLine);
-
-            value.RunInUIThread(() =>
+        if (writeToFile)
+        {
+            lock (_lock)
             {
-                value.AppendText(stringBuilder.ToString());
-                value.ScrollToCaret();
-            });
+                if (!Directory.Exists(filePath))
+                    Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
-            if (writeToFile)
-            {
-                lock (_lock)
-                {
-                    if (!Directory.Exists(filePath))
-                        Directory.CreateDirectory(Path.GetDirectoryName(filePath));
-
-                    using (var stream = File.AppendText(filePath))
-                        stream.Write(stringBuilder.ToString());
-                }
+                using (var stream = File.AppendText(filePath))
+                    stream.Write(stringBuilder.ToString());
             }
         }
+    }
 
-        /// <summary>
-        /// Run action a required thread on controls
-        /// </summary>
-        /// <param name="target">The target</param>
-        /// <param name="action">The action</param>
-        public static void RunInUIThread(this Control target, Action action)
-        {
-            if (target.InvokeRequired)
-                target.Invoke(action);
-            else
-                action();
-        }
+    /// <summary>
+    /// Run action a required thread on controls
+    /// </summary>
+    /// <param name="target">The target</param>
+    /// <param name="action">The action</param>
+    public static void RunInUIThread(this Control target, Action action)
+    {
+        if (target.InvokeRequired)
+            target.Invoke(action);
+        else
+            action();
     }
 }

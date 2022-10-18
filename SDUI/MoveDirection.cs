@@ -1,11 +1,10 @@
-﻿namespace System.Windows.Forms
+﻿namespace System.Windows.Forms;
+
+/// <summary>
+/// The <see cref="ListViewItem"/> moving direction
+/// </summary>
+public enum MoveDirection
 {
-    /// <summary>
-    /// The <see cref="ListViewItem"/> moving direction
-    /// </summary>
-    public enum MoveDirection
-    {
-        Up = -1,
-        Down = 1
-    };
-}
+    Up = -1,
+    Down = 1
+};
