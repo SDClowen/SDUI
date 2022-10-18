@@ -40,12 +40,16 @@ public class MultiPageControl : Panel
 
     private void _collection_OnItemAdded(object sender, EventArgs e)
     {
+        SuspendLayout();
         Invalidate();
+        ResumeLayout();
     }
 
     private void _collection_OnItemRemoved(object sender, EventArgs e)
     {
+        SuspendLayout();
         Invalidate();
+        ResumeLayout();
     }
 
     private MultiPageControlCollection _collection = new MultiPageControlCollection();
