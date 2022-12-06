@@ -205,7 +205,7 @@ public partial class MainWindow
             this.tabControl1.Margin = new System.Windows.Forms.Padding(0);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1251, 609);
+            this.tabControl1.Size = new System.Drawing.Size(1271, 652);
             this.tabControl1.TabIndex = 0;
             // 
             // tabPage1
@@ -256,7 +256,7 @@ public partial class MainWindow
             this.tabPage1.Location = new System.Drawing.Point(4, 24);
             this.tabPage1.Margin = new System.Windows.Forms.Padding(0);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Size = new System.Drawing.Size(1243, 581);
+            this.tabPage1.Size = new System.Drawing.Size(1263, 624);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "tabPage1";
             // 
@@ -649,11 +649,11 @@ public partial class MainWindow
             this.panel8.Controls.Add(this.label3);
             this.panel8.Controls.Add(this.progressBar5);
             this.panel8.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel8.Location = new System.Drawing.Point(1010, 0);
+            this.panel8.Location = new System.Drawing.Point(1030, 0);
             this.panel8.Name = "panel8";
             this.panel8.Radius = 0;
             this.panel8.ShadowDepth = 2F;
-            this.panel8.Size = new System.Drawing.Size(233, 581);
+            this.panel8.Size = new System.Drawing.Size(233, 624);
             this.panel8.TabIndex = 12;
             // 
             // toggleButton1
@@ -1346,7 +1346,7 @@ public partial class MainWindow
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage2.Size = new System.Drawing.Size(1243, 580);
+            this.tabPage2.Size = new System.Drawing.Size(1247, 584);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "tabPage2";
             // 
@@ -1365,7 +1365,7 @@ public partial class MainWindow
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
             this.listView1.ShowItemToolTips = true;
-            this.listView1.Size = new System.Drawing.Size(1235, 574);
+            this.listView1.Size = new System.Drawing.Size(1239, 578);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -1397,10 +1397,10 @@ public partial class MainWindow
             this.tabPage3.Controls.Add(this.buttonRemoveTab);
             this.tabPage3.Controls.Add(this.buttonAddTab);
             this.tabPage3.Controls.Add(this.multiPageControl);
-            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Location = new System.Drawing.Point(4, 25);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(1243, 581);
+            this.tabPage3.Size = new System.Drawing.Size(1247, 584);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "tabPage3";
             // 
@@ -1421,7 +1421,7 @@ public partial class MainWindow
             this.helpToolStripButton});
             this.toolStrip1.Location = new System.Drawing.Point(3, 3);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1237, 31);
+            this.toolStrip1.Size = new System.Drawing.Size(1241, 31);
             this.toolStrip1.TabIndex = 4;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -1559,7 +1559,7 @@ public partial class MainWindow
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(1, 1);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1251, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1271, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -1813,11 +1813,12 @@ public partial class MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(1253, 635);
+            this.BackColor = System.Drawing.Color.Black;
+            this.ClientSize = new System.Drawing.Size(1257, 639);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.MaximumSize = new System.Drawing.Size(1273, 678);
             this.MinimumSize = new System.Drawing.Size(1273, 678);

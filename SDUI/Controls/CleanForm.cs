@@ -8,12 +8,28 @@ namespace SDUI.Controls;
 public class CleanForm : Form
 {
     /// <summary>
-    /// Variables for box shadow
+    /// Has aero enabled by windows <c>true</c>; otherwise <c>false</c>
     /// </summary>
-    private bool _aeroEnabled;
+    private bool _aeroEnabled
+    {
+        get
+        {
+            if (Environment.OSVersion.Version.Major >= 6)
+            {
+                int enabled = 0;
+                DwmIsCompositionEnabled(ref enabled);
+                return enabled == 1;
+            }
+
+            return false;
+        }
+    }
 
     public CleanForm()
     {
+        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+
+        //BackColor = Color.FromArgb(0, 0, 0, 0);
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
@@ -29,8 +45,6 @@ public class CleanForm : Form
     {
         get
         {
-            _aeroEnabled = CheckAeroEnabled();
-
             var cp = base.CreateParams;
             if (!_aeroEnabled)
                 cp.ClassStyle |= CS_DROPSHADOW;
@@ -42,18 +56,11 @@ public class CleanForm : Form
         }
     }
 
-    private bool CheckAeroEnabled()
-    {
-        int enabled = 0;
-        DwmIsCompositionEnabled(ref enabled);
-        return enabled == 1;
-    }
-
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
 
-        BackColor = ColorScheme.BackColor;
+        //BackColor = ColorScheme.BackColor;
 
         if (DesignMode)
             return;
@@ -61,6 +68,13 @@ public class CleanForm : Form
         // Otherwise, it will not be applied.
         if (StartPosition == FormStartPosition.CenterScreen)
             CenterToScreen();
+
+        var flag = DWMSBT_TABBEDWINDOW;
+        DwmSetWindowAttribute(
+            Handle,
+            DWMWA_SYSTEMBACKDROP_TYPE,
+            ref flag,
+            sizeof(int));
     }
 
     protected override void WndProc(ref Message m)
@@ -72,23 +86,6 @@ public class CleanForm : Form
                     return;
                 else
                     break;
-            case WM_NCPAINT:                        // box shadow
-                if (_aeroEnabled)
-                {
-                    var v = 2;
-                    DwmSetWindowAttribute(Handle, 2, ref v, 4);
-                    var margins = new MARGINS()
-                    {
-                        Bottom = 1,
-                        Left = 1,
-                        Right = 1,
-                        Top = 1
-                    };
-
-                    DwmExtendFrameIntoClientArea(this.Handle, ref margins);
-
-                }
-                break;
         }
 
         base.WndProc(ref m);
@@ -123,6 +120,43 @@ public class CleanForm : Form
         ChangeControlsTheme(this);
         ForeColor = ColorScheme.ForeColor;
 
+        if (_aeroEnabled)
+        {
+            var v = 2;
+            DwmSetWindowAttribute(Handle, 2, ref v, 4);
+            var margins = new MARGINS()
+            {
+                Bottom = 1,
+                Left = 1,
+                Right = 1,
+                Top = 1
+            };
+
+            if (BackColor.IsDark())
+            {
+                margins = new MARGINS()
+                {
+                    Bottom = -1,
+                    Left = -1,
+                    Right = -1,
+                    Top = -1
+                };
+            }
+
+            DwmExtendFrameIntoClientArea(this.Handle, ref margins);
+
+        }
+
         Helpers.WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        if (!Helpers.WindowsHelper.TenOrHigher)
+            return;
+
+
+        var flag = DWMSBT_TABBEDWINDOW;
+        DwmSetWindowAttribute(
+            Handle,
+            DWMWA_SYSTEMBACKDROP_TYPE,
+            ref flag,
+            sizeof(int));
     }
 }
