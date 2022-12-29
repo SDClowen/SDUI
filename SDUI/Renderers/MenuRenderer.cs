@@ -1,9 +1,10 @@
-﻿using System.Drawing;
+﻿using SDUI.Extensions;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Renderers;
 
-public class MenuRenderer : ToolStripProfessionalRenderer
+public class MenuRenderer : ToolStripRenderer
 {
     protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
     {
@@ -20,52 +21,50 @@ public class MenuRenderer : ToolStripProfessionalRenderer
     {
         Graphics g = e.Graphics;
         Rectangle dropDownRect = e.ArrowRectangle;
-        using (Brush brush = new SolidBrush(ColorScheme.BorderColor))
+        using Brush brush = new SolidBrush(ColorScheme.ForeColor);
+        Point middle = new Point(dropDownRect.Left + dropDownRect.Width / 2, dropDownRect.Top + dropDownRect.Height / 2);
+
+        Point[] arrow;
+
+        int hor = 3;
+        int ver = 3;
+
+        switch (e.Direction)
         {
-            Point middle = new Point(dropDownRect.Left + dropDownRect.Width / 2, dropDownRect.Top + dropDownRect.Height / 2);
+            case ArrowDirection.Up:
 
-            Point[] arrow;
-
-            int hor = 3;
-            int ver = 3;
-
-            switch (e.Direction)
-            {
-                case ArrowDirection.Up:
-
-                    arrow = new Point[] {
+                arrow = new Point[] {
                                  new Point(middle.X - hor, middle.Y + 1),
                                  new Point(middle.X + hor + 1, middle.Y + 1),
                                  new Point(middle.X, middle.Y - ver)};
 
-                    break;
+                break;
 
-                case ArrowDirection.Left:
-                    arrow = new Point[] {
+            case ArrowDirection.Left:
+                arrow = new Point[] {
                                  new Point(middle.X + hor, middle.Y - 2 * ver),
                                  new Point(middle.X + hor, middle.Y + 2 * ver),
                                  new Point(middle.X - hor, middle.Y)};
 
-                    break;
+                break;
 
-                case ArrowDirection.Right:
-                    arrow = new Point[] {
+            case ArrowDirection.Right:
+                arrow = new Point[] {
                                  new Point(middle.X - hor, middle.Y - 2 * ver),
                                  new Point(middle.X - hor, middle.Y + 2 * ver),
                                  new Point(middle.X + hor, middle.Y)};
 
-                    break;
+                break;
 
-                case ArrowDirection.Down:
-                default:
-                    arrow = new Point[] {
+            case ArrowDirection.Down:
+            default:
+                arrow = new Point[] {
                              new Point(middle.X - hor, middle.Y - 1),
                              new Point(middle.X + hor + 1, middle.Y - 1),
                              new Point(middle.X, middle.Y + ver) };
-                    break;
-            }
-            g.FillPolygon(brush, arrow);
+                break;
         }
+        g.FillPolygon(brush, arrow);
     }
 
     protected override void OnRenderItemCheck(ToolStripItemImageRenderEventArgs e)
@@ -100,8 +99,24 @@ public class MenuRenderer : ToolStripProfessionalRenderer
     {
         base.OnRenderItemText(e);
 
-        if(e.Item.ForeColor != ColorScheme.ForeColor)
+        if (e.Item.ForeColor != ColorScheme.ForeColor)
             e.Item.ForeColor = ColorScheme.ForeColor;
+    }
+
+    protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+    {
+        //base.OnRenderToolStripBorder(e);
+        var rectangle = e.ToolStrip.ClientRectangle;
+        if (e.ToolStrip is ContextMenuStrip ||
+            e.ToolStrip is ToolStripDropDownMenu ||
+            e.ToolStrip is StatusStrip)
+        {
+            e.Graphics.DrawPath(new Pen(ColorScheme.BorderColor, 1), rectangle.Radius(6));
+        }
+        else
+        {
+            base.OnRenderToolStripBorder(e);
+        }
     }
 
     protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
@@ -111,16 +126,22 @@ public class MenuRenderer : ToolStripProfessionalRenderer
             return;
 
         var rectangle = new Rectangle(Point.Empty, e.Item.Size);
+        var backColor = ColorScheme.BackColor.Brightness(.08f);
+        if (!backColor.IsDark())
+            backColor = ColorScheme.BackColor.Brightness(-.03f);
+        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
 
-        e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor.Brightness(.2f)), rectangle);
-        e.Graphics.DrawRectangle(new Pen(ColorScheme.BorderColor), 0, 0, rectangle.Width - 1, rectangle.Height - 1);
+        using var brush = new SolidBrush(backColor);
 
+        e.Graphics.FillRectangle(brush, rectangle);
     }
 
     protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
     {
+        base.OnRenderToolStripBackground(e);
         var rectangle = e.ToolStrip.ClientRectangle;
-        e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), rectangle);
+
+        e.Graphics.FillRectangle(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle);
     }
 
     protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)
