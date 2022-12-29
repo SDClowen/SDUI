@@ -7,13 +7,6 @@ namespace SDUI;
 
 public class NativeMethods
 {
-
-    public const int DWMSBT_MAINWINDOW = 2; // Mica
-    public const int DWMSBT_TRANSIENTWINDOW = 3; // Acrylic
-    public const int DWMSBT_TABBEDWINDOW = 4; // Tabbed
-
-
-
     private const string user32 = "user32.dll";
     private const string uxtheme = "uxtheme.dll";
     private const string dwmapi = "dwmapi.dll";
@@ -26,8 +19,6 @@ public class NativeMethods
     public const int WM_NCPAINT = 0x0085;
     public const int WM_NCHITTEST = 0x84;
     public const int WM_NCCALCSIZE = 0x0083;
-    public const int WM_SYSCOMMAND = 0x0112;
-    public const int SC_MOVE = 0xF010;
     public const int HTCAPTION = 0x2;
     public const int HTCLIENT = 0x1;
     public const int LVCDI_ITEM = 0x0;
@@ -94,7 +85,6 @@ public class NativeMethods
 
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
-    public const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
 
     public struct MARGINS                           // struct for box shadow
     {

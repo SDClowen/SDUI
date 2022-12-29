@@ -22,9 +22,7 @@ public partial class MainWindow : CleanForm
     protected override void OnBackColorChanged(EventArgs e)
     {
         base.OnBackColorChanged(e);
-        if (Controls.Count == 0)
-            return;
-
+        
         listView1.Items.Clear();
         listView2.Items.Clear();
 
