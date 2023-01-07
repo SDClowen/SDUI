@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Windows.Forms;
@@ -7,6 +9,10 @@ namespace SDUI;
 
 public class NativeMethods
 {
+    public const int DWMSBT_MAINWINDOW = 2; // Mica
+    public const int DWMSBT_TRANSIENTWINDOW = 3; // Acrylic
+    public const int DWMSBT_TABBEDWINDOW = 4; // Tabbed
+
     private const string user32 = "user32.dll";
     private const string uxtheme = "uxtheme.dll";
     private const string dwmapi = "dwmapi.dll";
@@ -19,6 +25,8 @@ public class NativeMethods
     public const int WM_NCPAINT = 0x0085;
     public const int WM_NCHITTEST = 0x84;
     public const int WM_NCCALCSIZE = 0x0083;
+    public const int WM_SYSCOMMAND = 0x0112;
+    public const int SC_MOVE = 0xF010;
     public const int HTCAPTION = 0x2;
     public const int HTCLIENT = 0x1;
     public const int LVCDI_ITEM = 0x0;
@@ -85,6 +93,7 @@ public class NativeMethods
 
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    public const int DWMWA_SYSTEMBACKDROP_TYPE = 38;
 
     public struct MARGINS                           // struct for box shadow
     {
@@ -116,13 +125,16 @@ public class NativeMethods
     public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref LVGROUP lParam);
 
     [DllImport(user32, EntryPoint = "SendMessageW", SetLastError = true)]
-    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref RECT lParam);
+    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref Rect lParam);
 
     [DllImport(user32, EntryPoint = "PostMessageW", SetLastError = true)]
     public static extern int PostMessage(IntPtr hWnd, int Msg, int wParam, ref IntPtr lParam);
 
     [DllImport(uxtheme, CharSet = CharSet.Unicode, SetLastError = true)]
     public extern static int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
+
+    [DllImport(uxtheme, EntryPoint = "#133", SetLastError = true)]
+    internal static extern bool AllowDarkModeForWindow(IntPtr window, bool isDarkModeAllowed);
 
     [DllImport(user32, EntryPoint = "SendMessage", CharSet = CharSet.Auto)]
     public static extern IntPtr SendMessageLVItem(IntPtr hWnd, int msg, int wParam, ref LVITEM lvi);
@@ -152,7 +164,7 @@ public class NativeMethods
     public static extern bool DeleteObject(IntPtr hObject);
 
     [DllImport(user32)]
-    public static extern bool SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttribData data);
+    public static extern bool SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
 
     [SecurityCritical]
     [DllImport("ntdll.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -160,8 +172,86 @@ public class NativeMethods
 
     [DllImport("user32")]
     public static extern IntPtr GetDC(IntPtr hwnd);
+
     [DllImport("user32")]
     public static extern IntPtr ReleaseDC(IntPtr hwnd, IntPtr hdc);
+
+    private delegate bool EnumWindowProc(IntPtr hWnd, IntPtr parameter);
+    [DllImport("user32")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool EnumChildWindows(IntPtr window, EnumWindowProc callback, IntPtr i);
+
+    private static bool EnumWindow(IntPtr handle, IntPtr pointer)
+    {
+        GCHandle gch = GCHandle.FromIntPtr(pointer);
+        List<IntPtr> list = gch.Target as List<IntPtr>;
+        if (list == null)
+            throw new InvalidCastException("GCHandle Target could not be cast as List<IntPtr>");
+        list.Add(handle);
+        return true;
+    }
+
+    public static void DisableVisualStylesForFirstChild(IntPtr parent)
+    {
+        List<IntPtr> children = new List<IntPtr>();
+        GCHandle listHandle = GCHandle.Alloc(children);
+        try
+        {
+            EnumWindowProc childProc = new EnumWindowProc(EnumWindow);
+            EnumChildWindows(parent, childProc, GCHandle.ToIntPtr(listHandle));
+            if (children.Count > 0)
+                SetWindowTheme(children[0], "", "");
+        }
+        finally
+        {
+            if (listHandle.IsAllocated)
+                listHandle.Free();
+        }
+    }
+
+    public static void EnableAcrylic(IWin32Window window, Color blurColor)
+    {
+        if (window is null) throw new ArgumentNullException(nameof(window));
+
+        var accentPolicy = new AccentPolicy
+        {
+            AccentState = ACCENT.ENABLE_ACRYLICBLURBEHIND,
+            GradientColor = blurColor.ToAbgr()
+        };
+
+        unsafe
+        {
+            var data = new WindowCompositionAttributeData
+            {
+                Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
+                Data = &accentPolicy,
+                SizeOfData = Marshal.SizeOf<AccentPolicy>()
+            };
+
+            SetWindowCompositionAttribute(
+                window.Handle,
+                ref data);
+        }
+    }
+
+    public enum ACCENT
+    {
+        DISABLED = 0,
+        ENABLE_GRADIENT = 1,
+        ENABLE_TRANSPARENTGRADIENT = 2,
+        ENABLE_BLURBEHIND = 3,
+        ENABLE_ACRYLICBLURBEHIND = 4,
+        INVALID_STATE = 5
+    }
+
+
+    public struct AccentPolicy
+    {
+        public ACCENT AccentState;
+        public uint AccentFlags;
+        public uint GradientColor;
+        public uint AnimationId;
+    }
 
     public static IntPtr GetHeaderControl(ListView list)
     {
@@ -195,10 +285,10 @@ public class NativeMethods
         public byte Reserved;
     }
 
-    public struct WindowCompositionAttribData
+    public unsafe struct WindowCompositionAttributeData
     {
         public WindowCompositionAttribute Attribute;
-        public IntPtr Data;
+        public void* Data;
         public int SizeOfData;
     }
 
@@ -230,12 +320,69 @@ public class NativeMethods
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public partial struct RECT
+    public struct Rect
     {
-        public int left;
-        public int top;
-        public int right;
-        public int bottom;
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+
+        public Rect(int left, int top, int right, int bottom)
+        {
+            Left = left;
+            Top = top;
+            Right = right;
+            Bottom = bottom;
+        }
+
+        public int X
+        {
+            get => Left;
+            set
+            {
+                Right -= Left - value;
+                Left = value;
+            }
+        }
+
+        public int Y
+        {
+            get => Top;
+            set
+            {
+                Bottom -= Top - value;
+                Top = value;
+            }
+        }
+
+        public int Height
+        {
+            get => Bottom - Top;
+            set => Bottom = value + Top;
+        }
+
+        public int Width
+        {
+            get => Right - Left;
+            set => Right = value + Left;
+        }
+
+    }
+
+    public enum DWMWINDOWATTRIBUTE : int
+    {
+        DWMWA_WINDOW_CORNER_PREFERENCE = 33
+    }
+
+    // The DWM_WINDOW_CORNER_PREFERENCE enum for DwmSetWindowAttribute's third parameter, which tells the function
+    // what value of the enum to set.
+    // Copied from dwmapi.h
+    public enum DWM_WINDOW_CORNER_PREFERENCE : int
+    {
+        DWMWCP_DEFAULT = 0,
+        DWMWCP_DONOTROUND = 1,
+        DWMWCP_ROUND = 2,
+        DWMWCP_ROUNDSMALL = 3
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -244,7 +391,7 @@ public class NativeMethods
         public NMHDR hdr;
         public int dwDrawStage;
         public IntPtr hdc;
-        public RECT rc;
+        public Rect rc;
         public IntPtr dwItemSpec;
         public uint uItemState;
         public IntPtr lItemlParam;
@@ -263,7 +410,7 @@ public class NativeMethods
         public int iIconPhase;
         public int iPartId;
         public int iStateId;
-        public RECT rcText;
+        public Rect rcText;
         public uint uAlign;
     }
 

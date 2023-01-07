@@ -1,5 +1,4 @@
-﻿using SDUI.Extensions;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Renderers;
@@ -126,10 +125,9 @@ public class MenuRenderer : ToolStripRenderer
             return;
 
         var rectangle = new Rectangle(Point.Empty, e.Item.Size);
-        var backColor = ColorScheme.BackColor.Brightness(.08f);
+        var backColor = ColorScheme.BackColor.Brightness(.12f);
         if (!backColor.IsDark())
-            backColor = ColorScheme.BackColor.Brightness(-.03f);
-        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+            backColor = ColorScheme.BackColor.Brightness(-.08f);
 
         using var brush = new SolidBrush(backColor);
 

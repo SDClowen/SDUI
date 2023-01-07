@@ -60,12 +60,8 @@ public class ListView : System.Windows.Forms.ListView
     {
         base.OnHandleCreated(e);
 
-        if (Environment.OSVersion.Version.Major >= 6)
-        {
-            SetWindowTheme(Handle, "explorer", null);
-
+        if (WindowsHelper.BuildInfo.BuildNumber >= 7200)
             SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
-        }
     }
 
     protected override void OnNotifyMessage(Message m)
@@ -168,15 +164,17 @@ public class ListView : System.Windows.Forms.ListView
                     case CDDS.CDDS_PREPAINT:
                         if (pnmlv.dwItemType == LVCDI_GROUP)
                         {
-                            var rectHeader = new RECT();
-                            rectHeader.top = LVGGR_HEADER;
+                            var rectHeader = new Rect
+                            {
+                                Top = LVGGR_HEADER
+                            };
                             var nItem = (int)pnmlv.nmcd.dwItemSpec;
 
                             SendMessage(m.HWnd, LVM_GETGROUPRECT, nItem, ref rectHeader);
 
                             using (var graphics = Graphics.FromHdc(pnmlv.nmcd.hdc))
                             {
-                                var rect = new Rectangle(rectHeader.left, rectHeader.top, rectHeader.right - rectHeader.left, rectHeader.bottom - rectHeader.top);
+                                var rect = new Rectangle(rectHeader.Left, rectHeader.Top, rectHeader.Right - rectHeader.Left, rectHeader.Bottom - rectHeader.Top);
 
                                 //var backgroundBrush = new SolidBrush(_groupHeadingBackColor);
                                 //graphics.FillRectangle(backgroundBrush, rect);

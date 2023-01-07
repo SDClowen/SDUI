@@ -1,5 +1,6 @@
 ﻿using System.Windows.Forms;
 using SDUI;
+using SDUI.Controls;
 
 namespace SDUI.Test;
 
@@ -37,7 +38,7 @@ public partial class MainWindow
             System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
             System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
             "123412341324"}, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point));
-            this.tabControl1 = new SDUI.Controls.TabControl();
+            this.tabControl = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.contextMenuStrip1 = new SDUI.Controls.ContextMenuStrip();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
@@ -56,6 +57,7 @@ public partial class MainWindow
             this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem7 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.rsButton1 = new SDUI.Controls.Button();
             this.button6 = new SDUI.Controls.Button();
             this.groupBox4 = new SDUI.Controls.GroupBox();
             this.comboBox6 = new SDUI.Controls.ComboBox();
@@ -82,10 +84,8 @@ public partial class MainWindow
             this.chatBubble2 = new SDUI.Controls.ChatBubble();
             this.chatBubble1 = new SDUI.Controls.ChatBubble();
             this.numUpDown1 = new SDUI.Controls.NumUpDown();
-            this.separator6 = new SDUI.Controls.Separator();
             this.checkBox4 = new SDUI.Controls.CheckBox();
             this.checkBox3 = new SDUI.Controls.CheckBox();
-            this.button1 = new SDUI.Controls.Button();
             this.label3 = new SDUI.Controls.Label();
             this.progressBar5 = new SDUI.Controls.ProgressBar();
             this.panel7 = new SDUI.Controls.Panel();
@@ -129,20 +129,18 @@ public partial class MainWindow
             this.columnHeader3 = new System.Windows.Forms.ColumnHeader();
             this.columnHeader4 = new System.Windows.Forms.ColumnHeader();
             this.tabPage3 = new System.Windows.Forms.TabPage();
-            this.toolStrip1 = new SDUI.Controls.ToolStrip();
-            this.newToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.openToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.saveToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.printToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
-            this.cutToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.copyToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.pasteToolStripButton = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
-            this.helpToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.multiPageControl = new SDUI.Controls.MultiPageControl();
             this.buttonRemoveTab = new SDUI.Controls.Button();
             this.buttonAddTab = new SDUI.Controls.Button();
-            this.multiPageControl = new SDUI.Controls.MultiPageControl();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.buttonSelectColor = new SDUI.Controls.Button();
+            this.comboBoxHatchType = new SDUI.Controls.ComboBox();
+            this.checkBoxDrawFullHatch = new SDUI.Controls.CheckBox();
+            this.checkBoxDrawTitleBarHatch = new SDUI.Controls.CheckBox();
+            this.numTitleHeight = new SDUI.Controls.NumUpDown();
+            this.numIconWidth = new SDUI.Controls.NumUpDown();
+            this.label5 = new SDUI.Controls.Label();
+            this.label6 = new SDUI.Controls.Label();
             this.menuStrip1 = new SDUI.Controls.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.newToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -174,14 +172,13 @@ public partial class MainWindow
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.tabControl1.SuspendLayout();
+            this.tabControl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
             this.groupBox3.SuspendLayout();
             this.panel8.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).BeginInit();
             this.panel2.SuspendLayout();
             this.panel3.SuspendLayout();
             this.groupBox2.SuspendLayout();
@@ -189,29 +186,30 @@ public partial class MainWindow
             this.panel1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             this.tabPage3.SuspendLayout();
-            this.toolStrip1.SuspendLayout();
+            this.tabPage4.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
-            // tabControl1
+            // tabControl
             // 
-            this.tabControl1.Border = new System.Windows.Forms.Padding(1);
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Controls.Add(this.tabPage3);
-            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl1.HideTabArea = false;
-            this.tabControl1.Location = new System.Drawing.Point(1, 25);
-            this.tabControl1.Margin = new System.Windows.Forms.Padding(0);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1251, 609);
-            this.tabControl1.TabIndex = 0;
+            this.tabControl.Controls.Add(this.tabPage1);
+            this.tabControl.Controls.Add(this.tabPage2);
+            this.tabControl.Controls.Add(this.tabPage3);
+            this.tabControl.Controls.Add(this.tabPage4);
+            this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl.ItemSize = new System.Drawing.Size(80, 24);
+            this.tabControl.Location = new System.Drawing.Point(0, 32);
+            this.tabControl.Margin = new System.Windows.Forms.Padding(0);
+            this.tabControl.Name = "tabControl";
+            this.tabControl.SelectedIndex = 0;
+            this.tabControl.Size = new System.Drawing.Size(1257, 583);
+            this.tabControl.TabIndex = 0;
             // 
             // tabPage1
             // 
-            this.tabPage1.BackColor = System.Drawing.Color.White;
+            this.tabPage1.BackColor = System.Drawing.Color.Transparent;
             this.tabPage1.ContextMenuStrip = this.contextMenuStrip1;
+            this.tabPage1.Controls.Add(this.rsButton1);
             this.tabPage1.Controls.Add(this.button6);
             this.tabPage1.Controls.Add(this.groupBox4);
             this.tabPage1.Controls.Add(this.comboBox6);
@@ -253,12 +251,12 @@ public partial class MainWindow
             this.tabPage1.Controls.Add(this.progressBar1);
             this.tabPage1.Controls.Add(this.separator2);
             this.tabPage1.Controls.Add(this.separator1);
-            this.tabPage1.Location = new System.Drawing.Point(4, 24);
+            this.tabPage1.Location = new System.Drawing.Point(4, 28);
             this.tabPage1.Margin = new System.Windows.Forms.Padding(0);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Size = new System.Drawing.Size(1243, 581);
+            this.tabPage1.Size = new System.Drawing.Size(1249, 551);
             this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "tabPage1";
+            this.tabPage1.Text = "General UI";
             // 
             // contextMenuStrip1
             // 
@@ -389,6 +387,18 @@ public partial class MainWindow
             this.toolStripSeparator6.Name = "toolStripSeparator6";
             this.toolStripSeparator6.Size = new System.Drawing.Size(177, 6);
             // 
+            // rsButton1
+            // 
+            this.rsButton1.Color = System.Drawing.Color.Transparent;
+            this.rsButton1.Location = new System.Drawing.Point(416, 370);
+            this.rsButton1.Name = "rsButton1";
+            this.rsButton1.Radius = 6;
+            this.rsButton1.ShadowDepth = 4F;
+            this.rsButton1.Size = new System.Drawing.Size(75, 23);
+            this.rsButton1.TabIndex = 33;
+            this.rsButton1.Text = "rsButton1";
+            this.rsButton1.UseVisualStyleBackColor = true;
+            // 
             // button6
             // 
             this.button6.Color = System.Drawing.Color.Transparent;
@@ -514,11 +524,11 @@ public partial class MainWindow
             this.button5.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
             this.button5.Color = System.Drawing.Color.Transparent;
             this.button5.Enabled = false;
-            this.button5.Location = new System.Drawing.Point(660, 199);
+            this.button5.Location = new System.Drawing.Point(942, 14);
             this.button5.Name = "button5";
             this.button5.Radius = 6;
             this.button5.ShadowDepth = 2F;
-            this.button5.Size = new System.Drawing.Size(62, 25);
+            this.button5.Size = new System.Drawing.Size(68, 36);
             this.button5.TabIndex = 4;
             this.button5.Text = "Disabled";
             this.button5.Click += new System.EventHandler(this.buttonLight_Click);
@@ -552,9 +562,10 @@ public partial class MainWindow
             this.radio2.AutoSize = true;
             this.radio2.Checked = true;
             this.radio2.Location = new System.Drawing.Point(829, 342);
+            this.radio2.Margin = new System.Windows.Forms.Padding(0);
             this.radio2.Name = "radio2";
-            this.radio2.ShadowDepth = 0;
-            this.radio2.Size = new System.Drawing.Size(65, 15);
+            this.radio2.Ripple = true;
+            this.radio2.Size = new System.Drawing.Size(65, 30);
             this.radio2.TabIndex = 24;
             this.radio2.TabStop = true;
             this.radio2.Text = "radio1";
@@ -563,9 +574,10 @@ public partial class MainWindow
             // 
             this.radio1.AutoSize = true;
             this.radio1.Location = new System.Drawing.Point(663, 342);
+            this.radio1.Margin = new System.Windows.Forms.Padding(0);
             this.radio1.Name = "radio1";
-            this.radio1.ShadowDepth = 0;
-            this.radio1.Size = new System.Drawing.Size(65, 15);
+            this.radio1.Ripple = true;
+            this.radio1.Size = new System.Drawing.Size(65, 30);
             this.radio1.TabIndex = 24;
             this.radio1.Text = "radio1";
             // 
@@ -573,10 +585,13 @@ public partial class MainWindow
             // 
             this.checkBox6.AutoSize = true;
             this.checkBox6.BackColor = System.Drawing.Color.Transparent;
+            this.checkBox6.Depth = 0;
             this.checkBox6.Location = new System.Drawing.Point(515, 370);
+            this.checkBox6.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBox6.MouseLocation = new System.Drawing.Point(-1, -1);
             this.checkBox6.Name = "checkBox6";
-            this.checkBox6.ShadowDepth = 7;
-            this.checkBox6.Size = new System.Drawing.Size(131, 15);
+            this.checkBox6.Ripple = true;
+            this.checkBox6.Size = new System.Drawing.Size(143, 30);
             this.checkBox6.TabIndex = 14;
             this.checkBox6.Text = "Draw Debug Borders";
             this.checkBox6.UseVisualStyleBackColor = false;
@@ -586,11 +601,14 @@ public partial class MainWindow
             // 
             this.checkBox2.AutoSize = true;
             this.checkBox2.BackColor = System.Drawing.Color.Transparent;
+            this.checkBox2.Depth = 0;
             this.checkBox2.Enabled = false;
             this.checkBox2.Location = new System.Drawing.Point(515, 349);
+            this.checkBox2.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBox2.MouseLocation = new System.Drawing.Point(-1, -1);
             this.checkBox2.Name = "checkBox2";
-            this.checkBox2.ShadowDepth = 0;
-            this.checkBox2.Size = new System.Drawing.Size(80, 15);
+            this.checkBox2.Ripple = true;
+            this.checkBox2.Size = new System.Drawing.Size(87, 30);
             this.checkBox2.TabIndex = 13;
             this.checkBox2.Text = "checkBox1";
             this.checkBox2.UseVisualStyleBackColor = false;
@@ -599,10 +617,13 @@ public partial class MainWindow
             // 
             this.checkBox1.AutoSize = true;
             this.checkBox1.BackColor = System.Drawing.Color.Transparent;
+            this.checkBox1.Depth = 0;
             this.checkBox1.Location = new System.Drawing.Point(663, 370);
+            this.checkBox1.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBox1.MouseLocation = new System.Drawing.Point(-1, -1);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.ShadowDepth = 2;
-            this.checkBox1.Size = new System.Drawing.Size(133, 15);
+            this.checkBox1.Ripple = true;
+            this.checkBox1.Size = new System.Drawing.Size(142, 30);
             this.checkBox1.TabIndex = 13;
             this.checkBox1.Text = "checkBox1 asdfadfas";
             this.checkBox1.UseVisualStyleBackColor = false;
@@ -642,18 +663,16 @@ public partial class MainWindow
             this.panel8.Controls.Add(this.chatBubble2);
             this.panel8.Controls.Add(this.chatBubble1);
             this.panel8.Controls.Add(this.numUpDown1);
-            this.panel8.Controls.Add(this.separator6);
             this.panel8.Controls.Add(this.checkBox4);
             this.panel8.Controls.Add(this.checkBox3);
-            this.panel8.Controls.Add(this.button1);
             this.panel8.Controls.Add(this.label3);
             this.panel8.Controls.Add(this.progressBar5);
             this.panel8.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel8.Location = new System.Drawing.Point(1010, 0);
+            this.panel8.Location = new System.Drawing.Point(1016, 0);
             this.panel8.Name = "panel8";
             this.panel8.Radius = 0;
             this.panel8.ShadowDepth = 2F;
-            this.panel8.Size = new System.Drawing.Size(233, 581);
+            this.panel8.Size = new System.Drawing.Size(233, 551);
             this.panel8.TabIndex = 12;
             // 
             // toggleButton1
@@ -663,7 +682,6 @@ public partial class MainWindow
             this.toggleButton1.Location = new System.Drawing.Point(106, 380);
             this.toggleButton1.MinimumSize = new System.Drawing.Size(46, 22);
             this.toggleButton1.Name = "toggleButton1";
-            this.toggleButton1.ShadowDepth = 1;
             this.toggleButton1.Size = new System.Drawing.Size(46, 22);
             this.toggleButton1.TabIndex = 31;
             this.toggleButton1.UseVisualStyleBackColor = false;
@@ -732,22 +750,29 @@ public partial class MainWindow
             // 
             // numUpDown1
             // 
-            this.numUpDown1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
-            this.numUpDown1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.numUpDown1.BackColor = System.Drawing.Color.Transparent;
+            this.numUpDown1.Font = new System.Drawing.Font("Segoe UI", 9.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.numUpDown1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.numUpDown1.Location = new System.Drawing.Point(16, 379);
+            this.numUpDown1.Maximum = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.numUpDown1.Minimum = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.numUpDown1.MinimumSize = new System.Drawing.Size(80, 25);
             this.numUpDown1.Name = "numUpDown1";
-            this.numUpDown1.Size = new System.Drawing.Size(73, 23);
+            this.numUpDown1.Size = new System.Drawing.Size(80, 25);
             this.numUpDown1.TabIndex = 28;
-            // 
-            // separator6
-            // 
-            this.separator6.IsVertical = false;
-            this.separator6.Location = new System.Drawing.Point(16, 54);
-            this.separator6.Name = "separator6";
-            this.separator6.Size = new System.Drawing.Size(120, 10);
-            this.separator6.TabIndex = 0;
-            this.separator6.Text = "separator3";
+            this.numUpDown1.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
             // 
             // checkBox4
             // 
@@ -755,10 +780,13 @@ public partial class MainWindow
             this.checkBox4.BackColor = System.Drawing.Color.Transparent;
             this.checkBox4.Checked = true;
             this.checkBox4.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox4.Depth = 0;
             this.checkBox4.Location = new System.Drawing.Point(16, 238);
+            this.checkBox4.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBox4.MouseLocation = new System.Drawing.Point(-1, -1);
             this.checkBox4.Name = "checkBox4";
-            this.checkBox4.ShadowDepth = 0;
-            this.checkBox4.Size = new System.Drawing.Size(80, 15);
+            this.checkBox4.Ripple = true;
+            this.checkBox4.Size = new System.Drawing.Size(87, 30);
             this.checkBox4.TabIndex = 13;
             this.checkBox4.Text = "checkBox1";
             this.checkBox4.UseVisualStyleBackColor = false;
@@ -767,28 +795,18 @@ public partial class MainWindow
             // 
             this.checkBox3.AutoSize = true;
             this.checkBox3.BackColor = System.Drawing.Color.Transparent;
+            this.checkBox3.Depth = 0;
             this.checkBox3.Dock = System.Windows.Forms.DockStyle.Top;
             this.checkBox3.Location = new System.Drawing.Point(0, 0);
+            this.checkBox3.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBox3.MouseLocation = new System.Drawing.Point(-1, -1);
             this.checkBox3.Name = "checkBox3";
-            this.checkBox3.ShadowDepth = 0;
-            this.checkBox3.Size = new System.Drawing.Size(233, 15);
+            this.checkBox3.Ripple = true;
+            this.checkBox3.Size = new System.Drawing.Size(233, 30);
             this.checkBox3.TabIndex = 13;
             this.checkBox3.Text = "Toggle Title";
             this.checkBox3.UseVisualStyleBackColor = false;
             this.checkBox3.Click += new System.EventHandler(this.checkBox3_Click);
-            // 
-            // button1
-            // 
-            this.button1.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.button1.Color = System.Drawing.Color.Transparent;
-            this.button1.Location = new System.Drawing.Point(16, 71);
-            this.button1.Name = "button1";
-            this.button1.Radius = 6;
-            this.button1.ShadowDepth = 2F;
-            this.button1.Size = new System.Drawing.Size(120, 23);
-            this.button1.TabIndex = 4;
-            this.button1.Text = "Light";
-            this.button1.Click += new System.EventHandler(this.buttonLight_Click);
             // 
             // label3
             // 
@@ -850,9 +868,9 @@ public partial class MainWindow
             // 
             this.label2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.label2.Location = new System.Drawing.Point(377, 230);
+            this.label2.Location = new System.Drawing.Point(377, 199);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(618, 75);
+            this.label2.Size = new System.Drawing.Size(618, 106);
             this.label2.TabIndex = 11;
             this.label2.Text = resources.GetString("label2.Text");
             // 
@@ -1340,15 +1358,15 @@ public partial class MainWindow
             // 
             // tabPage2
             // 
-            this.tabPage2.BackColor = System.Drawing.Color.White;
+            this.tabPage2.BackColor = System.Drawing.Color.Transparent;
             this.tabPage2.Controls.Add(this.listView1);
-            this.tabPage2.Location = new System.Drawing.Point(4, 25);
+            this.tabPage2.Location = new System.Drawing.Point(4, 28);
             this.tabPage2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.tabPage2.Size = new System.Drawing.Size(1243, 580);
+            this.tabPage2.Size = new System.Drawing.Size(1249, 551);
             this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "tabPage2";
+            this.tabPage2.Text = "ListView";
             // 
             // listView1
             // 
@@ -1365,7 +1383,7 @@ public partial class MainWindow
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
             this.listView1.ShowItemToolTips = true;
-            this.listView1.Size = new System.Drawing.Size(1235, 574);
+            this.listView1.Size = new System.Drawing.Size(1241, 545);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -1392,125 +1410,36 @@ public partial class MainWindow
             // 
             // tabPage3
             // 
-            this.tabPage3.BackColor = System.Drawing.Color.White;
-            this.tabPage3.Controls.Add(this.toolStrip1);
+            this.tabPage3.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage3.Controls.Add(this.multiPageControl);
             this.tabPage3.Controls.Add(this.buttonRemoveTab);
             this.tabPage3.Controls.Add(this.buttonAddTab);
-            this.tabPage3.Controls.Add(this.multiPageControl);
-            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Location = new System.Drawing.Point(4, 28);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(1243, 581);
+            this.tabPage3.Size = new System.Drawing.Size(1249, 551);
             this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "tabPage3";
+            this.tabPage3.Text = "MultipageControl";
             // 
-            // toolStrip1
+            // multiPageControl
             // 
-            this.toolStrip1.GripStyle = System.Windows.Forms.ToolStripGripStyle.Hidden;
-            this.toolStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.newToolStripButton,
-            this.openToolStripButton,
-            this.saveToolStripButton,
-            this.printToolStripButton,
-            this.toolStripSeparator8,
-            this.cutToolStripButton,
-            this.copyToolStripButton,
-            this.pasteToolStripButton,
-            this.toolStripSeparator9,
-            this.helpToolStripButton});
-            this.toolStrip1.Location = new System.Drawing.Point(3, 3);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(1237, 31);
-            this.toolStrip1.TabIndex = 4;
-            this.toolStrip1.Text = "toolStrip1";
-            // 
-            // newToolStripButton
-            // 
-            this.newToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.newToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("newToolStripButton.Image")));
-            this.newToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.newToolStripButton.Name = "newToolStripButton";
-            this.newToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.newToolStripButton.Text = "&New";
-            // 
-            // openToolStripButton
-            // 
-            this.openToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.openToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("openToolStripButton.Image")));
-            this.openToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.openToolStripButton.Name = "openToolStripButton";
-            this.openToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.openToolStripButton.Text = "&Open";
-            // 
-            // saveToolStripButton
-            // 
-            this.saveToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.saveToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("saveToolStripButton.Image")));
-            this.saveToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.saveToolStripButton.Name = "saveToolStripButton";
-            this.saveToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.saveToolStripButton.Text = "&Save";
-            // 
-            // printToolStripButton
-            // 
-            this.printToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.printToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("printToolStripButton.Image")));
-            this.printToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.printToolStripButton.Name = "printToolStripButton";
-            this.printToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.printToolStripButton.Text = "&Print";
-            // 
-            // toolStripSeparator8
-            // 
-            this.toolStripSeparator8.Name = "toolStripSeparator8";
-            this.toolStripSeparator8.Size = new System.Drawing.Size(6, 31);
-            // 
-            // cutToolStripButton
-            // 
-            this.cutToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.cutToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("cutToolStripButton.Image")));
-            this.cutToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.cutToolStripButton.Name = "cutToolStripButton";
-            this.cutToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.cutToolStripButton.Text = "C&ut";
-            // 
-            // copyToolStripButton
-            // 
-            this.copyToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.copyToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("copyToolStripButton.Image")));
-            this.copyToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.copyToolStripButton.Name = "copyToolStripButton";
-            this.copyToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.copyToolStripButton.Text = "&Copy";
-            // 
-            // pasteToolStripButton
-            // 
-            this.pasteToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.pasteToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("pasteToolStripButton.Image")));
-            this.pasteToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.pasteToolStripButton.Name = "pasteToolStripButton";
-            this.pasteToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.pasteToolStripButton.Text = "&Paste";
-            // 
-            // toolStripSeparator9
-            // 
-            this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(6, 31);
-            // 
-            // helpToolStripButton
-            // 
-            this.helpToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
-            this.helpToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("helpToolStripButton.Image")));
-            this.helpToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.helpToolStripButton.Name = "helpToolStripButton";
-            this.helpToolStripButton.Size = new System.Drawing.Size(28, 28);
-            this.helpToolStripButton.Text = "He&lp";
+            this.multiPageControl.BackColor = System.Drawing.Color.Transparent;
+            this.multiPageControl.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            this.multiPageControl.BorderColor = System.Drawing.Color.Transparent;
+            this.multiPageControl.HeaderControlSize = new System.Drawing.Size(80, 30);
+            this.multiPageControl.Location = new System.Drawing.Point(80, 70);
+            this.multiPageControl.Name = "multiPageControl";
+            this.multiPageControl.Padding = new System.Windows.Forms.Padding(0, 30, 0, 0);
+            this.multiPageControl.Radius = 10;
+            this.multiPageControl.SelectedIndex = 0;
+            this.multiPageControl.ShadowDepth = 4F;
+            this.multiPageControl.Size = new System.Drawing.Size(974, 420);
+            this.multiPageControl.TabIndex = 5;
             // 
             // buttonRemoveTab
             // 
             this.buttonRemoveTab.Color = System.Drawing.Color.Transparent;
-            this.buttonRemoveTab.Location = new System.Drawing.Point(169, 38);
+            this.buttonRemoveTab.Location = new System.Drawing.Point(171, 41);
             this.buttonRemoveTab.Name = "buttonRemoveTab";
             this.buttonRemoveTab.Radius = 6;
             this.buttonRemoveTab.ShadowDepth = 4F;
@@ -1523,7 +1452,7 @@ public partial class MainWindow
             // buttonAddTab
             // 
             this.buttonAddTab.Color = System.Drawing.Color.Transparent;
-            this.buttonAddTab.Location = new System.Drawing.Point(78, 38);
+            this.buttonAddTab.Location = new System.Drawing.Point(80, 41);
             this.buttonAddTab.Name = "buttonAddTab";
             this.buttonAddTab.Radius = 6;
             this.buttonAddTab.ShadowDepth = 4F;
@@ -1533,33 +1462,179 @@ public partial class MainWindow
             this.buttonAddTab.UseVisualStyleBackColor = true;
             this.buttonAddTab.Click += new System.EventHandler(this.buttonAddTab_Click);
             // 
-            // multiPageControl
+            // tabPage4
             // 
-            this.multiPageControl.BackColor = System.Drawing.Color.Transparent;
-            this.multiPageControl.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
-            this.multiPageControl.BorderColor = System.Drawing.Color.Transparent;
-            this.multiPageControl.HeaderControlSize = new System.Drawing.Size(0, 30);
-            this.multiPageControl.Location = new System.Drawing.Point(78, 67);
-            this.multiPageControl.Name = "multiPageControl";
-            this.multiPageControl.Padding = new System.Windows.Forms.Padding(0, 30, 0, 0);
-            this.multiPageControl.Radius = 10;
-            this.multiPageControl.SelectedIndex = 0;
-            this.multiPageControl.ShadowDepth = 4F;
-            this.multiPageControl.Size = new System.Drawing.Size(1080, 466);
-            this.multiPageControl.TabIndex = 0;
+            this.tabPage4.BackColor = System.Drawing.Color.Transparent;
+            this.tabPage4.Controls.Add(this.buttonSelectColor);
+            this.tabPage4.Controls.Add(this.comboBoxHatchType);
+            this.tabPage4.Controls.Add(this.checkBoxDrawFullHatch);
+            this.tabPage4.Controls.Add(this.checkBoxDrawTitleBarHatch);
+            this.tabPage4.Controls.Add(this.numTitleHeight);
+            this.tabPage4.Controls.Add(this.numIconWidth);
+            this.tabPage4.Controls.Add(this.label5);
+            this.tabPage4.Controls.Add(this.label6);
+            this.tabPage4.Location = new System.Drawing.Point(4, 28);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage4.Size = new System.Drawing.Size(1249, 551);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "Config";
+            // 
+            // buttonSelectColor
+            // 
+            this.buttonSelectColor.Color = System.Drawing.Color.Transparent;
+            this.buttonSelectColor.Location = new System.Drawing.Point(731, 136);
+            this.buttonSelectColor.Name = "buttonSelectColor";
+            this.buttonSelectColor.Radius = 6;
+            this.buttonSelectColor.ShadowDepth = 4F;
+            this.buttonSelectColor.Size = new System.Drawing.Size(95, 23);
+            this.buttonSelectColor.TabIndex = 39;
+            this.buttonSelectColor.Text = "Select Color";
+            this.buttonSelectColor.UseVisualStyleBackColor = true;
+            this.buttonSelectColor.Click += new System.EventHandler(this.buttonSelectColor_Click);
+            // 
+            // comboBoxHatchType
+            // 
+            this.comboBoxHatchType.BackColor = System.Drawing.Color.Transparent;
+            this.comboBoxHatchType.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            this.comboBoxHatchType.DropDownHeight = 100;
+            this.comboBoxHatchType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBoxHatchType.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(85)))), ((int)(((byte)(91)))));
+            this.comboBoxHatchType.FormattingEnabled = true;
+            this.comboBoxHatchType.IntegralHeight = false;
+            this.comboBoxHatchType.ItemHeight = 16;
+            this.comboBoxHatchType.Location = new System.Drawing.Point(595, 55);
+            this.comboBoxHatchType.Name = "comboBoxHatchType";
+            this.comboBoxHatchType.Radius = 5;
+            this.comboBoxHatchType.ShadowDepth = 4F;
+            this.comboBoxHatchType.Size = new System.Drawing.Size(121, 22);
+            this.comboBoxHatchType.TabIndex = 34;
+            this.comboBoxHatchType.SelectedIndexChanged += new System.EventHandler(this.comboBoxHatchType_SelectedIndexChanged);
+            // 
+            // checkBoxDrawFullHatch
+            // 
+            this.checkBoxDrawFullHatch.AutoSize = true;
+            this.checkBoxDrawFullHatch.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDrawFullHatch.Depth = 0;
+            this.checkBoxDrawFullHatch.Location = new System.Drawing.Point(731, 51);
+            this.checkBoxDrawFullHatch.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
+            this.checkBoxDrawFullHatch.Ripple = true;
+            this.checkBoxDrawFullHatch.Size = new System.Drawing.Size(111, 30);
+            this.checkBoxDrawFullHatch.TabIndex = 37;
+            this.checkBoxDrawFullHatch.Text = "Draw full hatch";
+            this.checkBoxDrawFullHatch.UseVisualStyleBackColor = true;
+            this.checkBoxDrawFullHatch.CheckedChanged += new System.EventHandler(this.checkBoxDrawFullHatch_CheckedChanged);
+            // 
+            // checkBoxDrawTitleBarHatch
+            // 
+            this.checkBoxDrawTitleBarHatch.Appearance = System.Windows.Forms.Appearance.Button;
+            this.checkBoxDrawTitleBarHatch.AutoSize = true;
+            this.checkBoxDrawTitleBarHatch.BackColor = System.Drawing.Color.Transparent;
+            this.checkBoxDrawTitleBarHatch.Depth = 0;
+            this.checkBoxDrawTitleBarHatch.Location = new System.Drawing.Point(438, 50);
+            this.checkBoxDrawTitleBarHatch.Margin = new System.Windows.Forms.Padding(0);
+            this.checkBoxDrawTitleBarHatch.MouseLocation = new System.Drawing.Point(-1, -1);
+            this.checkBoxDrawTitleBarHatch.Name = "checkBoxDrawTitleBarHatch";
+            this.checkBoxDrawTitleBarHatch.Ripple = true;
+            this.checkBoxDrawTitleBarHatch.Size = new System.Drawing.Size(139, 30);
+            this.checkBoxDrawTitleBarHatch.TabIndex = 38;
+            this.checkBoxDrawTitleBarHatch.Text = "Draw Title Bar hatch";
+            this.checkBoxDrawTitleBarHatch.UseVisualStyleBackColor = true;
+            this.checkBoxDrawTitleBarHatch.CheckedChanged += new System.EventHandler(this.checkBoxDrawTitleBarHatch_CheckedChanged);
+            // 
+            // numTitleHeight
+            // 
+            this.numTitleHeight.BackColor = System.Drawing.Color.Transparent;
+            this.numTitleHeight.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.numTitleHeight.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(76)))), ((int)(((byte)(76)))), ((int)(((byte)(76)))));
+            this.numTitleHeight.Location = new System.Drawing.Point(746, 95);
+            this.numTitleHeight.Maximum = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.numTitleHeight.Minimum = new decimal(new int[] {
+            31,
+            0,
+            0,
+            0});
+            this.numTitleHeight.MinimumSize = new System.Drawing.Size(80, 25);
+            this.numTitleHeight.Name = "numTitleHeight";
+            this.numTitleHeight.Size = new System.Drawing.Size(80, 25);
+            this.numTitleHeight.TabIndex = 32;
+            this.numTitleHeight.Text = "rsNumericUpDown1";
+            this.numTitleHeight.Value = new decimal(new int[] {
+            31,
+            0,
+            0,
+            0});
+            this.numTitleHeight.ValueChanged += new System.EventHandler(this.numTitleHeight_ValueChanged);
+            // 
+            // numIconWidth
+            // 
+            this.numIconWidth.BackColor = System.Drawing.Color.Transparent;
+            this.numIconWidth.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.numIconWidth.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(76)))), ((int)(((byte)(76)))), ((int)(((byte)(76)))));
+            this.numIconWidth.Location = new System.Drawing.Point(529, 95);
+            this.numIconWidth.Maximum = new decimal(new int[] {
+            100,
+            0,
+            0,
+            0});
+            this.numIconWidth.Minimum = new decimal(new int[] {
+            32,
+            0,
+            0,
+            0});
+            this.numIconWidth.MinimumSize = new System.Drawing.Size(80, 25);
+            this.numIconWidth.Name = "numIconWidth";
+            this.numIconWidth.Size = new System.Drawing.Size(80, 25);
+            this.numIconWidth.TabIndex = 33;
+            this.numIconWidth.Text = "rsNumericUpDown1";
+            this.numIconWidth.Value = new decimal(new int[] {
+            41,
+            0,
+            0,
+            0});
+            this.numIconWidth.ValueChanged += new System.EventHandler(this.numIconWidth_ValueChanged);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.BackColor = System.Drawing.Color.Transparent;
+            this.label5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.label5.Location = new System.Drawing.Point(449, 101);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(65, 15);
+            this.label5.TabIndex = 35;
+            this.label5.Text = "IconWidth:";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.BackColor = System.Drawing.Color.Transparent;
+            this.label6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.label6.Location = new System.Drawing.Point(669, 101);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(71, 15);
+            this.label6.TabIndex = 36;
+            this.label6.Text = "Title Height:";
             // 
             // menuStrip1
             // 
             this.menuStrip1.BackColor = System.Drawing.Color.Transparent;
+            this.menuStrip1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.editToolStripMenuItem,
             this.toolsToolStripMenuItem,
             this.helpToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(1, 1);
+            this.menuStrip1.Location = new System.Drawing.Point(0, 615);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1251, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1257, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -1813,20 +1888,21 @@ public partial class MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(1253, 635);
-            this.Controls.Add(this.tabControl1);
+            this.BackColor = System.Drawing.Color.White;
+            this.ClientSize = new System.Drawing.Size(1257, 639);
+            this.ControlBox = false;
+            this.Controls.Add(this.tabControl);
             this.Controls.Add(this.menuStrip1);
             this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Fixed3D;
+            this.ForeColor = System.Drawing.Color.Black;
+            this.MainTabControl = this.tabControl;
             this.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.MaximumSize = new System.Drawing.Size(1273, 678);
-            this.MinimumSize = new System.Drawing.Size(1273, 678);
             this.Name = "MainWindow";
-            this.Padding = new System.Windows.Forms.Padding(1);
+            this.Padding = new System.Windows.Forms.Padding(0, 32, 0, 0);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MainWindow";
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.tabControl1.ResumeLayout(false);
+            this.tabControl.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage1.PerformLayout();
             this.contextMenuStrip1.ResumeLayout(false);
@@ -1835,7 +1911,6 @@ public partial class MainWindow
             this.groupBox3.ResumeLayout(false);
             this.panel8.ResumeLayout(false);
             this.panel8.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.numUpDown1)).EndInit();
             this.panel2.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
             this.groupBox2.ResumeLayout(false);
@@ -1843,9 +1918,8 @@ public partial class MainWindow
             this.panel1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             this.tabPage3.ResumeLayout(false);
-            this.tabPage3.PerformLayout();
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
+            this.tabPage4.ResumeLayout(false);
+            this.tabPage4.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
@@ -1855,7 +1929,7 @@ public partial class MainWindow
 
     #endregion
 
-    private Controls.TabControl tabControl1;
+    private Controls.TabControl tabControl;
     private TabPage tabPage1;
     private TabPage tabPage2;
     private Controls.Separator separator1;
@@ -1875,11 +1949,10 @@ public partial class MainWindow
     private Controls.ComboBox comboBox2;
     private Controls.Panel panel1;
     private Controls.Panel panel2;
-    private Panel panel3;
+    private System.Windows.Forms.Panel panel3;
     private Controls.Separator separator5;
     private Controls.Separator separator3;
     private Controls.Separator separator4;
-    private Controls.Separator separator6;
     private Controls.Label label1;
     private Controls.Label label2;
     private Controls.Panel panel4;
@@ -1891,7 +1964,6 @@ public partial class MainWindow
     private Controls.CheckBox checkBox2;
     private Controls.CheckBox checkBox3;
     private Controls.CheckBox checkBox4;
-    private Controls.Button button1;
     private Controls.ComboBox comboBox3;
     private Controls.Label label3;
     private Controls.CheckBox checkBox6;
@@ -1973,23 +2045,22 @@ public partial class MainWindow
     private Controls.ComboBox comboBox5;
     private Controls.GroupBox groupBox4;
     private TabPage tabPage3;
-    private Controls.MultiPageControl multiPageControl;
     private Controls.Button buttonRemoveTab;
     private Controls.Button buttonAddTab;
-    private Controls.ToolStrip toolStrip1;
-    private ToolStripButton newToolStripButton;
-    private ToolStripButton openToolStripButton;
-    private ToolStripButton saveToolStripButton;
-    private ToolStripButton printToolStripButton;
-    private ToolStripSeparator toolStripSeparator8;
-    private ToolStripButton cutToolStripButton;
-    private ToolStripButton copyToolStripButton;
-    private ToolStripButton pasteToolStripButton;
-    private ToolStripSeparator toolStripSeparator9;
-    private ToolStripButton helpToolStripButton;
     private Controls.ComboBox comboBox6;
     private Controls.ProgressBar progressBar9;
     private Controls.Button button6;
     private ToolTip toolTip1;
     private Controls.ToggleButton toggleButton1;
+    private SDUI.Controls.Button rsButton1;
+    private TabPage tabPage4;
+    private Controls.Button buttonSelectColor;
+    private Controls.ComboBox comboBoxHatchType;
+    private Controls.CheckBox checkBoxDrawFullHatch;
+    private Controls.CheckBox checkBoxDrawTitleBarHatch;
+    private NumUpDown numTitleHeight;
+    private NumUpDown numIconWidth;
+    private Controls.Label label5;
+    private Controls.Label label6;
+    private MultiPageControl multiPageControl;
 }

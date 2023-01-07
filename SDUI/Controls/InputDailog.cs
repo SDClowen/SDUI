@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public partial class InputDialog : CleanForm
+public partial class InputDialog : UIWindowBase
 {
     public enum InputType
     {
@@ -34,7 +34,7 @@ public partial class InputDialog : CleanForm
     /// <value>
     /// The selector.
     /// </value>
-    public NumericUpDown Numeric => numValue;
+    public NumUpDown Numeric => numValue;
 
     /// <summary>
     /// Form input type

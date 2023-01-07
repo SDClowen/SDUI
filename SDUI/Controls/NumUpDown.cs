@@ -1,163 +1,229 @@
-﻿using System;
+﻿using SDUI;
+using System;
 using System.Drawing;
-using System.Runtime.InteropServices;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace SDUI.Controls;
-
-public class NumUpDown : NumericUpDown
+namespace SDUI.Controls
 {
-    public new BorderStyle BorderStyle
+    public class NumUpDown : Control
     {
-        get => BorderStyle.FixedSingle;
-        set => base.BorderStyle = value;
-    }
+        public event EventHandler ValueChanged;
 
-    public NumUpDown()
-    {
-        var renderer = new UpDownButtonRenderer(Controls[0]);
-    }
+        private decimal _value;
+        private decimal _min;
+        private decimal _max;
+        private int Xval;
+        private bool _isUsingKeyboard;
+        private Timer _longPressTimer = new();
 
-    private Color GetColor()
-    {
-        var color = ColorScheme.BackColor;
-        if (color.IsDark())
-            return ControlPaint.Light(color, .2f);
-        else
-            return ControlPaint.Dark(color, -.4f);
-    }
-
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        base.OnPaint(e);
-
-        if (BackColor != GetColor())
+        public decimal Value
         {
-            BackColor = GetColor();
-            ForeColor = ColorScheme.ForeColor;
-        }
-
-        using (var pen = new Pen(ColorScheme.BorderColor, 1))
-        {
-            e.Graphics.FillRectangle(new SolidBrush(BackColor), ClientRectangle);
-
-            e.Graphics.DrawRectangle(pen,
-                ClientRectangle.Left, ClientRectangle.Top,
-                ClientRectangle.Width - 1, ClientRectangle.Height - 1);
-        }
-    }
-
-    private class UpDownButtonRenderer : NativeWindow
-    {
-        [DllImport("user32.dll", ExactSpelling = true, EntryPoint = "BeginPaint", CharSet = CharSet.Auto)]
-        private static extern IntPtr IntBeginPaint(IntPtr hWnd, [In, Out] ref PAINTSTRUCT lpPaint);
-        [StructLayout(LayoutKind.Sequential)]
-        public struct PAINTSTRUCT
-        {
-            public IntPtr hdc;
-            public bool fErase;
-            public int rcPaint_left;
-            public int rcPaint_top;
-            public int rcPaint_right;
-            public int rcPaint_bottom;
-            public bool fRestore;
-            public bool fIncUpdate;
-            public int reserved1;
-            public int reserved2;
-            public int reserved3;
-            public int reserved4;
-            public int reserved5;
-            public int reserved6;
-            public int reserved7;
-            public int reserved8;
-        }
-        [DllImport("user32.dll", ExactSpelling = true, EntryPoint = "EndPaint", CharSet = CharSet.Auto)]
-        private static extern bool IntEndPaint(IntPtr hWnd, ref PAINTSTRUCT lpPaint);
-
-        Control updown;
-        public UpDownButtonRenderer(Control c)
-        {
-            this.updown = c;
-            if (updown.IsHandleCreated)
-                this.AssignHandle(updown.Handle);
-            else
-                updown.HandleCreated += (s, e) => this.AssignHandle(updown.Handle);
-        }
-        private Point[] GetDownArrow(Rectangle r)
-        {
-            var middle = new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
-            return new Point[]
+            get
             {
-                new Point(middle.X - 3, middle.Y - 2),
-                new Point(middle.X + 4, middle.Y - 2),
-                new Point(middle.X, middle.Y + 2)
-            };
-        }
-        private Point[] GetUpArrow(Rectangle r)
-        {
-            var middle = new Point(r.Left + r.Width / 2, r.Top + r.Height / 2);
-            return new Point[]
+                return _value;
+            }
+            set
             {
-                new Point(middle.X - 4, middle.Y + 2),
-                new Point(middle.X + 4, middle.Y + 2),
-                new Point(middle.X, middle.Y - 3)
-            };
-        }
-        protected override void WndProc(ref Message m)
-        {
-            var parent = (NumUpDown)updown.Parent;
-            if (m.Msg == 0xF /*WM_PAINT*/ && parent.BorderStyle == BorderStyle.FixedSingle)
-            {
-                var s = new PAINTSTRUCT();
-                IntBeginPaint(updown.Handle, ref s);
-                using (var g = Graphics.FromHdc(s.hdc))
+                if (value <= _max & value >= _min)
                 {
-                    var enabled = updown.Enabled;
-                    using (var backBrush = new SolidBrush(parent.BackColor))
-                    {
-                        g.FillRectangle(backBrush, updown.ClientRectangle);
-                    }
+                    _value = value;
+                    ValueChanged?.Invoke(this, EventArgs.Empty);
+                }
+                Invalidate();
+            }
+        }
 
-                    var r1 = new Rectangle(0, 0, updown.Width, updown.Height / 2);
-                    var r2 = new Rectangle(0, updown.Height / 2, updown.Width, updown.Height / 2 + 1);
-                    var p = updown.PointToClient(MousePosition);
-
-                    if (enabled && updown.ClientRectangle.Contains(p))
-                    {
-                        using (var b = new SolidBrush(ColorScheme.BorderColor))
-                        {
-                            if (r1.Contains(p))
-                                g.FillRectangle(b, r1);
-                            else
-                                g.FillRectangle(b, r2);
-                        }
-                    }
-
-                    using (var pen = new Pen(ColorScheme.BorderColor))
-                    {
-                        g.DrawLines(pen,
-                            new[] { new Point(0, 0), new Point(0, updown.Height),
-                                        new Point(0, updown.Height / 2), new Point(updown.Width, updown.Height / 2)
-                            });
-                    }
-
-                    var brush = new SolidBrush(ColorScheme.ForeColor);
-                    g.FillPolygon(brush, GetUpArrow(r1));
-                    g.FillPolygon(brush, GetDownArrow(r2));
+        public decimal Minimum
+        {
+            get
+            {
+                return _min;
+            }
+            set
+            {
+                if (value < _max)
+                {
+                    _min = value;
                 }
 
-                m.Result = (IntPtr)1;
-                base.WndProc(ref m);
-                IntEndPaint(updown.Handle, ref s);
+                if (_value < _min)
+                    Value = _min;
+
+                Invalidate();
             }
-            else if (m.Msg == 0x0014/*WM_ERASEBKGND*/)
+        }
+
+        public decimal Maximum
+        {
+            get
             {
-                using (var g = Graphics.FromHdcInternal(m.WParam))
-                    g.FillRectangle(new SolidBrush(ColorScheme.BackColor), updown.ClientRectangle);
-                m.Result = (IntPtr)1;
+                return _max;
+            }
+            set
+            {
+                if (value > _min)
+                    _max = value;
+
+                if (_value > _max)
+                    Value = _max;
+
+                Invalidate();
+            }
+        }
+
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            Xval = e.Location.X;
+            Invalidate();
+
+            if (e.X < Width - 50)
+            {
+                Cursor = Cursors.IBeam;
             }
             else
-                base.WndProc(ref m);
+            {
+                Cursor = Cursors.Default;
+            }
+            if (e.X > Width - 25 && e.X < Width - 10)
+            {
+                Cursor = Cursors.Default;
+            }
+            if (e.X > Width - 44 && e.X < Width - 33)
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        private void ClickButton()
+        {
+            if (Xval > Width - 25 && Xval < Width - 10)
+            {
+                if (_value + 1 <= _max)
+                {
+                    Value++;
+                }
+            }
+            else
+            {
+                if (Xval > Width - 44 && Xval < Width - 33)
+                {
+                    if (_value - 1 >= _min)
+                    {
+                        Value--;
+                    }
+                }
+                _isUsingKeyboard = !_isUsingKeyboard;
+            }
+            Focus();
+            Invalidate();
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseClick(e);
+            ClickButton();
+            _longPressTimer.Start();
+        }
+
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            _longPressTimer.Stop();
+        }
+
+        private void LongPressTimer_Tick(object sender, EventArgs e)
+        {
+            ClickButton();
+        }
+
+        protected override void OnKeyPress(KeyPressEventArgs e)
+        {
+            base.OnKeyPress(e);
+            try
+            {
+                if (_isUsingKeyboard == true && _value < _max)
+                    Value = long.Parse(_value.ToString() + e.KeyChar.ToString());
+            }
+            catch (Exception)
+            {
+            }
+        }
+
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            base.OnKeyUp(e);
+            if (e.KeyCode == Keys.Back)
+            {
+                var tempVal = _value.ToString();
+                tempVal = tempVal.Remove(Convert.ToInt32(tempVal.Length - 1));
+                if (tempVal.Length == 0)
+                    tempVal = "0";
+
+                Value = Convert.ToInt32(tempVal);
+            }
+            Invalidate();
+        }
+
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            if (e.Delta > 0)
+            {
+                if (_value + 1 <= _max)
+                {
+                    Value++;
+                }
+                Invalidate();
+            }
+            else
+            {
+                if (_value - 1 >= _min)
+                {
+                    Value--;
+                }
+                Invalidate();
+            }
+        }
+
+        public NumUpDown()
+        {
+            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
+            BackColor = Color.Transparent;
+            _min = 0;
+            _max = 100;
+            Font = new Font("Segoe UI", 9.25f);
+            Size = new Size(80, 25);
+            MinimumSize = Size;
+            DoubleBuffered = true;
+
+            _longPressTimer.Tick += LongPressTimer_Tick;
+            _longPressTimer.Interval = 200;
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            //base.OnPaint(e);
+            var graphics = e.Graphics;
+            ButtonRenderer.DrawParentBackground(e.Graphics, Bounds, this);
+
+            using var borderPen = new Pen(ColorScheme.BorderColor);
+            using var backColorBrush = ColorScheme.BackColor.Brush();
+            using var foreColorBrush = ColorScheme.ForeColor.Brush();
+
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            using var round = ClientRectangle.Radius(8);
+            graphics.FillPath(backColorBrush, round);
+            graphics.DrawPath(borderPen, round);
+
+            using var plusMinusFont = new Font("Tahoma", 12.75f, FontStyle.Bold);
+            graphics.DrawString("+", plusMinusFont, foreColorBrush, Width - 22, 1);
+            graphics.DrawLine(borderPen, Width - 25, 1, Width - 25, Height - 2);
+            graphics.DrawString("-", plusMinusFont, foreColorBrush, Width - 41, 1);
+            graphics.DrawLine(borderPen, Width - 45, 1, Width - 45, Height - 2);
+
+            TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(1, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
         }
     }
 }

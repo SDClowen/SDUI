@@ -1,26 +1,50 @@
-﻿using SDUI.Extensions;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
 using System.Drawing;
 using System.Drawing.Design;
-using System.Drawing.Drawing2D;
+using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
 
 namespace SDUI.Controls;
 
-public class MultiPageControlItem : SDUI.Controls.Panel
+public class MultiPageControlItem : Panel
 {
-    public MultiPageControlItem()
+    [
+    Localizable(true),
+        Browsable(true),
+        EditorBrowsable(EditorBrowsableState.Always)
+        ]
+        public override string Text
     {
-        Dock = DockStyle.Fill;
-        Padding = Padding.Empty;
+        get
+        {
+            return base.Text;
+        }
+        set
+        {
+            base.Text = value;
+            Parent.Invalidate();
+        }
     }
 
-    public override string Text { get; set; }
+    public MultiPageControlItem()
+        : base()
+    {
+        SetStyle(ControlStyles.CacheText, true);
+        Dock = DockStyle.Fill;
+        Padding = Padding.Empty;
+        BackColor = Color.Transparent;
+    }
+
+    public MultiPageControlItem(string text) 
+        : this()
+    {
+        Text = text;
+    }
 }
 
 [Designer(typeof(MultiPageControlDesigner))]
@@ -34,28 +58,16 @@ public class MultiPageControl : Panel
                  ControlStyles.UserPaint, true);
 
         Padding = new Padding(0, 30, 0, 0);
-        _collection.OnItemAdded += _collection_OnItemAdded;
-        _collection.OnItemRemoved += _collection_OnItemRemoved;
     }
 
-    private void _collection_OnItemAdded(object sender, EventArgs e)
-    {
-        SuspendLayout();
-        Invalidate();
-        ResumeLayout();
-    }
-
-    private void _collection_OnItemRemoved(object sender, EventArgs e)
-    {
-        SuspendLayout();
-        Invalidate();
-        ResumeLayout();
-    }
-
-    private MultiPageControlCollection _collection = new MultiPageControlCollection();
+    private MultiPageControlCollection _collection = new();
     [Editor(typeof(MultiPageControlCollectionEditor), typeof(UITypeEditor))]
     [MergableProperty(false)]
-    public MultiPageControlCollection Collection => _collection;
+    public MultiPageControlCollection Collection
+    {
+        get => _collection;
+        set => _collection = value;
+    }
 
     private int _selectedIndex;
     public int SelectedIndex
@@ -79,28 +91,97 @@ public class MultiPageControl : Panel
         }
     }
 
+    public MultiPageControlItem Add()
+    {
+        return Add("New Tab " + (Collection.Count + 1));
+    }
+
+    public MultiPageControlItem Add(string text)
+    {
+        var newPage = new MultiPageControlItem { Parent = this, Text = text };
+        Collection.Add(newPage);
+
+        SuspendLayout();
+        Invalidate();
+        ResumeLayout();
+
+        return newPage;
+    }
+
+    public void Remove()
+    {
+        RemoveAt(SelectedIndex);
+    }
+
+    public void Remove(MultiPageControlItem item)
+    {
+        Collection.Remove(item);
+
+        SuspendLayout();
+        Invalidate();
+        ResumeLayout();
+    }
+
+    public void RemoveAt(int index)
+    {
+        if (index < 0 || index >= _collection.Count)
+            return;
+
+        Collection.RemoveAt(index);
+
+        SuspendLayout();
+        Invalidate();
+        ResumeLayout();
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
+        GroupBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+
         base.OnPaint(e);
         var graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
-        e.Graphics.DrawLine(new Pen(ColorScheme.BorderColor), 0, _headerControlSize.Height, Width, _headerControlSize.Height);
+        using var borderPen = new Pen(ColorScheme.BorderColor);
+
+        graphics.SetHighQuality();
+
+        e.Graphics.DrawLine(borderPen, 2, _headerControlSize.Height, Width - 3, _headerControlSize.Height);
 
         var x = this.Radius / 2;
         var i = 0;
         foreach (MultiPageControlItem control in Collection)
         {
             var stringSize = TextRenderer.MeasureText(control.Text, Font);
-            var width = stringSize.Width + 30;
-            var rectangle = new Rectangle(x, 1, width, _headerControlSize.Height - 1);
+            var width = stringSize.Width + 80;
+            var rectangle = new Rectangle(x, 6, width, _headerControlSize.Height - 6);
 
-            var brush = new SolidBrush(i == _selectedIndex ? ColorScheme.BorderColor : ColorScheme.BackColor2);
-            e.Graphics.FillRectangle(brush, rectangle);
+            if (i == SelectedIndex)
+                e.Graphics.FillPath(borderPen.Brush, rectangle.ToRectangleF().Radius(6, 6, 0, 0));
+
+            // is mouse in close button
+            if (true)
+            {
+                const int closeWH = 12;
+                using var closeBrush = borderPen.Color.Alpha(50).Brush();
+                e.Graphics.DrawArc(borderPen, new Rectangle(rectangle.X + rectangle.Width - 20, rectangle.Y + 6, closeWH, closeWH), 0, 360);
+                e.Graphics.FillPie(closeBrush, new Rectangle(rectangle.X + rectangle.Width - 18, rectangle.Y + 8, closeWH - 4, closeWH - 4), 0, 360);
+            }
+
+            if (true)
+                e.Graphics.DrawIcon(SystemIcons.Hand, new Rectangle(rectangle.X + 6, rectangle.Y + 5, 16, 16));
+
             x += width;
             i++;
             TextRenderer.DrawText(graphics, control.Text, Font, rectangle, ColorScheme.ForeColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
         }
+
+        // new tab button
+        if (true)
+        {
+            e.Graphics.FillPath(borderPen.Brush, new RectangleF(x + 4, 9, 24, 16).Radius(6, 12, 12, 6));
+        }
+
+        graphics.SetDefaultQuality();
     }
 }
 
@@ -121,124 +202,77 @@ public class MultiPageControlDesigner : ControlDesigner
 
 public class MultiPageControlActions : DesignerActionList
 {
-    ControlDesigner designer;
-    MultiPageControl control;
+    ControlDesigner _designer;
+    MultiPageControl _control;
 
-    public MultiPageControlActions(ControlDesigner designer) : base(designer.Component)
+    public MultiPageControlActions(ControlDesigner designer) 
+        : base(designer.Component)
     {
-        this.designer = designer;
-        control = (MultiPageControl)designer.Control;
+        this._designer = designer;
+        _control = (MultiPageControl)designer.Control;
     }
 
     public void AddTab()
     {
-        control.Collection.Add(new MultiPageControlItem { Text = "New Tab " + (control.Collection.Count + 1) });
+        _control.Add();
     }
 
     public void RemoveTab()
     {
-        control.Collection.RemoveAt(control.SelectedIndex);
+        _control.Remove();
     }
 
     public override DesignerActionItemCollection GetSortedActionItems()
     {
-        return new DesignerActionItemCollection() {
-                new DesignerActionMethodItem(this, "AddTab", "Add Tab",  true),
-                new DesignerActionMethodItem(this, "RemoveTab", "Remove Tab",  true)
-            };
+        return new()
+        {
+            new DesignerActionMethodItem(this, "AddTab", "Add Tab", true),
+            new DesignerActionMethodItem(this, "RemoveTab", "Remove Tab", true)
+        };
     }
 }
 
-internal class MultiPageControlCollectionEditor : CollectionEditor
+public class MultiPageControlCollectionEditor : CollectionEditor
 {
-    public MultiPageControlCollectionEditor() : base(typeof(MultiPageControlCollection))
+    public MultiPageControlCollectionEditor()
+        : base(typeof(MultiPageControlCollection))
     {
     }
 
     protected override object SetItems(object editValue, object[] value)
     {
         var multiPageControl = this.Context.Instance as MultiPageControl;
-        if (multiPageControl != null)
-            multiPageControl.SuspendLayout();
+
+        multiPageControl.SuspendLayout();
 
         object retValue = base.SetItems(editValue, value);
 
-        if (multiPageControl != null)
-            multiPageControl.ResumeLayout();
-
+        multiPageControl.ResumeLayout();
+        multiPageControl.Invalidate();
 
         return retValue;
     }
+
+    protected override CollectionForm CreateCollectionForm()
+    {
+        var form = base.CreateCollectionForm();
+        Type type = form.GetType();
+        PropertyInfo propertyInfo = type.GetProperty("CollectionEditable", BindingFlags.Instance | BindingFlags.NonPublic);
+        propertyInfo.SetValue(form, true);
+        return form;
+    }
+
+    protected override Type CreateCollectionItemType()
+    {
+        return typeof(MultiPageControlCollection);
+    }
+
+    public override object EditValue(ITypeDescriptorContext context, IServiceProvider provider, object value)
+    {
+        return base.EditValue(context, provider, value);
+    }
 }
 
-public class MultiPageControlCollection : ICollection<MultiPageControlItem>
+public class MultiPageControlCollection : List<MultiPageControlItem>, IList
 {
-    public event EventHandler OnItemAdded;
-    public event EventHandler OnItemRemoved;
-
-    private readonly object _lock = new object();
-    private List<MultiPageControlItem> _items = new List<MultiPageControlItem>();
-
-    public int Count => _items.Count;
-
-    public object SyncRoot => _lock;
-
-    public bool IsSynchronized => true;
-
-    public bool IsReadOnly => false;
-
-    public void Add(MultiPageControlItem item)
-    {
-        lock (_lock)
-        {
-            _items.Add(item);
-            OnItemAdded?.Invoke(item, EventArgs.Empty);
-        }
-    }
-
-    public void Clear()
-    {
-        _items.Clear();
-    }
-
-    public bool Contains(MultiPageControlItem item)
-    {
-        return _items.Contains(item);
-    }
-
-    public void CopyTo(MultiPageControlItem[] array, int arrayIndex)
-    {
-        _items.CopyTo(array, arrayIndex);
-    }
-
-    public IEnumerator GetEnumerator()
-    {
-        return _items.GetEnumerator();
-    }
-
-    public bool Remove(MultiPageControlItem item)
-    {
-        lock (_lock)
-        {
-            OnItemRemoved?.Invoke(item, EventArgs.Empty);
-            return _items.Remove(item);
-        }
-    }
-
-    public void RemoveAt(int index)
-    {
-        if (index < 0 || index >= _items.Count)
-            return;
-
-        lock (_lock)
-        {
-            OnItemRemoved?.Invoke(_items[index], EventArgs.Empty);
-            _items.RemoveAt(index);
-        }
-    }
-
-    IEnumerator<MultiPageControlItem> IEnumerable<MultiPageControlItem>.GetEnumerator()
-    {
-        return _items.GetEnumerator();
-    }
 }

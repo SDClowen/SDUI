@@ -1,6 +1,4 @@
-﻿using SDUI.Extensions;
-using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;

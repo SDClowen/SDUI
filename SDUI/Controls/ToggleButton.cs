@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ToggleButton : CheckBox
+public class ToggleButton : System.Windows.Forms.CheckBox
 {
 
     [Browsable(true)]

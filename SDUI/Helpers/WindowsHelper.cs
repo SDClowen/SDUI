@@ -29,10 +29,11 @@ public static class WindowsHelper
         if (RtlGetVersion(ref version) != NTSTATUS.STATUS_SUCCESS)
             return;
 
-        SevenOrHigher = version.MajorVersion == 6 && version.MinorVersion == 1 && (version.BuildNumber >= 7600 && version.BuildNumber <= 7601);
-        EightOrHigher = version.MajorVersion == 6 && version.MinorVersion >= 2 && (version.BuildNumber >= 9200 && version.BuildNumber <= 9999);
-        TenOrHigher = version.MajorVersion == 10 && (version.BuildNumber >= 10240 && version.BuildNumber <= 20000);
-        ElevenOrHigher = version.BuildNumber >= 22000;
+        IsSeven = version.MajorVersion == 6 && version.MinorVersion == 1 && (version.BuildNumber >= 7600 && version.BuildNumber <= 7601);
+        IsEight = version.MajorVersion == 6 && version.MinorVersion >= 2 && (version.BuildNumber >= 9200 && version.BuildNumber <= 9999);
+        IsTen = version.MajorVersion == 10 && (version.BuildNumber >= 10240 && version.BuildNumber <= 20000);
+        IsEleven = version.BuildNumber >= 22000;
+        IsModern = IsTen || IsEleven;
         VisualStylesEnabled = VisualStyleInformation.IsEnabledByUser;
         BuildInfo = version;
 
@@ -48,36 +49,44 @@ public static class WindowsHelper
     }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 7 or higher.
+    /// Returns a value indicating whether the Operating System is Windows 7.
     /// </summary>
     /// <value>
-    ///   <c>true</c> if the Operating System is Windows 7 or higher; otherwise, <c>false</c>.
+    ///   <c>true</c> if the Operating System is Windows 7; otherwise, <c>false</c>.
     /// </value>
-    public static bool SevenOrHigher { get; private set; }
+    public static bool IsSeven { get; private set; }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 8 or higher.
+    /// Returns a value indicating whether the Operating System is Windows 8.
     /// </summary>
     /// <value>
-    ///   <c>true</c> if the Operating System is Windows 8 or higher; otherwise, <c>false</c>.
+    ///   <c>true</c> if the Operating System is Windows 8; otherwise, <c>false</c>.
     /// </value>
-    public static bool EightOrHigher { get; private set; }
+    public static bool IsEight { get; private set; }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 10 or higher.
+    /// Returns a value indicating whether the Operating System is Windows 10.
+    /// </summary>
+    /// <value>
+    ///   <c>true</c> if the Operating System is Windows 10; otherwise, <c>false</c>.
+    /// </value>
+    public static bool IsTen { get; private set; }
+
+    /// <summary>
+    /// Returns a value indicating whether the Operating System is Windows 11.
+    /// </summary>
+    /// <value>
+    ///   <c>true</c> if the Operating System is Windows 11; otherwise, <c>false</c>.
+    /// </value>
+    public static bool IsEleven { get; private set; }
+
+    /// <summary>
+    /// Returns a value indicating whether the Operating System is Windows 11.
     /// </summary>
     /// <value>
     ///   <c>true</c> if the Operating System is Windows 10 or higher; otherwise, <c>false</c>.
     /// </value>
-    public static bool TenOrHigher { get; private set; }
-
-    /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 11 or higher.
-    /// </summary>
-    /// <value>
-    ///   <c>true</c> if the Operating System is Windows 11 or higher; otherwise, <c>false</c>.
-    /// </value>
-    public static bool ElevenOrHigher { get; private set; }
+    public static bool IsModern { get; private set; }
 
     /// <summary>
     /// Returns a value indicating whether Visual Styles are enabled.
@@ -94,7 +103,7 @@ public static class WindowsHelper
     public static bool IsDark()
     {
         int value = 1;
-        if (TenOrHigher || ElevenOrHigher)
+        if (IsTen || IsEleven)
         {
             try
             {
@@ -117,7 +126,7 @@ public static class WindowsHelper
     /// <param name="isDark">Is dark <c>true</c> otherwise <c>false</c></param>
     public static bool UseImmersiveDarkMode(IntPtr handle, bool enabled)
     {
-        if (TenOrHigher || ElevenOrHigher)
+        if (IsTen || IsEleven)
         {
             var attribute = DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
             if (BuildInfo.BuildNumber > 18980)
@@ -134,6 +143,9 @@ public static class WindowsHelper
                 SetWindowTheme(handle, "Explorer", null);
 
             int useImmersiveDarkMode = enabled ? 1 : 0;
+
+            //AllowDarkModeForWindow(handle, true);
+            //return true;
             return DwmSetWindowAttribute(handle, (int)attribute, ref useImmersiveDarkMode, sizeof(int)) == 0;
         }
 

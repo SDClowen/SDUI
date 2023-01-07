@@ -36,7 +36,6 @@
             this.comboBox = new SDUI.Controls.ComboBox();
             this.numValue = new SDUI.Controls.NumUpDown();
             this.panel1 = new SDUI.Controls.Panel();
-            ((System.ComponentModel.ISupportInitialize)(this.numValue)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -116,7 +115,6 @@
             // numValue
             // 
             this.numValue.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(238)))), ((int)(((byte)(238)))));
-            this.numValue.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.numValue.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.numValue.Location = new System.Drawing.Point(12, 69);
             this.numValue.Maximum = new decimal(new int[] {
@@ -132,7 +130,6 @@
             this.numValue.Name = "numValue";
             this.numValue.Size = new System.Drawing.Size(156, 23);
             this.numValue.TabIndex = 5;
-            this.numValue.ThousandsSeparator = true;
             this.numValue.Value = new decimal(new int[] {
             1,
             0,
@@ -178,7 +175,6 @@
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.InputDialog_FormClosing);
-            ((System.ComponentModel.ISupportInitialize)(this.numValue)).EndInit();
             this.panel1.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();

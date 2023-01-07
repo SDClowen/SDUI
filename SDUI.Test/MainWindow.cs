@@ -4,17 +4,18 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SDUI.Test;
 
-public partial class MainWindow : CleanForm
+public partial class MainWindow : UIWindow
 {
     public MainWindow()
     {
         InitializeComponent();
         comboBox6.Items.AddRange(Enum.GetNames<HatchStyle>());
-        button6.SetUseAsync(true);
+        comboBoxHatchType.Items.AddRange(Enum.GetNames<HatchStyle>());
 
         toolTip1.SetToolTip(progressBar8, "Test tooltip");
     }
@@ -22,7 +23,9 @@ public partial class MainWindow : CleanForm
     protected override void OnBackColorChanged(EventArgs e)
     {
         base.OnBackColorChanged(e);
-        
+        if (Controls.Count == 0)
+            return;
+
         listView1.Items.Clear();
         listView2.Items.Clear();
 
@@ -155,27 +158,27 @@ public partial class MainWindow : CleanForm
 
     private void newToolStripButton_Click(object sender, EventArgs e)
     {
-        tabControl1.SelectedIndex = 0;
+        tabControl.SelectedIndex = 0;
     }
 
     private void openToolStripButton_Click(object sender, EventArgs e)
     {
-        tabControl1.SelectedIndex = 1;
+        tabControl.SelectedIndex = 1;
     }
 
     private void saveToolStripButton_Click(object sender, EventArgs e)
     {
-        tabControl1.SelectedIndex = 2;
+        tabControl.SelectedIndex = 2;
     }
 
     private void buttonAddTab_Click(object sender, EventArgs e)
     {
-        multiPageControl.Collection.Add(new MultiPageControlItem { Text = "New Tab " + (multiPageControl.Collection.Count + 1) });
+        multiPageControl.Add();
     }
 
     private void buttonRemoveTab_Click(object sender, EventArgs e)
     {
-        multiPageControl.Collection.RemoveAt(multiPageControl.SelectedIndex);
+        multiPageControl.RemoveAt(multiPageControl.SelectedIndex);
     }
 
     private void trackBar1_Scroll(object sender, EventArgs e)
@@ -213,8 +216,46 @@ public partial class MainWindow : CleanForm
         progressBar3.Invalidate();
     }
 
-    private void button6_Click(object sender, EventArgs e)
+    private async void button6_Click(object sender, EventArgs e)
     {
-        Thread.Sleep(5000);
+        await Task.Delay(5000);
+    }
+
+    private void checkBoxDrawFullHatch_CheckedChanged(object sender, EventArgs e)
+    {
+        FullDrawHatch = checkBoxDrawFullHatch.Checked;
+    }
+
+    private void checkBoxDrawTitleBarHatch_CheckedChanged(object sender, EventArgs e)
+    {
+        DrawHatch = checkBoxDrawTitleBarHatch.Checked;
+    }
+
+    private void numIconWidth_ValueChanged(object sender, EventArgs e)
+    {
+        IconWidth = (int)numIconWidth.Value;
+    }
+
+    private void numTitleHeight_ValueChanged(object sender, EventArgs e)
+    {
+        TitleHeight = (int)numTitleHeight.Value;
+    }
+
+    private void comboBoxHatchType_SelectedIndexChanged(object sender, EventArgs e)
+    {
+        if (!Enum.TryParse<HatchStyle>(comboBoxHatchType.SelectedItem.ToString(), out var @enum))
+            return;
+
+        Hatch = @enum;
+        Invalidate();
+    }
+
+    private void buttonSelectColor_Click(object sender, EventArgs e)
+    {
+        var colorpicker = new ColorDialog();
+        colorpicker.ShowDialog();
+        TitleColor = colorpicker.Color;
+        BackColor = colorpicker.Color;
+        ForeColor = BackColor.Determine();
     }
 }

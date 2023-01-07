@@ -30,6 +30,11 @@ public class ColorScheme
     public static Color ShadowColor => ForeColor.Alpha(10);
 
     /// <summary>
+    /// Gets theme accent color
+    /// </summary>
+    public static Color AccentColor => Color.FromArgb(0, 92, 252);
+
+    /// <summary>
     /// Gets or sets the debug borders
     /// </summary>
     public static bool DrawDebugBorders;
