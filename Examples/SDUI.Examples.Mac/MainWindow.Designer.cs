@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.tabControl1 = new SDUI.Controls.TabControl();
+            this.tabControl = new SDUI.Controls.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.button1 = new SDUI.Controls.Button();
             this.panel3 = new SDUI.Controls.Panel();
@@ -51,7 +51,7 @@
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this.panel1 = new SDUI.Controls.Panel();
             this.formControlBox1 = new SDUI.Controls.FormControlBox();
-            this.tabControl1.SuspendLayout();
+            this.tabControl.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.panel3.SuspendLayout();
             this.panel2.SuspendLayout();
@@ -60,17 +60,17 @@
             // 
             // tabControl1
             // 
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl1.ItemSize = new System.Drawing.Size(120, 30);
-            this.tabControl1.Location = new System.Drawing.Point(248, 0);
-            this.tabControl1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(720, 675);
-            this.tabControl1.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
-            this.tabControl1.TabIndex = 0;
+            this.tabControl.Controls.Add(this.tabPage1);
+            this.tabControl.Controls.Add(this.tabPage2);
+            this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl.ItemSize = new System.Drawing.Size(120, 30);
+            this.tabControl.Location = new System.Drawing.Point(248, 0);
+            this.tabControl.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.tabControl.Name = "tabControl1";
+            this.tabControl.SelectedIndex = 0;
+            this.tabControl.Size = new System.Drawing.Size(720, 675);
+            this.tabControl.SizeMode = System.Windows.Forms.TabSizeMode.Fixed;
+            this.tabControl.TabIndex = 0;
             // 
             // tabPage1
             // 
@@ -366,14 +366,14 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(968, 675);
-            this.Controls.Add(this.tabControl1);
+            this.Controls.Add(this.tabControl);
             this.Controls.Add(this.panel1);
             this.Font = new System.Drawing.Font("Segoe UI", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.Name = "MainWindow";
             this.ShowTitle = false;
             this.Text = "SDUI Examples Mac";
-            this.tabControl1.ResumeLayout(false);
+            this.tabControl.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.panel3.ResumeLayout(false);
             this.panel3.PerformLayout();
@@ -386,7 +386,7 @@
 
         #endregion
 
-        private Controls.TabControl tabControl1;
+        private Controls.TabControl tabControl;
         private TabPage tabPage1;
         private TabPage tabPage2;
         private Controls.Panel panel1;

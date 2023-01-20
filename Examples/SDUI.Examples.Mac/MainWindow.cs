@@ -8,6 +8,8 @@ namespace SDUI.Examples.Mac
         {
             ColorScheme.BackColor = Color.FromArgb(20, 20, 20);
             InitializeComponent();
+            AddMousePressMove(this);
+            AddMousePressMove(panel1);
         }
     }
 }

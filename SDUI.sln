@@ -5,11 +5,11 @@ VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI", "SDUI\SDUI.csproj", "{38B06E05-D80D-4E99-9F62-8B3AF0B7AC53}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Test", "SDUI.Test\SDUI.Test.csproj", "{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Test", "Examples\SDUI.Test\SDUI.Test.csproj", "{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{A440C19E-A7E1-40AE-9D2E-6B44AC55312A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDUI.Examples.Mac", "SDUI.Examples.LeftPanel\SDUI.Examples.Mac.csproj", "{789C8834-22D0-4AEF-8643-C051704949D6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Examples.Mac", "Examples\SDUI.Examples.Mac\SDUI.Examples.Mac.csproj", "{789C8834-22D0-4AEF-8643-C051704949D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,6 +34,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
 		{789C8834-22D0-4AEF-8643-C051704949D6} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution

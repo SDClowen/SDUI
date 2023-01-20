@@ -55,11 +55,25 @@ public class MultiPageControlItem : Panel
 public class MultiPageControl : UserControl
 {
     private EventHandler<int> _onSelectedIndexChanged;
+    private EventHandler _onNewPageButtonClicked;
+    private EventHandler _onClosePageButtonClicked;
 
     public event EventHandler<int> SelectedIndexChanged
     {
         add => _onSelectedIndexChanged += value;
         remove => _onSelectedIndexChanged -= value;
+    }
+
+    public event EventHandler NewPageButtonClicked
+    {
+        add => _onNewPageButtonClicked += value;
+        remove => _onNewPageButtonClicked -= value;
+    }
+
+    public event EventHandler ClosePageButtonClicked
+    {
+        add => _onClosePageButtonClicked += value;
+        remove => _onClosePageButtonClicked -= value;
     }
 
     public MultiPageControl()
@@ -193,7 +207,7 @@ public class MultiPageControl : UserControl
 
     public MultiPageControlItem Add(string text)
     {
-        var newPage = new MultiPageControlItem { Parent = this, Text = text };
+        var newPage = new MultiPageControlItem { Parent = this, Text = text, Visible = false, Dock = DockStyle.Fill };
         Controls.Add(newPage);
         ReorganizePages();
 
@@ -354,7 +368,12 @@ public class MultiPageControl : UserControl
             {
                 var item = Controls[i];
                 if (item.RectangleClose.Contains(_mouseLocation))
-                    RemoveAt(i);
+                {
+                    if(_onClosePageButtonClicked == null)
+                        RemoveAt(i);
+                    else
+                        _onClosePageButtonClicked(this, EventArgs.Empty);
+                }
                 else if (item.Rectangle.Contains(_mouseLocation))
                     SelectedIndex = i;
             }
@@ -363,7 +382,12 @@ public class MultiPageControl : UserControl
                 return;
 
             if (_newButtonPath.GetBounds().Contains(_mouseLocation))
-                Add();
+            {
+                if(_onNewPageButtonClicked == null)
+                    Add();
+                else
+                    _onNewPageButtonClicked(this, EventArgs.Empty);
+            }
         }
 
         _mouseState = 1;
