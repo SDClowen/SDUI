@@ -312,11 +312,6 @@ public class UIWindow : UIWindowBase
     }
 
     /// <summary>
-    /// Draw hatch brush on title bar
-    /// </summary>
-    public bool DrawHatch { get; set; }
-
-    /// <summary>
     /// Draw hatch brush on form
     /// </summary>
     public bool FullDrawHatch { get; set; }
@@ -368,11 +363,11 @@ public class UIWindow : UIWindowBase
     /// <summary>
     /// tab area animation manager
     /// </summary>
-    private readonly AnimationManager tabAreaAnimationManager;
+    private readonly AnimationManager pageAreaAnimationManager;
 
-    private int previousSelectedTabIndex;
+    private int previousSelectedPageIndex;
     private Point animationSource;
-    private List<Rectangle> tabRects;
+    private List<Rectangle> pageRect;
     private const int TAB_HEADER_PADDING = 9;
     private const int TAB_INDICATOR_HEIGHT = 2;
 
@@ -402,7 +397,7 @@ public class UIWindow : UIWindowBase
 
         enableFullDraggable = false;
 
-        tabAreaAnimationManager = new AnimationManager
+        pageAreaAnimationManager = new AnimationManager
         {
             AnimationType = AnimationType.EaseOut,
             Increment = 0.06
@@ -433,7 +428,7 @@ public class UIWindow : UIWindowBase
         maxBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         closeBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         extendBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
-        tabAreaAnimationManager.OnAnimationProgress += sender => Invalidate();
+        pageAreaAnimationManager.OnAnimationProgress += sender => Invalidate();
     }
 
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox;
@@ -638,14 +633,14 @@ public class UIWindow : UIWindowBase
         Cursor.Clip = new Rectangle();
         _formMoveMouseDown = false;
 
-        if (tabRects == null)
+        if (pageRect == null)
             UpdateTabRects();
 
-        for (int i = 0; i < tabRects.Count; i++)
+        for (int i = 0; i < pageRect.Count; i++)
         {
-            if (tabRects[i].Contains(e.Location))
+            if (pageRect[i].Contains(e.Location))
             {
-                _tabControl.SelectedIndex = i;
+                _windowPageControl.SelectedIndex = i;
             }
         }
 
@@ -658,12 +653,12 @@ public class UIWindow : UIWindowBase
         {
             if (WindowState == FormWindowState.Maximized)
             {
-                int MaximizedWidth = Width;
-                int LocationX = Left;
+                int maximizedWidth = Width;
+                int locationX = Left;
                 ShowMaximize();
 
-                float offsetXRatio = 1 - (float)Width / MaximizedWidth;
-                _mouseOffset.X -= (int)((_mouseOffset.X - LocationX) * offsetXRatio);
+                float offsetXRatio = 1 - (float)Width / maximizedWidth;
+                _mouseOffset.X -= (int)((_mouseOffset.X - locationX) * offsetXRatio);
             }
 
             var offsetX = _mouseOffset.X - MousePosition.X;
@@ -792,7 +787,7 @@ public class UIWindow : UIWindowBase
             graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
         }
         else
-            graphics.FillRectangle(hoverColor, 0, 0, Width, Height);
+            graphics.FillRectangle(ColorScheme.BackColor, 0, 0, Width, Height);
 
         if (Width <= 0 || Height <= 0)
             return;
@@ -804,14 +799,6 @@ public class UIWindow : UIWindowBase
 
         if (titleColor != Color.Empty)
             graphics.FillRectangle(titleColor, 0, 0, Width, _titleHeight);
-
-        if (DrawHatch)
-        {
-            using (var hatchBrush = new HatchBrush(_hatch, titleColor, hoverColor))
-            {
-                graphics.FillRectangle(hatchBrush, 0, 0, Width, _titleHeight);
-            }
-        }
 
         if (controlBox)
         {
@@ -915,7 +902,7 @@ public class UIWindow : UIWindowBase
         if (Icon != null)
             graphics.DrawIcon(Icon, new Rectangle(10, (_titleHeight / 2) - (faviconSize / 2), faviconSize, faviconSize));
 
-        if (_tabControl == null)
+        if (_windowPageControl == null)
         {
             var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter;
             var stringSize = TextRenderer.MeasureText(Text, TitleFont);
@@ -923,50 +910,49 @@ public class UIWindow : UIWindowBase
             TextRenderer.DrawText(e.Graphics, Text, TitleFont, textPoint, foreColor, flags);
         }
 
-        if (_tabControl == null)
+        if (_windowPageControl == null)
             return;
 
-        if (!tabAreaAnimationManager.IsAnimating() || tabRects == null || tabRects.Count != _tabControl.TabCount)
+        if (!pageAreaAnimationManager.IsAnimating() || pageRect == null || pageRect.Count != _windowPageControl.Count)
             UpdateTabRects();
 
-        var animationProgress = tabAreaAnimationManager.GetProgress();
+        var animationProgress = pageAreaAnimationManager.GetProgress();
 
         //Click feedback
-        if (tabAreaAnimationManager.IsAnimating())
+        if (pageAreaAnimationManager.IsAnimating())
         {
             var rippleBrush = new SolidBrush(Color.FromArgb((int)(51 - (animationProgress * 50)), foreColor));
-            var rippleSize = (int)(animationProgress * tabRects[_tabControl.SelectedIndex].Width * 1.75);
+            var rippleSize = (int)(animationProgress * pageRect[_windowPageControl.SelectedIndex].Width * 1.75);
 
-            graphics.SetClip(tabRects[_tabControl.SelectedIndex]);
+            graphics.SetClip(pageRect[_windowPageControl.SelectedIndex]);
             graphics.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
             graphics.ResetClip();
             rippleBrush.Dispose();
         }
 
         // fix desing time error
-        if (_tabControl.SelectedIndex <= -1 || _tabControl.SelectedIndex >= _tabControl.TabCount)
+        if (_windowPageControl.SelectedIndex <= -1 || _windowPageControl.SelectedIndex >= _windowPageControl.Count)
             return;
 
-        //Animate tab indicator
-        var previousSelectedTabIndexIfHasOne = previousSelectedTabIndex == -1 ? _tabControl.SelectedIndex : previousSelectedTabIndex;
-        Rectangle previousActiveTabRect = tabRects[previousSelectedTabIndexIfHasOne];
-        Rectangle activeTabPageRect = tabRects[_tabControl.SelectedIndex];
+        //Animate page indicator
+        var previousSelectedPageIndexIfHasOne = previousSelectedPageIndex == -1 ? _windowPageControl.SelectedIndex : previousSelectedPageIndex;
+        var previousActivePageRect = pageRect[previousSelectedPageIndexIfHasOne];
+        var activePageRect = pageRect[_windowPageControl.SelectedIndex];
 
-        var y = activeTabPageRect.Bottom - 2;
-        var x = previousActiveTabRect.X + (int)((activeTabPageRect.X - previousActiveTabRect.X) * animationProgress);
-        var width = previousActiveTabRect.Width + (int)((activeTabPageRect.Width - previousActiveTabRect.Width) * animationProgress);
+        var y = activePageRect.Bottom - 2;
+        var x = previousActivePageRect.X + (int)((activePageRect.X - previousActivePageRect.X) * animationProgress);
+        var width = previousActivePageRect.Width + (int)((activePageRect.Width - previousActivePageRect.Width) * animationProgress);
 
-
-        graphics.DrawRectangle(hoverColor, activeTabPageRect.X, 0, width, _titleHeight);
+        graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeight);
         graphics.FillRectangle(hoverColor, x, 0, width, _titleHeight);
         graphics.FillRectangle(Color.DeepSkyBlue, x, y, width, TAB_INDICATOR_HEIGHT);
 
         //Draw tab headers
-        foreach (TabPage tabPage in _tabControl.TabPages)
+        foreach (UserControl page in _windowPageControl.Controls)
         {
-            var currentTabIndex = _tabControl.TabPages.IndexOf(tabPage);
+            var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
             var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
-            TextRenderer.DrawText(graphics, tabPage.Text, Font, tabRects[currentTabIndex], foreColor, flags);
+            TextRenderer.DrawText(graphics, page.Text, _titleFont, pageRect[currentTabIndex], foreColor, flags);
         }
 
         if(_drawTitleBorder)
@@ -1036,29 +1022,29 @@ public class UIWindow : UIWindowBase
         }
     }
 
-    private System.Windows.Forms.TabControl _tabControl;
-    public System.Windows.Forms.TabControl MainTabControl
+    private WindowPageControl _windowPageControl;
+    public WindowPageControl WindowPageControl
     {
-        get { return _tabControl; }
+        get => _windowPageControl;
         set
         {
-            _tabControl = value;
-            if (_tabControl == null) return;
-            previousSelectedTabIndex = _tabControl.SelectedIndex;
-            _tabControl.Deselected += (sender, args) =>
+            _windowPageControl = value;
+            if (_windowPageControl == null) 
+                return;
+
+            previousSelectedPageIndex = _windowPageControl.SelectedIndex;
+
+            _windowPageControl.SelectedIndexChanged += (sender, previousIndex) =>
             {
-                previousSelectedTabIndex = _tabControl.SelectedIndex;
+                previousSelectedPageIndex = previousIndex;
+                pageAreaAnimationManager.SetProgress(0);
+                pageAreaAnimationManager.StartNewAnimation(AnimationDirection.In);
             };
-            _tabControl.SelectedIndexChanged += (sender, args) =>
-            {
-                tabAreaAnimationManager.SetProgress(0);
-                tabAreaAnimationManager.StartNewAnimation(AnimationDirection.In);
-            };
-            _tabControl.ControlAdded += delegate
+            _windowPageControl.ControlAdded += delegate
             {
                 Invalidate();
             };
-            _tabControl.ControlRemoved += delegate
+            _windowPageControl.ControlRemoved += delegate
             {
                 Invalidate();
             };
@@ -1067,16 +1053,16 @@ public class UIWindow : UIWindowBase
 
     private void UpdateTabRects()
     {
-        tabRects = new List<Rectangle>();
+        pageRect = new List<Rectangle>();
 
         //If there isn't a base tab control, the rects shouldn't be calculated
         //If there aren't tab pages in the base tab control, the list should just be empty which has been set already; exit the void
-        if (_tabControl == null || _tabControl.TabCount == 0)
+        if (_windowPageControl == null || _windowPageControl.Count == 0)
             return;
 
         //Calculate the bounds of each tab header specified in the base tab control
-        tabRects.Add(new Rectangle(44, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_tabControl.TabPages[0].Text, Font).Width, TitleHeight));
-        for (int i = 1; i < _tabControl.TabPages.Count; i++)
-            tabRects.Add(new Rectangle(tabRects[i - 1].Right, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_tabControl.TabPages[i].Text, Font).Width, TitleHeight));
+        pageRect.Add(new Rectangle(44, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_windowPageControl.Controls[0].Text, _titleFont).Width, _titleHeight));
+        for (int i = 1; i < _windowPageControl.Count; i++)
+            pageRect.Add(new Rectangle(pageRect[i - 1].Right, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_windowPageControl.Controls[i].Text, _titleFont).Width, _titleHeight));
     }
 }

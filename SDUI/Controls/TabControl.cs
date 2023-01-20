@@ -27,7 +27,9 @@ public class TabControl : System.Windows.Forms.TabControl
     {
         base.CreateHandle();
 
-        ItemSize = new Size(80, 24);
+        if(SizeMode != TabSizeMode.Fixed)
+            ItemSize = new Size(80, 24);
+
         Alignment = TabAlignment.Top;
     }
 
@@ -41,13 +43,13 @@ public class TabControl : System.Windows.Forms.TabControl
         GroupBoxRenderer.DrawParentBackground(graphics, this.ClientRectangle, this);
 
         graphics.SetHighQuality();
-        using var borderBrush = new Pen(Color.FromArgb(100, 201, 198, 195));
-        using var backBrush = new SolidBrush(Color.FromArgb(100, 247, 246, 246));
+        using var borderBrush = new Pen(Color.FromArgb(70, 0, 0, 0));
+        using var backBrush = new SolidBrush(ColorScheme.BackColor.IsDark() ? Color.FromArgb(10, 255, 255, 255) : Color.FromArgb(50, 0, 0, 0));
         // Draw container rectangle
-        var r = new RectangleF(0, 23, Width - 1, Height - 24);
+        var r = new RectangleF(0, ItemSize.Height, Width - 1, Height - ItemSize.Height - 1);
         using (var path = r.Radius(SelectedIndex == 0 ? 2 : 4, 4, 4, 4))
         {
-            graphics.FillPath(backBrush, path);
+            //graphics.FillPath(backBrush, path);
             graphics.DrawPath(borderBrush, path);
         }
 
@@ -66,10 +68,20 @@ public class TabControl : System.Windows.Forms.TabControl
 
             TextRenderer.DrawText(graphics, TabPages[i].Text, Font, textRect, ColorScheme.ForeColor);
 
-            if (TabPages[i].BackColor != Color.Transparent)
-                TabPages[i].BackColor = Color.Transparent;
+            if (TabPages[i].BackColor != ColorScheme.BackColor)
+                TabPages[i].BackColor = ColorScheme.BackColor;
         }
 
         graphics.SetDefaultQuality();
+    }
+
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            var parms = base.CreateParams;
+            parms.Style &= ~0x02000000;  // Turn off WS_CLIPCHILDREN
+            return parms;
+        }
     }
 }

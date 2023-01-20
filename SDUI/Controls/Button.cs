@@ -25,7 +25,7 @@ public class Button : System.Windows.Forms.Button
         set
         {
             base.Text = value;
-            textSize = CreateGraphics().MeasureString(value, Font);
+            textSize = TextRenderer.MeasureText(value, Font);
             if (AutoSize)
                 Size = GetPreferredSize();
             Invalidate();
@@ -52,11 +52,10 @@ public class Button : System.Windows.Forms.Button
         get => _radius;
         set
         {
-            /*if (_radius == value)
+            if (_radius == value)
                 return;
 
-            _radius = value;*/
-            _radius = 6;
+            _radius = value;
             Invalidate();
         }
     }
@@ -86,6 +85,7 @@ public class Button : System.Windows.Forms.Button
         hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
 
         animationManager.OnAnimationProgress += sender => Invalidate();
+        UpdateStyles();
     }
 
     protected override void OnMouseDown(MouseEventArgs e)

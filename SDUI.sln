@@ -3,9 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDUI", "SDUI\SDUI.csproj", "{38B06E05-D80D-4E99-9F62-8B3AF0B7AC53}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI", "SDUI\SDUI.csproj", "{38B06E05-D80D-4E99-9F62-8B3AF0B7AC53}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDUI.Test", "SDUI.Test\SDUI.Test.csproj", "{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Test", "SDUI.Test\SDUI.Test.csproj", "{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{A440C19E-A7E1-40AE-9D2E-6B44AC55312A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDUI.Examples.Mac", "SDUI.Examples.LeftPanel\SDUI.Examples.Mac.csproj", "{789C8834-22D0-4AEF-8643-C051704949D6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,9 +25,16 @@ Global
 		{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}.Release|Any CPU.Build.0 = Release|Any CPU
+		{789C8834-22D0-4AEF-8643-C051704949D6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{789C8834-22D0-4AEF-8643-C051704949D6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{789C8834-22D0-4AEF-8643-C051704949D6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{789C8834-22D0-4AEF-8643-C051704949D6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{789C8834-22D0-4AEF-8643-C051704949D6} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9C264AFA-7C24-4F28-B801-E99CDC68D995}

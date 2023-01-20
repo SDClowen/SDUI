@@ -3,22 +3,26 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Design;
+using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace SDUI.Controls;
 
 public class MultiPageControlItem : Panel
 {
-    [
-    Localizable(true),
-        Browsable(true),
-        EditorBrowsable(EditorBrowsableState.Always)
-        ]
-        public override string Text
+    public Rectangle Rectangle { get; set; }
+    public Rectangle RectangleClose { get; set; }
+    public Rectangle RectangleIcon { get; set; }
+
+    [Localizable(true), Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
+    public override string Text
     {
         get
         {
@@ -40,7 +44,7 @@ public class MultiPageControlItem : Panel
         BackColor = Color.Transparent;
     }
 
-    public MultiPageControlItem(string text) 
+    public MultiPageControlItem(string text)
         : this()
     {
         Text = text;
@@ -48,34 +52,67 @@ public class MultiPageControlItem : Panel
 }
 
 [Designer(typeof(MultiPageControlDesigner))]
-public class MultiPageControl : Panel
+public class MultiPageControl : UserControl
 {
+    private EventHandler<int> _onSelectedIndexChanged;
+
+    public event EventHandler<int> SelectedIndexChanged
+    {
+        add => _onSelectedIndexChanged += value;
+        remove => _onSelectedIndexChanged -= value;
+    }
+
     public MultiPageControl()
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
                  ControlStyles.OptimizedDoubleBuffer |
                  ControlStyles.ResizeRedraw |
+                 ControlStyles.AllPaintingInWmPaint |
                  ControlStyles.UserPaint, true);
 
         Padding = new Padding(0, 30, 0, 0);
+        ReorganizePages();
     }
 
     private MultiPageControlCollection _collection = new();
     [Editor(typeof(MultiPageControlCollectionEditor), typeof(UITypeEditor))]
     [MergableProperty(false)]
-    public MultiPageControlCollection Collection
+    public new MultiPageControlCollection Controls
     {
         get => _collection;
         set => _collection = value;
     }
 
-    private int _selectedIndex;
+    private int _selectedIndex = -1;
     public int SelectedIndex
     {
         get => _selectedIndex;
         set
         {
+            var sys = Stopwatch.StartNew();
+
+            if (_selectedIndex == value)
+                return;
+
+            if (Controls.Count > 0)
+            {
+                if (value < 0)
+                    value = Controls.Count - 1;
+
+                if (value > Controls.Count - 1)
+                    value = 0;
+            }
+            else
+                value = -1;
+
+            var previousSelectedIndex = _selectedIndex;
             _selectedIndex = value;
+            _onSelectedIndexChanged?.Invoke(this, previousSelectedIndex);
+
+            for (int i = 0; i < Controls.Count; i++)
+                Controls[i].Visible = i == _selectedIndex;
+
+            Debug.WriteLine($"Index: {_selectedIndex} Finished: {sys.ElapsedMilliseconds} ms {Controls.Count} & {Controls.Count}");
             Invalidate();
         }
     }
@@ -91,15 +128,74 @@ public class MultiPageControl : Panel
         }
     }
 
+    private Point _mouseLocation;
+    private GraphicsPath _newButtonPath;
+    private int _mouseState;
+    private int _lastTabX;
+
+    public bool _renderNewPageButton = true;
+    public bool RenderNewPageButton
+    {
+        get => _renderNewPageButton;
+        set
+        {
+            _renderNewPageButton = value;
+            Invalidate();
+        }
+    }
+
+    public bool _renderPageIcon = true;
+    public bool RenderPageIcon
+    {
+        get => _renderPageIcon;
+        set
+        {
+            _renderPageIcon = value;
+            Invalidate();
+        }
+    }
+
+    public bool _renderPageClose = true;
+    public bool RenderPageClose
+    {
+        get => _renderPageClose;
+        set
+        {
+            _renderPageClose = value;
+            Invalidate();
+        }
+    }
+
+    private void ReorganizePages()
+    {
+        _lastTabX = 6;// this.Radius / 2;
+
+        for(int i = 0; i < Controls.Count; i++)
+        {
+            var control = Controls[i];
+
+            var stringSize = TextRenderer.MeasureText(control.Text, Font);
+            var width = stringSize.Width + 80;
+            var rectangle = new Rectangle(_lastTabX, 6, width, _headerControlSize.Height - 6);
+            control.Rectangle = rectangle;
+            control.RectangleClose = new Rectangle(rectangle.X + rectangle.Width - 20, rectangle.Y + 6, 12, 12);
+            control.RectangleIcon = new Rectangle(rectangle.X + 6, rectangle.Y + 5, 16, 16);
+            _lastTabX += width;
+        }
+
+        _newButtonPath = new RectangleF(_lastTabX + 4, 9, 24, 16).Radius(6, 12, 12, 6);
+    }
+
     public MultiPageControlItem Add()
     {
-        return Add("New Tab " + (Collection.Count + 1));
+        return Add("New Tab " + (Controls.Count + 1));
     }
 
     public MultiPageControlItem Add(string text)
     {
         var newPage = new MultiPageControlItem { Parent = this, Text = text };
-        Collection.Add(newPage);
+        Controls.Add(newPage);
+        ReorganizePages();
 
         SuspendLayout();
         Invalidate();
@@ -115,7 +211,7 @@ public class MultiPageControl : Panel
 
     public void Remove(MultiPageControlItem item)
     {
-        Collection.Remove(item);
+        Controls.Remove(item);
 
         SuspendLayout();
         Invalidate();
@@ -127,7 +223,8 @@ public class MultiPageControl : Panel
         if (index < 0 || index >= _collection.Count)
             return;
 
-        Collection.RemoveAt(index);
+        Controls.RemoveAt(index);
+        ReorganizePages();
 
         SuspendLayout();
         Invalidate();
@@ -145,43 +242,131 @@ public class MultiPageControl : Panel
 
         graphics.SetHighQuality();
 
-        e.Graphics.DrawLine(borderPen, 2, _headerControlSize.Height, Width - 3, _headerControlSize.Height);
+        //graphics.DrawLine(borderPen, 2, _headerControlSize.Height, Width - 3, _headerControlSize.Height);
 
-        var x = this.Radius / 2;
         var i = 0;
-        foreach (MultiPageControlItem control in Collection)
+        foreach (MultiPageControlItem control in Controls)
         {
-            var stringSize = TextRenderer.MeasureText(control.Text, Font);
-            var width = stringSize.Width + 80;
-            var rectangle = new Rectangle(x, 6, width, _headerControlSize.Height - 6);
+            if (SelectedIndex > Controls.Count - 1)
+                SelectedIndex = Controls.Count - 1;
+            else if(SelectedIndex < 0 && Controls.Count > 0)
+                SelectedIndex = 0;
+
+            var rectangle = control.Rectangle;
 
             if (i == SelectedIndex)
-                e.Graphics.FillPath(borderPen.Brush, rectangle.ToRectangleF().Radius(6, 6, 0, 0));
+                graphics.FillPath(borderPen.Brush, rectangle.ToRectangleF().Radius(6, 6));
 
             // is mouse in close button
-            if (true)
+            if (_renderPageClose)
             {
-                const int closeWH = 12;
                 using var closeBrush = borderPen.Color.Alpha(50).Brush();
-                e.Graphics.DrawArc(borderPen, new Rectangle(rectangle.X + rectangle.Width - 20, rectangle.Y + 6, closeWH, closeWH), 0, 360);
-                e.Graphics.FillPie(closeBrush, new Rectangle(rectangle.X + rectangle.Width - 18, rectangle.Y + 8, closeWH - 4, closeWH - 4), 0, 360);
+
+                var isMouseHoverOnCloseBrn = control.RectangleClose.Contains(_mouseLocation);
+                if (isMouseHoverOnCloseBrn)
+                    closeBrush.Color = Color.DarkGray;
+                
+                using var closePen = new Pen(closeBrush.Color);
+
+                graphics.DrawArc(closePen, control.RectangleClose, 0, 360);
+
+                var inlineCloseRect = control.RectangleClose;
+                inlineCloseRect.Offset(0, 0);
+                inlineCloseRect.Inflate(-2, -2);
+
+                graphics.FillPie(closeBrush, inlineCloseRect, 0, 360);
             }
 
-            if (true)
-                e.Graphics.DrawIcon(SystemIcons.Hand, new Rectangle(rectangle.X + 6, rectangle.Y + 5, 16, 16));
+            if (_renderPageIcon)
+                graphics.DrawIcon(SystemIcons.Hand, control.RectangleIcon);
 
-            x += width;
             i++;
             TextRenderer.DrawText(graphics, control.Text, Font, rectangle, ColorScheme.ForeColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
         }
 
         // new tab button
-        if (true)
+        if (_renderNewPageButton)
         {
-            e.Graphics.FillPath(borderPen.Brush, new RectangleF(x + 4, 9, 24, 16).Radius(6, 12, 12, 6));
+            var bounds = _newButtonPath.GetBounds().Contains(_mouseLocation);
+            using SolidBrush newPageButtonBrush = borderPen.Brush as SolidBrush;
+
+            switch (_mouseState)
+            {
+                case 1:
+                    if (bounds)
+                        newPageButtonBrush.Color = ColorScheme.BackColor2.Alpha(30);
+                    break;
+                case 2:
+                    if (bounds)
+                        newPageButtonBrush.Color = ColorScheme.ShadowColor;
+                    break;
+            }
+
+            graphics.FillPath(newPageButtonBrush, _newButtonPath);
         }
 
         graphics.SetDefaultQuality();
+        graphics.DrawString("Index:" + _selectedIndex + " State:" + _mouseState +  " Pos:" + _mouseLocation, Font, Brushes.Red, new PointF(Width - 200, Height - 32));
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        _mouseLocation = e.Location;
+        Invalidate();
+    }
+
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        base.OnMouseWheel(e);
+
+        SelectedIndex += e.Delta <= -120 ? -1 : 1;
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+        _mouseState = 2; 
+        Invalidate();
+    }
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        base.OnMouseEnter(e);
+        _mouseState = 1;
+        Invalidate();
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _mouseState = 0;
+        Invalidate();
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if(_mouseState == 2)
+        {
+            for (int i = 0; i < Controls.Count; i++)
+            {
+                var item = Controls[i];
+                if (item.RectangleClose.Contains(_mouseLocation))
+                    RemoveAt(i);
+                else if (item.Rectangle.Contains(_mouseLocation))
+                    SelectedIndex = i;
+            }
+
+            if (_newButtonPath == null)
+                return;
+
+            if (_newButtonPath.GetBounds().Contains(_mouseLocation))
+                Add();
+        }
+
+        _mouseState = 1;
     }
 }
 
@@ -205,7 +390,7 @@ public class MultiPageControlActions : DesignerActionList
     ControlDesigner _designer;
     MultiPageControl _control;
 
-    public MultiPageControlActions(ControlDesigner designer) 
+    public MultiPageControlActions(ControlDesigner designer)
         : base(designer.Component)
     {
         this._designer = designer;

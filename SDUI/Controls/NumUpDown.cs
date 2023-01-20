@@ -8,6 +8,8 @@ namespace SDUI.Controls
 {
     public class NumUpDown : Control
     {
+        private const int LONG_PRESS_TIMER_INTERVAL = 250;
+
         public event EventHandler ValueChanged;
 
         private decimal _value;
@@ -72,6 +74,21 @@ namespace SDUI.Controls
             }
         }
 
+        public NumUpDown()
+        {
+            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
+            BackColor = Color.Transparent;
+            _min = 0;
+            _max = 100;
+            Font = new Font("Segoe UI", 9.25f);
+            Size = new Size(80, 25);
+            MinimumSize = Size;
+            DoubleBuffered = true;
+
+            _longPressTimer.Tick += LongPressTimer_Tick;
+            _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
+        }
+
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
@@ -131,11 +148,15 @@ namespace SDUI.Controls
         {
             base.OnMouseUp(e);
             _longPressTimer.Stop();
+            _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
         }
 
         private void LongPressTimer_Tick(object sender, EventArgs e)
         {
             ClickButton();
+
+            if(_longPressTimer.Interval == LONG_PRESS_TIMER_INTERVAL)
+                _longPressTimer.Interval = 50;
         }
 
         protected override void OnKeyPress(KeyPressEventArgs e)
@@ -185,21 +206,6 @@ namespace SDUI.Controls
                 }
                 Invalidate();
             }
-        }
-
-        public NumUpDown()
-        {
-            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
-            BackColor = Color.Transparent;
-            _min = 0;
-            _max = 100;
-            Font = new Font("Segoe UI", 9.25f);
-            Size = new Size(80, 25);
-            MinimumSize = Size;
-            DoubleBuffered = true;
-
-            _longPressTimer.Tick += LongPressTimer_Tick;
-            _longPressTimer.Interval = 200;
         }
 
         protected override void OnPaint(PaintEventArgs e)
