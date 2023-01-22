@@ -5,7 +5,7 @@ namespace SDUI.Test
 {
     public partial class MultiPageControlTestPage : UserControl
     {
-        private Control[] _list = { new GeneralPage(), new ListViewPage(), new ConfigPage() };
+        private Type[] _types = { typeof(GeneralPage), typeof(ListViewPage), typeof(ConfigPage) };
         public MultiPageControlTestPage()
         {
             InitializeComponent();
@@ -16,8 +16,10 @@ namespace SDUI.Test
         {
             var item = multiPageControl.Add();
 
-            var control = _list[new Random().Next(0, _list.Length)];
+            var type = _types[new Random().Next(0, _types.Length)];
+            var control = Activator.CreateInstance(type) as Control;
             control.Dock = DockStyle.Fill;
+            control.BackColor = ColorScheme.BackColor;
             item.Controls.Add(control);
         }
     }
