@@ -62,6 +62,15 @@ public class ListView : System.Windows.Forms.ListView
 
         if (WindowsHelper.BuildInfo.BuildNumber >= 7200)
             SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
+
+        IntPtr hHeader = GetHeaderControl(this);
+        IntPtr hdc = GetDC(hHeader);
+
+        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        WindowsHelper.UseImmersiveDarkMode(hHeader, ColorScheme.BackColor.IsDark());
+        SetWindowTheme(hHeader, "ItemsView", null); // DarkMode
+        SetWindowTheme(this.Handle, "ItemsView", null); // DarkMode
+
     }
 
     protected override void OnNotifyMessage(Message m)
@@ -213,7 +222,7 @@ public class ListView : System.Windows.Forms.ListView
                         }*/
 
                         break;
-                        /*
+                        
                     case CDDS.CDDS_ITEMPREPAINT:
                         m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
 
@@ -232,11 +241,11 @@ public class ListView : System.Windows.Forms.ListView
                                 var bounds = new Rectangle(new Point(width, 0), new Size(column.Width + 5, 24));
 
                                 if(column.TextAlign == HorizontalAlignment.Left)
-                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis);
+                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis | TextFormatFlags.VerticalCenter);
                                 else if (column.TextAlign == HorizontalAlignment.Right)
-                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right);
+                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
                                 else
-                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter);
+                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
                                 var x = bounds.X - 2;
                                 graphics.DrawLine(new Pen(ColorScheme.BorderColor), x, 0, x, Height);
@@ -247,9 +256,24 @@ public class ListView : System.Windows.Forms.ListView
 
                         ReleaseDC(headerControl, hdc);
 
-                            break;*/
+                            break;
                 }
             }
+        }
+        else if(m.Msg == WM_THEMECHANGED)
+        {
+            IntPtr headerControl = GetHeaderControl(this);
+            IntPtr hdc = GetDC(headerControl);
+
+            AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
+            AllowDarkModeForWindow(headerControl, ColorScheme.BackColor.IsDark());
+
+            BackColor = ColorScheme.BackColor;
+            ForeColor = ColorScheme.ForeColor;
+
+            SendMessage(headerControl, WM_THEMECHANGED, m.WParam, m.LParam);
+
+            RedrawWindow(m.HWnd, IntPtr.Zero, IntPtr.Zero, 0x0400 | 0x0001);
         }
         else if (m.Msg != WM_KILLFOCUS &&
             (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))

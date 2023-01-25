@@ -90,6 +90,7 @@ public class NativeMethods
     public const int WM_KILLFOCUS = 0x8;
     public const int WM_VSCROLL = 0x115;
     public const int WM_HSCROLL = 0x114;
+    public const int WM_THEMECHANGED = 0x031A;
 
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
@@ -107,7 +108,13 @@ public class NativeMethods
     public static extern bool ReleaseCapture();
 
     [DllImport(user32, SetLastError = true)]
-    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam); 
+
+    [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam); 
+    
+    [DllImport("user32.dll")]
+    public static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, int flags);
 
     [DllImport(dwmapi)]
     public static extern int DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS pMarInset);
