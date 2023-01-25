@@ -20,6 +20,7 @@ namespace SDUI.Test
             var control = Activator.CreateInstance(type) as Control;
             control.Dock = DockStyle.Fill;
             control.BackColor = ColorScheme.BackColor;
+            item.Text = control.Text;
             item.Controls.Add(control);
         }
     }

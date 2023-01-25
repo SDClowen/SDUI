@@ -226,9 +226,9 @@ public partial class MainWindow
             this.editToolStripMenuItem,
             this.toolsToolStripMenuItem,
             this.helpToolStripMenuItem});
-            this.menuStrip1.Location = new System.Drawing.Point(0, 695);
+            this.menuStrip1.Location = new System.Drawing.Point(0, 633);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(1339, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(1177, 24);
             this.menuStrip1.TabIndex = 1;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -484,16 +484,15 @@ public partial class MainWindow
             this.windowPageControl.Location = new System.Drawing.Point(0, 32);
             this.windowPageControl.Name = "windowPageControl";
             this.windowPageControl.SelectedIndex = -1;
-            this.windowPageControl.Size = new System.Drawing.Size(1339, 663);
+            this.windowPageControl.Size = new System.Drawing.Size(1177, 601);
             this.windowPageControl.TabIndex = 2;
-            this.windowPageControl.Text = "windowPageControl1";
             // 
             // MainWindow
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(1339, 719);
+            this.ClientSize = new System.Drawing.Size(1177, 657);
             this.ControlBox = false;
             this.Controls.Add(this.windowPageControl);
             this.Controls.Add(this.menuStrip1);
@@ -504,6 +503,7 @@ public partial class MainWindow
             this.Padding = new System.Windows.Forms.Padding(0, 32, 0, 0);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "MainWindow";
+            this.TitleFont = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.WindowPageControl = this.windowPageControl;
             this.Load += new System.EventHandler(this.MainWindow_Load);
             this.contextMenuStrip1.ResumeLayout(false);

@@ -105,8 +105,8 @@ public class MultiPageControl : UserControl
         {
             var sys = Stopwatch.StartNew();
 
-            if (_selectedIndex == value)
-                return;
+            //if (_selectedIndex == value)
+              //  return;
 
             if (Controls.Count > 0)
             {
@@ -207,12 +207,19 @@ public class MultiPageControl : UserControl
 
     public MultiPageControlItem Add(string text)
     {
+        SuspendLayout();
         var newPage = new MultiPageControlItem { Parent = this, Text = text, Visible = false, Dock = DockStyle.Fill };
         Controls.Add(newPage);
+
         ReorganizePages();
 
-        SuspendLayout();
-        Invalidate();
+        if (Controls.Count == 1)
+            SelectedIndex = 0;
+        else if (Controls.Count < 1)
+            SelectedIndex = -1;
+        else
+            Invalidate();
+
         ResumeLayout();
 
         return newPage;
@@ -223,25 +230,27 @@ public class MultiPageControl : UserControl
         RemoveAt(SelectedIndex);
     }
 
-    public void Remove(MultiPageControlItem item)
-    {
-        Controls.Remove(item);
-
-        SuspendLayout();
-        Invalidate();
-        ResumeLayout();
-    }
-
     public void RemoveAt(int index)
     {
         if (index < 0 || index >= _collection.Count)
             return;
 
+        SuspendLayout();
+
+        Controls[index].Controls.Clear();
+        Controls[index].Visible = false;
         Controls.RemoveAt(index);
         ReorganizePages();
 
-        SuspendLayout();
-        Invalidate();
+        if (Controls.Count == 1)
+            SelectedIndex = 0;
+        else if (Controls.Count < 1)
+            SelectedIndex = -1;
+        else if (SelectedIndex == index)
+            SelectedIndex = index; // run set method again
+        else
+            Invalidate();
+
         ResumeLayout();
     }
 
@@ -261,11 +270,6 @@ public class MultiPageControl : UserControl
         var i = 0;
         foreach (MultiPageControlItem control in Controls)
         {
-            if (SelectedIndex > Controls.Count - 1)
-                SelectedIndex = Controls.Count - 1;
-            else if(SelectedIndex < 0 && Controls.Count > 0)
-                SelectedIndex = 0;
-
             var rectangle = control.Rectangle;
 
             if (i == SelectedIndex)
