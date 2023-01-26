@@ -68,7 +68,7 @@ namespace SDUI.Test
             var parent = form as UIWindow;
 
             parent.Hatch = @enum;
-            Invalidate();
+            parent.Invalidate();
         }
 
         private void buttonSelectColor_Click(object sender, EventArgs e)
@@ -82,6 +82,23 @@ namespace SDUI.Test
             var colorpicker = new ColorDialog();
             colorpicker.ShowDialog();
             parent.TitleColor = colorpicker.Color;
+            parent.Invalidate();
+        }
+
+        private void buttonSelectFont_Click(object sender, EventArgs e)
+        {
+            var form = FindForm();
+            if (form == null)
+                return;
+
+            var parent = form as UIWindow;
+
+            var fontDialog = new FontDialog();
+            if (fontDialog.ShowDialog() == DialogResult.OK)    
+            {
+                parent.TitleFont = fontDialog.Font;
+                parent.Invalidate();
+            }
         }
     }
 }

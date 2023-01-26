@@ -35,16 +35,19 @@
             this.numIconWidth = new SDUI.Controls.NumUpDown();
             this.label5 = new SDUI.Controls.Label();
             this.label6 = new SDUI.Controls.Label();
+            this.buttonSelectFont = new SDUI.Controls.Button();
             this.SuspendLayout();
             // 
             // buttonSelectColor
             // 
-            this.buttonSelectColor.Color = System.Drawing.Color.Transparent;
-            this.buttonSelectColor.Location = new System.Drawing.Point(453, 125);
+            this.buttonSelectColor.Color = System.Drawing.Color.Navy;
+            this.buttonSelectColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.buttonSelectColor.ForeColor = System.Drawing.Color.White;
+            this.buttonSelectColor.Location = new System.Drawing.Point(252, 124);
             this.buttonSelectColor.Name = "buttonSelectColor";
             this.buttonSelectColor.Radius = 6;
             this.buttonSelectColor.ShadowDepth = 4F;
-            this.buttonSelectColor.Size = new System.Drawing.Size(95, 23);
+            this.buttonSelectColor.Size = new System.Drawing.Size(103, 27);
             this.buttonSelectColor.TabIndex = 46;
             this.buttonSelectColor.Text = "Select Color";
             this.buttonSelectColor.UseVisualStyleBackColor = true;
@@ -162,10 +165,26 @@
             this.label6.TabIndex = 44;
             this.label6.Text = "Title Height:";
             // 
+            // buttonSelectFont
+            // 
+            this.buttonSelectFont.Color = System.Drawing.Color.RosyBrown;
+            this.buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            this.buttonSelectFont.ForeColor = System.Drawing.Color.White;
+            this.buttonSelectFont.Location = new System.Drawing.Point(152, 124);
+            this.buttonSelectFont.Name = "buttonSelectFont";
+            this.buttonSelectFont.Radius = 8;
+            this.buttonSelectFont.ShadowDepth = 0F;
+            this.buttonSelectFont.Size = new System.Drawing.Size(94, 27);
+            this.buttonSelectFont.TabIndex = 47;
+            this.buttonSelectFont.Text = "Select Font";
+            this.buttonSelectFont.UseVisualStyleBackColor = true;
+            this.buttonSelectFont.Click += new System.EventHandler(this.buttonSelectFont_Click);
+            // 
             // ConfigPage
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.buttonSelectFont);
             this.Controls.Add(this.buttonSelectColor);
             this.Controls.Add(this.comboBoxHatchType);
             this.Controls.Add(this.checkBoxDrawFullHatch);
@@ -189,5 +208,6 @@
         private Controls.NumUpDown numIconWidth;
         private Controls.Label label5;
         private Controls.Label label6;
+        private Controls.Button buttonSelectFont;
     }
 }
