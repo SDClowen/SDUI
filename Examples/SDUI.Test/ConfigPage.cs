@@ -94,11 +94,27 @@ namespace SDUI.Test
             var parent = form as UIWindow;
 
             var fontDialog = new FontDialog();
+            fontDialog.Font = parent.TitleFont;
+            fontDialog.ShowColor = true;
+            fontDialog.ShowApply = true;
+            fontDialog.Apply += FontDialog_Apply;
             if (fontDialog.ShowDialog() == DialogResult.OK)    
             {
                 parent.TitleFont = fontDialog.Font;
                 parent.Invalidate();
             }
+        }
+
+        private void FontDialog_Apply(object? sender, EventArgs e)
+        {
+            var form = FindForm();
+            if (form == null)
+                return;
+
+            var dialog = sender as FontDialog;
+            var parent = form as UIWindow;
+            parent.TitleFont = dialog.Font;
+            parent.Invalidate();
         }
     }
 }
