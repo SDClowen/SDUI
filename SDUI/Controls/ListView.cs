@@ -1,4 +1,5 @@
-﻿using SDUI.Helpers;
+﻿using SDUI.Controls.Subclasses;
+using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -13,6 +14,11 @@ public class ListView : System.Windows.Forms.ListView
     /// The column sorter
     /// </summary>
     private ListViewColumnSorter LvwColumnSorter { get; set; }
+
+    /// <summary>
+    /// The header sub class
+    /// </summary>
+    private ListViewHeaderSubclassedWindow _headerSubClass;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AeroListView"/> class.
@@ -32,6 +38,9 @@ public class ListView : System.Windows.Forms.ListView
         View = View.Details;
         FullRowSelect = true;
         UpdateStyles();
+
+        //_headerSubClass = new();
+        //_headerSubClass.AssignHandle(this.Handle);
     }
 
     protected override void OnSelectedIndexChanged(EventArgs e)
@@ -60,17 +69,8 @@ public class ListView : System.Windows.Forms.ListView
     {
         base.OnHandleCreated(e);
 
-        if (WindowsHelper.BuildInfo.BuildNumber >= 7200)
-            SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
-
-        IntPtr hHeader = GetHeaderControl(this);
-        IntPtr hdc = GetDC(hHeader);
-
-        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
-        WindowsHelper.UseImmersiveDarkMode(hHeader, ColorScheme.BackColor.IsDark());
-        SetWindowTheme(hHeader, "ItemsView", null); // DarkMode
-        SetWindowTheme(this.Handle, "ItemsView", null); // DarkMode
-
+        SetWindowTheme(Handle, "explorer", null);
+        SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
     }
 
     protected override void OnNotifyMessage(Message m)
@@ -89,6 +89,9 @@ public class ListView : System.Windows.Forms.ListView
     {
         base.OnColumnClick(e);
 
+        for (int i = 0; i < Columns.Count; i++)
+            SetSortArrow(i, SortOrder.None);
+
         // Determine if clicked column is already the column that is being sorted.
         if (e.Column == LvwColumnSorter.SortColumn)
         {
@@ -103,6 +106,8 @@ public class ListView : System.Windows.Forms.ListView
             LvwColumnSorter.SortColumn = e.Column;
             LvwColumnSorter.Order = SortOrder.Ascending;
         }
+
+        SetSortArrow(e.Column, LvwColumnSorter.Order);
 
         // Perform the sort with these new sort options.
         if (!VirtualMode)
@@ -216,69 +221,88 @@ public class ListView : System.Windows.Forms.ListView
 
                             m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULT); return;
                         }
-                        /*else
+                        else
                         {
                             m.Result = new IntPtr((int)CDRF.CDRF_NOTIFYITEMDRAW);
-                        }*/
-
-                        break;
-                        
-                    case CDDS.CDDS_ITEMPREPAINT:
-                        m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
-
-                        ListView lv = this;
-                        IntPtr headerControl = GetHeaderControl(lv);
-                        IntPtr hdc = GetDC(headerControl);
-
-                        using (var graphics = Graphics.FromHdc(hdc))
-                        {
-                            graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), graphics.ClipBounds);
-
-                            var width = 0;
-                            foreach (ColumnHeader column in Columns)
-                            {
-                                var size = TextRenderer.MeasureText(column.Text, Font);
-                                var bounds = new Rectangle(new Point(width, 0), new Size(column.Width + 5, 24));
-
-                                if(column.TextAlign == HorizontalAlignment.Left)
-                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis | TextFormatFlags.VerticalCenter);
-                                else if (column.TextAlign == HorizontalAlignment.Right)
-                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
-                                else
-                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-
-                                var x = bounds.X - 2;
-                                graphics.DrawLine(new Pen(ColorScheme.BorderColor), x, 0, x, Height);
-
-                                width += column.Width;
-                            }
                         }
 
-                        ReleaseDC(headerControl, hdc);
+                        break;
 
-                            break;
+                        /*case CDDS.CDDS_ITEMPREPAINT:
+                            m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
+
+                            ListView lv = this;
+                            IntPtr hHeader = GetHeaderControl(lv);
+                            IntPtr hdc = GetDC(hHeader);
+
+                            using (var graphics = Graphics.FromHdc(hdc))
+                            {
+                                graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), graphics.ClipBounds);
+
+                                var width = 0;
+                                foreach (ColumnHeader column in Columns)
+                                {
+                                    var size = TextRenderer.MeasureText(column.Text, Font);
+                                    var bounds = new Rectangle(new Point(width, 0), new Size(column.Width + 5, 24));
+
+                                    if(column.TextAlign == HorizontalAlignment.Left)
+                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis | TextFormatFlags.VerticalCenter);
+                                    else if (column.TextAlign == HorizontalAlignment.Right)
+                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+                                    else
+                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+
+                                    var x = bounds.X - 2;
+                                    graphics.DrawLine(new Pen(ColorScheme.BorderColor), x, 0, x, Height);
+
+                                    width += column.Width;
+                                }
+                            }
+
+                            //ReleaseDC(hHeader, hdc);
+
+                                break;*/
                 }
             }
         }
-        else if(m.Msg == WM_THEMECHANGED)
+        else if (m.Msg == WM_THEMECHANGED)
         {
-            IntPtr headerControl = GetHeaderControl(this);
-            IntPtr hdc = GetDC(headerControl);
-
-            AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
-            AllowDarkModeForWindow(headerControl, ColorScheme.BackColor.IsDark());
+           //AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
 
             BackColor = ColorScheme.BackColor;
             ForeColor = ColorScheme.ForeColor;
-
-            SendMessage(headerControl, WM_THEMECHANGED, m.WParam, m.LParam);
-
-            RedrawWindow(m.HWnd, IntPtr.Zero, IntPtr.Zero, 0x0400 | 0x0001);
         }
         else if (m.Msg != WM_KILLFOCUS &&
             (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
             Invalidate();
 
         base.WndProc(ref m);
+    }
+
+    public void SetSortArrow(int column, SortOrder sortOrder)
+    {
+        var pHeader = SendMessage(this.Handle, LVM_GETHEADER, 0, 0);
+
+        var pColumn = new IntPtr(column);
+        var headerItem = new HDITEM { mask = HDITEM.Mask.Format };
+
+        SendMessage(pHeader, HDM_GETITEM, pColumn, ref headerItem);
+
+        switch (sortOrder)
+        {
+            case SortOrder.Ascending:
+                headerItem.fmt &= ~HDITEM.Format.SortDown;
+                headerItem.fmt |= HDITEM.Format.SortUp;
+                break;
+            case SortOrder.Descending:
+                headerItem.fmt &= ~HDITEM.Format.SortUp;
+                headerItem.fmt |= HDITEM.Format.SortDown;
+                break;
+            case SortOrder.None:
+                headerItem.fmt &= ~(HDITEM.Format.SortDown | HDITEM.Format.SortUp);
+                break;
+        }
+
+        SendMessage(pHeader, HDM_SETITEM, pColumn, ref headerItem);
     }
 }

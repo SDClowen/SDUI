@@ -113,13 +113,7 @@ public class UIWindowBase : Form
             {
                 SendMessage(control.Handle, 0x0127, (1 << 16) | (1 & 0xffff), 0);
 
-                var headerControlHandle = GetHeaderControl(control as ListView);
-
-                AllowDarkModeForWindow(headerControlHandle, true);
                 AllowDarkModeForWindow(control.Handle, true);
-
-                SetWindowTheme(headerControlHandle, "ItemsView", null);
-                SetWindowTheme(control.Handle, "ItemsView", null);
             }
         }
 
@@ -127,8 +121,6 @@ public class UIWindowBase : Form
         {
             control.BackColor = ColorScheme.BackColor;
             control.ForeColor = ColorScheme.ForeColor;
-
-            
         }
 
         WindowsHelper.UseImmersiveDarkMode(control.Handle, isDark);

@@ -33,6 +33,7 @@ public class NativeMethods
     public const int LVCDI_GROUP = 0x1;
     public const int LVCDI_ITEMSLIST = 0x2;
     public const int LVM_FIRST = 0x1000;
+    public const int LVM_GETHEADER = LVM_FIRST + 31;
     public const int LVM_SETITEMSTATE = LVM_FIRST + 43;
     public const int LVM_GETGROUPRECT = LVM_FIRST + 98;
     public const int LVM_ENABLEGROUPVIEW = LVM_FIRST + 157;
@@ -90,7 +91,10 @@ public class NativeMethods
     public const int WM_KILLFOCUS = 0x8;
     public const int WM_VSCROLL = 0x115;
     public const int WM_HSCROLL = 0x114;
-    public const int WM_THEMECHANGED = 0x031A;
+    public const int WM_THEMECHANGED = 0x031A; 
+    public const int HDM_FIRST = 0x1200;
+    public const int HDM_GETITEM = HDM_FIRST + 11;
+    public const int HDM_SETITEM = HDM_FIRST + 12;
 
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
     public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
@@ -112,6 +116,9 @@ public class NativeMethods
 
     [DllImport(user32, SetLastError = true)]
     public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam); 
+
+    [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref HDITEM lParam); 
     
     [DllImport("user32.dll")]
     public static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, int flags);
@@ -188,6 +195,38 @@ public class NativeMethods
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool EnumChildWindows(IntPtr window, EnumWindowProc callback, IntPtr i);
 
+    public delegate IntPtr SUBCLASSPROC(
+            IntPtr hWnd,
+            int msg,
+            IntPtr wParam,
+            IntPtr lParam,
+            UIntPtr uIdSubclass,
+            UIntPtr dwRefData
+        );
+
+    [DllImport("comctl32.dll", ExactSpelling = true)]
+    public static extern bool SetWindowSubclass(
+        IntPtr hWnd,
+        IntPtr pfnSubclass,
+        UIntPtr uIdSubclass,
+        UIntPtr dwRefData
+    );
+
+    [DllImport("comctl32.dll", ExactSpelling = true)]
+    public static extern bool RemoveWindowSubclass(
+        IntPtr hWnd,
+        IntPtr pfnSubclass,
+        UIntPtr uIdSubclass
+    );
+
+    [DllImport("comctl32.dll", ExactSpelling = true)]
+    public static extern IntPtr DefSubclassProc(
+        IntPtr hWnd,
+        int msg,
+        IntPtr wParam,
+        IntPtr lParam
+    );
+
     private static bool EnumWindow(IntPtr handle, IntPtr pointer)
     {
         GCHandle gch = GCHandle.FromIntPtr(pointer);
@@ -258,12 +297,6 @@ public class NativeMethods
         public uint AccentFlags;
         public uint GradientColor;
         public uint AnimationId;
-    }
-
-    public static IntPtr GetHeaderControl(ListView list)
-    {
-        const int LVM_GETHEADER = 0x1000 + 31;
-        return SendMessage(list.Handle, LVM_GETHEADER, 0, 0);
     }
 
     public enum NTSTATUS : uint
@@ -449,6 +482,40 @@ public class NativeMethods
         public IntPtr pszSubsetTitle;
         public uint cchSubsetTitle;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HDITEM
+    {
+        public Mask mask;
+        public int cxy;
+        [MarshalAs(UnmanagedType.LPTStr)] public string pszText;
+        public IntPtr hbm;
+        public int cchTextMax;
+        public Format fmt;
+        public IntPtr lParam;
+        // _WIN32_IE >= 0x0300 
+        public int iImage;
+        public int iOrder;
+        // _WIN32_IE >= 0x0500
+        public uint type;
+        public IntPtr pvFilter;
+        // _WIN32_WINNT >= 0x0600
+        public uint state;
+
+        [Flags]
+        public enum Mask
+        {
+            Format = 0x4,       // HDI_FORMAT
+        };
+
+        [Flags]
+        public enum Format
+        {
+            SortDown = 0x200,   // HDF_SORTDOWN
+            SortUp = 0x400,     // HDF_SORTUP
+        };
+    };
+
 
     [Flags]
     public enum CDRF
