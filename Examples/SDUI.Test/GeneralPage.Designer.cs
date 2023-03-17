@@ -28,1115 +28,1059 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(GeneralPage));
             System.Windows.Forms.ListViewItem listViewItem1 = new System.Windows.Forms.ListViewItem("123412341234");
             System.Windows.Forms.ListViewItem listViewItem2 = new System.Windows.Forms.ListViewItem("123412341324");
-            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] {
-            "123412341324"}, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point));
-            this.rsButton1 = new SDUI.Controls.Button();
-            this.button6 = new SDUI.Controls.Button();
-            this.groupBox4 = new SDUI.Controls.GroupBox();
-            this.comboBox6 = new SDUI.Controls.ComboBox();
-            this.trackBar2 = new System.Windows.Forms.TrackBar();
-            this.comboBox5 = new SDUI.Controls.ComboBox();
-            this.trackBar1 = new System.Windows.Forms.TrackBar();
-            this.buttonOpenInputDialog = new SDUI.Controls.Button();
-            this.buttonRandomColor = new SDUI.Controls.Button();
-            this.label4 = new SDUI.Controls.Label();
-            this.button5 = new SDUI.Controls.Button();
-            this.groupBox3 = new SDUI.Controls.GroupBox();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-            this.radio2 = new SDUI.Controls.Radio();
-            this.radio1 = new SDUI.Controls.Radio();
-            this.checkBox6 = new SDUI.Controls.CheckBox();
-            this.checkBox2 = new SDUI.Controls.CheckBox();
-            this.checkBox1 = new SDUI.Controls.CheckBox();
-            this.panel6 = new SDUI.Controls.Panel();
-            this.panel5 = new SDUI.Controls.Panel();
-            this.panel8 = new SDUI.Controls.Panel();
-            this.toggleButton1 = new SDUI.Controls.ToggleButton();
-            this.shapeProgressBar2 = new SDUI.Controls.ShapeProgressBar();
-            this.shapeProgressBar1 = new SDUI.Controls.ShapeProgressBar();
-            this.chatBubble2 = new SDUI.Controls.ChatBubble();
-            this.chatBubble1 = new SDUI.Controls.ChatBubble();
-            this.numUpDown1 = new SDUI.Controls.NumUpDown();
-            this.checkBox4 = new SDUI.Controls.CheckBox();
-            this.checkBox3 = new SDUI.Controls.CheckBox();
-            this.label3 = new SDUI.Controls.Label();
-            this.progressBar5 = new SDUI.Controls.ProgressBar();
-            this.panel7 = new SDUI.Controls.Panel();
-            this.panel4 = new SDUI.Controls.Panel();
-            this.label2 = new SDUI.Controls.Label();
-            this.label1 = new SDUI.Controls.Label();
-            this.panel2 = new SDUI.Controls.Panel();
-            this.panel3 = new System.Windows.Forms.Panel();
-            this.separator5 = new SDUI.Controls.Separator();
-            this.comboBox3 = new SDUI.Controls.ComboBox();
-            this.separator3 = new SDUI.Controls.Separator();
-            this.comboBox2 = new SDUI.Controls.ComboBox();
-            this.groupBox2 = new SDUI.Controls.GroupBox();
-            this.listView3 = new SDUI.Controls.ListView();
-            this.columnHeader6 = new System.Windows.Forms.ColumnHeader();
-            this.comboBox4 = new SDUI.Controls.ComboBox();
-            this.groupBox1 = new SDUI.Controls.GroupBox();
-            this.separator4 = new SDUI.Controls.Separator();
-            this.panel1 = new SDUI.Controls.Panel();
-            this.listView2 = new SDUI.Controls.ListView();
-            this.columnHeader5 = new System.Windows.Forms.ColumnHeader();
-            this.comboBox1 = new SDUI.Controls.ComboBox();
-            this.textBox1 = new SDUI.Controls.TextBox();
-            this.button3 = new SDUI.Controls.Button();
-            this.buttonDark = new SDUI.Controls.Button();
-            this.buttonLight = new SDUI.Controls.Button();
-            this.progressBar9 = new SDUI.Controls.ProgressBar();
-            this.progressBar8 = new SDUI.Controls.ProgressBar();
-            this.progressBar4 = new SDUI.Controls.ProgressBar();
-            this.progressBar7 = new SDUI.Controls.ProgressBar();
-            this.progressBar3 = new SDUI.Controls.ProgressBar();
-            this.progressBar6 = new SDUI.Controls.ProgressBar();
-            this.progressBar2 = new SDUI.Controls.ProgressBar();
-            this.progressBar1 = new SDUI.Controls.ProgressBar();
-            this.separator2 = new SDUI.Controls.Separator();
-            this.separator1 = new SDUI.Controls.Separator();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            ((System.ComponentModel.ISupportInitialize)(this.trackBar2)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
-            this.groupBox3.SuspendLayout();
-            this.panel8.SuspendLayout();
-            this.panel2.SuspendLayout();
-            this.panel3.SuspendLayout();
-            this.groupBox2.SuspendLayout();
-            this.groupBox1.SuspendLayout();
-            this.panel1.SuspendLayout();
-            this.SuspendLayout();
+            System.Windows.Forms.ListViewItem listViewItem3 = new System.Windows.Forms.ListViewItem(new string[] { "123412341324" }, -1, System.Drawing.Color.White, System.Drawing.SystemColors.HotTrack, new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point));
+            rsButton1 = new Controls.Button();
+            button6 = new Controls.Button();
+            groupBox4 = new Controls.GroupBox();
+            comboBox6 = new Controls.ComboBox();
+            trackBar2 = new System.Windows.Forms.TrackBar();
+            comboBox5 = new Controls.ComboBox();
+            trackBar1 = new System.Windows.Forms.TrackBar();
+            buttonOpenInputDialog = new Controls.Button();
+            buttonRandomColor = new Controls.Button();
+            label4 = new Controls.Label();
+            button5 = new Controls.Button();
+            groupBox3 = new Controls.GroupBox();
+            richTextBox1 = new System.Windows.Forms.RichTextBox();
+            radio2 = new Controls.Radio();
+            radio1 = new Controls.Radio();
+            checkBox6 = new Controls.CheckBox();
+            checkBox2 = new Controls.CheckBox();
+            checkBox1 = new Controls.CheckBox();
+            panel6 = new Controls.Panel();
+            panel5 = new Controls.Panel();
+            panel8 = new Controls.Panel();
+            toggleButton1 = new Controls.ToggleButton();
+            shapeProgressBar2 = new Controls.ShapeProgressBar();
+            shapeProgressBar1 = new Controls.ShapeProgressBar();
+            chatBubble2 = new Controls.ChatBubble();
+            chatBubble1 = new Controls.ChatBubble();
+            numUpDown1 = new Controls.NumUpDown();
+            checkBox4 = new Controls.CheckBox();
+            checkBox3 = new Controls.CheckBox();
+            label3 = new Controls.Label();
+            progressBar5 = new Controls.ProgressBar();
+            panel7 = new Controls.Panel();
+            panel4 = new Controls.Panel();
+            label2 = new Controls.Label();
+            label1 = new Controls.Label();
+            panel2 = new Controls.Panel();
+            panel3 = new System.Windows.Forms.Panel();
+            separator5 = new Controls.Separator();
+            comboBox3 = new Controls.ComboBox();
+            separator3 = new Controls.Separator();
+            comboBox2 = new Controls.ComboBox();
+            groupBox2 = new Controls.GroupBox();
+            listView3 = new Controls.ListView();
+            columnHeader6 = new System.Windows.Forms.ColumnHeader();
+            comboBox4 = new Controls.ComboBox();
+            groupBox1 = new Controls.GroupBox();
+            separator4 = new Controls.Separator();
+            panel1 = new Controls.Panel();
+            listView2 = new Controls.ListView();
+            columnHeader5 = new System.Windows.Forms.ColumnHeader();
+            comboBox1 = new Controls.ComboBox();
+            textBox1 = new Controls.TextBox();
+            button3 = new Controls.Button();
+            buttonDark = new Controls.Button();
+            buttonLight = new Controls.Button();
+            progressBar9 = new Controls.ProgressBar();
+            progressBar8 = new Controls.ProgressBar();
+            progressBar4 = new Controls.ProgressBar();
+            progressBar7 = new Controls.ProgressBar();
+            progressBar3 = new Controls.ProgressBar();
+            progressBar6 = new Controls.ProgressBar();
+            progressBar2 = new Controls.ProgressBar();
+            progressBar1 = new Controls.ProgressBar();
+            separator2 = new Controls.Separator();
+            separator1 = new Controls.Separator();
+            toolTip1 = new System.Windows.Forms.ToolTip(components);
+            ((System.ComponentModel.ISupportInitialize)trackBar2).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)trackBar1).BeginInit();
+            groupBox3.SuspendLayout();
+            panel8.SuspendLayout();
+            panel2.SuspendLayout();
+            panel3.SuspendLayout();
+            groupBox2.SuspendLayout();
+            groupBox1.SuspendLayout();
+            panel1.SuspendLayout();
+            SuspendLayout();
             // 
             // rsButton1
             // 
-            this.rsButton1.Color = System.Drawing.Color.Transparent;
-            this.rsButton1.Location = new System.Drawing.Point(412, 370);
-            this.rsButton1.Name = "rsButton1";
-            this.rsButton1.Radius = 6;
-            this.rsButton1.ShadowDepth = 4F;
-            this.rsButton1.Size = new System.Drawing.Size(75, 23);
-            this.rsButton1.TabIndex = 74;
-            this.rsButton1.Text = "rsButton1";
-            this.rsButton1.UseVisualStyleBackColor = true;
+            rsButton1.Color = System.Drawing.Color.Transparent;
+            rsButton1.Location = new System.Drawing.Point(412, 370);
+            rsButton1.Name = "rsButton1";
+            rsButton1.Radius = 6;
+            rsButton1.ShadowDepth = 4F;
+            rsButton1.Size = new System.Drawing.Size(75, 23);
+            rsButton1.TabIndex = 74;
+            rsButton1.Text = "rsButton1";
+            rsButton1.UseVisualStyleBackColor = true;
             // 
             // button6
             // 
-            this.button6.Color = System.Drawing.Color.Transparent;
-            this.button6.Location = new System.Drawing.Point(815, 385);
-            this.button6.Name = "button6";
-            this.button6.Radius = 6;
-            this.button6.ShadowDepth = 4F;
-            this.button6.Size = new System.Drawing.Size(99, 23);
-            this.button6.TabIndex = 73;
-            this.button6.Text = "Async Button";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
+            button6.Color = System.Drawing.Color.Transparent;
+            button6.Location = new System.Drawing.Point(815, 385);
+            button6.Name = "button6";
+            button6.Radius = 6;
+            button6.ShadowDepth = 4F;
+            button6.Size = new System.Drawing.Size(99, 23);
+            button6.TabIndex = 73;
+            button6.Text = "Async Button";
+            button6.UseVisualStyleBackColor = true;
+            button6.Click += button6_Click;
             // 
             // groupBox4
             // 
-            this.groupBox4.BackColor = System.Drawing.Color.Transparent;
-            this.groupBox4.Location = new System.Drawing.Point(428, 430);
-            this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
-            this.groupBox4.Radius = 10;
-            this.groupBox4.ShadowDepth = 4;
-            this.groupBox4.Size = new System.Drawing.Size(230, 106);
-            this.groupBox4.TabIndex = 72;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "groupBox4";
+            groupBox4.BackColor = System.Drawing.Color.Transparent;
+            groupBox4.Location = new System.Drawing.Point(428, 430);
+            groupBox4.Name = "groupBox4";
+            groupBox4.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
+            groupBox4.Radius = 10;
+            groupBox4.ShadowDepth = 4;
+            groupBox4.Size = new System.Drawing.Size(230, 106);
+            groupBox4.TabIndex = 72;
+            groupBox4.TabStop = false;
+            groupBox4.Text = "groupBox4";
             // 
             // comboBox6
             // 
-            this.comboBox6.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboBox6.DropDownHeight = 100;
-            this.comboBox6.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox6.FormattingEnabled = true;
-            this.comboBox6.IntegralHeight = false;
-            this.comboBox6.ItemHeight = 17;
-            this.comboBox6.Location = new System.Drawing.Point(20, 542);
-            this.comboBox6.Name = "comboBox6";
-            this.comboBox6.Radius = 5;
-            this.comboBox6.ShadowDepth = 4F;
-            this.comboBox6.Size = new System.Drawing.Size(194, 23);
-            this.comboBox6.TabIndex = 51;
-            this.comboBox6.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
+            comboBox6.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            comboBox6.DropDownHeight = 100;
+            comboBox6.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBox6.FormattingEnabled = true;
+            comboBox6.IntegralHeight = false;
+            comboBox6.ItemHeight = 17;
+            comboBox6.Location = new System.Drawing.Point(20, 542);
+            comboBox6.Name = "comboBox6";
+            comboBox6.Radius = 5;
+            comboBox6.ShadowDepth = 4F;
+            comboBox6.Size = new System.Drawing.Size(194, 23);
+            comboBox6.TabIndex = 51;
+            comboBox6.SelectedIndexChanged += comboBox6_SelectedIndexChanged;
             // 
             // trackBar2
             // 
-            this.trackBar2.Location = new System.Drawing.Point(20, 491);
-            this.trackBar2.Maximum = 24;
-            this.trackBar2.Minimum = 4;
-            this.trackBar2.Name = "trackBar2";
-            this.trackBar2.Size = new System.Drawing.Size(233, 45);
-            this.trackBar2.TabIndex = 71;
-            this.trackBar2.Value = 4;
-            this.trackBar2.Scroll += new System.EventHandler(this.trackBar2_Scroll);
+            trackBar2.Location = new System.Drawing.Point(20, 491);
+            trackBar2.Maximum = 24;
+            trackBar2.Minimum = 4;
+            trackBar2.Name = "trackBar2";
+            trackBar2.Size = new System.Drawing.Size(233, 45);
+            trackBar2.TabIndex = 71;
+            trackBar2.Value = 4;
+            trackBar2.Scroll += trackBar2_Scroll;
             // 
             // comboBox5
             // 
-            this.comboBox5.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboBox5.DropDownHeight = 100;
-            this.comboBox5.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox5.FormattingEnabled = true;
-            this.comboBox5.IntegralHeight = false;
-            this.comboBox5.ItemHeight = 17;
-            this.comboBox5.Items.AddRange(new object[] {
-            "asdfasdfasdfasdf",
-            "asdfasdfasd",
-            "asdfasdfasdfas",
-            "asdfxcvxzcvzx",
-            "1236afsdf"});
-            this.comboBox5.Location = new System.Drawing.Point(165, 101);
-            this.comboBox5.Name = "comboBox5";
-            this.comboBox5.Radius = 5;
-            this.comboBox5.ShadowDepth = 4F;
-            this.comboBox5.Size = new System.Drawing.Size(146, 23);
-            this.comboBox5.TabIndex = 50;
+            comboBox5.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            comboBox5.DropDownHeight = 100;
+            comboBox5.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBox5.FormattingEnabled = true;
+            comboBox5.IntegralHeight = false;
+            comboBox5.ItemHeight = 17;
+            comboBox5.Items.AddRange(new object[] { "asdfasdfasdfasdf", "asdfasdfasd", "asdfasdfasdfas", "asdfxcvxzcvzx", "1236afsdf" });
+            comboBox5.Location = new System.Drawing.Point(165, 101);
+            comboBox5.Name = "comboBox5";
+            comboBox5.Radius = 5;
+            comboBox5.ShadowDepth = 4F;
+            comboBox5.Size = new System.Drawing.Size(146, 23);
+            comboBox5.TabIndex = 50;
             // 
             // trackBar1
             // 
-            this.trackBar1.Location = new System.Drawing.Point(16, 440);
-            this.trackBar1.Maximum = 200;
-            this.trackBar1.Name = "trackBar1";
-            this.trackBar1.Size = new System.Drawing.Size(233, 45);
-            this.trackBar1.TabIndex = 70;
-            this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+            trackBar1.Location = new System.Drawing.Point(16, 440);
+            trackBar1.Maximum = 200;
+            trackBar1.Name = "trackBar1";
+            trackBar1.Size = new System.Drawing.Size(233, 45);
+            trackBar1.TabIndex = 70;
+            trackBar1.Scroll += trackBar1_Scroll;
             // 
             // buttonOpenInputDialog
             // 
-            this.buttonOpenInputDialog.Color = System.Drawing.Color.Transparent;
-            this.buttonOpenInputDialog.Location = new System.Drawing.Point(16, 14);
-            this.buttonOpenInputDialog.Name = "buttonOpenInputDialog";
-            this.buttonOpenInputDialog.Radius = 6;
-            this.buttonOpenInputDialog.ShadowDepth = 2F;
-            this.buttonOpenInputDialog.Size = new System.Drawing.Size(104, 23);
-            this.buttonOpenInputDialog.TabIndex = 69;
-            this.buttonOpenInputDialog.Text = "Input Dialog";
-            this.buttonOpenInputDialog.UseVisualStyleBackColor = true;
-            this.buttonOpenInputDialog.Click += new System.EventHandler(this.buttonOpenInputDialog_Click);
+            buttonOpenInputDialog.Color = System.Drawing.Color.Transparent;
+            buttonOpenInputDialog.Location = new System.Drawing.Point(16, 14);
+            buttonOpenInputDialog.Name = "buttonOpenInputDialog";
+            buttonOpenInputDialog.Radius = 6;
+            buttonOpenInputDialog.ShadowDepth = 2F;
+            buttonOpenInputDialog.Size = new System.Drawing.Size(104, 23);
+            buttonOpenInputDialog.TabIndex = 69;
+            buttonOpenInputDialog.Text = "Input Dialog";
+            buttonOpenInputDialog.UseVisualStyleBackColor = true;
+            buttonOpenInputDialog.Click += buttonOpenInputDialog_Click;
             // 
             // buttonRandomColor
             // 
-            this.buttonRandomColor.Color = System.Drawing.Color.Transparent;
-            this.buttonRandomColor.Location = new System.Drawing.Point(126, 14);
-            this.buttonRandomColor.Name = "buttonRandomColor";
-            this.buttonRandomColor.Radius = 6;
-            this.buttonRandomColor.ShadowDepth = 4F;
-            this.buttonRandomColor.Size = new System.Drawing.Size(153, 23);
-            this.buttonRandomColor.TabIndex = 68;
-            this.buttonRandomColor.Text = "Random Color";
-            this.buttonRandomColor.UseVisualStyleBackColor = true;
-            this.buttonRandomColor.Click += new System.EventHandler(this.buttonRandomColor_Click);
+            buttonRandomColor.Color = System.Drawing.Color.Transparent;
+            buttonRandomColor.Location = new System.Drawing.Point(126, 14);
+            buttonRandomColor.Name = "buttonRandomColor";
+            buttonRandomColor.Radius = 6;
+            buttonRandomColor.ShadowDepth = 4F;
+            buttonRandomColor.Size = new System.Drawing.Size(153, 23);
+            buttonRandomColor.TabIndex = 68;
+            buttonRandomColor.Text = "Random Color";
+            buttonRandomColor.UseVisualStyleBackColor = true;
+            buttonRandomColor.Click += buttonRandomColor_Click;
             // 
             // label4
             // 
-            this.label4.AutoSize = true;
-            this.label4.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.label4.Location = new System.Drawing.Point(155, 75);
-            this.label4.Name = "label4";
-            this.label4.Size = new System.Drawing.Size(38, 15);
-            this.label4.TabIndex = 67;
-            this.label4.Text = "label4";
+            label4.AutoSize = true;
+            label4.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label4.Location = new System.Drawing.Point(155, 75);
+            label4.Name = "label4";
+            label4.Size = new System.Drawing.Size(38, 15);
+            label4.TabIndex = 67;
+            label4.Text = "label4";
             // 
             // button5
             // 
-            this.button5.AutoSize = true;
-            this.button5.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.button5.Color = System.Drawing.Color.Transparent;
-            this.button5.Enabled = false;
-            this.button5.Location = new System.Drawing.Point(938, 14);
-            this.button5.Name = "button5";
-            this.button5.Radius = 6;
-            this.button5.ShadowDepth = 2F;
-            this.button5.Size = new System.Drawing.Size(68, 36);
-            this.button5.TabIndex = 45;
-            this.button5.Text = "Disabled";
+            button5.AutoSize = true;
+            button5.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            button5.Color = System.Drawing.Color.Transparent;
+            button5.Enabled = false;
+            button5.Location = new System.Drawing.Point(938, 14);
+            button5.Name = "button5";
+            button5.Radius = 6;
+            button5.ShadowDepth = 2F;
+            button5.Size = new System.Drawing.Size(68, 36);
+            button5.TabIndex = 45;
+            button5.Text = "Disabled";
             // 
             // groupBox3
             // 
-            this.groupBox3.BackColor = System.Drawing.Color.Transparent;
-            this.groupBox3.Controls.Add(this.richTextBox1);
-            this.groupBox3.Location = new System.Drawing.Point(692, 430);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Padding = new System.Windows.Forms.Padding(3, 8, 3, 3);
-            this.groupBox3.Radius = 10;
-            this.groupBox3.ShadowDepth = 4;
-            this.groupBox3.Size = new System.Drawing.Size(287, 123);
-            this.groupBox3.TabIndex = 66;
-            this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "groupBox3";
+            groupBox3.BackColor = System.Drawing.Color.Transparent;
+            groupBox3.Controls.Add(richTextBox1);
+            groupBox3.Location = new System.Drawing.Point(692, 430);
+            groupBox3.Name = "groupBox3";
+            groupBox3.Padding = new System.Windows.Forms.Padding(3, 8, 3, 3);
+            groupBox3.Radius = 10;
+            groupBox3.ShadowDepth = 4;
+            groupBox3.Size = new System.Drawing.Size(287, 123);
+            groupBox3.TabIndex = 66;
+            groupBox3.TabStop = false;
+            groupBox3.Text = "groupBox3";
             // 
             // richTextBox1
             // 
-            this.richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.richTextBox1.Location = new System.Drawing.Point(3, 24);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(281, 96);
-            this.richTextBox1.TabIndex = 15;
-            this.richTextBox1.Text = "";
+            richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
+            richTextBox1.Location = new System.Drawing.Point(3, 24);
+            richTextBox1.Name = "richTextBox1";
+            richTextBox1.Size = new System.Drawing.Size(281, 96);
+            richTextBox1.TabIndex = 15;
+            richTextBox1.Text = "";
             // 
             // radio2
             // 
-            this.radio2.AutoSize = true;
-            this.radio2.Checked = true;
-            this.radio2.Location = new System.Drawing.Point(825, 342);
-            this.radio2.Margin = new System.Windows.Forms.Padding(0);
-            this.radio2.Name = "radio2";
-            this.radio2.Ripple = true;
-            this.radio2.Size = new System.Drawing.Size(65, 30);
-            this.radio2.TabIndex = 65;
-            this.radio2.TabStop = true;
-            this.radio2.Text = "radio1";
+            radio2.AutoSize = true;
+            radio2.Checked = true;
+            radio2.Location = new System.Drawing.Point(825, 342);
+            radio2.Margin = new System.Windows.Forms.Padding(0);
+            radio2.Name = "radio2";
+            radio2.Ripple = true;
+            radio2.Size = new System.Drawing.Size(65, 30);
+            radio2.TabIndex = 65;
+            radio2.TabStop = true;
+            radio2.Text = "radio1";
             // 
             // radio1
             // 
-            this.radio1.AutoSize = true;
-            this.radio1.Location = new System.Drawing.Point(659, 342);
-            this.radio1.Margin = new System.Windows.Forms.Padding(0);
-            this.radio1.Name = "radio1";
-            this.radio1.Ripple = true;
-            this.radio1.Size = new System.Drawing.Size(65, 30);
-            this.radio1.TabIndex = 64;
-            this.radio1.Text = "radio1";
+            radio1.AutoSize = true;
+            radio1.Location = new System.Drawing.Point(659, 342);
+            radio1.Margin = new System.Windows.Forms.Padding(0);
+            radio1.Name = "radio1";
+            radio1.Ripple = true;
+            radio1.Size = new System.Drawing.Size(65, 30);
+            radio1.TabIndex = 64;
+            radio1.Text = "radio1";
             // 
             // checkBox6
             // 
-            this.checkBox6.AutoSize = true;
-            this.checkBox6.BackColor = System.Drawing.Color.Transparent;
-            this.checkBox6.Depth = 0;
-            this.checkBox6.Location = new System.Drawing.Point(511, 370);
-            this.checkBox6.Margin = new System.Windows.Forms.Padding(0);
-            this.checkBox6.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.checkBox6.Name = "checkBox6";
-            this.checkBox6.Ripple = true;
-            this.checkBox6.Size = new System.Drawing.Size(143, 30);
-            this.checkBox6.TabIndex = 63;
-            this.checkBox6.Text = "Draw Debug Borders";
-            this.checkBox6.UseVisualStyleBackColor = false;
-            this.checkBox6.CheckedChanged += new System.EventHandler(this.checkBox6_CheckedChanged);
+            checkBox6.AutoSize = true;
+            checkBox6.BackColor = System.Drawing.Color.Transparent;
+            checkBox6.Depth = 0;
+            checkBox6.Location = new System.Drawing.Point(511, 370);
+            checkBox6.Margin = new System.Windows.Forms.Padding(0);
+            checkBox6.MouseLocation = new System.Drawing.Point(-1, -1);
+            checkBox6.Name = "checkBox6";
+            checkBox6.Ripple = true;
+            checkBox6.Size = new System.Drawing.Size(143, 30);
+            checkBox6.TabIndex = 63;
+            checkBox6.Text = "Draw Debug Borders";
+            checkBox6.UseVisualStyleBackColor = false;
+            checkBox6.CheckedChanged += checkBox6_CheckedChanged;
             // 
             // checkBox2
             // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.BackColor = System.Drawing.Color.Transparent;
-            this.checkBox2.Depth = 0;
-            this.checkBox2.Enabled = false;
-            this.checkBox2.Location = new System.Drawing.Point(511, 349);
-            this.checkBox2.Margin = new System.Windows.Forms.Padding(0);
-            this.checkBox2.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Ripple = true;
-            this.checkBox2.Size = new System.Drawing.Size(87, 30);
-            this.checkBox2.TabIndex = 62;
-            this.checkBox2.Text = "checkBox1";
-            this.checkBox2.UseVisualStyleBackColor = false;
+            checkBox2.AutoSize = true;
+            checkBox2.BackColor = System.Drawing.Color.Transparent;
+            checkBox2.Depth = 0;
+            checkBox2.Enabled = false;
+            checkBox2.Location = new System.Drawing.Point(511, 349);
+            checkBox2.Margin = new System.Windows.Forms.Padding(0);
+            checkBox2.MouseLocation = new System.Drawing.Point(-1, -1);
+            checkBox2.Name = "checkBox2";
+            checkBox2.Ripple = true;
+            checkBox2.Size = new System.Drawing.Size(87, 30);
+            checkBox2.TabIndex = 62;
+            checkBox2.Text = "checkBox1";
+            checkBox2.UseVisualStyleBackColor = false;
             // 
             // checkBox1
             // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.BackColor = System.Drawing.Color.Transparent;
-            this.checkBox1.Depth = 0;
-            this.checkBox1.Location = new System.Drawing.Point(659, 370);
-            this.checkBox1.Margin = new System.Windows.Forms.Padding(0);
-            this.checkBox1.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Ripple = true;
-            this.checkBox1.Size = new System.Drawing.Size(142, 30);
-            this.checkBox1.TabIndex = 61;
-            this.checkBox1.Text = "checkBox1 asdfadfas";
-            this.checkBox1.UseVisualStyleBackColor = false;
+            checkBox1.AutoSize = true;
+            checkBox1.BackColor = System.Drawing.Color.Transparent;
+            checkBox1.Depth = 0;
+            checkBox1.Location = new System.Drawing.Point(659, 370);
+            checkBox1.Margin = new System.Windows.Forms.Padding(0);
+            checkBox1.MouseLocation = new System.Drawing.Point(-1, -1);
+            checkBox1.Name = "checkBox1";
+            checkBox1.Ripple = true;
+            checkBox1.Size = new System.Drawing.Size(142, 30);
+            checkBox1.TabIndex = 61;
+            checkBox1.Text = "checkBox1 asdfadfas";
+            checkBox1.UseVisualStyleBackColor = false;
             // 
             // panel6
             // 
-            this.panel6.BackColor = System.Drawing.Color.Transparent;
-            this.panel6.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
-            this.panel6.BorderColor = System.Drawing.Color.Transparent;
-            this.panel6.Location = new System.Drawing.Point(19, 275);
-            this.panel6.Name = "panel6";
-            this.panel6.Radius = 0;
-            this.panel6.ShadowDepth = 2F;
-            this.panel6.Size = new System.Drawing.Size(63, 45);
-            this.panel6.TabIndex = 59;
+            panel6.BackColor = System.Drawing.Color.Transparent;
+            panel6.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
+            panel6.BorderColor = System.Drawing.Color.Transparent;
+            panel6.Location = new System.Drawing.Point(19, 275);
+            panel6.Name = "panel6";
+            panel6.Radius = 0;
+            panel6.ShadowDepth = 2F;
+            panel6.Size = new System.Drawing.Size(63, 45);
+            panel6.TabIndex = 59;
             // 
             // panel5
             // 
-            this.panel5.BackColor = System.Drawing.Color.Transparent;
-            this.panel5.Border = new System.Windows.Forms.Padding(0, 0, 1, 0);
-            this.panel5.BorderColor = System.Drawing.Color.Transparent;
-            this.panel5.Location = new System.Drawing.Point(109, 275);
-            this.panel5.Name = "panel5";
-            this.panel5.Radius = 0;
-            this.panel5.ShadowDepth = 2F;
-            this.panel5.Size = new System.Drawing.Size(63, 45);
-            this.panel5.TabIndex = 58;
+            panel5.BackColor = System.Drawing.Color.Transparent;
+            panel5.Border = new System.Windows.Forms.Padding(0, 0, 1, 0);
+            panel5.BorderColor = System.Drawing.Color.Transparent;
+            panel5.Location = new System.Drawing.Point(109, 275);
+            panel5.Name = "panel5";
+            panel5.Radius = 0;
+            panel5.ShadowDepth = 2F;
+            panel5.Size = new System.Drawing.Size(63, 45);
+            panel5.TabIndex = 58;
             // 
             // panel8
             // 
-            this.panel8.BackColor = System.Drawing.Color.Transparent;
-            this.panel8.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
-            this.panel8.BorderColor = System.Drawing.Color.Transparent;
-            this.panel8.Controls.Add(this.toggleButton1);
-            this.panel8.Controls.Add(this.shapeProgressBar2);
-            this.panel8.Controls.Add(this.shapeProgressBar1);
-            this.panel8.Controls.Add(this.chatBubble2);
-            this.panel8.Controls.Add(this.chatBubble1);
-            this.panel8.Controls.Add(this.numUpDown1);
-            this.panel8.Controls.Add(this.checkBox4);
-            this.panel8.Controls.Add(this.checkBox3);
-            this.panel8.Controls.Add(this.label3);
-            this.panel8.Controls.Add(this.progressBar5);
-            this.panel8.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel8.Location = new System.Drawing.Point(1029, 0);
-            this.panel8.Name = "panel8";
-            this.panel8.Radius = 0;
-            this.panel8.ShadowDepth = 2F;
-            this.panel8.Size = new System.Drawing.Size(233, 587);
-            this.panel8.TabIndex = 57;
+            panel8.BackColor = System.Drawing.Color.Transparent;
+            panel8.Border = new System.Windows.Forms.Padding(1, 0, 0, 0);
+            panel8.BorderColor = System.Drawing.Color.Transparent;
+            panel8.Controls.Add(toggleButton1);
+            panel8.Controls.Add(shapeProgressBar2);
+            panel8.Controls.Add(shapeProgressBar1);
+            panel8.Controls.Add(chatBubble2);
+            panel8.Controls.Add(chatBubble1);
+            panel8.Controls.Add(numUpDown1);
+            panel8.Controls.Add(checkBox4);
+            panel8.Controls.Add(checkBox3);
+            panel8.Controls.Add(label3);
+            panel8.Controls.Add(progressBar5);
+            panel8.Dock = System.Windows.Forms.DockStyle.Right;
+            panel8.Location = new System.Drawing.Point(1029, 0);
+            panel8.Name = "panel8";
+            panel8.Radius = 0;
+            panel8.ShadowDepth = 2F;
+            panel8.Size = new System.Drawing.Size(233, 587);
+            panel8.TabIndex = 57;
             // 
             // toggleButton1
             // 
-            this.toggleButton1.AutoSize = true;
-            this.toggleButton1.BackColor = System.Drawing.Color.Transparent;
-            this.toggleButton1.Location = new System.Drawing.Point(106, 380);
-            this.toggleButton1.MinimumSize = new System.Drawing.Size(46, 22);
-            this.toggleButton1.Name = "toggleButton1";
-            this.toggleButton1.Size = new System.Drawing.Size(46, 22);
-            this.toggleButton1.TabIndex = 31;
-            this.toggleButton1.UseVisualStyleBackColor = false;
+            toggleButton1.AutoSize = true;
+            toggleButton1.BackColor = System.Drawing.Color.Transparent;
+            toggleButton1.Location = new System.Drawing.Point(106, 380);
+            toggleButton1.MinimumSize = new System.Drawing.Size(46, 22);
+            toggleButton1.Name = "toggleButton1";
+            toggleButton1.Size = new System.Drawing.Size(46, 22);
+            toggleButton1.TabIndex = 31;
+            toggleButton1.UseVisualStyleBackColor = false;
             // 
             // shapeProgressBar2
             // 
-            this.shapeProgressBar2.BackColor = System.Drawing.Color.Transparent;
-            this.shapeProgressBar2.DrawHatch = true;
-            this.shapeProgressBar2.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.shapeProgressBar2.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Maroon,
-        System.Drawing.Color.Red};
-            this.shapeProgressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
-            this.shapeProgressBar2.Location = new System.Drawing.Point(122, 453);
-            this.shapeProgressBar2.Maximum = ((long)(100));
-            this.shapeProgressBar2.MinimumSize = new System.Drawing.Size(100, 100);
-            this.shapeProgressBar2.Name = "shapeProgressBar2";
-            this.shapeProgressBar2.Size = new System.Drawing.Size(113, 113);
-            this.shapeProgressBar2.TabIndex = 30;
-            this.shapeProgressBar2.Text = "shapeProgressBar1";
-            this.shapeProgressBar2.Value = ((long)(52));
+            shapeProgressBar2.BackColor = System.Drawing.Color.Transparent;
+            shapeProgressBar2.DrawHatch = true;
+            shapeProgressBar2.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            shapeProgressBar2.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            shapeProgressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
+            shapeProgressBar2.Location = new System.Drawing.Point(117, 453);
+            shapeProgressBar2.Maximum = 100L;
+            shapeProgressBar2.Name = "shapeProgressBar2";
+            shapeProgressBar2.Size = new System.Drawing.Size(64, 64);
+            shapeProgressBar2.TabIndex = 30;
+            shapeProgressBar2.Text = "shapeProgressBar1";
+            shapeProgressBar2.Value = 52L;
+            shapeProgressBar2.Weight = 12F;
             // 
             // shapeProgressBar1
             // 
-            this.shapeProgressBar1.BackColor = System.Drawing.Color.Transparent;
-            this.shapeProgressBar1.DrawHatch = false;
-            this.shapeProgressBar1.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.shapeProgressBar1.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Maroon,
-        System.Drawing.Color.Red};
-            this.shapeProgressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
-            this.shapeProgressBar1.Location = new System.Drawing.Point(16, 453);
-            this.shapeProgressBar1.Maximum = ((long)(100));
-            this.shapeProgressBar1.MinimumSize = new System.Drawing.Size(100, 100);
-            this.shapeProgressBar1.Name = "shapeProgressBar1";
-            this.shapeProgressBar1.Size = new System.Drawing.Size(113, 113);
-            this.shapeProgressBar1.TabIndex = 30;
-            this.shapeProgressBar1.Text = "shapeProgressBar1";
-            this.shapeProgressBar1.Value = ((long)(52));
+            shapeProgressBar1.BackColor = System.Drawing.Color.Transparent;
+            shapeProgressBar1.DrawHatch = false;
+            shapeProgressBar1.Font = new System.Drawing.Font("Impact", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            shapeProgressBar1.ForeColor = System.Drawing.Color.Silver;
+            shapeProgressBar1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            shapeProgressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
+            shapeProgressBar1.Location = new System.Drawing.Point(16, 453);
+            shapeProgressBar1.Maximum = 100L;
+            shapeProgressBar1.Name = "shapeProgressBar1";
+            shapeProgressBar1.Size = new System.Drawing.Size(48, 48);
+            shapeProgressBar1.TabIndex = 30;
+            shapeProgressBar1.Text = "shapeProgressBar1";
+            shapeProgressBar1.Value = 52L;
+            shapeProgressBar1.Weight = 8F;
             // 
             // chatBubble2
             // 
-            this.chatBubble2.ArrowPosition = System.Windows.Forms.AnchorStyles.Right;
-            this.chatBubble2.BackColor = System.Drawing.Color.Transparent;
-            this.chatBubble2.BubbleColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(192)))), ((int)(((byte)(255)))));
-            this.chatBubble2.DrawBubbleArrow = true;
-            this.chatBubble2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(52)))), ((int)(((byte)(52)))), ((int)(((byte)(52)))));
-            this.chatBubble2.Location = new System.Drawing.Point(16, 326);
-            this.chatBubble2.Name = "chatBubble2";
-            this.chatBubble2.Size = new System.Drawing.Size(175, 38);
-            this.chatBubble2.TabIndex = 28;
-            this.chatBubble2.Text = "Hello Bob i am fine, Thanks";
+            chatBubble2.ArrowPosition = System.Windows.Forms.AnchorStyles.Right;
+            chatBubble2.BackColor = System.Drawing.Color.Transparent;
+            chatBubble2.BubbleColor = System.Drawing.Color.FromArgb(192, 192, 255);
+            chatBubble2.DrawBubbleArrow = true;
+            chatBubble2.ForeColor = System.Drawing.Color.FromArgb(52, 52, 52);
+            chatBubble2.Location = new System.Drawing.Point(16, 326);
+            chatBubble2.Name = "chatBubble2";
+            chatBubble2.Size = new System.Drawing.Size(175, 38);
+            chatBubble2.TabIndex = 28;
+            chatBubble2.Text = "Hello Bob i am fine, Thanks";
             // 
             // chatBubble1
             // 
-            this.chatBubble1.ArrowPosition = System.Windows.Forms.AnchorStyles.Left;
-            this.chatBubble1.BackColor = System.Drawing.Color.Transparent;
-            this.chatBubble1.BubbleColor = System.Drawing.Color.FromArgb(((int)(((byte)(217)))), ((int)(((byte)(217)))), ((int)(((byte)(217)))));
-            this.chatBubble1.DrawBubbleArrow = true;
-            this.chatBubble1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(52)))), ((int)(((byte)(52)))), ((int)(((byte)(52)))));
-            this.chatBubble1.Location = new System.Drawing.Point(43, 279);
-            this.chatBubble1.Name = "chatBubble1";
-            this.chatBubble1.Size = new System.Drawing.Size(175, 38);
-            this.chatBubble1.TabIndex = 28;
-            this.chatBubble1.Text = "Hello Jean How are you?";
+            chatBubble1.ArrowPosition = System.Windows.Forms.AnchorStyles.Left;
+            chatBubble1.BackColor = System.Drawing.Color.Transparent;
+            chatBubble1.BubbleColor = System.Drawing.Color.FromArgb(217, 217, 217);
+            chatBubble1.DrawBubbleArrow = true;
+            chatBubble1.ForeColor = System.Drawing.Color.FromArgb(52, 52, 52);
+            chatBubble1.Location = new System.Drawing.Point(43, 279);
+            chatBubble1.Name = "chatBubble1";
+            chatBubble1.Size = new System.Drawing.Size(175, 38);
+            chatBubble1.TabIndex = 28;
+            chatBubble1.Text = "Hello Jean How are you?";
             // 
             // numUpDown1
             // 
-            this.numUpDown1.BackColor = System.Drawing.Color.Transparent;
-            this.numUpDown1.Font = new System.Drawing.Font("Segoe UI", 9.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.numUpDown1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.numUpDown1.Location = new System.Drawing.Point(16, 379);
-            this.numUpDown1.Maximum = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            this.numUpDown1.Minimum = new decimal(new int[] {
-            0,
-            0,
-            0,
-            0});
-            this.numUpDown1.MinimumSize = new System.Drawing.Size(80, 25);
-            this.numUpDown1.Name = "numUpDown1";
-            this.numUpDown1.Size = new System.Drawing.Size(80, 25);
-            this.numUpDown1.TabIndex = 28;
-            this.numUpDown1.Value = new decimal(new int[] {
-            0,
-            0,
-            0,
-            0});
+            numUpDown1.BackColor = System.Drawing.Color.Transparent;
+            numUpDown1.Font = new System.Drawing.Font("Segoe UI", 9.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            numUpDown1.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            numUpDown1.Location = new System.Drawing.Point(16, 379);
+            numUpDown1.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+            numUpDown1.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
+            numUpDown1.MinimumSize = new System.Drawing.Size(80, 25);
+            numUpDown1.Name = "numUpDown1";
+            numUpDown1.Size = new System.Drawing.Size(80, 25);
+            numUpDown1.TabIndex = 28;
+            numUpDown1.Value = new decimal(new int[] { 0, 0, 0, 0 });
             // 
             // checkBox4
             // 
-            this.checkBox4.AutoSize = true;
-            this.checkBox4.BackColor = System.Drawing.Color.Transparent;
-            this.checkBox4.Checked = true;
-            this.checkBox4.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.checkBox4.Depth = 0;
-            this.checkBox4.Location = new System.Drawing.Point(16, 238);
-            this.checkBox4.Margin = new System.Windows.Forms.Padding(0);
-            this.checkBox4.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.checkBox4.Name = "checkBox4";
-            this.checkBox4.Ripple = true;
-            this.checkBox4.Size = new System.Drawing.Size(87, 30);
-            this.checkBox4.TabIndex = 13;
-            this.checkBox4.Text = "checkBox1";
-            this.checkBox4.UseVisualStyleBackColor = false;
+            checkBox4.AutoSize = true;
+            checkBox4.BackColor = System.Drawing.Color.Transparent;
+            checkBox4.Checked = true;
+            checkBox4.CheckState = System.Windows.Forms.CheckState.Checked;
+            checkBox4.Depth = 0;
+            checkBox4.Location = new System.Drawing.Point(16, 238);
+            checkBox4.Margin = new System.Windows.Forms.Padding(0);
+            checkBox4.MouseLocation = new System.Drawing.Point(-1, -1);
+            checkBox4.Name = "checkBox4";
+            checkBox4.Ripple = true;
+            checkBox4.Size = new System.Drawing.Size(87, 30);
+            checkBox4.TabIndex = 13;
+            checkBox4.Text = "checkBox1";
+            checkBox4.UseVisualStyleBackColor = false;
             // 
             // checkBox3
             // 
-            this.checkBox3.AutoSize = true;
-            this.checkBox3.BackColor = System.Drawing.Color.Transparent;
-            this.checkBox3.Depth = 0;
-            this.checkBox3.Dock = System.Windows.Forms.DockStyle.Top;
-            this.checkBox3.Location = new System.Drawing.Point(0, 0);
-            this.checkBox3.Margin = new System.Windows.Forms.Padding(0);
-            this.checkBox3.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.checkBox3.Name = "checkBox3";
-            this.checkBox3.Ripple = true;
-            this.checkBox3.Size = new System.Drawing.Size(233, 30);
-            this.checkBox3.TabIndex = 13;
-            this.checkBox3.Text = "Toggle Title";
-            this.checkBox3.UseVisualStyleBackColor = false;
+            checkBox3.AutoSize = true;
+            checkBox3.BackColor = System.Drawing.Color.Transparent;
+            checkBox3.Depth = 0;
+            checkBox3.Dock = System.Windows.Forms.DockStyle.Top;
+            checkBox3.Location = new System.Drawing.Point(0, 0);
+            checkBox3.Margin = new System.Windows.Forms.Padding(0);
+            checkBox3.MouseLocation = new System.Drawing.Point(-1, -1);
+            checkBox3.Name = "checkBox3";
+            checkBox3.Ripple = true;
+            checkBox3.Size = new System.Drawing.Size(233, 30);
+            checkBox3.TabIndex = 13;
+            checkBox3.Text = "Toggle Title";
+            checkBox3.UseVisualStyleBackColor = false;
             // 
             // label3
             // 
-            this.label3.AutoSize = true;
-            this.label3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.label3.Location = new System.Drawing.Point(8, 104);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(220, 30);
-            this.label3.TabIndex = 11;
-            this.label3.Text = "Lorem Ipsum is simply dummy text \r\nof the printing and typesetting industry. ";
+            label3.AutoSize = true;
+            label3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label3.Location = new System.Drawing.Point(8, 104);
+            label3.Name = "label3";
+            label3.Size = new System.Drawing.Size(220, 30);
+            label3.TabIndex = 11;
+            label3.Text = "Lorem Ipsum is simply dummy text \r\nof the printing and typesetting industry. ";
             // 
             // progressBar5
             // 
-            this.progressBar5.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar5.DrawHatch = false;
-            this.progressBar5.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Maroon,
-        System.Drawing.Color.Red};
-            this.progressBar5.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar5.Location = new System.Drawing.Point(16, 417);
-            this.progressBar5.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar5.Maximum = ((long)(100));
-            this.progressBar5.MaxPercentShowValue = 100F;
-            this.progressBar5.Name = "progressBar5";
-            this.progressBar5.PercentIndices = 2;
-            this.progressBar5.Radius = 4;
-            this.progressBar5.ShowAsPercent = true;
-            this.progressBar5.ShowValue = true;
-            this.progressBar5.Size = new System.Drawing.Size(179, 16);
-            this.progressBar5.TabIndex = 3;
-            this.progressBar5.Text = "70.00%";
-            this.progressBar5.Value = ((long)(70));
+            progressBar5.BackColor = System.Drawing.Color.Transparent;
+            progressBar5.DrawHatch = false;
+            progressBar5.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            progressBar5.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar5.Location = new System.Drawing.Point(16, 417);
+            progressBar5.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar5.Maximum = 100L;
+            progressBar5.MaxPercentShowValue = 100F;
+            progressBar5.Name = "progressBar5";
+            progressBar5.PercentIndices = 2;
+            progressBar5.Radius = 4;
+            progressBar5.ShowAsPercent = true;
+            progressBar5.ShowValue = true;
+            progressBar5.Size = new System.Drawing.Size(179, 16);
+            progressBar5.TabIndex = 3;
+            progressBar5.Text = "70.00%";
+            progressBar5.Value = 70L;
             // 
             // panel7
             // 
-            this.panel7.BackColor = System.Drawing.Color.Transparent;
-            this.panel7.Border = new System.Windows.Forms.Padding(0, 0, 0, 1);
-            this.panel7.BorderColor = System.Drawing.Color.Transparent;
-            this.panel7.Location = new System.Drawing.Point(289, 275);
-            this.panel7.Name = "panel7";
-            this.panel7.Radius = 0;
-            this.panel7.ShadowDepth = 2F;
-            this.panel7.Size = new System.Drawing.Size(63, 45);
-            this.panel7.TabIndex = 56;
+            panel7.BackColor = System.Drawing.Color.Transparent;
+            panel7.Border = new System.Windows.Forms.Padding(0, 0, 0, 1);
+            panel7.BorderColor = System.Drawing.Color.Transparent;
+            panel7.Location = new System.Drawing.Point(289, 275);
+            panel7.Name = "panel7";
+            panel7.Radius = 0;
+            panel7.ShadowDepth = 2F;
+            panel7.Size = new System.Drawing.Size(63, 45);
+            panel7.TabIndex = 56;
             // 
             // panel4
             // 
-            this.panel4.BackColor = System.Drawing.Color.Transparent;
-            this.panel4.Border = new System.Windows.Forms.Padding(0, 1, 0, 0);
-            this.panel4.BorderColor = System.Drawing.Color.Transparent;
-            this.panel4.Location = new System.Drawing.Point(199, 275);
-            this.panel4.Name = "panel4";
-            this.panel4.Radius = 0;
-            this.panel4.ShadowDepth = 2F;
-            this.panel4.Size = new System.Drawing.Size(63, 45);
-            this.panel4.TabIndex = 60;
+            panel4.BackColor = System.Drawing.Color.Transparent;
+            panel4.Border = new System.Windows.Forms.Padding(0, 1, 0, 0);
+            panel4.BorderColor = System.Drawing.Color.Transparent;
+            panel4.Location = new System.Drawing.Point(199, 275);
+            panel4.Name = "panel4";
+            panel4.Radius = 0;
+            panel4.ShadowDepth = 2F;
+            panel4.Size = new System.Drawing.Size(63, 45);
+            panel4.TabIndex = 60;
             // 
             // label2
             // 
-            this.label2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.label2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.label2.Location = new System.Drawing.Point(373, 199);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(618, 106);
-            this.label2.TabIndex = 55;
-            this.label2.Text = resources.GetString("label2.Text");
+            label2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            label2.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label2.Location = new System.Drawing.Point(373, 199);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(618, 106);
+            label2.TabIndex = 55;
+            label2.Text = resources.GetString("label2.Text");
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(487, 215);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(0, 15);
-            this.label1.TabIndex = 54;
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(487, 215);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(0, 15);
+            label1.TabIndex = 54;
             // 
             // panel2
             // 
-            this.panel2.BackColor = System.Drawing.Color.Transparent;
-            this.panel2.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
-            this.panel2.BorderColor = System.Drawing.Color.Transparent;
-            this.panel2.Controls.Add(this.panel3);
-            this.panel2.Controls.Add(this.separator3);
-            this.panel2.Location = new System.Drawing.Point(19, 130);
-            this.panel2.Name = "panel2";
-            this.panel2.Radius = 5;
-            this.panel2.ShadowDepth = 4F;
-            this.panel2.Size = new System.Drawing.Size(333, 134);
-            this.panel2.TabIndex = 53;
+            panel2.BackColor = System.Drawing.Color.Transparent;
+            panel2.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            panel2.BorderColor = System.Drawing.Color.Transparent;
+            panel2.Controls.Add(panel3);
+            panel2.Controls.Add(separator3);
+            panel2.Location = new System.Drawing.Point(19, 130);
+            panel2.Name = "panel2";
+            panel2.Radius = 5;
+            panel2.ShadowDepth = 4F;
+            panel2.Size = new System.Drawing.Size(333, 134);
+            panel2.TabIndex = 53;
             // 
             // panel3
             // 
-            this.panel3.BackColor = System.Drawing.Color.Transparent;
-            this.panel3.Controls.Add(this.separator5);
-            this.panel3.Controls.Add(this.comboBox3);
-            this.panel3.Location = new System.Drawing.Point(17, 27);
-            this.panel3.Name = "panel3";
-            this.panel3.Size = new System.Drawing.Size(306, 100);
-            this.panel3.TabIndex = 10;
+            panel3.BackColor = System.Drawing.Color.Transparent;
+            panel3.Controls.Add(separator5);
+            panel3.Controls.Add(comboBox3);
+            panel3.Location = new System.Drawing.Point(17, 27);
+            panel3.Name = "panel3";
+            panel3.Size = new System.Drawing.Size(306, 100);
+            panel3.TabIndex = 10;
             // 
             // separator5
             // 
-            this.separator5.IsVertical = false;
-            this.separator5.Location = new System.Drawing.Point(16, 15);
-            this.separator5.Name = "separator5";
-            this.separator5.Size = new System.Drawing.Size(120, 10);
-            this.separator5.TabIndex = 0;
-            this.separator5.Text = "separator3";
+            separator5.IsVertical = false;
+            separator5.Location = new System.Drawing.Point(16, 15);
+            separator5.Name = "separator5";
+            separator5.Size = new System.Drawing.Size(120, 10);
+            separator5.TabIndex = 0;
+            separator5.Text = "separator3";
             // 
             // comboBox3
             // 
-            this.comboBox3.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboBox3.DropDownHeight = 100;
-            this.comboBox3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox3.FormattingEnabled = true;
-            this.comboBox3.IntegralHeight = false;
-            this.comboBox3.ItemHeight = 17;
-            this.comboBox3.Items.AddRange(new object[] {
-            "asdfasdfasdfasdf",
-            "asdfasdfasd",
-            "asdfasdfasdfas",
-            "asdfxcvxzcvzx",
-            "1236afsdf"});
-            this.comboBox3.Location = new System.Drawing.Point(3, 32);
-            this.comboBox3.Name = "comboBox3";
-            this.comboBox3.Radius = 5;
-            this.comboBox3.ShadowDepth = 4F;
-            this.comboBox3.Size = new System.Drawing.Size(194, 23);
-            this.comboBox3.TabIndex = 8;
+            comboBox3.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            comboBox3.DropDownHeight = 100;
+            comboBox3.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBox3.FormattingEnabled = true;
+            comboBox3.IntegralHeight = false;
+            comboBox3.ItemHeight = 17;
+            comboBox3.Items.AddRange(new object[] { "asdfasdfasdfasdf", "asdfasdfasd", "asdfasdfasdfas", "asdfxcvxzcvzx", "1236afsdf" });
+            comboBox3.Location = new System.Drawing.Point(3, 32);
+            comboBox3.Name = "comboBox3";
+            comboBox3.Radius = 5;
+            comboBox3.ShadowDepth = 4F;
+            comboBox3.Size = new System.Drawing.Size(194, 23);
+            comboBox3.TabIndex = 8;
             // 
             // separator3
             // 
-            this.separator3.IsVertical = false;
-            this.separator3.Location = new System.Drawing.Point(17, 11);
-            this.separator3.Name = "separator3";
-            this.separator3.Size = new System.Drawing.Size(120, 10);
-            this.separator3.TabIndex = 0;
-            this.separator3.Text = "separator3";
+            separator3.IsVertical = false;
+            separator3.Location = new System.Drawing.Point(17, 11);
+            separator3.Name = "separator3";
+            separator3.Size = new System.Drawing.Size(120, 10);
+            separator3.TabIndex = 0;
+            separator3.Text = "separator3";
             // 
             // comboBox2
             // 
-            this.comboBox2.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboBox2.DropDownHeight = 100;
-            this.comboBox2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox2.FormattingEnabled = true;
-            this.comboBox2.IntegralHeight = false;
-            this.comboBox2.ItemHeight = 17;
-            this.comboBox2.Location = new System.Drawing.Point(20, 101);
-            this.comboBox2.Name = "comboBox2";
-            this.comboBox2.Radius = 5;
-            this.comboBox2.ShadowDepth = 2F;
-            this.comboBox2.Size = new System.Drawing.Size(136, 23);
-            this.comboBox2.TabIndex = 52;
+            comboBox2.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            comboBox2.DropDownHeight = 100;
+            comboBox2.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBox2.FormattingEnabled = true;
+            comboBox2.IntegralHeight = false;
+            comboBox2.ItemHeight = 17;
+            comboBox2.Location = new System.Drawing.Point(20, 101);
+            comboBox2.Name = "comboBox2";
+            comboBox2.Radius = 5;
+            comboBox2.ShadowDepth = 2F;
+            comboBox2.Size = new System.Drawing.Size(136, 23);
+            comboBox2.TabIndex = 52;
             // 
             // groupBox2
             // 
-            this.groupBox2.BackColor = System.Drawing.Color.Transparent;
-            this.groupBox2.Controls.Add(this.listView3);
-            this.groupBox2.Controls.Add(this.comboBox4);
-            this.groupBox2.Location = new System.Drawing.Point(656, 6);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
-            this.groupBox2.Radius = 10;
-            this.groupBox2.ShadowDepth = 5;
-            this.groupBox2.Size = new System.Drawing.Size(275, 190);
-            this.groupBox2.TabIndex = 49;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "groupBox1";
+            groupBox2.BackColor = System.Drawing.Color.Transparent;
+            groupBox2.Controls.Add(listView3);
+            groupBox2.Controls.Add(comboBox4);
+            groupBox2.Location = new System.Drawing.Point(656, 6);
+            groupBox2.Name = "groupBox2";
+            groupBox2.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
+            groupBox2.Radius = 10;
+            groupBox2.ShadowDepth = 5;
+            groupBox2.Size = new System.Drawing.Size(275, 190);
+            groupBox2.TabIndex = 49;
+            groupBox2.TabStop = false;
+            groupBox2.Text = "groupBox1";
             // 
             // listView3
             // 
-            this.listView3.CheckBoxes = true;
-            this.listView3.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader6});
-            this.listView3.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.listView3.FullRowSelect = true;
+            listView3.BackColor = System.Drawing.Color.White;
+            listView3.CheckBoxes = true;
+            listView3.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] { columnHeader6 });
+            listView3.Dock = System.Windows.Forms.DockStyle.Bottom;
+            listView3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            listView3.FullRowSelect = true;
             listViewItem1.Checked = true;
             listViewItem1.StateImageIndex = 1;
             listViewItem2.Checked = true;
             listViewItem2.StateImageIndex = 1;
             listViewItem3.Checked = true;
             listViewItem3.StateImageIndex = 1;
-            this.listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] {
-            listViewItem1,
-            listViewItem2,
-            listViewItem3});
-            this.listView3.Location = new System.Drawing.Point(3, 58);
-            this.listView3.Name = "listView3";
-            this.listView3.Size = new System.Drawing.Size(269, 129);
-            this.listView3.TabIndex = 0;
-            this.listView3.UseCompatibleStateImageBehavior = false;
-            this.listView3.View = System.Windows.Forms.View.Details;
+            listView3.Items.AddRange(new System.Windows.Forms.ListViewItem[] { listViewItem1, listViewItem2, listViewItem3 });
+            listView3.Location = new System.Drawing.Point(3, 58);
+            listView3.Name = "listView3";
+            listView3.Size = new System.Drawing.Size(269, 129);
+            listView3.TabIndex = 0;
+            listView3.UseCompatibleStateImageBehavior = false;
+            listView3.View = System.Windows.Forms.View.Details;
             // 
             // columnHeader6
             // 
-            this.columnHeader6.Width = 220;
+            columnHeader6.Width = 220;
             // 
             // comboBox4
             // 
-            this.comboBox4.Dock = System.Windows.Forms.DockStyle.Top;
-            this.comboBox4.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboBox4.DropDownHeight = 100;
-            this.comboBox4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox4.FormattingEnabled = true;
-            this.comboBox4.IntegralHeight = false;
-            this.comboBox4.ItemHeight = 17;
-            this.comboBox4.Items.AddRange(new object[] {
-            "asdfasdfasdfasdf",
-            "asdfasdfasd",
-            "asdfasdfasdfas",
-            "asdfxcvxzcvzx",
-            "1236afsdf"});
-            this.comboBox4.Location = new System.Drawing.Point(3, 26);
-            this.comboBox4.Name = "comboBox4";
-            this.comboBox4.Radius = 5;
-            this.comboBox4.ShadowDepth = 0F;
-            this.comboBox4.Size = new System.Drawing.Size(269, 23);
-            this.comboBox4.TabIndex = 6;
+            comboBox4.Dock = System.Windows.Forms.DockStyle.Top;
+            comboBox4.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            comboBox4.DropDownHeight = 100;
+            comboBox4.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBox4.FormattingEnabled = true;
+            comboBox4.IntegralHeight = false;
+            comboBox4.ItemHeight = 17;
+            comboBox4.Items.AddRange(new object[] { "asdfasdfasdfasdf", "asdfasdfasd", "asdfasdfasdfas", "asdfxcvxzcvzx", "1236afsdf" });
+            comboBox4.Location = new System.Drawing.Point(3, 26);
+            comboBox4.Name = "comboBox4";
+            comboBox4.Radius = 5;
+            comboBox4.ShadowDepth = 0F;
+            comboBox4.Size = new System.Drawing.Size(269, 23);
+            comboBox4.TabIndex = 6;
             // 
             // groupBox1
             // 
-            this.groupBox1.BackColor = System.Drawing.Color.Transparent;
-            this.groupBox1.Controls.Add(this.separator4);
-            this.groupBox1.Controls.Add(this.panel1);
-            this.groupBox1.Controls.Add(this.comboBox1);
-            this.groupBox1.Location = new System.Drawing.Point(359, 6);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
-            this.groupBox1.Radius = 10;
-            this.groupBox1.ShadowDepth = 5;
-            this.groupBox1.Size = new System.Drawing.Size(275, 190);
-            this.groupBox1.TabIndex = 48;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "groupBox1";
+            groupBox1.BackColor = System.Drawing.Color.Transparent;
+            groupBox1.Controls.Add(separator4);
+            groupBox1.Controls.Add(panel1);
+            groupBox1.Controls.Add(comboBox1);
+            groupBox1.Location = new System.Drawing.Point(359, 6);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Padding = new System.Windows.Forms.Padding(3, 10, 3, 3);
+            groupBox1.Radius = 10;
+            groupBox1.ShadowDepth = 5;
+            groupBox1.Size = new System.Drawing.Size(275, 190);
+            groupBox1.TabIndex = 48;
+            groupBox1.TabStop = false;
+            groupBox1.Text = "groupBox1";
             // 
             // separator4
             // 
-            this.separator4.IsVertical = false;
-            this.separator4.Location = new System.Drawing.Point(17, 51);
-            this.separator4.Name = "separator4";
-            this.separator4.Size = new System.Drawing.Size(120, 10);
-            this.separator4.TabIndex = 0;
-            this.separator4.Text = "separator3";
+            separator4.IsVertical = false;
+            separator4.Location = new System.Drawing.Point(17, 51);
+            separator4.Name = "separator4";
+            separator4.Size = new System.Drawing.Size(120, 10);
+            separator4.TabIndex = 0;
+            separator4.Text = "separator3";
             // 
             // panel1
             // 
-            this.panel1.BackColor = System.Drawing.Color.Transparent;
-            this.panel1.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
-            this.panel1.BorderColor = System.Drawing.Color.Transparent;
-            this.panel1.Controls.Add(this.listView2);
-            this.panel1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.panel1.Location = new System.Drawing.Point(6, 65);
-            this.panel1.Name = "panel1";
-            this.panel1.Radius = 1;
-            this.panel1.ShadowDepth = 2F;
-            this.panel1.Size = new System.Drawing.Size(263, 115);
-            this.panel1.TabIndex = 9;
+            panel1.BackColor = System.Drawing.Color.Transparent;
+            panel1.Border = new System.Windows.Forms.Padding(0, 0, 0, 0);
+            panel1.BorderColor = System.Drawing.Color.Transparent;
+            panel1.Controls.Add(listView2);
+            panel1.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            panel1.Location = new System.Drawing.Point(6, 65);
+            panel1.Name = "panel1";
+            panel1.Radius = 1;
+            panel1.ShadowDepth = 2F;
+            panel1.Size = new System.Drawing.Size(263, 115);
+            panel1.TabIndex = 9;
             // 
             // listView2
             // 
-            this.listView2.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader5});
-            this.listView2.FullRowSelect = true;
-            this.listView2.Location = new System.Drawing.Point(10, 9);
-            this.listView2.Name = "listView2";
-            this.listView2.ShowItemToolTips = true;
-            this.listView2.Size = new System.Drawing.Size(240, 97);
-            this.listView2.TabIndex = 0;
-            this.listView2.UseCompatibleStateImageBehavior = false;
-            this.listView2.View = System.Windows.Forms.View.Details;
+            listView2.BackColor = System.Drawing.Color.White;
+            listView2.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] { columnHeader5 });
+            listView2.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            listView2.FullRowSelect = true;
+            listView2.Location = new System.Drawing.Point(10, 9);
+            listView2.Name = "listView2";
+            listView2.ShowItemToolTips = true;
+            listView2.Size = new System.Drawing.Size(240, 97);
+            listView2.TabIndex = 0;
+            listView2.UseCompatibleStateImageBehavior = false;
+            listView2.View = System.Windows.Forms.View.Details;
             // 
             // columnHeader5
             // 
-            this.columnHeader5.Width = 220;
+            columnHeader5.Width = 220;
             // 
             // comboBox1
             // 
-            this.comboBox1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.comboBox1.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboBox1.DropDownHeight = 100;
-            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.IntegralHeight = false;
-            this.comboBox1.ItemHeight = 17;
-            this.comboBox1.Items.AddRange(new object[] {
-            "asdfasdfasdfasdf",
-            "asdfasdfasd",
-            "asdfasdfasdfas",
-            "asdfxcvxzcvzx",
-            "1236afsdf"});
-            this.comboBox1.Location = new System.Drawing.Point(3, 26);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Radius = 5;
-            this.comboBox1.ShadowDepth = 0F;
-            this.comboBox1.Size = new System.Drawing.Size(269, 23);
-            this.comboBox1.TabIndex = 6;
+            comboBox1.Dock = System.Windows.Forms.DockStyle.Top;
+            comboBox1.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            comboBox1.DropDownHeight = 100;
+            comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBox1.FormattingEnabled = true;
+            comboBox1.IntegralHeight = false;
+            comboBox1.ItemHeight = 17;
+            comboBox1.Items.AddRange(new object[] { "asdfasdfasdfasdf", "asdfasdfasd", "asdfasdfasdfas", "asdfxcvxzcvzx", "1236afsdf" });
+            comboBox1.Location = new System.Drawing.Point(3, 26);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Radius = 5;
+            comboBox1.ShadowDepth = 0F;
+            comboBox1.Size = new System.Drawing.Size(269, 23);
+            comboBox1.TabIndex = 6;
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(19, 74);
-            this.textBox1.MaxLength = 32767;
-            this.textBox1.MultiLine = false;
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Radius = 2;
-            this.textBox1.Size = new System.Drawing.Size(134, 21);
-            this.textBox1.TabIndex = 47;
-            this.textBox1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
-            this.textBox1.UseSystemPasswordChar = false;
-            this.textBox1.TextChanged += new System.EventHandler(this.textBox1_TextChanged);
-            this.textBox1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.textBox1_KeyDown);
+            textBox1.Location = new System.Drawing.Point(19, 74);
+            textBox1.MaxLength = 32767;
+            textBox1.MultiLine = false;
+            textBox1.Name = "textBox1";
+            textBox1.Radius = 2;
+            textBox1.Size = new System.Drawing.Size(134, 21);
+            textBox1.TabIndex = 47;
+            textBox1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
+            textBox1.UseSystemPasswordChar = false;
+            textBox1.TextChanged += textBox1_TextChanged;
+            textBox1.KeyDown += textBox1_KeyDown;
             // 
             // button3
             // 
-            this.button3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.button3.Color = System.Drawing.Color.Maroon;
-            this.button3.ForeColor = System.Drawing.Color.White;
-            this.button3.Location = new System.Drawing.Point(218, 44);
-            this.button3.Name = "button3";
-            this.button3.Radius = 6;
-            this.button3.ShadowDepth = 2F;
-            this.button3.Size = new System.Drawing.Size(93, 23);
-            this.button3.TabIndex = 43;
-            this.button3.Text = "button1";
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            button3.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            button3.Color = System.Drawing.Color.Maroon;
+            button3.ForeColor = System.Drawing.Color.White;
+            button3.Location = new System.Drawing.Point(218, 44);
+            button3.Name = "button3";
+            button3.Radius = 6;
+            button3.ShadowDepth = 2F;
+            button3.Size = new System.Drawing.Size(93, 23);
+            button3.TabIndex = 43;
+            button3.Text = "button1";
+            button3.Click += button3_Click;
             // 
             // buttonDark
             // 
-            this.buttonDark.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.buttonDark.Color = System.Drawing.Color.RoyalBlue;
-            this.buttonDark.ForeColor = System.Drawing.Color.White;
-            this.buttonDark.Location = new System.Drawing.Point(19, 44);
-            this.buttonDark.Name = "buttonDark";
-            this.buttonDark.Radius = 6;
-            this.buttonDark.ShadowDepth = 2F;
-            this.buttonDark.Size = new System.Drawing.Size(93, 23);
-            this.buttonDark.TabIndex = 44;
-            this.buttonDark.Text = "Dark";
-            this.buttonDark.Click += new System.EventHandler(this.buttonDark_Click);
+            buttonDark.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            buttonDark.Color = System.Drawing.Color.RoyalBlue;
+            buttonDark.ForeColor = System.Drawing.Color.White;
+            buttonDark.Location = new System.Drawing.Point(19, 44);
+            buttonDark.Name = "buttonDark";
+            buttonDark.Radius = 6;
+            buttonDark.ShadowDepth = 2F;
+            buttonDark.Size = new System.Drawing.Size(93, 23);
+            buttonDark.TabIndex = 44;
+            buttonDark.Text = "Dark";
+            buttonDark.Click += buttonDark_Click;
             // 
             // buttonLight
             // 
-            this.buttonLight.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
-            this.buttonLight.Color = System.Drawing.Color.Transparent;
-            this.buttonLight.Location = new System.Drawing.Point(118, 44);
-            this.buttonLight.Name = "buttonLight";
-            this.buttonLight.Radius = 6;
-            this.buttonLight.ShadowDepth = 2F;
-            this.buttonLight.Size = new System.Drawing.Size(93, 23);
-            this.buttonLight.TabIndex = 46;
-            this.buttonLight.Text = "Light";
-            this.buttonLight.Click += new System.EventHandler(this.buttonLight_Click);
+            buttonLight.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            buttonLight.Color = System.Drawing.Color.Transparent;
+            buttonLight.Location = new System.Drawing.Point(118, 44);
+            buttonLight.Name = "buttonLight";
+            buttonLight.Radius = 6;
+            buttonLight.ShadowDepth = 2F;
+            buttonLight.Size = new System.Drawing.Size(93, 23);
+            buttonLight.TabIndex = 46;
+            buttonLight.Text = "Light";
+            buttonLight.Click += buttonLight_Click;
             // 
             // progressBar9
             // 
-            this.progressBar9.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar9.DrawHatch = true;
-            this.progressBar9.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Red,
-        System.Drawing.Color.Yellow};
-            this.progressBar9.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar9.Location = new System.Drawing.Point(256, 440);
-            this.progressBar9.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar9.Maximum = ((long)(1000));
-            this.progressBar9.MaxPercentShowValue = 100F;
-            this.progressBar9.Name = "progressBar9";
-            this.progressBar9.PercentIndices = 2;
-            this.progressBar9.Radius = 4;
-            this.progressBar9.ShowAsPercent = false;
-            this.progressBar9.ShowValue = true;
-            this.progressBar9.Size = new System.Drawing.Size(165, 25);
-            this.progressBar9.TabIndex = 41;
-            this.progressBar9.Text = "0 / 1000";
-            this.progressBar9.Value = ((long)(0));
+            progressBar9.BackColor = System.Drawing.Color.Transparent;
+            progressBar9.DrawHatch = true;
+            progressBar9.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Red, System.Drawing.Color.Yellow });
+            progressBar9.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar9.Location = new System.Drawing.Point(256, 440);
+            progressBar9.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar9.Maximum = 1000L;
+            progressBar9.MaxPercentShowValue = 100F;
+            progressBar9.Name = "progressBar9";
+            progressBar9.PercentIndices = 2;
+            progressBar9.Radius = 4;
+            progressBar9.ShowAsPercent = false;
+            progressBar9.ShowValue = true;
+            progressBar9.Size = new System.Drawing.Size(165, 25);
+            progressBar9.TabIndex = 41;
+            progressBar9.Text = "0 / 1000";
+            progressBar9.Value = 0L;
             // 
             // progressBar8
             // 
-            this.progressBar8.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar8.DrawHatch = true;
-            this.progressBar8.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Gold,
-        System.Drawing.Color.Yellow};
-            this.progressBar8.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar8.Location = new System.Drawing.Point(218, 385);
-            this.progressBar8.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar8.Maximum = ((long)(1000));
-            this.progressBar8.MaxPercentShowValue = 100F;
-            this.progressBar8.Name = "progressBar8";
-            this.progressBar8.PercentIndices = 2;
-            this.progressBar8.Radius = 4;
-            this.progressBar8.ShowAsPercent = false;
-            this.progressBar8.ShowValue = true;
-            this.progressBar8.Size = new System.Drawing.Size(179, 16);
-            this.progressBar8.TabIndex = 40;
-            this.progressBar8.Text = "777 / 1000";
-            this.progressBar8.Value = ((long)(777));
+            progressBar8.BackColor = System.Drawing.Color.Transparent;
+            progressBar8.DrawHatch = true;
+            progressBar8.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gold, System.Drawing.Color.Yellow });
+            progressBar8.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar8.Location = new System.Drawing.Point(218, 385);
+            progressBar8.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar8.Maximum = 1000L;
+            progressBar8.MaxPercentShowValue = 100F;
+            progressBar8.Name = "progressBar8";
+            progressBar8.PercentIndices = 2;
+            progressBar8.Radius = 4;
+            progressBar8.ShowAsPercent = false;
+            progressBar8.ShowValue = true;
+            progressBar8.Size = new System.Drawing.Size(179, 16);
+            progressBar8.TabIndex = 40;
+            progressBar8.Text = "777 / 1000";
+            progressBar8.Value = 777L;
             // 
             // progressBar4
             // 
-            this.progressBar4.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar4.DrawHatch = false;
-            this.progressBar4.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Gold,
-        System.Drawing.Color.Yellow};
-            this.progressBar4.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar4.Location = new System.Drawing.Point(16, 408);
-            this.progressBar4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar4.Maximum = ((long)(1000));
-            this.progressBar4.MaxPercentShowValue = 100F;
-            this.progressBar4.Name = "progressBar4";
-            this.progressBar4.PercentIndices = 2;
-            this.progressBar4.Radius = 4;
-            this.progressBar4.ShowAsPercent = false;
-            this.progressBar4.ShowValue = true;
-            this.progressBar4.Size = new System.Drawing.Size(179, 16);
-            this.progressBar4.TabIndex = 39;
-            this.progressBar4.Text = "777 / 1000";
-            this.progressBar4.Value = ((long)(777));
+            progressBar4.BackColor = System.Drawing.Color.Transparent;
+            progressBar4.DrawHatch = false;
+            progressBar4.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gold, System.Drawing.Color.Yellow });
+            progressBar4.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar4.Location = new System.Drawing.Point(16, 408);
+            progressBar4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar4.Maximum = 1000L;
+            progressBar4.MaxPercentShowValue = 100F;
+            progressBar4.Name = "progressBar4";
+            progressBar4.PercentIndices = 2;
+            progressBar4.Radius = 4;
+            progressBar4.ShowAsPercent = false;
+            progressBar4.ShowValue = true;
+            progressBar4.Size = new System.Drawing.Size(179, 16);
+            progressBar4.TabIndex = 39;
+            progressBar4.Text = "777 / 1000";
+            progressBar4.Value = 777L;
             // 
             // progressBar7
             // 
-            this.progressBar7.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar7.DrawHatch = false;
-            this.progressBar7.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.DarkGreen,
-        System.Drawing.Color.Lime};
-            this.progressBar7.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar7.Location = new System.Drawing.Point(218, 363);
-            this.progressBar7.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar7.Maximum = ((long)(1000));
-            this.progressBar7.MaxPercentShowValue = 99.99F;
-            this.progressBar7.Name = "progressBar7";
-            this.progressBar7.PercentIndices = 2;
-            this.progressBar7.Radius = 4;
-            this.progressBar7.ShowAsPercent = true;
-            this.progressBar7.ShowValue = true;
-            this.progressBar7.Size = new System.Drawing.Size(179, 16);
-            this.progressBar7.TabIndex = 38;
-            this.progressBar7.Text = "99.99%";
-            this.progressBar7.Value = ((long)(1000));
+            progressBar7.BackColor = System.Drawing.Color.Transparent;
+            progressBar7.DrawHatch = false;
+            progressBar7.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.DarkGreen, System.Drawing.Color.Lime });
+            progressBar7.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar7.Location = new System.Drawing.Point(218, 363);
+            progressBar7.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar7.Maximum = 1000L;
+            progressBar7.MaxPercentShowValue = 99.99F;
+            progressBar7.Name = "progressBar7";
+            progressBar7.PercentIndices = 2;
+            progressBar7.Radius = 4;
+            progressBar7.ShowAsPercent = true;
+            progressBar7.ShowValue = true;
+            progressBar7.Size = new System.Drawing.Size(179, 16);
+            progressBar7.TabIndex = 38;
+            progressBar7.Text = "99.99%";
+            progressBar7.Value = 1000L;
             // 
             // progressBar3
             // 
-            this.progressBar3.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar3.DrawHatch = false;
-            this.progressBar3.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.DarkGreen,
-        System.Drawing.Color.Lime};
-            this.progressBar3.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar3.Location = new System.Drawing.Point(16, 386);
-            this.progressBar3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar3.Maximum = ((long)(1000));
-            this.progressBar3.MaxPercentShowValue = 100F;
-            this.progressBar3.Name = "progressBar3";
-            this.progressBar3.PercentIndices = 2;
-            this.progressBar3.Radius = 4;
-            this.progressBar3.ShowAsPercent = true;
-            this.progressBar3.ShowValue = true;
-            this.progressBar3.Size = new System.Drawing.Size(179, 16);
-            this.progressBar3.TabIndex = 37;
-            this.progressBar3.Text = "62.30%";
-            this.progressBar3.Value = ((long)(623));
+            progressBar3.BackColor = System.Drawing.Color.Transparent;
+            progressBar3.DrawHatch = false;
+            progressBar3.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.DarkGreen, System.Drawing.Color.Lime });
+            progressBar3.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar3.Location = new System.Drawing.Point(16, 386);
+            progressBar3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar3.Maximum = 1000L;
+            progressBar3.MaxPercentShowValue = 100F;
+            progressBar3.Name = "progressBar3";
+            progressBar3.PercentIndices = 2;
+            progressBar3.Radius = 4;
+            progressBar3.ShowAsPercent = true;
+            progressBar3.ShowValue = true;
+            progressBar3.Size = new System.Drawing.Size(179, 16);
+            progressBar3.TabIndex = 37;
+            progressBar3.Text = "62.30%";
+            progressBar3.Value = 623L;
             // 
             // progressBar6
             // 
-            this.progressBar6.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar6.DrawHatch = false;
-            this.progressBar6.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.MidnightBlue,
-        System.Drawing.Color.RoyalBlue};
-            this.progressBar6.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar6.Location = new System.Drawing.Point(218, 341);
-            this.progressBar6.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar6.Maximum = ((long)(100));
-            this.progressBar6.MaxPercentShowValue = 100F;
-            this.progressBar6.Name = "progressBar6";
-            this.progressBar6.PercentIndices = 2;
-            this.progressBar6.Radius = 4;
-            this.progressBar6.ShowAsPercent = false;
-            this.progressBar6.ShowValue = true;
-            this.progressBar6.Size = new System.Drawing.Size(179, 16);
-            this.progressBar6.TabIndex = 36;
-            this.progressBar6.Text = "33 / 100";
-            this.progressBar6.Value = ((long)(33));
+            progressBar6.BackColor = System.Drawing.Color.Transparent;
+            progressBar6.DrawHatch = false;
+            progressBar6.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.MidnightBlue, System.Drawing.Color.RoyalBlue });
+            progressBar6.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar6.Location = new System.Drawing.Point(218, 341);
+            progressBar6.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar6.Maximum = 100L;
+            progressBar6.MaxPercentShowValue = 100F;
+            progressBar6.Name = "progressBar6";
+            progressBar6.PercentIndices = 2;
+            progressBar6.Radius = 4;
+            progressBar6.ShowAsPercent = false;
+            progressBar6.ShowValue = true;
+            progressBar6.Size = new System.Drawing.Size(179, 16);
+            progressBar6.TabIndex = 36;
+            progressBar6.Text = "33 / 100";
+            progressBar6.Value = 33L;
             // 
             // progressBar2
             // 
-            this.progressBar2.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar2.DrawHatch = false;
-            this.progressBar2.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.MidnightBlue,
-        System.Drawing.Color.RoyalBlue};
-            this.progressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar2.Location = new System.Drawing.Point(16, 364);
-            this.progressBar2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar2.Maximum = ((long)(100));
-            this.progressBar2.MaxPercentShowValue = 100F;
-            this.progressBar2.Name = "progressBar2";
-            this.progressBar2.PercentIndices = 2;
-            this.progressBar2.Radius = 4;
-            this.progressBar2.ShowAsPercent = true;
-            this.progressBar2.ShowValue = true;
-            this.progressBar2.Size = new System.Drawing.Size(179, 16);
-            this.progressBar2.TabIndex = 35;
-            this.progressBar2.Text = "33.00%";
-            this.progressBar2.Value = ((long)(33));
+            progressBar2.BackColor = System.Drawing.Color.Transparent;
+            progressBar2.DrawHatch = false;
+            progressBar2.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.MidnightBlue, System.Drawing.Color.RoyalBlue });
+            progressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar2.Location = new System.Drawing.Point(16, 364);
+            progressBar2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar2.Maximum = 100L;
+            progressBar2.MaxPercentShowValue = 100F;
+            progressBar2.Name = "progressBar2";
+            progressBar2.PercentIndices = 2;
+            progressBar2.Radius = 4;
+            progressBar2.ShowAsPercent = true;
+            progressBar2.ShowValue = true;
+            progressBar2.Size = new System.Drawing.Size(179, 16);
+            progressBar2.TabIndex = 35;
+            progressBar2.Text = "33.00%";
+            progressBar2.Value = 33L;
             // 
             // progressBar1
             // 
-            this.progressBar1.BackColor = System.Drawing.Color.Transparent;
-            this.progressBar1.DrawHatch = false;
-            this.progressBar1.Gradient = new System.Drawing.Color[] {
-        System.Drawing.Color.Maroon,
-        System.Drawing.Color.Red};
-            this.progressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            this.progressBar1.Location = new System.Drawing.Point(16, 342);
-            this.progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.progressBar1.Maximum = ((long)(100));
-            this.progressBar1.MaxPercentShowValue = 100F;
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.PercentIndices = 2;
-            this.progressBar1.Radius = 4;
-            this.progressBar1.ShowAsPercent = true;
-            this.progressBar1.ShowValue = true;
-            this.progressBar1.Size = new System.Drawing.Size(179, 16);
-            this.progressBar1.TabIndex = 42;
-            this.progressBar1.Text = "70.00%";
-            this.progressBar1.Value = ((long)(70));
+            progressBar1.BackColor = System.Drawing.Color.Transparent;
+            progressBar1.DrawHatch = false;
+            progressBar1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            progressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+            progressBar1.Location = new System.Drawing.Point(16, 342);
+            progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            progressBar1.Maximum = 100L;
+            progressBar1.MaxPercentShowValue = 100F;
+            progressBar1.Name = "progressBar1";
+            progressBar1.PercentIndices = 2;
+            progressBar1.Radius = 4;
+            progressBar1.ShowAsPercent = true;
+            progressBar1.ShowValue = true;
+            progressBar1.Size = new System.Drawing.Size(179, 16);
+            progressBar1.TabIndex = 42;
+            progressBar1.Text = "70.00%";
+            progressBar1.Value = 70L;
             // 
             // separator2
             // 
-            this.separator2.IsVertical = false;
-            this.separator2.Location = new System.Drawing.Point(4, 6);
-            this.separator2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.separator2.Name = "separator2";
-            this.separator2.Size = new System.Drawing.Size(307, 2);
-            this.separator2.TabIndex = 34;
-            this.separator2.Text = "separator1";
+            separator2.IsVertical = false;
+            separator2.Location = new System.Drawing.Point(4, 6);
+            separator2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            separator2.Name = "separator2";
+            separator2.Size = new System.Drawing.Size(307, 2);
+            separator2.TabIndex = 34;
+            separator2.Text = "separator1";
             // 
             // separator1
             // 
-            this.separator1.IsVertical = true;
-            this.separator1.Location = new System.Drawing.Point(4, 14);
-            this.separator1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
-            this.separator1.Name = "separator1";
-            this.separator1.Size = new System.Drawing.Size(2, 222);
-            this.separator1.TabIndex = 75;
-            this.separator1.Text = "separator1";
+            separator1.IsVertical = true;
+            separator1.Location = new System.Drawing.Point(4, 14);
+            separator1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
+            separator1.Name = "separator1";
+            separator1.Size = new System.Drawing.Size(2, 222);
+            separator1.TabIndex = 75;
+            separator1.Text = "separator1";
             // 
             // GeneralPage
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.separator1);
-            this.Controls.Add(this.rsButton1);
-            this.Controls.Add(this.button6);
-            this.Controls.Add(this.groupBox4);
-            this.Controls.Add(this.comboBox6);
-            this.Controls.Add(this.trackBar2);
-            this.Controls.Add(this.comboBox5);
-            this.Controls.Add(this.trackBar1);
-            this.Controls.Add(this.buttonOpenInputDialog);
-            this.Controls.Add(this.buttonRandomColor);
-            this.Controls.Add(this.label4);
-            this.Controls.Add(this.button5);
-            this.Controls.Add(this.groupBox3);
-            this.Controls.Add(this.radio2);
-            this.Controls.Add(this.radio1);
-            this.Controls.Add(this.checkBox6);
-            this.Controls.Add(this.checkBox2);
-            this.Controls.Add(this.checkBox1);
-            this.Controls.Add(this.panel6);
-            this.Controls.Add(this.panel5);
-            this.Controls.Add(this.panel8);
-            this.Controls.Add(this.panel7);
-            this.Controls.Add(this.panel4);
-            this.Controls.Add(this.label2);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.panel2);
-            this.Controls.Add(this.comboBox2);
-            this.Controls.Add(this.groupBox2);
-            this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.button3);
-            this.Controls.Add(this.buttonDark);
-            this.Controls.Add(this.buttonLight);
-            this.Controls.Add(this.progressBar9);
-            this.Controls.Add(this.progressBar8);
-            this.Controls.Add(this.progressBar4);
-            this.Controls.Add(this.progressBar7);
-            this.Controls.Add(this.progressBar3);
-            this.Controls.Add(this.progressBar6);
-            this.Controls.Add(this.progressBar2);
-            this.Controls.Add(this.progressBar1);
-            this.Controls.Add(this.separator2);
-            this.Name = "GeneralPage";
-            this.Size = new System.Drawing.Size(1262, 587);
-            ((System.ComponentModel.ISupportInitialize)(this.trackBar2)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
-            this.groupBox3.ResumeLayout(false);
-            this.panel8.ResumeLayout(false);
-            this.panel8.PerformLayout();
-            this.panel2.ResumeLayout(false);
-            this.panel3.ResumeLayout(false);
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox1.ResumeLayout(false);
-            this.panel1.ResumeLayout(false);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(separator1);
+            Controls.Add(rsButton1);
+            Controls.Add(button6);
+            Controls.Add(groupBox4);
+            Controls.Add(comboBox6);
+            Controls.Add(trackBar2);
+            Controls.Add(comboBox5);
+            Controls.Add(trackBar1);
+            Controls.Add(buttonOpenInputDialog);
+            Controls.Add(buttonRandomColor);
+            Controls.Add(label4);
+            Controls.Add(button5);
+            Controls.Add(groupBox3);
+            Controls.Add(radio2);
+            Controls.Add(radio1);
+            Controls.Add(checkBox6);
+            Controls.Add(checkBox2);
+            Controls.Add(checkBox1);
+            Controls.Add(panel6);
+            Controls.Add(panel5);
+            Controls.Add(panel8);
+            Controls.Add(panel7);
+            Controls.Add(panel4);
+            Controls.Add(label2);
+            Controls.Add(label1);
+            Controls.Add(panel2);
+            Controls.Add(comboBox2);
+            Controls.Add(groupBox2);
+            Controls.Add(groupBox1);
+            Controls.Add(textBox1);
+            Controls.Add(button3);
+            Controls.Add(buttonDark);
+            Controls.Add(buttonLight);
+            Controls.Add(progressBar9);
+            Controls.Add(progressBar8);
+            Controls.Add(progressBar4);
+            Controls.Add(progressBar7);
+            Controls.Add(progressBar3);
+            Controls.Add(progressBar6);
+            Controls.Add(progressBar2);
+            Controls.Add(progressBar1);
+            Controls.Add(separator2);
+            Name = "GeneralPage";
+            Size = new System.Drawing.Size(1262, 587);
+            ((System.ComponentModel.ISupportInitialize)trackBar2).EndInit();
+            ((System.ComponentModel.ISupportInitialize)trackBar1).EndInit();
+            groupBox3.ResumeLayout(false);
+            panel8.ResumeLayout(false);
+            panel8.PerformLayout();
+            panel2.ResumeLayout(false);
+            panel3.ResumeLayout(false);
+            groupBox2.ResumeLayout(false);
+            groupBox1.ResumeLayout(false);
+            panel1.ResumeLayout(false);
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion

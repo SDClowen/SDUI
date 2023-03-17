@@ -128,11 +128,9 @@ public static class WindowsHelper
     {
         if (IsTen || IsEleven)
         {
-            var attribute = DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
+            var attribute = DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1;
             if (BuildInfo.BuildNumber > 18980)
-            {
-                attribute = DWMWA_USE_IMMERSIVE_DARK_MODE;
-            }
+                attribute = DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE;
 
             if (enabled)
             {
@@ -146,9 +144,33 @@ public static class WindowsHelper
 
             //AllowDarkModeForWindow(handle, true);
             //return true;
-            return DwmSetWindowAttribute(handle, (int)attribute, ref useImmersiveDarkMode, sizeof(int)) == 0;
+            return DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(uint)) == 0;
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Apply round corner to the hWnd
+    /// </summary>
+    /// <param name="hWnd">The control hwnd</param>
+    public static void ApplyRoundCorner(IntPtr hWnd)
+    {
+        var dwAttribute = DWMWINDOWATTRIBUTE.DWMWA_WINDOW_CORNER_PREFERENCE;
+        var pvAttribute = DWM_WINDOW_CORNER_PREFERENCE.DWMWCP_ROUND;
+        DwmSetWindowAttribute(hWnd, dwAttribute, ref pvAttribute, sizeof(uint));
+    }
+
+    /// <summary>
+    /// Apply border color to the hWnd control
+    /// </summary>
+    /// <param name="hWnd">The control</param>
+    /// <param name="color">The color</param>
+    public static void ApplyBorderColor(IntPtr hWnd, int color = 0x74a5b6)
+    {
+        var pvAttribute = color;
+        var dwAttribute = DWMWINDOWATTRIBUTE.DWMWA_BORDER_COLOR;
+
+        DwmSetWindowAttribute(hWnd, dwAttribute, ref pvAttribute, sizeof(int));
     }
 }

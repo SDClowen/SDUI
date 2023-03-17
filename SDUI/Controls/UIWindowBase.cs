@@ -135,9 +135,7 @@ public class UIWindowBase : Form
     {
         base.OnHandleCreated(e);
 
-        var attribute = (int)DWMWINDOWATTRIBUTE.DWMWA_WINDOW_CORNER_PREFERENCE;
-        var preference = (int)DWM_WINDOW_CORNER_PREFERENCE.DWMWCP_ROUND;
-        DwmSetWindowAttribute(this.Handle, attribute, ref preference, sizeof(uint));
+        WindowsHelper.ApplyRoundCorner(this.Handle);
     }
 
     protected override void OnBackColorChanged(EventArgs e)
@@ -153,7 +151,8 @@ public class UIWindowBase : Form
         if (_aeroEnabled)
         {
             var v = 2;
-            DwmSetWindowAttribute(Handle, 2, ref v, 4);
+
+            DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
             var margins = new MARGINS()
             {
                 Bottom = 1,
@@ -175,7 +174,7 @@ public class UIWindowBase : Form
         var flag = DWMSBT_TABBEDWINDOW;
         DwmSetWindowAttribute(
             Handle,
-            DWMWA_SYSTEMBACKDROP_TYPE,
+            DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
             ref flag,
             sizeof(int));
     }

@@ -1,4 +1,5 @@
 ﻿using SDUI.Controls;
+using SDUI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -98,7 +99,7 @@ namespace SDUI.Test
             fontDialog.ShowColor = true;
             fontDialog.ShowApply = true;
             fontDialog.Apply += FontDialog_Apply;
-            if (fontDialog.ShowDialog() == DialogResult.OK)    
+            if (fontDialog.ShowDialog() == DialogResult.OK)
             {
                 parent.TitleFont = fontDialog.Font;
                 parent.Invalidate();

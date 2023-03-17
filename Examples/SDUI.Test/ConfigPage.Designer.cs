@@ -28,175 +28,170 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.buttonSelectColor = new SDUI.Controls.Button();
-            this.comboBoxHatchType = new SDUI.Controls.ComboBox();
-            this.checkBoxDrawFullHatch = new SDUI.Controls.CheckBox();
-            this.numTitleHeight = new SDUI.Controls.NumUpDown();
-            this.numIconWidth = new SDUI.Controls.NumUpDown();
-            this.label5 = new SDUI.Controls.Label();
-            this.label6 = new SDUI.Controls.Label();
-            this.buttonSelectFont = new SDUI.Controls.Button();
-            this.SuspendLayout();
+            buttonSelectColor = new Controls.Button();
+            comboBoxHatchType = new Controls.ComboBox();
+            checkBoxDrawFullHatch = new Controls.CheckBox();
+            numTitleHeight = new Controls.NumUpDown();
+            numIconWidth = new Controls.NumUpDown();
+            label5 = new Controls.Label();
+            label6 = new Controls.Label();
+            buttonSelectFont = new Controls.Button();
+            label1 = new Controls.Label();
+            SuspendLayout();
             // 
             // buttonSelectColor
             // 
-            this.buttonSelectColor.Color = System.Drawing.Color.Navy;
-            this.buttonSelectColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.buttonSelectColor.ForeColor = System.Drawing.Color.White;
-            this.buttonSelectColor.Location = new System.Drawing.Point(252, 124);
-            this.buttonSelectColor.Name = "buttonSelectColor";
-            this.buttonSelectColor.Radius = 6;
-            this.buttonSelectColor.ShadowDepth = 4F;
-            this.buttonSelectColor.Size = new System.Drawing.Size(103, 27);
-            this.buttonSelectColor.TabIndex = 46;
-            this.buttonSelectColor.Text = "Select Color";
-            this.buttonSelectColor.UseVisualStyleBackColor = true;
-            this.buttonSelectColor.Click += new System.EventHandler(this.buttonSelectColor_Click);
+            buttonSelectColor.Color = System.Drawing.Color.Navy;
+            buttonSelectColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            buttonSelectColor.ForeColor = System.Drawing.Color.White;
+            buttonSelectColor.Location = new System.Drawing.Point(252, 124);
+            buttonSelectColor.Name = "buttonSelectColor";
+            buttonSelectColor.Radius = 6;
+            buttonSelectColor.ShadowDepth = 4F;
+            buttonSelectColor.Size = new System.Drawing.Size(103, 27);
+            buttonSelectColor.TabIndex = 46;
+            buttonSelectColor.Text = "Select Color";
+            buttonSelectColor.UseVisualStyleBackColor = true;
+            buttonSelectColor.Click += buttonSelectColor_Click;
             // 
             // comboBoxHatchType
             // 
-            this.comboBoxHatchType.BackColor = System.Drawing.Color.Transparent;
-            this.comboBoxHatchType.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
-            this.comboBoxHatchType.DropDownHeight = 100;
-            this.comboBoxHatchType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.comboBoxHatchType.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(75)))), ((int)(((byte)(85)))), ((int)(((byte)(91)))));
-            this.comboBoxHatchType.FormattingEnabled = true;
-            this.comboBoxHatchType.IntegralHeight = false;
-            this.comboBoxHatchType.ItemHeight = 16;
-            this.comboBoxHatchType.Location = new System.Drawing.Point(171, 44);
-            this.comboBoxHatchType.Name = "comboBoxHatchType";
-            this.comboBoxHatchType.Radius = 5;
-            this.comboBoxHatchType.ShadowDepth = 4F;
-            this.comboBoxHatchType.Size = new System.Drawing.Size(121, 22);
-            this.comboBoxHatchType.TabIndex = 42;
-            this.comboBoxHatchType.SelectedIndexChanged += new System.EventHandler(this.comboBoxHatchType_SelectedIndexChanged);
+            comboBoxHatchType.BackColor = System.Drawing.Color.Transparent;
+            comboBoxHatchType.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+            comboBoxHatchType.DropDownHeight = 100;
+            comboBoxHatchType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBoxHatchType.ForeColor = System.Drawing.Color.FromArgb(75, 85, 91);
+            comboBoxHatchType.FormattingEnabled = true;
+            comboBoxHatchType.IntegralHeight = false;
+            comboBoxHatchType.ItemHeight = 16;
+            comboBoxHatchType.Location = new System.Drawing.Point(171, 44);
+            comboBoxHatchType.Name = "comboBoxHatchType";
+            comboBoxHatchType.Radius = 5;
+            comboBoxHatchType.ShadowDepth = 4F;
+            comboBoxHatchType.Size = new System.Drawing.Size(121, 22);
+            comboBoxHatchType.TabIndex = 42;
+            comboBoxHatchType.SelectedIndexChanged += comboBoxHatchType_SelectedIndexChanged;
             // 
             // checkBoxDrawFullHatch
             // 
-            this.checkBoxDrawFullHatch.AutoSize = true;
-            this.checkBoxDrawFullHatch.BackColor = System.Drawing.Color.Transparent;
-            this.checkBoxDrawFullHatch.Depth = 0;
-            this.checkBoxDrawFullHatch.Location = new System.Drawing.Point(295, 40);
-            this.checkBoxDrawFullHatch.Margin = new System.Windows.Forms.Padding(0);
-            this.checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
-            this.checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
-            this.checkBoxDrawFullHatch.Ripple = true;
-            this.checkBoxDrawFullHatch.Size = new System.Drawing.Size(111, 30);
-            this.checkBoxDrawFullHatch.TabIndex = 45;
-            this.checkBoxDrawFullHatch.Text = "Draw full hatch";
-            this.checkBoxDrawFullHatch.UseVisualStyleBackColor = true;
-            this.checkBoxDrawFullHatch.CheckedChanged += new System.EventHandler(this.checkBoxDrawFullHatch_CheckedChanged);
+            checkBoxDrawFullHatch.AutoSize = true;
+            checkBoxDrawFullHatch.BackColor = System.Drawing.Color.Transparent;
+            checkBoxDrawFullHatch.Depth = 0;
+            checkBoxDrawFullHatch.Location = new System.Drawing.Point(295, 40);
+            checkBoxDrawFullHatch.Margin = new System.Windows.Forms.Padding(0);
+            checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
+            checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
+            checkBoxDrawFullHatch.Ripple = true;
+            checkBoxDrawFullHatch.Size = new System.Drawing.Size(111, 30);
+            checkBoxDrawFullHatch.TabIndex = 45;
+            checkBoxDrawFullHatch.Text = "Draw full hatch";
+            checkBoxDrawFullHatch.UseVisualStyleBackColor = true;
+            checkBoxDrawFullHatch.CheckedChanged += checkBoxDrawFullHatch_CheckedChanged;
             // 
             // numTitleHeight
             // 
-            this.numTitleHeight.BackColor = System.Drawing.Color.Transparent;
-            this.numTitleHeight.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.numTitleHeight.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(76)))), ((int)(((byte)(76)))), ((int)(((byte)(76)))));
-            this.numTitleHeight.Location = new System.Drawing.Point(468, 84);
-            this.numTitleHeight.Maximum = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            this.numTitleHeight.Minimum = new decimal(new int[] {
-            31,
-            0,
-            0,
-            0});
-            this.numTitleHeight.MinimumSize = new System.Drawing.Size(80, 25);
-            this.numTitleHeight.Name = "numTitleHeight";
-            this.numTitleHeight.Size = new System.Drawing.Size(80, 25);
-            this.numTitleHeight.TabIndex = 40;
-            this.numTitleHeight.Text = "rsNumericUpDown1";
-            this.numTitleHeight.Value = new decimal(new int[] {
-            31,
-            0,
-            0,
-            0});
-            this.numTitleHeight.ValueChanged += new System.EventHandler(this.numTitleHeight_ValueChanged);
+            numTitleHeight.BackColor = System.Drawing.Color.Transparent;
+            numTitleHeight.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            numTitleHeight.ForeColor = System.Drawing.Color.FromArgb(76, 76, 76);
+            numTitleHeight.Location = new System.Drawing.Point(468, 84);
+            numTitleHeight.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+            numTitleHeight.Minimum = new decimal(new int[] { 31, 0, 0, 0 });
+            numTitleHeight.MinimumSize = new System.Drawing.Size(80, 25);
+            numTitleHeight.Name = "numTitleHeight";
+            numTitleHeight.Size = new System.Drawing.Size(80, 25);
+            numTitleHeight.TabIndex = 40;
+            numTitleHeight.Text = "rsNumericUpDown1";
+            numTitleHeight.Value = new decimal(new int[] { 31, 0, 0, 0 });
+            numTitleHeight.ValueChanged += numTitleHeight_ValueChanged;
             // 
             // numIconWidth
             // 
-            this.numIconWidth.BackColor = System.Drawing.Color.Transparent;
-            this.numIconWidth.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.numIconWidth.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(76)))), ((int)(((byte)(76)))), ((int)(((byte)(76)))));
-            this.numIconWidth.Location = new System.Drawing.Point(251, 84);
-            this.numIconWidth.Maximum = new decimal(new int[] {
-            100,
-            0,
-            0,
-            0});
-            this.numIconWidth.Minimum = new decimal(new int[] {
-            32,
-            0,
-            0,
-            0});
-            this.numIconWidth.MinimumSize = new System.Drawing.Size(80, 25);
-            this.numIconWidth.Name = "numIconWidth";
-            this.numIconWidth.Size = new System.Drawing.Size(80, 25);
-            this.numIconWidth.TabIndex = 41;
-            this.numIconWidth.Text = "rsNumericUpDown1";
-            this.numIconWidth.Value = new decimal(new int[] {
-            41,
-            0,
-            0,
-            0});
-            this.numIconWidth.ValueChanged += new System.EventHandler(this.numIconWidth_ValueChanged);
+            numIconWidth.BackColor = System.Drawing.Color.Transparent;
+            numIconWidth.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            numIconWidth.ForeColor = System.Drawing.Color.FromArgb(76, 76, 76);
+            numIconWidth.Location = new System.Drawing.Point(251, 84);
+            numIconWidth.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+            numIconWidth.Minimum = new decimal(new int[] { 32, 0, 0, 0 });
+            numIconWidth.MinimumSize = new System.Drawing.Size(80, 25);
+            numIconWidth.Name = "numIconWidth";
+            numIconWidth.Size = new System.Drawing.Size(80, 25);
+            numIconWidth.TabIndex = 41;
+            numIconWidth.Text = "rsNumericUpDown1";
+            numIconWidth.Value = new decimal(new int[] { 41, 0, 0, 0 });
+            numIconWidth.ValueChanged += numIconWidth_ValueChanged;
             // 
             // label5
             // 
-            this.label5.AutoSize = true;
-            this.label5.BackColor = System.Drawing.Color.Transparent;
-            this.label5.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.label5.Location = new System.Drawing.Point(171, 90);
-            this.label5.Name = "label5";
-            this.label5.Size = new System.Drawing.Size(65, 15);
-            this.label5.TabIndex = 43;
-            this.label5.Text = "IconWidth:";
+            label5.ApplyGradient = false;
+            label5.AutoSize = true;
+            label5.BackColor = System.Drawing.Color.Transparent;
+            label5.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label5.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
+            label5.Location = new System.Drawing.Point(171, 90);
+            label5.Name = "label5";
+            label5.Size = new System.Drawing.Size(65, 15);
+            label5.TabIndex = 43;
+            label5.Text = "IconWidth:";
             // 
             // label6
             // 
-            this.label6.AutoSize = true;
-            this.label6.BackColor = System.Drawing.Color.Transparent;
-            this.label6.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.label6.Location = new System.Drawing.Point(391, 90);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(71, 15);
-            this.label6.TabIndex = 44;
-            this.label6.Text = "Title Height:";
+            label6.ApplyGradient = false;
+            label6.AutoSize = true;
+            label6.BackColor = System.Drawing.Color.Transparent;
+            label6.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label6.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
+            label6.Location = new System.Drawing.Point(391, 90);
+            label6.Name = "label6";
+            label6.Size = new System.Drawing.Size(71, 15);
+            label6.TabIndex = 44;
+            label6.Text = "Title Height:";
             // 
             // buttonSelectFont
             // 
-            this.buttonSelectFont.Color = System.Drawing.Color.RosyBrown;
-            this.buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            this.buttonSelectFont.ForeColor = System.Drawing.Color.White;
-            this.buttonSelectFont.Location = new System.Drawing.Point(152, 124);
-            this.buttonSelectFont.Name = "buttonSelectFont";
-            this.buttonSelectFont.Radius = 8;
-            this.buttonSelectFont.ShadowDepth = 0F;
-            this.buttonSelectFont.Size = new System.Drawing.Size(94, 27);
-            this.buttonSelectFont.TabIndex = 47;
-            this.buttonSelectFont.Text = "Select Font";
-            this.buttonSelectFont.UseVisualStyleBackColor = true;
-            this.buttonSelectFont.Click += new System.EventHandler(this.buttonSelectFont_Click);
+            buttonSelectFont.Color = System.Drawing.Color.RosyBrown;
+            buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            buttonSelectFont.ForeColor = System.Drawing.Color.White;
+            buttonSelectFont.Location = new System.Drawing.Point(152, 124);
+            buttonSelectFont.Name = "buttonSelectFont";
+            buttonSelectFont.Radius = 8;
+            buttonSelectFont.ShadowDepth = 0F;
+            buttonSelectFont.Size = new System.Drawing.Size(94, 27);
+            buttonSelectFont.TabIndex = 47;
+            buttonSelectFont.Text = "Select Font";
+            buttonSelectFont.UseVisualStyleBackColor = true;
+            buttonSelectFont.Click += buttonSelectFont_Click;
+            // 
+            // label1
+            // 
+            label1.ApplyGradient = true;
+            label1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            label1.Font = new System.Drawing.Font("Segoe UI Semibold", 129.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            label1.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.FromArgb(0, 165, 178), System.Drawing.Color.FromArgb(40, 50, 212), System.Drawing.Color.FromArgb(114, 9, 212) });
+            label1.Location = new System.Drawing.Point(0, 355);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(791, 229);
+            label1.TabIndex = 48;
+            label1.Text = "SDUI";
+            label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // ConfigPage
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.Controls.Add(this.buttonSelectFont);
-            this.Controls.Add(this.buttonSelectColor);
-            this.Controls.Add(this.comboBoxHatchType);
-            this.Controls.Add(this.checkBoxDrawFullHatch);
-            this.Controls.Add(this.numTitleHeight);
-            this.Controls.Add(this.numIconWidth);
-            this.Controls.Add(this.label5);
-            this.Controls.Add(this.label6);
-            this.Name = "ConfigPage";
-            this.Size = new System.Drawing.Size(791, 584);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(label1);
+            Controls.Add(buttonSelectFont);
+            Controls.Add(buttonSelectColor);
+            Controls.Add(comboBoxHatchType);
+            Controls.Add(checkBoxDrawFullHatch);
+            Controls.Add(numTitleHeight);
+            Controls.Add(numIconWidth);
+            Controls.Add(label5);
+            Controls.Add(label6);
+            Name = "ConfigPage";
+            Size = new System.Drawing.Size(791, 584);
+            ResumeLayout(false);
+            PerformLayout();
         }
 
         #endregion
@@ -209,5 +204,6 @@
         private Controls.Label label5;
         private Controls.Label label6;
         private Controls.Button buttonSelectFont;
+        private Controls.Label label1;
     }
 }

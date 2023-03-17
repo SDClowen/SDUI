@@ -1,8 +1,15 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Text;
+using System.Windows.Forms;
 
 public static class DrawingExtensions
 {
+    private static readonly ContentAlignment anyRight = ContentAlignment.TopRight | ContentAlignment.MiddleRight | ContentAlignment.BottomRight;
+    private static readonly ContentAlignment anyBottom = ContentAlignment.BottomLeft | ContentAlignment.BottomCenter | ContentAlignment.BottomRight;
+    private static readonly ContentAlignment anyCenter = ContentAlignment.TopCenter | ContentAlignment.MiddleCenter | ContentAlignment.BottomCenter;
+    private static readonly ContentAlignment anyMiddle = ContentAlignment.MiddleLeft | ContentAlignment.MiddleCenter | ContentAlignment.MiddleRight;
+
     public static bool InRegion(this Point point, Region region)
     {
         return region.IsVisible(point);
@@ -167,5 +174,70 @@ public static class DrawingExtensions
                     graphics.DrawPath(pen, rectPath);
             }
         }
+    }
+
+    internal static StringAlignment TranslateAlignment(ContentAlignment align)
+    {
+        StringAlignment result;
+        if ((align & anyRight) != 0)
+            result = StringAlignment.Far;
+        else if ((align & anyCenter) != 0)
+            result = StringAlignment.Center;
+        else
+            result = StringAlignment.Near;
+        return result;
+    }
+    internal static StringAlignment TranslateLineAlignment(ContentAlignment align)
+    {
+        StringAlignment result;
+        if ((align & anyBottom) != 0)
+        {
+            result = StringAlignment.Far;
+        }
+        else if ((align & anyMiddle) != 0)
+        {
+            result = StringAlignment.Center;
+        }
+        else
+        {
+            result = StringAlignment.Near;
+        }
+        return result;
+    }
+
+    internal static StringFormat StringFormatForAlignment(System.Drawing.ContentAlignment align)
+    {
+        return new StringFormat { Alignment = TranslateAlignment(align), LineAlignment = TranslateLineAlignment(align) };
+    }
+
+    internal static StringFormat CreateStringFormat(this Control ctl, System.Drawing.ContentAlignment textAlign, bool showEllipsis, bool useMnemonic)
+    {
+        StringFormat format = StringFormatForAlignment(textAlign);
+        if (ctl.RightToLeft == RightToLeft.Yes)
+        {
+            format.FormatFlags |= StringFormatFlags.DirectionRightToLeft;
+        }
+        if (showEllipsis)
+        {
+            format.Trimming = StringTrimming.EllipsisCharacter;
+            format.FormatFlags |= StringFormatFlags.LineLimit;
+        }
+        if (!useMnemonic)
+        {
+            format.HotkeyPrefix = HotkeyPrefix.None;
+        }
+        /*else if (ctl.ShowKeyboardCues)
+        {
+            format.HotkeyPrefix = HotkeyPrefix.Show;
+        }*/
+        else
+        {
+            format.HotkeyPrefix = HotkeyPrefix.Hide;
+        }
+        if (ctl.AutoSize)
+        {
+            format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
+        }
+        return format;
     }
 }

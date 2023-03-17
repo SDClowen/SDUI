@@ -1,10 +1,15 @@
+using SDUI.Animation;
+using SDUI.Helpers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using SDUI.Animation;
+using System.Xml.Linq;
+using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
@@ -429,6 +434,9 @@ public class UIWindow : UIWindowBase
         closeBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         extendBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         pageAreaAnimationManager.OnAnimationProgress += sender => Invalidate();
+
+        WindowsHelper.ApplyRoundCorner(this.Handle);
+        WindowsHelper.ApplyBorderColor(this.Handle);
     }
 
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox;
@@ -807,17 +815,20 @@ public class UIWindow : UIWindowBase
             // if (_inCloseBox)
             graphics.FillRectangle(Color.FromArgb((int)(closeBoxHoverAnimationManager.GetProgress() * closeHoverColor.A), closeHoverColor.RemoveAlpha()), _controlBoxRect);
 
-            graphics.DrawLine(_inCloseBox ? Color.White : foreColor,
+            for (int i = 0; i < 3; i++)
+            {
+                graphics.DrawLine(_inCloseBox ? Color.White : foreColor,
                 _controlBoxRect.Left + _controlBoxRect.Width / 2 - 5,
                 _controlBoxRect.Top + _controlBoxRect.Height / 2 - 5,
                 _controlBoxRect.Left + _controlBoxRect.Width / 2 + 5,
                 _controlBoxRect.Top + _controlBoxRect.Height / 2 + 5);
 
-            graphics.DrawLine(_inCloseBox ? Color.White : foreColor,
-                _controlBoxRect.Left + _controlBoxRect.Width / 2 - 5,
-                _controlBoxRect.Top + _controlBoxRect.Height / 2 + 5,
-                _controlBoxRect.Left + _controlBoxRect.Width / 2 + 5,
-                _controlBoxRect.Top + _controlBoxRect.Height / 2 - 5);
+                graphics.DrawLine(_inCloseBox ? Color.White : foreColor,
+                    _controlBoxRect.Left + _controlBoxRect.Width / 2 - 5,
+                    _controlBoxRect.Top + _controlBoxRect.Height / 2 + 5,
+                    _controlBoxRect.Left + _controlBoxRect.Width / 2 + 5,
+                    _controlBoxRect.Top + _controlBoxRect.Height / 2 - 5);
+            }
         }
 
         if (MaximizeBox)
