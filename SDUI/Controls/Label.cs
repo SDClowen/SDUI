@@ -51,6 +51,22 @@ public class Label : System.Windows.Forms.Label
             
             using var format = this.CreateStringFormat(TextAlign, AutoEllipsis, UseMnemonic);
             e.Graphics.DrawString(Text, Font, brush, ClientRectangle, format);
+
+            /*
+            using var p = new Pen(brush, 8);
+            p.LineJoin = LineJoin.Round;
+            p.DashCap = DashCap.Triangle;
+            p.DashStyle = DashStyle.Solid;
+
+            using var gp = new GraphicsPath();
+
+            gp.AddString(Text, Font.FontFamily, (int)Font.Style, Font.Size, ClientRectangle, format);
+
+            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+            e.Graphics.DrawPath(p, gp);
+            e.Graphics.FillPath(brush, gp);
+            */
             return;
         }
 
