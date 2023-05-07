@@ -31,6 +31,25 @@ public class TextBox : Control
         }
     }
 
+    private bool _passFocusShow = false;
+    public bool PassFocusShow
+    {
+        get { return _passFocusShow; }
+        set
+        {
+            _passFocusShow = value;
+            Invalidate();
+        }
+    }
+    protected override void OnEnter(System.EventArgs e)
+    {
+        if (UseSystemPasswordChar && PassFocusShow) _textBox.UseSystemPasswordChar = false;
+    }
+    protected override void OnLeave(System.EventArgs e)
+    {
+        if (UseSystemPasswordChar && PassFocusShow) _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
+    }
+
     private int _maxchars = 32767;
     public int MaxLength
     {
