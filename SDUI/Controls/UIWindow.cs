@@ -298,9 +298,32 @@ public class UIWindow : UIWindowBase
     }
 
     /// <summary>
+    /// The title color
+    /// </summary>
+    private Color borderColor = Color.Transparent;
+
+    /// <summary>
+    /// Gets or sets the title color
+    /// </summary>
+    [Description("Border Color"), DefaultValue(typeof(Color), "Transparent")]
+    public Color BorderColor
+    {
+        get => borderColor;
+        set
+        {
+            borderColor = value;
+
+            if (value != Color.Transparent)
+                WindowsHelper.ApplyBorderColor(this.Handle, this.borderColor);
+
+            Invalidate();
+        }
+    }
+
+    /// <summary>
     /// The title font
     /// </summary>
-    private Font _titleFont = new Font("Segoe UI", 9.75f);
+    private Font _titleFont = new Font("Segoe UI", 9.25f);
 
     /// <summary>
     /// Gets or sets the title font
@@ -436,7 +459,6 @@ public class UIWindow : UIWindowBase
         pageAreaAnimationManager.OnAnimationProgress += sender => Invalidate();
 
         WindowsHelper.ApplyRoundCorner(this.Handle);
-        WindowsHelper.ApplyBorderColor(this.Handle);
     }
 
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox;

@@ -165,7 +165,7 @@ public class UIWindowBase : Form
 
         }
 
-        WindowsHelper.UseImmersiveDarkMode(Handle, true);
+        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
         if (!WindowsHelper.IsModern)
             return;
 

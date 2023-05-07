@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using static SDUI.NativeMethods;
@@ -62,6 +63,12 @@ namespace SDUI.Controls.Subclasses
             Handle = handle;
 
             SetWindowSubclass(handle, _windowProcHandle, UIntPtr.Zero, UIntPtr.Zero);
+
+            IntPtr hHeader = SendMessage(handle, LVM_GETHEADER, 0, 0);
+
+            SetWindowTheme(hHeader, "ItemsView", null); // DarkMode
+            SetWindowTheme(handle, "ItemsView", null); // DarkMode
+
             OnHandleChange();
         }
 
@@ -86,7 +93,83 @@ namespace SDUI.Controls.Subclasses
             try
             {
                 var m = System.Windows.Forms.Message.Create(hWnd, msg, wParam, lParam);
-                WndProc(ref m);
+                switch (m.Msg)
+                {
+                    case WM_NOTIFY:
+
+                        var pnmhdr = (NMHDR)m.GetLParam(typeof(NMHDR));
+
+                        if (pnmhdr.code == NM_CUSTOMDRAW)
+                        {
+                            var nmcd = (NMCUSTOMDRAW)m.GetLParam(typeof(NMCUSTOMDRAW));
+
+                            switch (nmcd.dwDrawStage)
+                            {
+                                case (int)CDDS.CDDS_PREPAINT:
+                                    m.Result = new IntPtr((int)CDRF.CDRF_NOTIFYITEMDRAW);
+                                    break;
+                                case (int)CDDS.CDDS_ITEMPREPAINT:
+
+                                    var info = (SubclassInfo)Marshal.PtrToStructure(unchecked((IntPtr)(long)(ulong)dwRefData), typeof(SubclassInfo));
+                                    SetTextColor(nmcd.hdc, info.headerTextColor);
+
+                                    m.Result = new IntPtr((int)CDRF.CDRF_DODEFAULT);
+
+                                    break;
+                                default:
+                                    m.Result = new IntPtr((int)CDRF.CDRF_NOTIFYPOSTPAINT);
+                                    break;
+                            }
+                        }
+                        break;
+                    case WM_THEMECHANGED:
+
+                        IntPtr hHeader = SendMessage(m.HWnd, LVM_GETHEADER, 0, 0);
+
+                        AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
+                        AllowDarkModeForWindow(hHeader, ColorScheme.BackColor.IsDark());
+
+                        var hTheme = OpenThemeData(IntPtr.Zero, "ItemsView");
+
+                        const int HP_HEADERITEM = 1;
+                        const int TMT_FILLCOLOR = 3802;
+                        const int TMT_TEXTCOLOR = 3803;
+
+                        if (hTheme != IntPtr.Zero)
+                        {
+                            COLORREF color;
+                            if (GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, out color) > 0)
+                            {
+                                SendMessage(m.HWnd, LVM_FIRST + 36, IntPtr.Zero, ref color);
+                            }
+                            if (GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, out color) > 0)
+                            {
+                                SendMessage(m.HWnd, LVM_FIRST + 38, IntPtr.Zero, ref color);
+                                SendMessage(m.HWnd, LVM_FIRST + 1, IntPtr.Zero, ref color);
+                            }
+                            CloseThemeData(hTheme);
+                        }
+
+                        hTheme = OpenThemeData(hHeader, "Header");
+                        if (hTheme != IntPtr.Zero)
+                        {
+                            SubclassInfo info;
+                            //var info = (SubclassInfo)Marshal.PtrToStructure(unchecked((IntPtr)(long)(ulong)dwRefData), typeof(SubclassInfo));
+
+                            GetThemeColor(hTheme, HP_HEADERITEM, 0, TMT_TEXTCOLOR, out info.headerTextColor);
+                            CloseThemeData(hTheme);
+                        }
+
+                        SendMessage(hHeader, WM_THEMECHANGED, m.WParam, m.LParam);
+
+                        RedrawWindow(m.HWnd, IntPtr.Zero, IntPtr.Zero, 0x0400 | 0x0001);
+
+                        break;
+                    default:
+                        break;
+                }
+
+                m.Result = DefSubclassProc(m.HWnd, m.Msg, m.WParam, m.LParam);
                 return m.Result;
             }
             catch (Exception e)
@@ -129,28 +212,7 @@ namespace SDUI.Controls.Subclasses
         {
             Debug.Assert(m.HWnd == Handle, "ListViewHeaderSubclassedWindow is not attached to the window m is addressed to.");
 
-            switch (m.Msg)
-            {
-                case WM_THEMECHANGED:
-
-                    IntPtr hHeader = SendMessage(m.HWnd, LVM_GETHEADER, 0, 0);
-
-                    AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
-                    AllowDarkModeForWindow(hHeader, ColorScheme.BackColor.IsDark());
-
-                    //BackColor = ColorScheme.BackColor;
-                    //ForeColor = ColorScheme.ForeColor;
-
-                    SendMessage(hHeader, WM_THEMECHANGED, m.WParam, m.LParam);
-
-                    RedrawWindow(m.HWnd, IntPtr.Zero, IntPtr.Zero, 0x0400 | 0x0001);
-
-                    break;
-                default:
-                    break;
-            }
-
-            m.Result = DefSubclassProc(m.HWnd, m.Msg, m.WParam, m.LParam);
+            
         }
 
         /// <summary>

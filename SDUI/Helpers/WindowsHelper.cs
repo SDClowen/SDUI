@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms.VisualStyles;
 using static SDUI.NativeMethods;
@@ -166,9 +167,9 @@ public static class WindowsHelper
     /// </summary>
     /// <param name="hWnd">The control</param>
     /// <param name="color">The color</param>
-    public static void ApplyBorderColor(IntPtr hWnd, int color = 0x74a5b6)
+    public static void ApplyBorderColor(IntPtr hWnd, System.Drawing.Color color)
     {
-        var pvAttribute = color;
+        var pvAttribute = ColorTranslator.ToOle(color);
         var dwAttribute = DWMWINDOWATTRIBUTE.DWMWA_BORDER_COLOR;
 
         DwmSetWindowAttribute(hWnd, dwAttribute, ref pvAttribute, sizeof(int));

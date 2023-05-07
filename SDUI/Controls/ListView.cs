@@ -39,8 +39,7 @@ public class ListView : System.Windows.Forms.ListView
         FullRowSelect = true;
         UpdateStyles();
 
-        //_headerSubClass = new();
-        //_headerSubClass.AssignHandle(this.Handle);
+        _headerSubClass = new();
     }
 
     protected override void OnSelectedIndexChanged(EventArgs e)
@@ -69,7 +68,9 @@ public class ListView : System.Windows.Forms.ListView
     {
         base.OnHandleCreated(e);
 
-        SetWindowTheme(Handle, "explorer", null);
+
+        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        _headerSubClass.AssignHandle(this.Handle);
         SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
     }
 

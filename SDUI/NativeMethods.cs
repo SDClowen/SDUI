@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Windows.Forms;
+using static SDUI.NativeMethods;
 
 namespace SDUI;
 
@@ -17,6 +18,7 @@ public class NativeMethods
     private const string uxtheme = "uxtheme.dll";
     private const string dwmapi = "dwmapi.dll";
 
+    public const int WM_NOTIFY = 0x004E;
     public const int WM_NCLBUTTONDOWN = 0xA1;
     public const int HT_CAPTION = 0x2;
     public const int CS_DROPSHADOW = 0x00020000;
@@ -104,6 +106,23 @@ public class NativeMethods
         public int Bottom;
     }
 
+    public struct SubclassInfo
+    {
+        public COLORREF headerTextColor;
+    };
+
+    [DllImport("uxtheme.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    public static extern IntPtr OpenThemeData(IntPtr hWnd, String classList);
+
+    [DllImport("uxtheme.dll", ExactSpelling = true)]
+    public extern static Int32 CloseThemeData(IntPtr hTheme);
+
+    [DllImport("uxtheme", ExactSpelling = true)]
+    public extern static Int32 GetThemeColor(IntPtr hTheme, int iPartId, int iStateId, int iPropId, out COLORREF pColor);
+    
+    [DllImport("gdi32.dll")]
+    public static extern uint SetTextColor(IntPtr hdc, COLORREF crColor);
+
     [DllImport(user32)]
     public static extern bool ReleaseCapture();
 
@@ -115,8 +134,11 @@ public class NativeMethods
 
     [DllImport(user32, SetLastError = true)]
     public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref HDITEM lParam); 
+
+    [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref COLORREF lParam); 
     
-    [DllImport("user32.dll")]
+    [DllImport(user32)]
     public static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, int flags);
 
     [DllImport(dwmapi)]
@@ -278,6 +300,14 @@ public class NativeMethods
                 window.Handle,
                 ref data);
         }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct COLORREF
+    {
+        public byte R;
+        public byte G;
+        public byte B;
     }
 
     public enum ACCENT
