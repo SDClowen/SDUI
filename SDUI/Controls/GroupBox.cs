@@ -1,5 +1,4 @@
-﻿using SDUI.Extensions;
-using SDUI.Helpers;
+﻿using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -79,6 +78,7 @@ public class GroupBox : System.Windows.Forms.GroupBox
         rect.Inflate(-inflate, -inflate);
         var shadowRect = rect;
 
+        //using (var path = e.Graphics.GenerateRoundedRectangle(rect, _radius))
         using (var path = rect.Radius(_radius))
         {
             rect = new RectangleF(0, 0, rect.Width, Font.Height + 7);
@@ -86,18 +86,18 @@ public class GroupBox : System.Windows.Forms.GroupBox
             var color = ColorScheme.BorderColor;
             BackColor = Color.Transparent;
 
-            using (var brush = new SolidBrush(ColorScheme.BackColor))
+            using (var brush = new SolidBrush(ColorScheme.BackColor2))
                 e.Graphics.FillPath(brush, path);
 
             var clip = e.Graphics.ClipBounds;
             e.Graphics.SetClip(rect);
             e.Graphics.DrawLine(new Pen(color), 0, rect.Height - 1, rect.Width, rect.Height - 1);
-            e.Graphics.FillPath(new SolidBrush(ColorScheme.BackColor2), path);
+            e.Graphics.FillPath(new SolidBrush(ColorScheme.BackColor2.Alpha(15)), path);
 
             TextRenderer.DrawText(e.Graphics, Text, Font, rect.ToRectangle(), ColorScheme.ForeColor);
             e.Graphics.SetClip(clip);
 
-            ControlPaintHelper.DrawShadow(e.Graphics, shadowRect, _shadowDepth, _radius);
+            e.Graphics.DrawShadow(shadowRect, _shadowDepth, _radius);
 
             using (var pen = new Pen(ColorScheme.BorderColor, 1))
                 e.Graphics.DrawPath(pen, path);

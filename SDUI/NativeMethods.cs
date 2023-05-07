@@ -1,16 +1,24 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Windows.Forms;
+using static SDUI.NativeMethods;
 
 namespace SDUI;
 
 public class NativeMethods
 {
+    public const int DWMSBT_MAINWINDOW = 2; // Mica
+    public const int DWMSBT_TRANSIENTWINDOW = 3; // Acrylic
+    public const int DWMSBT_TABBEDWINDOW = 4; // Tabbed
+
     private const string user32 = "user32.dll";
     private const string uxtheme = "uxtheme.dll";
     private const string dwmapi = "dwmapi.dll";
 
+    public const int WM_NOTIFY = 0x004E;
     public const int WM_NCLBUTTONDOWN = 0xA1;
     public const int HT_CAPTION = 0x2;
     public const int CS_DROPSHADOW = 0x00020000;
@@ -19,12 +27,15 @@ public class NativeMethods
     public const int WM_NCPAINT = 0x0085;
     public const int WM_NCHITTEST = 0x84;
     public const int WM_NCCALCSIZE = 0x0083;
+    public const int WM_SYSCOMMAND = 0x0112;
+    public const int SC_MOVE = 0xF010;
     public const int HTCAPTION = 0x2;
     public const int HTCLIENT = 0x1;
     public const int LVCDI_ITEM = 0x0;
     public const int LVCDI_GROUP = 0x1;
     public const int LVCDI_ITEMSLIST = 0x2;
     public const int LVM_FIRST = 0x1000;
+    public const int LVM_GETHEADER = LVM_FIRST + 31;
     public const int LVM_SETITEMSTATE = LVM_FIRST + 43;
     public const int LVM_GETGROUPRECT = LVM_FIRST + 98;
     public const int LVM_ENABLEGROUPVIEW = LVM_FIRST + 157;
@@ -82,9 +93,10 @@ public class NativeMethods
     public const int WM_KILLFOCUS = 0x8;
     public const int WM_VSCROLL = 0x115;
     public const int WM_HSCROLL = 0x114;
-
-    public const int DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19;
-    public const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    public const int WM_THEMECHANGED = 0x031A; 
+    public const int HDM_FIRST = 0x1200;
+    public const int HDM_GETITEM = HDM_FIRST + 11;
+    public const int HDM_SETITEM = HDM_FIRST + 12;
 
     public struct MARGINS                           // struct for box shadow
     {
@@ -94,20 +106,53 @@ public class NativeMethods
         public int Bottom;
     }
 
+    public struct SubclassInfo
+    {
+        public COLORREF headerTextColor;
+    };
+
+    [DllImport("uxtheme.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    public static extern IntPtr OpenThemeData(IntPtr hWnd, String classList);
+
+    [DllImport("uxtheme.dll", ExactSpelling = true)]
+    public extern static Int32 CloseThemeData(IntPtr hTheme);
+
+    [DllImport("uxtheme", ExactSpelling = true)]
+    public extern static Int32 GetThemeColor(IntPtr hTheme, int iPartId, int iStateId, int iPropId, out COLORREF pColor);
+    
+    [DllImport("gdi32.dll")]
+    public static extern uint SetTextColor(IntPtr hdc, COLORREF crColor);
+
     [DllImport(user32)]
     public static extern bool ReleaseCapture();
 
     [DllImport(user32, SetLastError = true)]
-    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam); 
+
+    [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam); 
+
+    [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref HDITEM lParam); 
+
+    [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref COLORREF lParam); 
+    
+    [DllImport(user32)]
+    public static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, int flags);
 
     [DllImport(dwmapi)]
     public static extern int DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS pMarInset);
 
+    [DllImport(dwmapi, CharSet = CharSet.Unicode, PreserveSig = false)]
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref DWM_WINDOW_CORNER_PREFERENCE pvAttribute, int cbAttribute);
+
     [DllImport(dwmapi)]
-    public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+    public static extern int DwmSetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref int pvAttribute, int cbAttribute);
 
     [DllImport(dwmapi)]
     public static extern int DwmIsCompositionEnabled(ref int pfEnabled);
+
 
     [DllImport(uxtheme, ExactSpelling = true)]
     public extern static int DrawThemeParentBackground(IntPtr hWnd, IntPtr hdc, ref System.Drawing.Rectangle pRect);
@@ -116,13 +161,16 @@ public class NativeMethods
     public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref LVGROUP lParam);
 
     [DllImport(user32, EntryPoint = "SendMessageW", SetLastError = true)]
-    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref RECT lParam);
+    public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref Rect lParam);
 
     [DllImport(user32, EntryPoint = "PostMessageW", SetLastError = true)]
     public static extern int PostMessage(IntPtr hWnd, int Msg, int wParam, ref IntPtr lParam);
 
     [DllImport(uxtheme, CharSet = CharSet.Unicode, SetLastError = true)]
     public extern static int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
+
+    [DllImport(uxtheme, EntryPoint = "#133", SetLastError = true)]
+    internal static extern bool AllowDarkModeForWindow(IntPtr window, bool isDarkModeAllowed);
 
     [DllImport(user32, EntryPoint = "SendMessage", CharSet = CharSet.Auto)]
     public static extern IntPtr SendMessageLVItem(IntPtr hWnd, int msg, int wParam, ref LVITEM lvi);
@@ -152,7 +200,7 @@ public class NativeMethods
     public static extern bool DeleteObject(IntPtr hObject);
 
     [DllImport(user32)]
-    public static extern bool SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttribData data);
+    public static extern bool SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
 
     [SecurityCritical]
     [DllImport("ntdll.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -160,13 +208,125 @@ public class NativeMethods
 
     [DllImport("user32")]
     public static extern IntPtr GetDC(IntPtr hwnd);
+
     [DllImport("user32")]
     public static extern IntPtr ReleaseDC(IntPtr hwnd, IntPtr hdc);
 
-    public static IntPtr GetHeaderControl(ListView list)
+    private delegate bool EnumWindowProc(IntPtr hWnd, IntPtr parameter);
+    [DllImport("user32")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool EnumChildWindows(IntPtr window, EnumWindowProc callback, IntPtr i);
+
+    public delegate IntPtr SUBCLASSPROC(
+            IntPtr hWnd,
+            int msg,
+            IntPtr wParam,
+            IntPtr lParam,
+            UIntPtr uIdSubclass,
+            UIntPtr dwRefData
+        );
+
+    [DllImport("comctl32.dll", ExactSpelling = true)]
+    public static extern bool SetWindowSubclass(
+        IntPtr hWnd,
+        IntPtr pfnSubclass,
+        UIntPtr uIdSubclass,
+        UIntPtr dwRefData
+    );
+
+    [DllImport("comctl32.dll", ExactSpelling = true)]
+    public static extern bool RemoveWindowSubclass(
+        IntPtr hWnd,
+        IntPtr pfnSubclass,
+        UIntPtr uIdSubclass
+    );
+
+    [DllImport("comctl32.dll", ExactSpelling = true)]
+    public static extern IntPtr DefSubclassProc(
+        IntPtr hWnd,
+        int msg,
+        IntPtr wParam,
+        IntPtr lParam
+    );
+
+    private static bool EnumWindow(IntPtr handle, IntPtr pointer)
     {
-        const int LVM_GETHEADER = 0x1000 + 31;
-        return SendMessage(list.Handle, LVM_GETHEADER, 0, 0);
+        GCHandle gch = GCHandle.FromIntPtr(pointer);
+        List<IntPtr> list = gch.Target as List<IntPtr>;
+        if (list == null)
+            throw new InvalidCastException("GCHandle Target could not be cast as List<IntPtr>");
+        list.Add(handle);
+        return true;
+    }
+
+    public static void DisableVisualStylesForFirstChild(IntPtr parent)
+    {
+        List<IntPtr> children = new List<IntPtr>();
+        GCHandle listHandle = GCHandle.Alloc(children);
+        try
+        {
+            EnumWindowProc childProc = new EnumWindowProc(EnumWindow);
+            EnumChildWindows(parent, childProc, GCHandle.ToIntPtr(listHandle));
+            if (children.Count > 0)
+                SetWindowTheme(children[0], "", "");
+        }
+        finally
+        {
+            if (listHandle.IsAllocated)
+                listHandle.Free();
+        }
+    }
+
+    public static void EnableAcrylic(IWin32Window window, Color blurColor)
+    {
+        if (window is null) throw new ArgumentNullException(nameof(window));
+
+        var accentPolicy = new AccentPolicy
+        {
+            AccentState = ACCENT.ENABLE_ACRYLICBLURBEHIND,
+            GradientColor = blurColor.ToAbgr()
+        };
+
+        unsafe
+        {
+            var data = new WindowCompositionAttributeData
+            {
+                Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
+                Data = &accentPolicy,
+                SizeOfData = Marshal.SizeOf<AccentPolicy>()
+            };
+
+            SetWindowCompositionAttribute(
+                window.Handle,
+                ref data);
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct COLORREF
+    {
+        public byte R;
+        public byte G;
+        public byte B;
+    }
+
+    public enum ACCENT
+    {
+        DISABLED = 0,
+        ENABLE_GRADIENT = 1,
+        ENABLE_TRANSPARENTGRADIENT = 2,
+        ENABLE_BLURBEHIND = 3,
+        ENABLE_ACRYLICBLURBEHIND = 4,
+        INVALID_STATE = 5
+    }
+
+
+    public struct AccentPolicy
+    {
+        public ACCENT AccentState;
+        public uint AccentFlags;
+        public uint GradientColor;
+        public uint AnimationId;
     }
 
     public enum NTSTATUS : uint
@@ -195,10 +355,10 @@ public class NativeMethods
         public byte Reserved;
     }
 
-    public struct WindowCompositionAttribData
+    public unsafe struct WindowCompositionAttributeData
     {
         public WindowCompositionAttribute Attribute;
-        public IntPtr Data;
+        public void* Data;
         public int SizeOfData;
     }
 
@@ -230,12 +390,64 @@ public class NativeMethods
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    public partial struct RECT
+    public struct Rect
     {
-        public int left;
-        public int top;
-        public int right;
-        public int bottom;
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+
+        public Rect(int left, int top, int right, int bottom)
+        {
+            Left = left;
+            Top = top;
+            Right = right;
+            Bottom = bottom;
+        }
+
+        public int X
+        {
+            get => Left;
+            set
+            {
+                Right -= Left - value;
+                Left = value;
+            }
+        }
+
+        public int Y
+        {
+            get => Top;
+            set
+            {
+                Bottom -= Top - value;
+                Top = value;
+            }
+        }
+
+        public int Height
+        {
+            get => Bottom - Top;
+            set => Bottom = value + Top;
+        }
+
+        public int Width
+        {
+            get => Right - Left;
+            set => Right = value + Left;
+        }
+
+    }
+
+    // The DWM_WINDOW_CORNER_PREFERENCE enum for DwmSetWindowAttribute's third parameter, which tells the function
+    // what value of the enum to set.
+    // Copied from dwmapi.h
+    public enum DWM_WINDOW_CORNER_PREFERENCE : int
+    {
+        DWMWCP_DEFAULT = 0,
+        DWMWCP_DONOTROUND = 1,
+        DWMWCP_ROUND = 2,
+        DWMWCP_ROUNDSMALL = 3
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -244,7 +456,7 @@ public class NativeMethods
         public NMHDR hdr;
         public int dwDrawStage;
         public IntPtr hdc;
-        public RECT rc;
+        public Rect rc;
         public IntPtr dwItemSpec;
         public uint uItemState;
         public IntPtr lItemlParam;
@@ -263,7 +475,7 @@ public class NativeMethods
         public int iIconPhase;
         public int iPartId;
         public int iStateId;
-        public RECT rcText;
+        public Rect rcText;
         public uint uAlign;
     }
 
@@ -295,6 +507,40 @@ public class NativeMethods
         public IntPtr pszSubsetTitle;
         public uint cchSubsetTitle;
     }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct HDITEM
+    {
+        public Mask mask;
+        public int cxy;
+        [MarshalAs(UnmanagedType.LPTStr)] public string pszText;
+        public IntPtr hbm;
+        public int cchTextMax;
+        public Format fmt;
+        public IntPtr lParam;
+        // _WIN32_IE >= 0x0300 
+        public int iImage;
+        public int iOrder;
+        // _WIN32_IE >= 0x0500
+        public uint type;
+        public IntPtr pvFilter;
+        // _WIN32_WINNT >= 0x0600
+        public uint state;
+
+        [Flags]
+        public enum Mask
+        {
+            Format = 0x4,       // HDI_FORMAT
+        };
+
+        [Flags]
+        public enum Format
+        {
+            SortDown = 0x200,   // HDF_SORTDOWN
+            SortUp = 0x400,     // HDF_SORTUP
+        };
+    };
+
 
     [Flags]
     public enum CDRF
@@ -356,4 +602,128 @@ public class NativeMethods
         WCA_USEDARKMODECOLORS = 26,
         WCA_LAST = 27
     };
+
+    [Flags]
+    public enum DWMWINDOWATTRIBUTE : uint
+    {
+        /// <summary>
+        /// Use with DwmGetWindowAttribute. Discovers whether non-client rendering is enabled. The retrieved value is of type BOOL. TRUE if non-client rendering is enabled; otherwise, FALSE.
+        /// </summary>
+        DWMWA_NCRENDERING_ENABLED = 1,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Sets the non-client rendering policy. The pvAttribute parameter points to a value from the DWMNCRENDERINGPOLICY enumeration.
+        /// </summary>
+        DWMWA_NCRENDERING_POLICY,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Enables or forcibly disables DWM transitions. The pvAttribute parameter points to a value of type BOOL. TRUE to disable transitions, or FALSE to enable transitions.
+        /// </summary>
+        DWMWA_TRANSITIONS_FORCEDISABLED,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Enables content rendered in the non-client area to be visible on the frame drawn by DWM. The pvAttribute parameter points to a value of type BOOL. TRUE to enable content rendered in the non-client area to be visible on the frame; otherwise, FALSE.
+        /// </summary>
+        DWMWA_ALLOW_NCPAINT,
+
+        /// <summary>
+        /// Use with DwmGetWindowAttribute. Retrieves the bounds of the caption button area in the window-relative space. The retrieved value is of type RECT. If the window is minimized or otherwise not visible to the user, then the value of the RECT retrieved is undefined. You should check whether the retrieved RECT contains a boundary that you can work with, and if it doesn't then you can conclude that the window is minimized or otherwise not visible.
+        /// </summary>
+        DWMWA_CAPTION_BUTTON_BOUNDS,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Specifies whether non-client content is right-to-left (RTL) mirrored. The pvAttribute parameter points to a value of type BOOL. TRUE if the non-client content is right-to-left (RTL) mirrored; otherwise, FALSE.
+        /// </summary>
+        DWMWA_NONCLIENT_RTL_LAYOUT,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Forces the window to display an iconic thumbnail or peek representation (a static bitmap), even if a live or snapshot representation of the window is available. This value is normally set during a window's creation, and not changed throughout the window's lifetime. Some scenarios, however, might require the value to change over time. The pvAttribute parameter points to a value of type BOOL. TRUE to require a iconic thumbnail or peek representation; otherwise, FALSE.
+        /// </summary>
+        DWMWA_FORCE_ICONIC_REPRESENTATION,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Sets how Flip3D treats the window. The pvAttribute parameter points to a value from the DWMFLIP3DWINDOWPOLICY enumeration.
+        /// </summary>
+        DWMWA_FLIP3D_POLICY,
+
+        /// <summary>
+        /// Use with DwmGetWindowAttribute. Retrieves the extended frame bounds rectangle in screen space. The retrieved value is of type RECT.
+        /// </summary>
+        DWMWA_EXTENDED_FRAME_BOUNDS,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. The window will provide a bitmap for use by DWM as an iconic thumbnail or peek representation (a static bitmap) for the window. DWMWA_HAS_ICONIC_BITMAP can be specified with DWMWA_FORCE_ICONIC_REPRESENTATION. DWMWA_HAS_ICONIC_BITMAP normally is set during a window's creation and not changed throughout the window's lifetime. Some scenarios, however, might require the value to change over time. The pvAttribute parameter points to a value of type BOOL. TRUE to inform DWM that the window will provide an iconic thumbnail or peek representation; otherwise, FALSE. Windows Vista and earlier: This value is not supported.
+        /// </summary>
+        DWMWA_HAS_ICONIC_BITMAP,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Do not show peek preview for the window. The peek view shows a full-sized preview of the window when the mouse hovers over the window's thumbnail in the taskbar. If this attribute is set, hovering the mouse pointer over the window's thumbnail dismisses peek (in case another window in the group has a peek preview showing). The pvAttribute parameter points to a value of type BOOL. TRUE to prevent peek functionality, or FALSE to allow it. Windows Vista and earlier: This value is not supported.
+        /// </summary>
+        DWMWA_DISALLOW_PEEK,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Prevents a window from fading to a glass sheet when peek is invoked. The pvAttribute parameter points to a value of type BOOL. TRUE to prevent the window from fading during another window's peek, or FALSE for normal behavior. Windows Vista and earlier: This value is not supported.
+        /// </summary>
+        DWMWA_EXCLUDED_FROM_PEEK,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Cloaks the window such that it is not visible to the user. The window is still composed by DWM. Using with DirectComposition: Use the DWMWA_CLOAK flag to cloak the layered child window when animating a representation of the window's content via a DirectComposition visual that has been associated with the layered child window. For more details on this usage case, see How to animate the bitmap of a layered child window. Windows 7 and earlier: This value is not supported.
+        /// </summary>
+        DWMWA_CLOAK,
+
+        /// <summary>
+        /// Use with DwmGetWindowAttribute. If the window is cloaked, provides one of the following values explaining why. DWM_CLOAKED_APP (value 0x0000001). The window was cloaked by its owner application. DWM_CLOAKED_SHELL(value 0x0000002). The window was cloaked by the Shell. DWM_CLOAKED_INHERITED(value 0x0000004). The cloak value was inherited from its owner window. Windows 7 and earlier: This value is not supported.
+        /// </summary>
+        DWMWA_CLOAKED,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Freeze the window's thumbnail image with its current visuals. Do no further live updates on the thumbnail image to match the window's contents. Windows 7 and earlier: This value is not supported.
+        /// </summary>
+        DWMWA_FREEZE_REPRESENTATION,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Enables a non-UWP window to use host backdrop brushes. If this flag is set, then a Win32 app that calls Windows::UI::Composition APIs can build transparency effects using the host backdrop brush (see Compositor.CreateHostBackdropBrush). The pvAttribute parameter points to a value of type BOOL. TRUE to enable host backdrop brushes for the window, or FALSE to disable it. This value is supported starting with Windows 11 Build 22000.
+        /// </summary>
+        DWMWA_USE_HOSTBACKDROPBRUSH,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Allows the window frame for this window to be drawn in dark mode colors when the dark mode system setting is enabled. For compatibility reasons, all windows default to light mode regardless of the system setting. The pvAttribute parameter points to a value of type BOOL. TRUE to honor dark mode for the window, FALSE to always use light mode. This value is supported starting with Windows 10 Build 17763.
+        /// </summary>
+        DWMWA_USE_IMMERSIVE_DARK_MODE_BEFORE_20H1 = 19,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Allows the window frame for this window to be drawn in dark mode colors when the dark mode system setting is enabled. For compatibility reasons, all windows default to light mode regardless of the system setting. The pvAttribute parameter points to a value of type BOOL. TRUE to honor dark mode for the window, FALSE to always use light mode. This value is supported starting with Windows 11 Build 22000.
+        /// </summary>
+        DWMWA_USE_IMMERSIVE_DARK_MODE = 20,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Specifies the rounded corner preference for a window. The pvAttribute parameter points to a value of type DWM_WINDOW_CORNER_PREFERENCE. This value is supported starting with Windows 11 Build 22000.
+        /// </summary>
+        DWMWA_WINDOW_CORNER_PREFERENCE = 33,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Specifies the color of the window border. The pvAttribute parameter points to a value of type COLORREF. The app is responsible for changing the border color according to state changes, such as a change in window activation. This value is supported starting with Windows 11 Build 22000.
+        /// </summary>
+        DWMWA_BORDER_COLOR,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Specifies the color of the caption. The pvAttribute parameter points to a value of type COLORREF. This value is supported starting with Windows 11 Build 22000.
+        /// </summary>
+        DWMWA_CAPTION_COLOR,
+
+        /// <summary>
+        /// Use with DwmSetWindowAttribute. Specifies the color of the caption text. The pvAttribute parameter points to a value of type COLORREF. This value is supported starting with Windows 11 Build 22000.
+        /// </summary>
+        DWMWA_TEXT_COLOR,
+
+        /// <summary>
+        /// Use with DwmGetWindowAttribute. Retrieves the width of the outer border that the DWM would draw around this window. The value can vary depending on the DPI of the window. The pvAttribute parameter points to a value of type UINT. This value is supported starting with Windows 11 Build 22000.
+        /// </summary>
+        DWMWA_VISIBLE_FRAME_BORDER_THICKNESS,
+
+        /// <summary>
+        /// The maximum recognized DWMWINDOWATTRIBUTE value, used for validation purposes.
+        /// </summary>
+        DWMWA_SYSTEMBACKDROP_TYPE,
+    }
 }

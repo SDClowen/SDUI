@@ -2,144 +2,86 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SDUI.Controls
+namespace SDUI.Controls;
+
+public class TabControl : System.Windows.Forms.TabControl
 {
-    /// <summary>
-    /// Summary description for TabControl.
-    /// </summary>
-    public class TabControl : System.Windows.Forms.TabControl
+    public TabControl()
     {
-        public TabControl()
-        {
-            SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
+        SetStyle(ControlStyles.SupportsTransparentBackColor |
+                 ControlStyles.OptimizedDoubleBuffer |
+                 ControlStyles.ResizeRedraw |
+                 ControlStyles.AllPaintingInWmPaint |
+                 ControlStyles.UserPaint, true);
 
-            UpdateStyles();
+        UpdateStyles();
+    }
+
+    protected override void OnParentBackColorChanged(EventArgs e)
+    {
+        base.OnParentBackColorChanged(e);
+        Invalidate();
+    }
+
+    protected override void CreateHandle()
+    {
+        base.CreateHandle();
+
+        if(SizeMode != TabSizeMode.Fixed)
+            ItemSize = new Size(80, 24);
+
+        Alignment = TabAlignment.Top;
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        if (TabCount <= 0 || SelectedTab == null)
+            return;
+
+        var graphics = e.Graphics;
+
+        GroupBoxRenderer.DrawParentBackground(graphics, this.ClientRectangle, this);
+
+        graphics.SetHighQuality();
+        using var borderBrush = new Pen(Color.FromArgb(70, 0, 0, 0));
+        using var backBrush = new SolidBrush(ColorScheme.BackColor.IsDark() ? Color.FromArgb(10, 255, 255, 255) : Color.FromArgb(50, 0, 0, 0));
+        // Draw container rectangle
+        var r = new RectangleF(0, ItemSize.Height, Width - 1, Height - ItemSize.Height - 1);
+        using (var path = r.Radius(SelectedIndex == 0 ? 2 : 4, 4, 4, 4))
+        {
+            //graphics.FillPath(backBrush, path);
+            graphics.DrawPath(borderBrush, path);
         }
 
-        public bool HideTabArea { get; set; }
-
-        private Padding _border = new(1);
-        public Padding Border
+        for (int i = 0; i <= TabCount - 1; i++)
         {
-            get => _border;
-            set
+            var tabBounds = GetTabRect(i);
+            var textRect = tabBounds;
+            textRect.Offset(0, -2);
+
+            if (i == SelectedIndex)
             {
-                if (_border == value)
-                    return;
-
-                _border = value;
-                Invalidate();
+                var rect = new RectangleF(tabBounds.X - 1, tabBounds.Y - 1, tabBounds.Width + 2, tabBounds.Height - 2);
+                using var path = rect.Radius(4, 4, 0, 0);
+                graphics.FillPath(backBrush, path);
             }
+
+            TextRenderer.DrawText(graphics, TabPages[i].Text, Font, textRect, ColorScheme.ForeColor);
+
+            if (TabPages[i].BackColor != ColorScheme.BackColor)
+                TabPages[i].BackColor = ColorScheme.BackColor;
         }
 
-        protected override void OnParentBackColorChanged(EventArgs e)
+        graphics.SetDefaultQuality();
+    }
+
+    protected override CreateParams CreateParams
+    {
+        get
         {
-            base.OnParentBackColorChanged(e);
-            Invalidate();
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            GroupBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
-
-            if (TabCount <= 0 || SelectedTab == null)
-                return;
-
-            //Draw a custom background for Transparent TabPages
-            var bounds = SelectedTab.Bounds;
-
-            //Draw a border around TabPage
-            bounds.Inflate(3, 3);
-
-            var brush = new SolidBrush(ColorScheme.BackColor.Alpha(200));
-
-            e.Graphics.FillRectangle(brush, bounds);
-
-            ControlPaint.DrawBorder(e.Graphics, bounds,
-                                  ColorScheme.BorderColor, _border.Left, ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, _border.Top, ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, _border.Right, ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, _border.Bottom, ButtonBorderStyle.Solid);
-
-            for (int index = 0; index <= TabCount - 1; index++)
-                if (index != SelectedIndex)
-                    DrawTab(index, e.Graphics);
-
-            DrawTab(SelectedIndex, e.Graphics);
-
-            brush.Dispose();
-        }
-
-        private void DrawTab(int index, Graphics graphics)
-        {
-            try
-            {
-                var tabpage = TabPages[index];
-
-                var brush = new SolidBrush(ColorScheme.BackColor);
-                var pen = new Pen(ColorScheme.BorderColor);
-
-                var tabRect = GetTabRect(index);
-
-                if (tabpage.BackColor != ColorScheme.BackColor)
-                    tabpage.BackColor = ColorScheme.BackColor;
-
-                if (index != SelectedIndex)
-                {
-                    //graphics.FillRectangle(brush, tabRect);
-                }
-                else
-                {
-                    brush.Color = ColorScheme.ForeColor.Alpha(20);
-                    graphics.FillRectangle(brush, tabRect);
-                }
-
-                ControlPaint.DrawBorder(graphics, tabRect,
-                                  ColorScheme.BorderColor, Convert.ToInt32(index == 0), ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, 1, ButtonBorderStyle.Solid,
-                                  ColorScheme.BorderColor, 1, ButtonBorderStyle.Solid,
-                                  Color.Transparent, 0, ButtonBorderStyle.None);
-
-                //Set up rotation for left and right aligned tabs
-                if (Alignment == TabAlignment.Left || Alignment == TabAlignment.Right)
-                {
-                    var angle = 90f;
-                    if (Alignment == TabAlignment.Left)
-                        angle = 270;
-
-                    var point = new PointF(tabRect.Left + (tabRect.Width >> 1), tabRect.Top + (tabRect.Height >> 1));
-                    graphics.TranslateTransform(point.X, point.Y);
-                    graphics.RotateTransform(angle);
-                    tabRect = new Rectangle(-(tabRect.Height >> 1), -(tabRect.Width >> 1), tabRect.Height, tabRect.Width);
-                }
-
-                //Draw the Tab Text
-                //if (tabpage.Enabled)
-                TextRenderer.DrawText(graphics, tabpage.Text, Font, tabRect, ColorScheme.ForeColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
-                /*else
-                {
-                    var stringFormat = new StringFormat();
-                    stringFormat.Alignment = StringAlignment.Center;
-                    stringFormat.LineAlignment = StringAlignment.Center;
-                    ControlPaint.DrawStringDisabled(graphics, tabpage.Text, Font, tabpage.BackColor, (RectangleF)tabRect, stringFormat);
-                }*/
-
-                graphics.ResetTransform();
-
-                brush.Dispose();
-                pen.Dispose();
-            }
-            catch
-            {
-            }
-        }
-
-        protected override void WndProc(ref Message m)
-        {
-            if (m.Msg == 0x1328 && !DesignMode && HideTabArea)
-                m.Result = (IntPtr)1;
-            else
-                base.WndProc(ref m);
+            var parms = base.CreateParams;
+            parms.Style &= ~0x02000000;  // Turn off WS_CLIPCHILDREN
+            return parms;
         }
     }
 }

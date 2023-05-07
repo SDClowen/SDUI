@@ -1,6 +1,4 @@
-﻿using SDUI.Extensions;
-using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -67,7 +65,8 @@ public class Panel : System.Windows.Forms.Panel
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
                  ControlStyles.OptimizedDoubleBuffer |
-                 ControlStyles.ResizeRedraw |
+                 ControlStyles.ResizeRedraw | 
+                 ControlStyles.AllPaintingInWmPaint |
                  ControlStyles.UserPaint, true);
 
         BackColor = Color.Transparent;
@@ -117,7 +116,7 @@ public class Panel : System.Windows.Forms.Panel
                 using (var brush = new SolidBrush(color))
                     e.Graphics.FillPath(brush, path);
 
-                ControlPaintHelper.DrawShadow(e.Graphics, rect, _shadowDepth, _radius);
+                e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
 
                 using (var pen = new Pen(borderColor, 1))
                     e.Graphics.DrawPath(pen, path);
@@ -129,7 +128,7 @@ public class Panel : System.Windows.Forms.Panel
         using (var brush = new SolidBrush(color))
             e.Graphics.FillRectangle(brush, rect);
 
-        ControlPaintHelper.DrawShadow(e.Graphics, rect, _shadowDepth, _radius == 0 ? 1 : _radius);
+        e.Graphics.DrawShadow(rect, _shadowDepth, _radius == 0 ? 1 : _radius);
 
         ControlPaint.DrawBorder(e.Graphics, ClientRectangle,
                               borderColor, _border.Left, ButtonBorderStyle.Solid,

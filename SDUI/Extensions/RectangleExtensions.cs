@@ -1,29 +1,33 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 
-namespace SDUI.Extensions;
-
 internal static class RectangleExtensions
 {
     internal static GraphicsPath Radius(this Rectangle rectangle, int radius)
     {
-        var path = new GraphicsPath();
-        path.AddArc(rectangle.X, rectangle.Y, radius, radius, 180, 90);
-        path.AddArc(rectangle.X + rectangle.Width - radius - 1, rectangle.Y, radius, radius, 270, 90);
-        path.AddArc(rectangle.X + rectangle.Width - radius - 1, rectangle.Y + rectangle.Height - radius - 1, radius, radius, 0, 90);
-        path.AddArc(rectangle.X, rectangle.Y + rectangle.Height - radius - 1, radius, radius, 90, 90);
-        path.CloseAllFigures();
-        return path;
+        return rectangle.ToRectangleF().Radius(radius);
     }
 
-    internal static GraphicsPath Radius(this RectangleF rectangle, int radius)
+    internal static GraphicsPath Radius(this RectangleF r, int radius)
     {
         var path = new GraphicsPath();
-        path.AddArc(rectangle.X, rectangle.Y, radius, radius, 180, 90);
-        path.AddArc(rectangle.X + rectangle.Width - radius - 1, rectangle.Y, radius, radius, 270, 90);
-        path.AddArc(rectangle.X + rectangle.Width - radius - 1, rectangle.Y + rectangle.Height - radius - 1, radius, radius, 0, 90);
-        path.AddArc(rectangle.X, rectangle.Y + rectangle.Height - radius - 1, radius, radius, 90, 90);
+        path.AddArc(r.X, r.Y, radius, radius, 180, 90);
+        path.AddArc(r.X + r.Width - radius - 1, r.Y, radius, radius, 270, 90);
+        path.AddArc(r.X + r.Width - radius - 1, r.Y + r.Height - radius - 1, radius, radius, 0, 90);
+        path.AddArc(r.X, r.Y + r.Height - radius - 1, radius, radius, 90, 90);
         path.CloseAllFigures();
+
+        //var path = new GraphicsPath();
+        //path.AddLine(r.X + radius, r.Y, r.X + r.Width - (radius * 2), r.Y);
+        //path.AddArc(r.X + r.Width - (radius * 2), r.Y, radius * 2, radius * 2, 270, 90);
+        //path.AddLine(r.X + r.Width, r.Y + radius, r.X + r.Width, r.Y + r.Height - (radius * 2));
+        //path.AddArc(r.X + r.Width - (radius * 2), r.Y + r.Height - (radius * 2), radius * 2, radius * 2, 0, 90);
+        //path.AddLine(r.X + r.Width - (radius * 2), r.Y + r.Height, r.X + radius, r.Y + r.Height);
+        //path.AddArc(r.X, r.Y + r.Height - (radius * 2), radius * 2, radius * 2, 90, 90);
+        //path.AddLine(r.X, r.Y + r.Height - (radius * 2), r.X, r.Y + radius);
+        //path.AddArc(r.X, r.Y, radius * 2, radius * 2, 180, 90);
+        //path.CloseFigure();
+
         return path;
     }
 
@@ -90,7 +94,7 @@ internal static class RectangleExtensions
         path.CloseFigure();
         return path;
     }
-
+    
     public static Rectangle ToRectangle(this RectangleF rect)
     {
         return Rectangle.Round(rect);
@@ -99,5 +103,25 @@ internal static class RectangleExtensions
     public static RectangleF ToRectangleF(this Rectangle rect)
     {
         return (RectangleF)rect;
+    }
+
+    public static bool InRect(this Point point, Rectangle rect)
+    {
+        return point.X >= rect.Left && point.X <= rect.Right && point.Y >= rect.Top && point.Y <= rect.Bottom;
+    }
+
+    public static bool InRect(this Point point, RectangleF rect)
+    {
+        return point.X >= rect.Left && point.X <= rect.Right && point.Y >= rect.Top && point.Y <= rect.Bottom;
+    }
+
+    public static bool InRect(this PointF point, Rectangle rect)
+    {
+        return point.X >= rect.Left && point.X <= rect.Right && point.Y >= rect.Top && point.Y <= rect.Bottom;
+    }
+
+    public static bool InRect(this PointF point, RectangleF rect)
+    {
+        return point.X >= rect.Left && point.X <= rect.Right && point.Y >= rect.Top && point.Y <= rect.Bottom;
     }
 }

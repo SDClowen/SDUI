@@ -1,5 +1,4 @@
-﻿using SDUI.Extensions;
-using SDUI.Helpers;
+﻿using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -104,8 +103,8 @@ public class ComboBox : System.Windows.Forms.ComboBox
 
         var textRectangle = new Rectangle(3, 0, Width - 18, Height);
 
-        var backColor = ColorScheme.BackColor;
-        var borderColor = ColorScheme.ForeColor.Alpha(60);
+        var backColor = ColorScheme.BackColor.Alpha(80);
+        var borderColor = ColorScheme.BorderColor;
 
         using (var path = rectf.Radius(_radius))
         {
@@ -127,7 +126,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
                 _extendBoxRect.Left + _extendBoxRect.Width / 2 - 1,
                 _extendBoxRect.Top + _extendBoxRect.Height / 2 + 3);
 
-            ControlPaintHelper.DrawShadow(graphics, rectf, _shadowDepth, _radius);
+            graphics.DrawShadow(rectf, _shadowDepth, _radius);
             e.Graphics.DrawPath(borderPen, path);
 
             var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;

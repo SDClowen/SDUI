@@ -7,6 +7,20 @@ namespace SDUI.Controls;
 
 public class ShapeProgressBar : Control
 {
+    private float _weight = 8;
+    public float Weight
+    {
+        get => _weight;
+        set
+        {
+            if (value < 0)
+                value = 1;
+
+            _weight = value;
+            Invalidate();
+        }
+    }
+
     private long _value;
     public long Value
     {
@@ -74,28 +88,19 @@ public class ShapeProgressBar : Control
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
-        SetStandardSize();
     }
 
     protected override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
-        SetStandardSize();
     }
 
     public ShapeProgressBar()
     {
-        Size = new Size(130, 130);
+        Size = new Size(100, 100);
         Font = new Font("Segoe UI", 15);
-        MinimumSize = new Size(100, 100);
         SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
-    }
-
-    private void SetStandardSize()
-    {
-        var size = Math.Max(Width, Height);
-        Size = new Size(size, size);
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -108,13 +113,16 @@ public class ShapeProgressBar : Control
 
         var calc = (int)Math.Round((double)((360.0 / _maximum) * _value));
 
+        var renderWidth = ClientRectangle.Width - _weight - 1;
+        var renderHeight = ClientRectangle.Height - _weight - 1;
+
         using (var brush = new LinearGradientBrush(ClientRectangle, _gradient[0], _gradient[1], LinearGradientMode.ForwardDiagonal))
         {
-            using (var pen = new Pen(brush, 14f))
+            using (var pen = new Pen(brush, _weight))
             {
                 pen.StartCap = LineCap.Round;
                 pen.EndCap = LineCap.Round;
-                graphics.DrawArc(pen, 18, 18, (Width - 35) - 2, (Height - 35) - 2, -90, calc);
+                graphics.DrawArc(pen, _weight / 2, _weight / 2, renderWidth, renderHeight, -90, calc);
             }
         }
 
@@ -126,13 +134,13 @@ public class ShapeProgressBar : Control
                 {
                     pen.StartCap = LineCap.Round;
                     pen.EndCap = LineCap.Round;
-                    graphics.DrawArc(pen, 18, 18, (Width - 35) - 2, (Height - 35) - 2, -90, calc);
+                    graphics.DrawArc(pen, _weight / 2, _weight / 2, renderWidth, renderHeight, -90, calc);
                 }
             }
         }
 
-        using (var brush = new LinearGradientBrush(ClientRectangle, ColorScheme.BackColor, ColorScheme.BorderColor, LinearGradientMode.Vertical))
-            graphics.FillEllipse(brush, 24, 24, (Width - 48) - 1, (Height - 48) - 1);
+        using (var brush = new LinearGradientBrush(ClientRectangle, ColorScheme.BackColor, ColorScheme.BackColor2, LinearGradientMode.Vertical))
+            graphics.FillEllipse(brush, _weight / 2, _weight / 2, renderWidth, renderHeight);
 
         var percent = (100 / _maximum) * _value;
         var percentString = percent.ToString();

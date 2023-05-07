@@ -1,5 +1,4 @@
-﻿using SDUI.Extensions;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Renderers;
