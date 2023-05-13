@@ -74,6 +74,8 @@ namespace SDUI.Controls
             }
         }
 
+        public override Color BackColor { get => base.BackColor; set => base.BackColor = Color.Transparent; }
+
         public NumUpDown()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
@@ -155,7 +157,7 @@ namespace SDUI.Controls
         {
             ClickButton();
 
-            if(_longPressTimer.Interval == LONG_PRESS_TIMER_INTERVAL)
+            if (_longPressTimer.Interval == LONG_PRESS_TIMER_INTERVAL)
                 _longPressTimer.Interval = 50;
         }
 

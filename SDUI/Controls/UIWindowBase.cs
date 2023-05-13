@@ -78,14 +78,15 @@ public class UIWindowBase : Form
     {
         base.OnLoad(e);
 
-        //BackColor = ColorScheme.BackColor;
-
         if (DesignMode)
             return;
 
         // Otherwise, it will not be applied.
         if (StartPosition == FormStartPosition.CenterScreen)
             CenterToScreen();
+
+        if (BackColor != ColorScheme.BackColor)
+            BackColor = ColorScheme.BackColor;
     }
 
     protected override void WndProc(ref Message m)
@@ -134,6 +135,9 @@ public class UIWindowBase : Form
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
+
+        if (DesignMode)
+            return;
 
         WindowsHelper.ApplyRoundCorner(this.Handle);
     }

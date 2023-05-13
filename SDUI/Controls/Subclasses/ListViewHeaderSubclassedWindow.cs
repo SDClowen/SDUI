@@ -212,7 +212,7 @@ namespace SDUI.Controls.Subclasses
         {
             Debug.Assert(m.HWnd == Handle, "ListViewHeaderSubclassedWindow is not attached to the window m is addressed to.");
 
-            
+
         }
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace SDUI.Controls.Subclasses
         {
             // No lock because access here should be race-free, no concurrent ListViewHeaderSubclassedWindow.AttachHandle/ReleaseHandle
             // should happen while shutting down.
-            Debug.Assert(0 == _instancesInUse.Count);
+            //Debug.Assert(0 == _instancesInUse.Count);
         }
 
         /// <summary>

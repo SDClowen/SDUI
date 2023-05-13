@@ -4,7 +4,6 @@ using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Windows.Forms;
-using static SDUI.NativeMethods;
 
 namespace SDUI;
 
@@ -93,7 +92,7 @@ public class NativeMethods
     public const int WM_KILLFOCUS = 0x8;
     public const int WM_VSCROLL = 0x115;
     public const int WM_HSCROLL = 0x114;
-    public const int WM_THEMECHANGED = 0x031A; 
+    public const int WM_THEMECHANGED = 0x031A;
     public const int HDM_FIRST = 0x1200;
     public const int HDM_GETITEM = HDM_FIRST + 11;
     public const int HDM_SETITEM = HDM_FIRST + 12;
@@ -119,7 +118,7 @@ public class NativeMethods
 
     [DllImport("uxtheme", ExactSpelling = true)]
     public extern static Int32 GetThemeColor(IntPtr hTheme, int iPartId, int iStateId, int iPropId, out COLORREF pColor);
-    
+
     [DllImport("gdi32.dll")]
     public static extern uint SetTextColor(IntPtr hdc, COLORREF crColor);
 
@@ -127,17 +126,17 @@ public class NativeMethods
     public static extern bool ReleaseCapture();
 
     [DllImport(user32, SetLastError = true)]
-    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam); 
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
     [DllImport(user32, SetLastError = true)]
-    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam); 
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport(user32, SetLastError = true)]
-    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref HDITEM lParam); 
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref HDITEM lParam);
 
     [DllImport(user32, SetLastError = true)]
-    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref COLORREF lParam); 
-    
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref COLORREF lParam);
+
     [DllImport(user32)]
     public static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, int flags);
 
