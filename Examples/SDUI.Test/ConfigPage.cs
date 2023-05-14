@@ -72,6 +72,17 @@ namespace SDUI.Test
             parent.Invalidate();
         }
 
+        private void checkBoxTitleBorder_CheckedChanged(object sender, EventArgs e)
+        {
+            var form = FindForm();
+            if (form == null)
+                return;
+
+            var parent = form as UIWindow;
+            parent.DrawTitleBorder = checkBoxTitleBorder.Checked;
+            parent.Invalidate();
+        }
+
         private void buttonSelectColor_Click(object sender, EventArgs e)
         {
             var form = FindForm();
@@ -83,6 +94,20 @@ namespace SDUI.Test
             var colorpicker = new ColorDialog();
             colorpicker.ShowDialog();
             parent.TitleColor = colorpicker.Color;
+            parent.Invalidate();
+        }
+
+        private void buttonBorderColor_Click(object sender, EventArgs e)
+        {
+            var form = FindForm();
+            if (form == null)
+                return;
+
+            var parent = form as UIWindow;
+
+            var colorpicker = new ColorDialog();
+            colorpicker.ShowDialog();
+            parent.BorderColor = colorpicker.Color;
             parent.Invalidate();
         }
 

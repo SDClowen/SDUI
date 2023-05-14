@@ -37,6 +37,8 @@
             label6 = new Controls.Label();
             buttonSelectFont = new Controls.Button();
             label1 = new Controls.Label();
+            buttonBorderColor = new Controls.Button();
+            checkBoxTitleBorder = new Controls.CheckBox();
             SuspendLayout();
             // 
             // buttonSelectColor
@@ -77,7 +79,7 @@
             checkBoxDrawFullHatch.AutoSize = true;
             checkBoxDrawFullHatch.BackColor = System.Drawing.Color.Transparent;
             checkBoxDrawFullHatch.Depth = 0;
-            checkBoxDrawFullHatch.Location = new System.Drawing.Point(295, 40);
+            checkBoxDrawFullHatch.Location = new System.Drawing.Point(295, 36);
             checkBoxDrawFullHatch.Margin = new System.Windows.Forms.Padding(0);
             checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
@@ -175,14 +177,47 @@
             label1.Text = "SDUI";
             label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // buttonBorderColor
+            // 
+            buttonBorderColor.Color = System.Drawing.Color.Crimson;
+            buttonBorderColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            buttonBorderColor.ForeColor = System.Drawing.Color.White;
+            buttonBorderColor.Location = new System.Drawing.Point(361, 124);
+            buttonBorderColor.Name = "buttonBorderColor";
+            buttonBorderColor.Radius = 6;
+            buttonBorderColor.ShadowDepth = 4F;
+            buttonBorderColor.Size = new System.Drawing.Size(140, 27);
+            buttonBorderColor.TabIndex = 49;
+            buttonBorderColor.Text = "Select Border Color";
+            buttonBorderColor.UseVisualStyleBackColor = true;
+            buttonBorderColor.Click += buttonBorderColor_Click;
+            // 
+            // checkBoxTitleBorder
+            // 
+            checkBoxTitleBorder.AutoSize = true;
+            checkBoxTitleBorder.BackColor = System.Drawing.Color.Transparent;
+            checkBoxTitleBorder.Depth = 0;
+            checkBoxTitleBorder.Location = new System.Drawing.Point(419, 36);
+            checkBoxTitleBorder.Margin = new System.Windows.Forms.Padding(0);
+            checkBoxTitleBorder.MouseLocation = new System.Drawing.Point(-1, -1);
+            checkBoxTitleBorder.Name = "checkBoxTitleBorder";
+            checkBoxTitleBorder.Ripple = true;
+            checkBoxTitleBorder.Size = new System.Drawing.Size(124, 30);
+            checkBoxTitleBorder.TabIndex = 45;
+            checkBoxTitleBorder.Text = "Draw Title Border";
+            checkBoxTitleBorder.UseVisualStyleBackColor = true;
+            checkBoxTitleBorder.CheckedChanged += checkBoxTitleBorder_CheckedChanged;
+            // 
             // ConfigPage
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            Controls.Add(buttonBorderColor);
             Controls.Add(label1);
             Controls.Add(buttonSelectFont);
             Controls.Add(buttonSelectColor);
             Controls.Add(comboBoxHatchType);
+            Controls.Add(checkBoxTitleBorder);
             Controls.Add(checkBoxDrawFullHatch);
             Controls.Add(numTitleHeight);
             Controls.Add(numIconWidth);
@@ -205,5 +240,7 @@
         private Controls.Label label6;
         private Controls.Button buttonSelectFont;
         private Controls.Label label1;
+        private Controls.Button buttonBorderColor;
+        private Controls.CheckBox checkBoxTitleBorder;
     }
 }

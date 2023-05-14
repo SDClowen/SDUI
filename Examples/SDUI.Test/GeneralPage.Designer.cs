@@ -228,8 +228,10 @@
             // 
             // label4
             // 
+            label4.ApplyGradient = false;
             label4.AutoSize = true;
             label4.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label4.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
             label4.Location = new System.Drawing.Point(155, 75);
             label4.Name = "label4";
             label4.Size = new System.Drawing.Size(38, 15);
@@ -388,7 +390,7 @@
             panel8.Location = new System.Drawing.Point(1029, 0);
             panel8.Name = "panel8";
             panel8.Radius = 0;
-            panel8.ShadowDepth = 2F;
+            panel8.ShadowDepth = 0F;
             panel8.Size = new System.Drawing.Size(233, 587);
             panel8.TabIndex = 57;
             // 
@@ -511,8 +513,10 @@
             // 
             // label3
             // 
+            label3.ApplyGradient = false;
             label3.AutoSize = true;
             label3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label3.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
             label3.Location = new System.Drawing.Point(8, 104);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(220, 30);
@@ -536,7 +540,7 @@
             progressBar5.ShowValue = true;
             progressBar5.Size = new System.Drawing.Size(179, 16);
             progressBar5.TabIndex = 3;
-            progressBar5.Text = "70.00%";
+            progressBar5.Text = "70,00%";
             progressBar5.Value = 70L;
             // 
             // panel7
@@ -565,8 +569,10 @@
             // 
             // label2
             // 
+            label2.ApplyGradient = false;
             label2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             label2.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+            label2.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
             label2.Location = new System.Drawing.Point(373, 199);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(618, 106);
@@ -575,7 +581,9 @@
             // 
             // label1
             // 
+            label1.ApplyGradient = false;
             label1.AutoSize = true;
+            label1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
             label1.Location = new System.Drawing.Point(487, 215);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(0, 15);
@@ -792,6 +800,7 @@
             textBox1.MaxLength = 32767;
             textBox1.MultiLine = false;
             textBox1.Name = "textBox1";
+            textBox1.PassFocusShow = false;
             textBox1.Radius = 2;
             textBox1.Size = new System.Drawing.Size(134, 21);
             textBox1.TabIndex = 47;
@@ -918,7 +927,7 @@
             progressBar7.ShowValue = true;
             progressBar7.Size = new System.Drawing.Size(179, 16);
             progressBar7.TabIndex = 38;
-            progressBar7.Text = "99.99%";
+            progressBar7.Text = "99,99%";
             progressBar7.Value = 1000L;
             // 
             // progressBar3
@@ -938,7 +947,7 @@
             progressBar3.ShowValue = true;
             progressBar3.Size = new System.Drawing.Size(179, 16);
             progressBar3.TabIndex = 37;
-            progressBar3.Text = "62.30%";
+            progressBar3.Text = "62,30%";
             progressBar3.Value = 623L;
             // 
             // progressBar6
@@ -978,7 +987,7 @@
             progressBar2.ShowValue = true;
             progressBar2.Size = new System.Drawing.Size(179, 16);
             progressBar2.TabIndex = 35;
-            progressBar2.Text = "33.00%";
+            progressBar2.Text = "33,00%";
             progressBar2.Value = 33L;
             // 
             // progressBar1
@@ -998,7 +1007,7 @@
             progressBar1.ShowValue = true;
             progressBar1.Size = new System.Drawing.Size(179, 16);
             progressBar1.TabIndex = 42;
-            progressBar1.Text = "70.00%";
+            progressBar1.Text = "70,00%";
             progressBar1.Value = 70L;
             // 
             // separator2
