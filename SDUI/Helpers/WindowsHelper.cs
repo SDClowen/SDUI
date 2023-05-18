@@ -157,6 +157,9 @@ public static class WindowsHelper
     /// <param name="hWnd">The control hwnd</param>
     public static void ApplyRoundCorner(IntPtr hWnd)
     {
+        if (!IsEleven)
+            return;
+
         var dwAttribute = DWMWINDOWATTRIBUTE.DWMWA_WINDOW_CORNER_PREFERENCE;
         var pvAttribute = DWM_WINDOW_CORNER_PREFERENCE.DWMWCP_ROUND;
         DwmSetWindowAttribute(hWnd, dwAttribute, ref pvAttribute, sizeof(uint));
