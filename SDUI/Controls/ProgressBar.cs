@@ -129,7 +129,13 @@ public class ProgressBar : Control
 
     public ProgressBar()
     {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        SetStyle(ControlStyles.SupportsTransparentBackColor |
+                  ControlStyles.OptimizedDoubleBuffer |
+                  ControlStyles.ResizeRedraw |
+                  ControlStyles.Opaque |
+                  ControlStyles.UserPaint, true);
+
+        UpdateStyles();
         BackColor = Color.Transparent;
     }
 

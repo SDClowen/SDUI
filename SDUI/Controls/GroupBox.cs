@@ -40,6 +40,7 @@ public class GroupBox : System.Windows.Forms.GroupBox
         SetStyle(ControlStyles.SupportsTransparentBackColor |
                   ControlStyles.OptimizedDoubleBuffer |
                   ControlStyles.ResizeRedraw |
+                  ControlStyles.Opaque |
                   ControlStyles.UserPaint, true);
 
         UpdateStyles();

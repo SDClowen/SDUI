@@ -7,7 +7,7 @@ public partial class MainWindow : UIWindow
 {
     public MainWindow()
     {
-        InitializeComponent();
+        InitializeComponent(); 
     }
 
     protected override void OnBackColorChanged(EventArgs e)

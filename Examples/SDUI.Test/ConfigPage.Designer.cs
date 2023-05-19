@@ -153,11 +153,11 @@
             buttonSelectFont.Color = System.Drawing.Color.RosyBrown;
             buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             buttonSelectFont.ForeColor = System.Drawing.Color.White;
-            buttonSelectFont.Location = new System.Drawing.Point(152, 124);
+            buttonSelectFont.Location = new System.Drawing.Point(155, 124);
             buttonSelectFont.Name = "buttonSelectFont";
             buttonSelectFont.Radius = 8;
             buttonSelectFont.ShadowDepth = 0F;
-            buttonSelectFont.Size = new System.Drawing.Size(94, 27);
+            buttonSelectFont.Size = new System.Drawing.Size(91, 27);
             buttonSelectFont.TabIndex = 47;
             buttonSelectFont.Text = "Select Font";
             buttonSelectFont.UseVisualStyleBackColor = true;

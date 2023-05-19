@@ -7,14 +7,14 @@ public class Separator : Control
 {
     public Separator()
     {
-        SetStyle(
-            ControlStyles.ResizeRedraw |
-            ControlStyles.UserPaint |
-            ControlStyles.SupportsTransparentBackColor,
-            true
-        );
+        SetStyle(ControlStyles.SupportsTransparentBackColor |
+                  ControlStyles.OptimizedDoubleBuffer |
+                  ControlStyles.ResizeRedraw |
+                  ControlStyles.UserPaint, true);
 
-        this.Size = new Size(120, 10);
+        UpdateStyles();
+
+        this.Size = new Size(120, 6);
     }
 
     private bool _isVertical = false;
@@ -30,7 +30,7 @@ public class Separator : Control
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        ButtonRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+        //GroupBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
 
         using (var pen = new Pen(ColorScheme.BorderColor))
         {

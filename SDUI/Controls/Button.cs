@@ -127,7 +127,7 @@ public class Button : System.Windows.Forms.Button
 
         ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
 
-        var rectf = new RectangleF(ClientRectangle.X, ClientRectangle.Y, ClientRectangle.Width, ClientRectangle.Height);
+        var rectf = ClientRectangle.ToRectangleF();
 
         if (ColorScheme.DrawDebugBorders)
         {

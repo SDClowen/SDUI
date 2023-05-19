@@ -64,11 +64,12 @@ public class Panel : System.Windows.Forms.Panel
     public Panel()
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
-                 ControlStyles.OptimizedDoubleBuffer |
-                 ControlStyles.ResizeRedraw | 
-                 ControlStyles.AllPaintingInWmPaint |
-                 ControlStyles.UserPaint, true);
+                  ControlStyles.OptimizedDoubleBuffer |
+                  ControlStyles.Opaque |
+                  ControlStyles.ResizeRedraw |
+                  ControlStyles.UserPaint, true);
 
+        this.DoubleBuffered = true;
         BackColor = Color.Transparent;
         UpdateStyles();
     }

@@ -83,8 +83,21 @@ public partial class MainWindow
         aboutToolStripMenuItem = new ToolStripMenuItem();
         toolTip1 = new ToolTip(components);
         windowPageControl = new WindowPageControl();
+        separator1 = new Separator();
+        panel8 = new Controls.Panel();
+        toggleButton1 = new ToggleButton();
+        shapeProgressBar2 = new ShapeProgressBar();
+        shapeProgressBar1 = new ShapeProgressBar();
+        chatBubble2 = new ChatBubble();
+        chatBubble1 = new ChatBubble();
+        numUpDown1 = new NumUpDown();
+        checkBox4 = new Controls.CheckBox();
+        checkBox3 = new Controls.CheckBox();
+        label3 = new Controls.Label();
+        progressBar5 = new Controls.ProgressBar();
         contextMenuStrip1.SuspendLayout();
         menuStrip1.SuspendLayout();
+        panel8.SuspendLayout();
         SuspendLayout();
         // 
         // contextMenuStrip1
@@ -436,20 +449,204 @@ public partial class MainWindow
         // windowPageControl
         // 
         windowPageControl.Dock = DockStyle.Fill;
-        windowPageControl.Location = new System.Drawing.Point(0, 32);
+        windowPageControl.Location = new System.Drawing.Point(0, 38);
         windowPageControl.Name = "windowPageControl";
         windowPageControl.SelectedIndex = -1;
-        windowPageControl.Size = new System.Drawing.Size(1177, 601);
+        windowPageControl.Size = new System.Drawing.Size(944, 595);
         windowPageControl.TabIndex = 2;
+        // 
+        // separator1
+        // 
+        separator1.Dock = DockStyle.Top;
+        separator1.IsVertical = false;
+        separator1.Location = new System.Drawing.Point(0, 32);
+        separator1.Name = "separator1";
+        separator1.Size = new System.Drawing.Size(1177, 6);
+        separator1.TabIndex = 3;
+        separator1.Text = "separator1";
+        // 
+        // panel8
+        // 
+        panel8.BackColor = System.Drawing.Color.Transparent;
+        panel8.Border = new Padding(1, 0, 0, 0);
+        panel8.BorderColor = System.Drawing.Color.Transparent;
+        panel8.Controls.Add(toggleButton1);
+        panel8.Controls.Add(shapeProgressBar2);
+        panel8.Controls.Add(shapeProgressBar1);
+        panel8.Controls.Add(chatBubble2);
+        panel8.Controls.Add(chatBubble1);
+        panel8.Controls.Add(numUpDown1);
+        panel8.Controls.Add(checkBox4);
+        panel8.Controls.Add(checkBox3);
+        panel8.Controls.Add(label3);
+        panel8.Controls.Add(progressBar5);
+        panel8.Dock = DockStyle.Right;
+        panel8.Location = new System.Drawing.Point(944, 38);
+        panel8.Name = "panel8";
+        panel8.Radius = 0;
+        panel8.ShadowDepth = 0F;
+        panel8.Size = new System.Drawing.Size(233, 595);
+        panel8.TabIndex = 58;
+        // 
+        // toggleButton1
+        // 
+        toggleButton1.AutoSize = true;
+        toggleButton1.BackColor = System.Drawing.Color.Transparent;
+        toggleButton1.Location = new System.Drawing.Point(106, 380);
+        toggleButton1.MinimumSize = new System.Drawing.Size(46, 22);
+        toggleButton1.Name = "toggleButton1";
+        toggleButton1.Size = new System.Drawing.Size(46, 22);
+        toggleButton1.TabIndex = 31;
+        toggleButton1.UseVisualStyleBackColor = false;
+        // 
+        // shapeProgressBar2
+        // 
+        shapeProgressBar2.BackColor = System.Drawing.Color.Transparent;
+        shapeProgressBar2.DrawHatch = true;
+        shapeProgressBar2.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+        shapeProgressBar2.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+        shapeProgressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
+        shapeProgressBar2.Location = new System.Drawing.Point(117, 453);
+        shapeProgressBar2.Maximum = 100L;
+        shapeProgressBar2.Name = "shapeProgressBar2";
+        shapeProgressBar2.Size = new System.Drawing.Size(64, 64);
+        shapeProgressBar2.TabIndex = 30;
+        shapeProgressBar2.Text = "shapeProgressBar1";
+        shapeProgressBar2.Value = 52L;
+        shapeProgressBar2.Weight = 12F;
+        // 
+        // shapeProgressBar1
+        // 
+        shapeProgressBar1.BackColor = System.Drawing.Color.Transparent;
+        shapeProgressBar1.DrawHatch = false;
+        shapeProgressBar1.Font = new System.Drawing.Font("Impact", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+        shapeProgressBar1.ForeColor = System.Drawing.Color.Silver;
+        shapeProgressBar1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+        shapeProgressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
+        shapeProgressBar1.Location = new System.Drawing.Point(16, 453);
+        shapeProgressBar1.Maximum = 100L;
+        shapeProgressBar1.Name = "shapeProgressBar1";
+        shapeProgressBar1.Size = new System.Drawing.Size(48, 48);
+        shapeProgressBar1.TabIndex = 30;
+        shapeProgressBar1.Text = "shapeProgressBar1";
+        shapeProgressBar1.Value = 52L;
+        shapeProgressBar1.Weight = 8F;
+        // 
+        // chatBubble2
+        // 
+        chatBubble2.ArrowPosition = AnchorStyles.Right;
+        chatBubble2.BackColor = System.Drawing.Color.Transparent;
+        chatBubble2.BubbleColor = System.Drawing.Color.FromArgb(192, 192, 255);
+        chatBubble2.DrawBubbleArrow = true;
+        chatBubble2.ForeColor = System.Drawing.Color.FromArgb(52, 52, 52);
+        chatBubble2.Location = new System.Drawing.Point(16, 326);
+        chatBubble2.Name = "chatBubble2";
+        chatBubble2.Size = new System.Drawing.Size(175, 38);
+        chatBubble2.TabIndex = 28;
+        chatBubble2.Text = "Hello Bob i am fine, Thanks";
+        // 
+        // chatBubble1
+        // 
+        chatBubble1.ArrowPosition = AnchorStyles.Left;
+        chatBubble1.BackColor = System.Drawing.Color.Transparent;
+        chatBubble1.BubbleColor = System.Drawing.Color.FromArgb(217, 217, 217);
+        chatBubble1.DrawBubbleArrow = true;
+        chatBubble1.ForeColor = System.Drawing.Color.FromArgb(52, 52, 52);
+        chatBubble1.Location = new System.Drawing.Point(43, 279);
+        chatBubble1.Name = "chatBubble1";
+        chatBubble1.Size = new System.Drawing.Size(175, 38);
+        chatBubble1.TabIndex = 28;
+        chatBubble1.Text = "Hello Jean How are you?";
+        // 
+        // numUpDown1
+        // 
+        numUpDown1.BackColor = System.Drawing.Color.Transparent;
+        numUpDown1.Font = new System.Drawing.Font("Segoe UI", 9.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+        numUpDown1.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+        numUpDown1.Location = new System.Drawing.Point(16, 379);
+        numUpDown1.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
+        numUpDown1.Minimum = new decimal(new int[] { 0, 0, 0, 0 });
+        numUpDown1.MinimumSize = new System.Drawing.Size(80, 25);
+        numUpDown1.Name = "numUpDown1";
+        numUpDown1.Size = new System.Drawing.Size(80, 25);
+        numUpDown1.TabIndex = 28;
+        numUpDown1.Value = new decimal(new int[] { 0, 0, 0, 0 });
+        // 
+        // checkBox4
+        // 
+        checkBox4.AutoSize = true;
+        checkBox4.BackColor = System.Drawing.Color.Transparent;
+        checkBox4.Checked = true;
+        checkBox4.CheckState = CheckState.Checked;
+        checkBox4.Depth = 0;
+        checkBox4.Location = new System.Drawing.Point(16, 238);
+        checkBox4.Margin = new Padding(0);
+        checkBox4.MouseLocation = new System.Drawing.Point(-1, -1);
+        checkBox4.Name = "checkBox4";
+        checkBox4.Ripple = true;
+        checkBox4.Size = new System.Drawing.Size(87, 30);
+        checkBox4.TabIndex = 13;
+        checkBox4.Text = "checkBox1";
+        checkBox4.UseVisualStyleBackColor = false;
+        // 
+        // checkBox3
+        // 
+        checkBox3.AutoSize = true;
+        checkBox3.BackColor = System.Drawing.Color.Transparent;
+        checkBox3.Depth = 0;
+        checkBox3.Dock = DockStyle.Top;
+        checkBox3.Location = new System.Drawing.Point(0, 0);
+        checkBox3.Margin = new Padding(0);
+        checkBox3.MouseLocation = new System.Drawing.Point(-1, -1);
+        checkBox3.Name = "checkBox3";
+        checkBox3.Ripple = true;
+        checkBox3.Size = new System.Drawing.Size(233, 30);
+        checkBox3.TabIndex = 13;
+        checkBox3.Text = "Toggle Title";
+        checkBox3.UseVisualStyleBackColor = false;
+        // 
+        // label3
+        // 
+        label3.ApplyGradient = false;
+        label3.AutoSize = true;
+        label3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+        label3.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
+        label3.Location = new System.Drawing.Point(8, 104);
+        label3.Name = "label3";
+        label3.Size = new System.Drawing.Size(220, 30);
+        label3.TabIndex = 11;
+        label3.Text = "Lorem Ipsum is simply dummy text \r\nof the printing and typesetting industry. ";
+        // 
+        // progressBar5
+        // 
+        progressBar5.BackColor = System.Drawing.Color.Transparent;
+        progressBar5.DrawHatch = false;
+        progressBar5.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+        progressBar5.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
+        progressBar5.Location = new System.Drawing.Point(16, 417);
+        progressBar5.Margin = new Padding(4, 3, 4, 3);
+        progressBar5.Maximum = 100L;
+        progressBar5.MaxPercentShowValue = 100F;
+        progressBar5.Name = "progressBar5";
+        progressBar5.PercentIndices = 2;
+        progressBar5.Radius = 4;
+        progressBar5.ShowAsPercent = true;
+        progressBar5.ShowValue = true;
+        progressBar5.Size = new System.Drawing.Size(179, 16);
+        progressBar5.TabIndex = 3;
+        progressBar5.Text = "70,00%";
+        progressBar5.Value = 70L;
         // 
         // MainWindow
         // 
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
-        BackColor = System.Drawing.Color.White;
+        BackColor = System.Drawing.Color.FromArgb(0, 0, 0, 0);
         ClientSize = new System.Drawing.Size(1177, 657);
         ControlBox = false;
         Controls.Add(windowPageControl);
+        Controls.Add(panel8);
+        Controls.Add(separator1);
         Controls.Add(menuStrip1);
         Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
         ForeColor = System.Drawing.Color.Black;
@@ -465,6 +662,8 @@ public partial class MainWindow
         contextMenuStrip1.ResumeLayout(false);
         menuStrip1.ResumeLayout(false);
         menuStrip1.PerformLayout();
+        panel8.ResumeLayout(false);
+        panel8.PerformLayout();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -519,4 +718,16 @@ public partial class MainWindow
     private ToolStripSeparator toolStripSeparator6;
     private ToolTip toolTip1;
     private WindowPageControl windowPageControl;
+    private Separator separator1;
+    private Controls.Panel panel8;
+    private ToggleButton toggleButton1;
+    private ShapeProgressBar shapeProgressBar2;
+    private ShapeProgressBar shapeProgressBar1;
+    private ChatBubble chatBubble2;
+    private ChatBubble chatBubble1;
+    private NumUpDown numUpDown1;
+    private Controls.CheckBox checkBox4;
+    private Controls.CheckBox checkBox3;
+    private Controls.Label label3;
+    private Controls.ProgressBar progressBar5;
 }

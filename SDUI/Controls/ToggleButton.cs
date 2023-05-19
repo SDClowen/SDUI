@@ -1,4 +1,4 @@
-﻿using System;
+﻿using SDUI.Animation;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -8,6 +8,7 @@ namespace SDUI.Controls;
 
 public class ToggleButton : System.Windows.Forms.CheckBox
 {
+    private readonly AnimationManager animationManager;
 
     [Browsable(true)]
     public override string Text
@@ -20,6 +21,13 @@ public class ToggleButton : System.Windows.Forms.CheckBox
     {
         this.DoubleBuffered = true;
         this.MinimumSize = new Size(46, 22);
+
+        animationManager = new AnimationManager()
+        {
+            AnimationType = AnimationType.EaseInOut,
+            Increment = 0.10,
+            SecondaryIncrement = 0.07
+        };
     }
 
     private GraphicsPath GetFigurePath()
@@ -50,8 +58,10 @@ public class ToggleButton : System.Windows.Forms.CheckBox
         e.Graphics.DrawPath(new Pen(ColorScheme.BorderColor, 1), path);
 
         using var solidBrush = new SolidBrush(ColorScheme.BorderColor.Alpha(50));
+        var progress = (float)animationManager.GetProgress();
+
         if (this.Checked)
-            e.Graphics.FillEllipse(solidBrush, new Rectangle(this.Width - this.Height + 1, 2, toggleSize, toggleSize));
+            e.Graphics.FillEllipse(solidBrush, new RectangleF(this.Width - this.Height + 1 * progress, 2, toggleSize, toggleSize));
         else
             e.Graphics.FillEllipse(solidBrush, new Rectangle(2, 2, toggleSize, toggleSize));
     }
