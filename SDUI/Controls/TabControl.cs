@@ -6,6 +6,16 @@ namespace SDUI.Controls;
 
 public class TabControl : System.Windows.Forms.TabControl
 {
+    private Padding _borderRadius = new System.Windows.Forms.Padding(4);
+    public Padding Radius
+    {
+        get => _borderRadius;
+        set
+        {
+            _borderRadius = value;
+            Invalidate();
+        }
+    }
     public TabControl()
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
@@ -45,9 +55,10 @@ public class TabControl : System.Windows.Forms.TabControl
         graphics.SetHighQuality();
         using var borderBrush = new Pen(Color.FromArgb(70, 0, 0, 0));
         using var backBrush = new SolidBrush(ColorScheme.BackColor.IsDark() ? Color.FromArgb(10, 255, 255, 255) : Color.FromArgb(50, 0, 0, 0));
+
         // Draw container rectangle
         var r = new RectangleF(0, ItemSize.Height, Width - 1, Height - ItemSize.Height - 1);
-        using (var path = r.Radius(SelectedIndex == 0 ? 2 : 4, 4, 4, 4))
+        using (var path = r.Radius(SelectedIndex == 0 ? 2 : _borderRadius.Left, _borderRadius.Top, _borderRadius.Right, _borderRadius.Bottom))
         {
             //graphics.FillPath(backBrush, path);
             graphics.DrawPath(borderBrush, path);
