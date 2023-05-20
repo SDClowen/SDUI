@@ -150,18 +150,10 @@ public class MenuRenderer : ToolStripRenderer
 
     protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
     {
+        base.OnRenderToolStripBackground(e);
         var rectangle = e.ToolStrip.ClientRectangle;
-        if (e.ToolStrip is ContextMenuStrip ||
-            e.ToolStrip is ToolStripDropDownMenu ||
-            e.ToolStrip is StatusStrip)
-        {
-            e.Graphics.FillRectangle(new SolidBrush(Color.Transparent), rectangle);
-            e.Graphics.FillPath(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle.Radius(4));
-        }
-        else
-        {
-            base.OnRenderToolStripBackground(e);
-        }
+
+        e.Graphics.FillRectangle(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle);
     }
 
     protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)
