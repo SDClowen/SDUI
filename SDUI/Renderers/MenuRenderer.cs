@@ -156,7 +156,7 @@ public class MenuRenderer : ToolStripRenderer
             e.ToolStrip is StatusStrip)
         {
             e.Graphics.FillRectangle(new SolidBrush(Color.Transparent), rectangle);
-            e.Graphics.FillPath(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle.Radius(6));
+            e.Graphics.FillPath(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle.Radius(4));
         }
         else
         {
