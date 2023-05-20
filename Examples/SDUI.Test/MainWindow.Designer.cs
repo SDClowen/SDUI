@@ -85,6 +85,7 @@ public partial class MainWindow
         windowPageControl = new WindowPageControl();
         separator1 = new Separator();
         panel8 = new Controls.Panel();
+        configPage1 = new ConfigPage();
         toggleButton1 = new ToggleButton();
         shapeProgressBar2 = new ShapeProgressBar();
         shapeProgressBar1 = new ShapeProgressBar();
@@ -219,9 +220,10 @@ public partial class MainWindow
         menuStrip1.Dock = DockStyle.Bottom;
         menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
         menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
-        menuStrip1.Location = new System.Drawing.Point(0, 633);
+        menuStrip1.Location = new System.Drawing.Point(0, 743);
         menuStrip1.Name = "menuStrip1";
-        menuStrip1.Size = new System.Drawing.Size(1177, 24);
+        menuStrip1.Size = new System.Drawing.Size(1241, 24);
+        menuStrip1.Stretch = false;
         menuStrip1.TabIndex = 1;
         menuStrip1.Text = "menuStrip1";
         // 
@@ -452,7 +454,7 @@ public partial class MainWindow
         windowPageControl.Location = new System.Drawing.Point(0, 38);
         windowPageControl.Name = "windowPageControl";
         windowPageControl.SelectedIndex = -1;
-        windowPageControl.Size = new System.Drawing.Size(944, 595);
+        windowPageControl.Size = new System.Drawing.Size(1008, 705);
         windowPageControl.TabIndex = 2;
         // 
         // separator1
@@ -461,7 +463,7 @@ public partial class MainWindow
         separator1.IsVertical = false;
         separator1.Location = new System.Drawing.Point(0, 32);
         separator1.Name = "separator1";
-        separator1.Size = new System.Drawing.Size(1177, 6);
+        separator1.Size = new System.Drawing.Size(1241, 6);
         separator1.TabIndex = 3;
         separator1.Text = "separator1";
         // 
@@ -470,6 +472,7 @@ public partial class MainWindow
         panel8.BackColor = System.Drawing.Color.Transparent;
         panel8.Border = new Padding(1, 0, 0, 0);
         panel8.BorderColor = System.Drawing.Color.Transparent;
+        panel8.Controls.Add(configPage1);
         panel8.Controls.Add(toggleButton1);
         panel8.Controls.Add(shapeProgressBar2);
         panel8.Controls.Add(shapeProgressBar1);
@@ -481,12 +484,19 @@ public partial class MainWindow
         panel8.Controls.Add(label3);
         panel8.Controls.Add(progressBar5);
         panel8.Dock = DockStyle.Right;
-        panel8.Location = new System.Drawing.Point(944, 38);
+        panel8.Location = new System.Drawing.Point(1008, 38);
         panel8.Name = "panel8";
         panel8.Radius = 0;
         panel8.ShadowDepth = 0F;
-        panel8.Size = new System.Drawing.Size(233, 595);
+        panel8.Size = new System.Drawing.Size(233, 705);
         panel8.TabIndex = 58;
+        // 
+        // configPage1
+        // 
+        configPage1.Location = new System.Drawing.Point(6, 90);
+        configPage1.Name = "configPage1";
+        configPage1.Size = new System.Drawing.Size(224, 312);
+        configPage1.TabIndex = 32;
         // 
         // toggleButton1
         // 
@@ -611,7 +621,8 @@ public partial class MainWindow
         label3.AutoSize = true;
         label3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         label3.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
-        label3.Location = new System.Drawing.Point(8, 104);
+        label3.GradientAnimation = false;
+        label3.Location = new System.Drawing.Point(10, 45);
         label3.Name = "label3";
         label3.Size = new System.Drawing.Size(220, 30);
         label3.TabIndex = 11;
@@ -642,7 +653,8 @@ public partial class MainWindow
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = System.Drawing.Color.FromArgb(0, 0, 0, 0);
-        ClientSize = new System.Drawing.Size(1177, 657);
+        ClientSize = new System.Drawing.Size(1241, 767);
+        ContextMenuStrip = contextMenuStrip1;
         ControlBox = false;
         Controls.Add(windowPageControl);
         Controls.Add(panel8);
@@ -730,4 +742,5 @@ public partial class MainWindow
     private Controls.CheckBox checkBox3;
     private Controls.Label label3;
     private Controls.ProgressBar progressBar5;
+    private ConfigPage configPage1;
 }

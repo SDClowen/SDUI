@@ -411,7 +411,7 @@ public class UIWindow : UIWindowBase
     /// <summary>
     /// The contructor
     /// </summary>
-    public UIWindow() 
+    public UIWindow()
         : base()
     {
         SetStyle(
@@ -931,7 +931,7 @@ public class UIWindow : UIWindowBase
 
         graphics.SetDefaultQuality();
 
-        var faviconSize = 20;
+        var faviconSize = 16;
         if (Icon != null)
             graphics.DrawIcon(Icon, new Rectangle(10, (_titleHeight / 2) - (faviconSize / 2), faviconSize, faviconSize));
 
@@ -988,7 +988,7 @@ public class UIWindow : UIWindowBase
             TextRenderer.DrawText(graphics, page.Text, _titleFont, pageRect[currentTabIndex], foreColor, flags);
         }
 
-        if(_drawTitleBorder)
+        if (_drawTitleBorder)
         {
             if (titleColor != Color.Empty)
             {
@@ -1062,7 +1062,7 @@ public class UIWindow : UIWindowBase
         set
         {
             _windowPageControl = value;
-            if (_windowPageControl == null) 
+            if (_windowPageControl == null)
                 return;
 
             previousSelectedPageIndex = _windowPageControl.SelectedIndex;

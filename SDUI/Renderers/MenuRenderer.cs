@@ -98,7 +98,7 @@ public class MenuRenderer : ToolStripRenderer
     {
         base.OnRenderItemText(e);
 
-        if (e.Item.ForeColor != ColorScheme.ForeColor)
+        if (e.Item.ForeColor != ColorScheme.ForeColor && e.Item.Tag?.ToString() != "private")
             e.Item.ForeColor = ColorScheme.ForeColor;
     }
 
@@ -110,7 +110,7 @@ public class MenuRenderer : ToolStripRenderer
             e.ToolStrip is ToolStripDropDownMenu ||
             e.ToolStrip is StatusStrip)
         {
-            e.Graphics.DrawPath(new Pen(ColorScheme.BorderColor, 1), rectangle.Radius(6));
+            e.Graphics.DrawPath(new Pen(ColorScheme.BorderColor, 1), rectangle.Radius(16));
         }
         else
         {
@@ -120,30 +120,48 @@ public class MenuRenderer : ToolStripRenderer
 
     protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
     {
+        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
         //base.OnRenderMenuItemBackground(e);
+        var rectangle = new Rectangle(Point.Empty, e.Item.Size);
+        if (e.ToolStrip is ToolStripDropDown)
+            rectangle.Inflate(-4, 0);
+
+        if (e.Item.Tag?.ToString() == "private")
+        {
+            using var pbrush = new SolidBrush(e.Item.BackColor);
+
+            e.Graphics.FillPath(pbrush, rectangle.Radius(6));
+        }
+
         if (!e.Item.Selected)
             return;
 
-        var rectangle = new Rectangle(Point.Empty, e.Item.Size);
         var backColor = ColorScheme.BackColor.Brightness(.1f);
 
         if (!backColor.IsDark())
             backColor = ColorScheme.BackColor.Brightness(-.1f);
 
-        e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
 
         using var brush = new SolidBrush(backColor);
 
-        rectangle.Inflate(-4, 0);
         e.Graphics.FillPath(brush, rectangle.Radius(6));
     }
 
     protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
     {
-        base.OnRenderToolStripBackground(e);
         var rectangle = e.ToolStrip.ClientRectangle;
-
-        e.Graphics.FillRectangle(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle);
+        if (e.ToolStrip is ContextMenuStrip ||
+            e.ToolStrip is ToolStripDropDownMenu ||
+            e.ToolStrip is StatusStrip)
+        {
+            e.Graphics.FillRectangle(new SolidBrush(Color.Transparent), rectangle);
+            e.Graphics.FillPath(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle.Radius(6));
+        }
+        else
+        {
+            base.OnRenderToolStripBackground(e);
+        }
     }
 
     protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)

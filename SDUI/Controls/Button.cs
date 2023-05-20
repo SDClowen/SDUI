@@ -166,25 +166,27 @@ public class Button : System.Windows.Forms.Button
             graphics.FillPath(b, path);
 
             graphics.DrawShadow(rectf, _shadowDepth, _radius);
-        }
 
-        //Ripple
-        if (animationManager.IsAnimating())
-        {
-            var mode = graphics.SmoothingMode;
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            for (int i = 0; i < animationManager.GetAnimationCount(); i++)
+            //Ripple
+            if (animationManager.IsAnimating())
             {
-                var animationValue = animationManager.GetProgress(i);
-                var animationSource = animationManager.GetSource(i);
+                var mode = graphics.SmoothingMode;
+                graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                for (int i = 0; i < animationManager.GetAnimationCount(); i++)
+                {
+                    var animationValue = animationManager.GetProgress(i);
+                    var animationSource = animationManager.GetSource(i);
 
-                using var rippleBrush = new SolidBrush(Color.FromArgb((int)(101 - (animationValue * 100)), Color.Black));
-                var rippleSize = (float)(animationValue * Width * 2.0);
-                graphics.FillEllipse(rippleBrush, new RectangleF(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
+                    using var rippleBrush = new SolidBrush(ColorScheme.BackColor.Alpha((int)(101 - (animationValue * 100))));
+                    var rippleSize = (float)(animationValue * Width * 2.0);
+
+                    var rippleRect = new RectangleF(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize);
+                    path.AddEllipse(rippleRect);
+                    graphics.FillPath(rippleBrush, path);
+                }
+                graphics.SmoothingMode = mode;
             }
-            graphics.SmoothingMode = mode;
         }
-
 
         var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
         if (!Enabled)

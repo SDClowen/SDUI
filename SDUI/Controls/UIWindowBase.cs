@@ -9,6 +9,16 @@ namespace SDUI.Controls;
 public class UIWindowBase : Form
 {
     protected bool enableFullDraggable;
+    private int dwmMargin = 1;
+    private bool right = false;
+    private Point location;
+
+
+    public int DwmMargin
+    {
+        get => dwmMargin;
+        set => dwmMargin = value;
+    }
 
     /// <summary>
     /// Has aero enabled by windows <c>true</c>; otherwise <c>false</c>
@@ -31,6 +41,9 @@ public class UIWindowBase : Form
     public UIWindowBase()
     {
         //BackColor = Color.FromArgb(0, 0, 0, 0);
+
+        SetStyle(ControlStyles.UserPaint, true);
+        UpdateStyles();
     }
 
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -45,6 +58,12 @@ public class UIWindowBase : Form
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
+        right = e.Button == MouseButtons.Right;
+        if (right)
+        {
+            location = e.Location;
+            Invalidate();
+        }
 
         if (!enableFullDraggable)
             return;
@@ -67,8 +86,8 @@ public class UIWindowBase : Form
             if (!_aeroEnabled)
                 cp.ClassStyle |= CS_DROPSHADOW;
 
-            cp.Style |= WS_MINIMIZEBOX;
-            cp.ClassStyle |= CS_DBLCLKS;
+            cp.Style |= WS_MINIMIZEBOX | WS_SYSMENU | WS_SIZEBOX;
+            //cp.ClassStyle |= CS_DBLCLKS;
 
             return cp;
         }
@@ -93,9 +112,24 @@ public class UIWindowBase : Form
     {
         switch (m.Msg)
         {
-            case WM_NCCALCSIZE:
-                if (!DesignMode && FormBorderStyle != FormBorderStyle.None)
+            case 0x84:
+            {  // Trap WM_NCHITTEST
+                Point pos = new Point(m.LParam.ToInt32() & 0xffff, m.LParam.ToInt32() >> 16);
+                pos = this.PointToClient(pos);
+                if (pos.X >= this.ClientSize.Width - 5 && pos.Y >= this.ClientSize.Height - 5)
+                {
+                    m.Result = (IntPtr)17; // HTBOTTOMRIGHT
                     return;
+                }
+
+                    break;
+            }
+            case WM_NCCALCSIZE:
+                if (FormBorderStyle != FormBorderStyle.None && m.WParam.ToInt32() == 1)
+                {
+                    m.Result = new IntPtr(0xF0);
+                    return;
+                }
                 else
                     break;
         }
@@ -159,10 +193,10 @@ public class UIWindowBase : Form
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
             var margins = new MARGINS()
             {
-                Bottom = 1,
-                Left = 1,
-                Right = 1,
-                Top = 1
+                Bottom = dwmMargin,
+                Left = dwmMargin,
+                Right = dwmMargin,
+                Top = dwmMargin
             };
 
             DwmExtendFrameIntoClientArea(this.Handle, ref margins);

@@ -22,6 +22,8 @@ public class NativeMethods
     public const int HT_CAPTION = 0x2;
     public const int CS_DROPSHADOW = 0x00020000;
     public const int WS_MINIMIZEBOX = 0x20000;
+    public const int WS_SIZEBOX = 0x00040000;
+    public const int WS_SYSMENU = 0x00080000;
     public const int CS_DBLCLKS = 0x8;
     public const int WM_NCPAINT = 0x0085;
     public const int WM_NCHITTEST = 0x84;
