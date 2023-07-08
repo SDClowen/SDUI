@@ -86,8 +86,18 @@ public class UIWindowBase : Form
             if (!_aeroEnabled)
                 cp.ClassStyle |= CS_DROPSHADOW;
 
-            cp.Style |= WS_MINIMIZEBOX | WS_SYSMENU | WS_SIZEBOX;
-            //cp.ClassStyle |= CS_DBLCLKS;
+            cp.ClassStyle |= CS_DBLCLKS;
+
+            var style = (uint)cp.Style;
+            //style &= ~(uint)SetWindowLongFlags.WS_CAPTION;
+            style &= ~(uint)SetWindowLongFlags.WS_SYSMENU;
+            style &= ~(uint)SetWindowLongFlags.WS_THICKFRAME;
+            style &= ~(uint)SetWindowLongFlags.WS_MINIMIZE;
+            style &= ~(uint)SetWindowLongFlags.WS_MINIMIZEBOX;
+            style &= ~(uint)SetWindowLongFlags.WS_MAXIMIZE;
+            style &= ~(uint)SetWindowLongFlags.WS_MAXIMIZEBOX;
+            style |= (uint)SetWindowLongFlags.WS_TILED;
+            cp.Style = (int)style;
 
             return cp;
         }
@@ -108,22 +118,83 @@ public class UIWindowBase : Form
             BackColor = ColorScheme.BackColor;
     }
 
+    private const int htLeft = 10;
+    private const int htRight = 11;
+    private const int htTop = 12;
+    private const int htTopLeft = 13;
+    private const int htTopRight = 14;
+    private const int htBottom = 15;
+    private const int htBottomLeft = 16;
+    private const int htBottomRight = 17;
     protected override void WndProc(ref Message m)
     {
         switch (m.Msg)
         {
             case 0x84:
-            {  // Trap WM_NCHITTEST
-                Point pos = new Point(m.LParam.ToInt32() & 0xffff, m.LParam.ToInt32() >> 16);
-                pos = this.PointToClient(pos);
-                if (pos.X >= this.ClientSize.Width - 5 && pos.Y >= this.ClientSize.Height - 5)
-                {
-                    m.Result = (IntPtr)17; // HTBOTTOMRIGHT
-                    return;
-                }
+                {  
+                    if (WindowState != FormWindowState.Maximized)
+                    {
+                        int gripDist = 10;
+                        //int x = (int)(m.LParam.ToInt64() & 0xFFFF);
+                        //int x = Cursor.Position.X;
+                        // int y = (int)((m.LParam.ToInt64() & 0xFFFF0000) >> 16);
+                        //Console.WriteLine(x);
+                        Point pt = PointToClient(Cursor.Position);
+                        //Console.WriteLine(pt);
+                        Size clientSize = ClientSize;
+                        ///allow resize on the lower right corner
+                        if (pt.X >= clientSize.Width - gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                        {
+                            m.Result = (IntPtr)(IsMirrored ? htBottomLeft : htBottomRight);
+                            return;
+                        }
+                        ///allow resize on the lower left corner
+                        if (pt.X <= gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                        {
+                            m.Result = (IntPtr)(IsMirrored ? htBottomRight : htBottomLeft);
+                            return;
+                        }
+                        ///allow resize on the upper right corner
+                        if (pt.X <= gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
+                        {
+                            m.Result = (IntPtr)(IsMirrored ? htTopRight : htTopLeft);
+                            return;
+                        }
+                        ///allow resize on the upper left corner
+                        if (pt.X >= clientSize.Width - gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
+                        {
+                            m.Result = (IntPtr)(IsMirrored ? htTopLeft : htTopRight);
+                            return;
+                        }
+                        ///allow resize on the top border
+                        if (pt.Y <= 2 && clientSize.Height >= 2)
+                        {
+                            m.Result = (IntPtr)htTop;
+                            return;
+                        }
+                        ///allow resize on the bottom border
+                        if (pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                        {
+                            m.Result = (IntPtr)htBottom;
+                            return;
+                        }
+                        ///allow resize on the left border
+                        if (pt.X <= gripDist && clientSize.Height >= gripDist)
+                        {
+                            m.Result = (IntPtr)htLeft;
+                            return;
+                        }
+                        ///allow resize on the right border
+                        if (pt.X >= clientSize.Width - gripDist && clientSize.Height >= gripDist)
+                        {
+                            m.Result = (IntPtr)htRight;
+                            return;
+                        }
+                    }
+
 
                     break;
-            }
+                }
             case WM_NCCALCSIZE:
                 if (FormBorderStyle != FormBorderStyle.None && m.WParam.ToInt32() == 1)
                 {
@@ -134,10 +205,11 @@ public class UIWindowBase : Form
                     break;
         }
 
-        base.WndProc(ref m);
 
-        //if (m.Msg == WM_NCHITTEST && (int)m.Result == HTCLIENT)     // drag the form
-        //  m.Result = (IntPtr)HTCAPTION;
+        if (m.Msg == WM_NCHITTEST && (int)m.Result == HTCLIENT)     // drag the form
+            m.Result = (IntPtr)HTCAPTION;
+
+        base.WndProc(ref m);
     }
     public void ChangeControlsTheme(Control control)
     {
@@ -165,7 +237,6 @@ public class UIWindowBase : Form
             ChangeControlsTheme(subControl);
         }
     }
-
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
@@ -179,13 +250,10 @@ public class UIWindowBase : Form
     protected override void OnBackColorChanged(EventArgs e)
     {
         base.OnBackColorChanged(e);
-
         if (DesignMode)
             return;
-
         ChangeControlsTheme(this);
         ForeColor = ColorScheme.ForeColor;
-
         if (_aeroEnabled)
         {
             var v = 2;
