@@ -651,7 +651,7 @@ public partial class MainWindow
         // MainWindow
         // 
         AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-        AutoScaleMode = AutoScaleMode.Font;
+        AutoScaleMode = AutoScaleMode.Dpi;
         BackColor = System.Drawing.Color.FromArgb(0, 0, 0, 0);
         ClientSize = new System.Drawing.Size(1241, 767);
         ContextMenuStrip = contextMenuStrip1;

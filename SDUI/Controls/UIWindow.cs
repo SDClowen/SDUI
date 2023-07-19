@@ -188,6 +188,12 @@ public class UIWindow : UIWindowBase
         }
     }
 
+    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    {
+        base.OnDpiChanged(e);
+        MessageBox.Show("test");
+    }
+
     /// <summary>
     /// Whether to display the control buttons of the form
     /// </summary>
