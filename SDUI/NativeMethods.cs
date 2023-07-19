@@ -14,6 +14,7 @@ public class NativeMethods
     public const int DWMSBT_TABBEDWINDOW = 4; // Tabbed
 
     private const string user32 = "user32.dll";
+    private const string gdi32 = "gdi32.dll";
     private const string uxtheme = "uxtheme.dll";
     private const string dwmapi = "dwmapi.dll";
 
@@ -112,16 +113,19 @@ public class NativeMethods
         public COLORREF headerTextColor;
     };
 
-    [DllImport("uxtheme.dll", ExactSpelling = true, CharSet = CharSet.Unicode)]
+    [DllImport(gdi32)]
+    public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pvd, [In] ref uint pcFonts);
+
+    [DllImport(uxtheme, ExactSpelling = true, CharSet = CharSet.Unicode)]
     public static extern IntPtr OpenThemeData(IntPtr hWnd, String classList);
 
-    [DllImport("uxtheme.dll", ExactSpelling = true)]
+    [DllImport(uxtheme, ExactSpelling = true)]
     public extern static Int32 CloseThemeData(IntPtr hTheme);
 
-    [DllImport("uxtheme", ExactSpelling = true)]
+    [DllImport(uxtheme, ExactSpelling = true)]
     public extern static Int32 GetThemeColor(IntPtr hTheme, int iPartId, int iStateId, int iPropId, out COLORREF pColor);
 
-    [DllImport("gdi32.dll")]
+    [DllImport(gdi32)]
     public static extern uint SetTextColor(IntPtr hdc, COLORREF crColor);
 
     [DllImport(user32)]
@@ -197,7 +201,7 @@ public class NativeMethods
     [DllImport(user32, EntryPoint = "SetWindowLongPtr", SetLastError = true)]
     public static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
-    [DllImport("Gdi32.dll", EntryPoint = "DeleteObject")]
+    [DllImport(gdi32, EntryPoint = "DeleteObject")]
     public static extern bool DeleteObject(IntPtr hObject);
 
     [DllImport(user32)]
@@ -207,14 +211,14 @@ public class NativeMethods
     [DllImport("ntdll.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     public static extern NTSTATUS RtlGetVersion(ref OSVERSIONINFOEX versionInfo);
 
-    [DllImport("user32")]
+    [DllImport(user32)]
     public static extern IntPtr GetDC(IntPtr hwnd);
 
-    [DllImport("user32")]
+    [DllImport(user32)]
     public static extern IntPtr ReleaseDC(IntPtr hwnd, IntPtr hdc);
 
     private delegate bool EnumWindowProc(IntPtr hWnd, IntPtr parameter);
-    [DllImport("user32")]
+    [DllImport(user32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool EnumChildWindows(IntPtr window, EnumWindowProc callback, IntPtr i);
 
@@ -323,10 +327,10 @@ public class NativeMethods
 
     private delegate IntPtr dWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
-    [DllImport("user32")]
+    [DllImport(user32)]
     static extern IntPtr GetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex);
 
-    [DllImport("user32")]
+    [DllImport(user32)]
     private static extern IntPtr SetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex, SetWindowLongFlags newProc);
 
     public enum SetWindowPosFlags : uint
