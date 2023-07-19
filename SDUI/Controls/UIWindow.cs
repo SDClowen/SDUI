@@ -96,13 +96,6 @@ public class UIWindow : UIWindowBase
     [DefaultValue(false)]
     public bool AllowAddControlOnTitle { get; set; }
 
-    [DefaultValue(false)]
-    public bool AllowShowTitle
-    {
-        get => ShowTitle;
-        set => ShowTitle = value;
-    }
-
     private bool _extendBox;
 
     [DefaultValue(false)]

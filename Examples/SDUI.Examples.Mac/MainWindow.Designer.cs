@@ -377,7 +377,6 @@
             // 
             // MainWindow
             // 
-            AllowShowTitle = false;
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(968, 675);

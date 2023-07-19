@@ -12,8 +12,10 @@ internal static class Program
     static void Main()
     {
         Application.EnableVisualStyles();
-        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
-        Application.SetCompatibleTextRenderingDefault(false);
+        Application.SetHighDpiMode(HighDpiMode.PerMonitor | HighDpiMode.PerMonitorV2);
+        Application.SetCompatibleTextRenderingDefault(false); 
+        Application.SetDefaultFont(SDUI.Helpers.FontManager.Inter);
+
         Application.Run(new MainWindow());
     }
 }

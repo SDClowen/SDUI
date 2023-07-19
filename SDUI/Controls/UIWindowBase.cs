@@ -44,6 +44,7 @@ public class UIWindowBase : Form
 
         SetStyle(ControlStyles.UserPaint, true);
         UpdateStyles();
+        ResizeRedraw = true;
     }
 
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
