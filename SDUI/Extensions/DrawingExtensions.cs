@@ -122,6 +122,17 @@ public static class DrawingExtensions
         using var brush = color.Brush();
         gfx.FillRectangle(brush, new Rectangle(x, y, width, height));
     }
+    public static void FillRectangle(this Graphics gfx, Color color, RectangleF rect)
+    {
+        using var brush = color.Brush();
+        gfx.FillRectangle(brush, rect);
+    }
+
+    public static void FillRectangle(this Graphics gfx, Color color, float x, float y, float width, float height)
+    {
+        using var brush = color.Brush();
+        gfx.FillRectangle(brush, new RectangleF(x, y, width, height));
+    }
 
     public static void DrawRectangle(this Graphics gfx, Color color, Rectangle rect)
     {
@@ -132,10 +143,22 @@ public static class DrawingExtensions
     public static void DrawRectangle(this Graphics gfx, Color color, int x, int y, int width, int height)
     {
         using var pen = color.Pen();
-        gfx.DrawRectangle(pen, new Rectangle(x, y, width, height));
+        gfx.DrawRectangle(pen, x, y, width, height);
+    }
+
+    public static void DrawRectangle(this Graphics gfx, Color color, float x, float y, float width, float height)
+    {
+        using var pen = color.Pen();
+        gfx.DrawRectangle(pen, x, y, width, height);
     }
 
     public static void DrawLine(this Graphics gfx, Color color, int x1, int y1, int x2, int y2)
+    {
+        using var pen = color.Pen();
+        gfx.DrawLine(pen, x1, y1, x2, y2);
+    }
+
+    public static void DrawLine(this Graphics gfx, Color color, float x1, float y1, float x2, float y2)
     {
         using var pen = color.Pen();
         gfx.DrawLine(pen, x1, y1, x2, y2);
