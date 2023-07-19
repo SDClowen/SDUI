@@ -21,6 +21,11 @@ public class UIWindowBase : Form
     }
 
     /// <summary>
+    /// Get DPI
+    /// </summary>
+    public float DPI => DeviceDpi / 96.0f;
+
+    /// <summary>
     /// Has aero enabled by windows <c>true</c>; otherwise <c>false</c>
     /// </summary>
     private bool _aeroEnabled

@@ -142,5 +142,15 @@ namespace SDUI.Test
             parent.TitleFont = dialog.Font;
             parent.Invalidate();
         }
+
+        private void checkBoxToggleTitle_CheckedChanged(object sender, EventArgs e)
+        {
+            var form = FindForm();
+            if (form == null)
+                return;
+
+            var parent = form as UIWindow;
+            parent.ShowTitle = !parent.ShowTitle;
+        }
     }
 }

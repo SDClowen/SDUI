@@ -376,9 +376,9 @@
             formControlBox1.TabIndex = 2;
             // 
             // MainWindow
-            // 
+            //
             AutoScaleDimensions = new SizeF(8F, 20F);
-            AutoScaleMode = AutoScaleMode.Font;
+            AutoScaleMode = AutoScaleMode.Dpi;
             ClientSize = new Size(968, 675);
             Controls.Add(tabControl);
             Controls.Add(panel1);
