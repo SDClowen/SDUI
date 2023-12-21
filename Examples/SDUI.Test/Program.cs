@@ -13,8 +13,7 @@ internal static class Program
     {
         Application.EnableVisualStyles();
         Application.SetHighDpiMode(HighDpiMode.PerMonitor | HighDpiMode.PerMonitorV2);
-        Application.SetCompatibleTextRenderingDefault(false); 
-        Application.SetDefaultFont(SDUI.Helpers.FontManager.Inter);
+        Application.SetCompatibleTextRenderingDefault(false);
 
         Application.Run(new MainWindow());
     }

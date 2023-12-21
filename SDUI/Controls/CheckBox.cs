@@ -67,6 +67,18 @@ namespace SDUI.Controls
 
         public CheckBox()
         {
+            //SetExtendedState(ExtendedStates.UserPreferredSizeCache, true);
+
+            SetStyle(ControlStyles.UserPaint |
+                     ControlStyles.SupportsTransparentBackColor |
+                     ControlStyles.OptimizedDoubleBuffer, true);
+
+            SetStyle(ControlStyles.FixedHeight |
+                     ControlStyles.Selectable, false);
+
+            SetStyle(ControlStyles.ResizeRedraw, true);
+
+
             animationManager = new AnimationManager
             {
                 AnimationType = AnimationType.EaseInOut,
