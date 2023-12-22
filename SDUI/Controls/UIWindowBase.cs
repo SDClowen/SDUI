@@ -1,5 +1,4 @@
-﻿using NetDimension.WinForm;
-using SDUI.Helpers;
+﻿using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
@@ -7,7 +6,7 @@ using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
-public class UIWindowBase : FormChrome
+public class UIWindowBase : Form
 {
     protected bool enableFullDraggable;
     private int dwmMargin = 1;
