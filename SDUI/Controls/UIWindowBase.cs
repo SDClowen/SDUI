@@ -1,4 +1,5 @@
-﻿using SDUI.Helpers;
+﻿using NetDimension.WinForm;
+using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
@@ -6,7 +7,7 @@ using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
-public class UIWindowBase : Form
+public class UIWindowBase : FormChrome
 {
     protected bool enableFullDraggable;
     private int dwmMargin = 1;
@@ -265,7 +266,7 @@ public class UIWindowBase : Form
             var v = 2;
 
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
-            var margins = new MARGINS()
+            var margins = new NativeMethods.MARGINS()
             {
                 Bottom = dwmMargin,
                 Left = dwmMargin,
