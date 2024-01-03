@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using System.Security;
 using System.Windows.Forms;
 
@@ -27,6 +28,8 @@ public class NativeMethods
     public const int WS_SYSMENU = 0x00080000;
     public const int CS_DBLCLKS = 0x8;
     public const int WM_NCPAINT = 0x0085;
+    public const int WM_PAINT = 0x000F;
+    public const int WM_ERASEBKGND = 0x0014;
     public const int WM_NCHITTEST = 0x84;
     public const int WM_NCCALCSIZE = 0x0083;
     public const int WM_SYSCOMMAND = 0x0112;
@@ -112,6 +115,27 @@ public class NativeMethods
     {
         public COLORREF headerTextColor;
     };
+
+    [DllImport("gdi32.dll", SetLastError = true, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+    [ResourceExposure(ResourceScope.None)]
+    public static extern int CombineRgn(IntPtr hRgn, IntPtr hRgn1, IntPtr hRgn2, int nCombineMode);
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetWindowDC(IntPtr hWnd);
+
+    [DllImport("gdi32.dll")]
+    public static extern bool FillRgn(IntPtr hdc, IntPtr hrgn, IntPtr hbr);
+
+    [DllImport("gdi32.dll")]
+    public static extern IntPtr CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect,
+            int nBottomRect);
+
+    [DllImport("gdi32.dll")]
+    public static extern IntPtr CreateSolidBrush(uint crColor);
+
+
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetDCEx(IntPtr hwnd, IntPtr hrgnclip, uint fdwOptions);
 
     [DllImport(gdi32)]
     public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pvd, [In] ref uint pcFonts);
