@@ -1,7 +1,9 @@
-﻿using System;
+﻿using SDUI.Helpers;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace SDUI.Controls;
 
@@ -56,15 +58,27 @@ public class ComboBox : System.Windows.Forms.ComboBox
             return;
 
         var foreColor = ColorScheme.ForeColor;
-        if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
+
+        if ((e.State & DrawItemState.Selected) == DrawItemState.Selected ||
+               (e.State & DrawItemState.Focus) == DrawItemState.Focus ||
+               (e.State & DrawItemState.NoFocusRect) != DrawItemState.NoFocusRect)
         {
             foreColor = Color.White;
-            e.DrawBackground();
+            e.Graphics.FillRectangle(new SolidBrush(Color.Blue), e.Bounds);
         }
         else
             e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), e.Bounds);
 
-        TextRenderer.DrawText(e.Graphics, GetItemText(Items[index]), e.Font, e.Bounds, foreColor, TextFormatFlags.Left);
+        var stringFormat = new StringFormat
+        {
+            LineAlignment = StringAlignment.Center,
+            Alignment = StringAlignment.Near,
+            FormatFlags = StringFormatFlags.NoWrap,
+            Trimming = StringTrimming.EllipsisCharacter
+        };
+
+        e.Graphics.DrawString(Items[index].ToString(), e.Font, new SolidBrush(foreColor), e.Bounds, stringFormat);
+        //TextRenderer.DrawText(e.Graphics, Items[index].ToString(), e.Font, e.Bounds, foreColor, TextFormatFlags.SingleLine);
 
     }
 

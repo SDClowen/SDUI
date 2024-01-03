@@ -231,7 +231,12 @@
             label4.ApplyGradient = false;
             label4.AutoSize = true;
             label4.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
-            label4.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
+            label4.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Gray,
+    System.Drawing.Color.Black
+    };
+            label4.GradientAnimation = false;
             label4.Location = new System.Drawing.Point(155, 75);
             label4.Name = "label4";
             label4.Size = new System.Drawing.Size(38, 15);
@@ -410,7 +415,11 @@
             shapeProgressBar2.BackColor = System.Drawing.Color.Transparent;
             shapeProgressBar2.DrawHatch = true;
             shapeProgressBar2.Font = new System.Drawing.Font("Segoe UI", 15F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            shapeProgressBar2.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            shapeProgressBar2.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Maroon,
+    System.Drawing.Color.Red
+    };
             shapeProgressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
             shapeProgressBar2.Location = new System.Drawing.Point(117, 453);
             shapeProgressBar2.Maximum = 100L;
@@ -427,7 +436,11 @@
             shapeProgressBar1.DrawHatch = false;
             shapeProgressBar1.Font = new System.Drawing.Font("Impact", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             shapeProgressBar1.ForeColor = System.Drawing.Color.Silver;
-            shapeProgressBar1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            shapeProgressBar1.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Maroon,
+    System.Drawing.Color.Red
+    };
             shapeProgressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
             shapeProgressBar1.Location = new System.Drawing.Point(16, 453);
             shapeProgressBar1.Maximum = 100L;
@@ -516,7 +529,12 @@
             label3.ApplyGradient = false;
             label3.AutoSize = true;
             label3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
-            label3.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
+            label3.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Gray,
+    System.Drawing.Color.Black
+    };
+            label3.GradientAnimation = false;
             label3.Location = new System.Drawing.Point(8, 104);
             label3.Name = "label3";
             label3.Size = new System.Drawing.Size(220, 30);
@@ -527,7 +545,11 @@
             // 
             progressBar5.BackColor = System.Drawing.Color.Transparent;
             progressBar5.DrawHatch = false;
-            progressBar5.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            progressBar5.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Maroon,
+    System.Drawing.Color.Red
+    };
             progressBar5.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar5.Location = new System.Drawing.Point(16, 417);
             progressBar5.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -540,7 +562,7 @@
             progressBar5.ShowValue = true;
             progressBar5.Size = new System.Drawing.Size(179, 16);
             progressBar5.TabIndex = 3;
-            progressBar5.Text = "70,00%";
+            progressBar5.Text = "70.00%";
             progressBar5.Value = 70L;
             // 
             // panel7
@@ -572,7 +594,12 @@
             label2.ApplyGradient = false;
             label2.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             label2.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
-            label2.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
+            label2.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Gray,
+    System.Drawing.Color.Black
+    };
+            label2.GradientAnimation = false;
             label2.Location = new System.Drawing.Point(373, 199);
             label2.Name = "label2";
             label2.Size = new System.Drawing.Size(618, 106);
@@ -583,7 +610,12 @@
             // 
             label1.ApplyGradient = false;
             label1.AutoSize = true;
-            label1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gray, System.Drawing.Color.Black });
+            label1.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Gray,
+    System.Drawing.Color.Black
+    };
+            label1.GradientAnimation = false;
             label1.Location = new System.Drawing.Point(487, 215);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(0, 15);
@@ -620,7 +652,6 @@
             separator5.Name = "separator5";
             separator5.Size = new System.Drawing.Size(120, 10);
             separator5.TabIndex = 0;
-            separator5.Text = "separator3";
             // 
             // comboBox3
             // 
@@ -645,7 +676,6 @@
             separator3.Name = "separator3";
             separator3.Size = new System.Drawing.Size(120, 10);
             separator3.TabIndex = 0;
-            separator3.Text = "separator3";
             // 
             // comboBox2
             // 
@@ -743,7 +773,6 @@
             separator4.Name = "separator4";
             separator4.Size = new System.Drawing.Size(120, 10);
             separator4.TabIndex = 0;
-            separator4.Text = "separator3";
             // 
             // panel1
             // 
@@ -854,7 +883,11 @@
             // 
             progressBar9.BackColor = System.Drawing.Color.Transparent;
             progressBar9.DrawHatch = true;
-            progressBar9.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Red, System.Drawing.Color.Yellow });
+            progressBar9.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Red,
+    System.Drawing.Color.Yellow
+    };
             progressBar9.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar9.Location = new System.Drawing.Point(256, 440);
             progressBar9.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -874,7 +907,11 @@
             // 
             progressBar8.BackColor = System.Drawing.Color.Transparent;
             progressBar8.DrawHatch = true;
-            progressBar8.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gold, System.Drawing.Color.Yellow });
+            progressBar8.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Gold,
+    System.Drawing.Color.Yellow
+    };
             progressBar8.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar8.Location = new System.Drawing.Point(218, 385);
             progressBar8.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -894,7 +931,11 @@
             // 
             progressBar4.BackColor = System.Drawing.Color.Transparent;
             progressBar4.DrawHatch = false;
-            progressBar4.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Gold, System.Drawing.Color.Yellow });
+            progressBar4.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Gold,
+    System.Drawing.Color.Yellow
+    };
             progressBar4.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar4.Location = new System.Drawing.Point(16, 408);
             progressBar4.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -914,7 +955,11 @@
             // 
             progressBar7.BackColor = System.Drawing.Color.Transparent;
             progressBar7.DrawHatch = false;
-            progressBar7.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.DarkGreen, System.Drawing.Color.Lime });
+            progressBar7.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.DarkGreen,
+    System.Drawing.Color.Lime
+    };
             progressBar7.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar7.Location = new System.Drawing.Point(218, 363);
             progressBar7.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -927,14 +972,18 @@
             progressBar7.ShowValue = true;
             progressBar7.Size = new System.Drawing.Size(179, 16);
             progressBar7.TabIndex = 38;
-            progressBar7.Text = "99,99%";
+            progressBar7.Text = "99.99%";
             progressBar7.Value = 1000L;
             // 
             // progressBar3
             // 
             progressBar3.BackColor = System.Drawing.Color.Transparent;
             progressBar3.DrawHatch = false;
-            progressBar3.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.DarkGreen, System.Drawing.Color.Lime });
+            progressBar3.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.DarkGreen,
+    System.Drawing.Color.Lime
+    };
             progressBar3.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar3.Location = new System.Drawing.Point(16, 386);
             progressBar3.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -947,14 +996,18 @@
             progressBar3.ShowValue = true;
             progressBar3.Size = new System.Drawing.Size(179, 16);
             progressBar3.TabIndex = 37;
-            progressBar3.Text = "62,30%";
+            progressBar3.Text = "62.30%";
             progressBar3.Value = 623L;
             // 
             // progressBar6
             // 
             progressBar6.BackColor = System.Drawing.Color.Transparent;
             progressBar6.DrawHatch = false;
-            progressBar6.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.MidnightBlue, System.Drawing.Color.RoyalBlue });
+            progressBar6.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.MidnightBlue,
+    System.Drawing.Color.RoyalBlue
+    };
             progressBar6.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar6.Location = new System.Drawing.Point(218, 341);
             progressBar6.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -974,7 +1027,11 @@
             // 
             progressBar2.BackColor = System.Drawing.Color.Transparent;
             progressBar2.DrawHatch = false;
-            progressBar2.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.MidnightBlue, System.Drawing.Color.RoyalBlue });
+            progressBar2.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.MidnightBlue,
+    System.Drawing.Color.RoyalBlue
+    };
             progressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar2.Location = new System.Drawing.Point(16, 364);
             progressBar2.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -987,14 +1044,18 @@
             progressBar2.ShowValue = true;
             progressBar2.Size = new System.Drawing.Size(179, 16);
             progressBar2.TabIndex = 35;
-            progressBar2.Text = "33,00%";
+            progressBar2.Text = "33.00%";
             progressBar2.Value = 33L;
             // 
             // progressBar1
             // 
             progressBar1.BackColor = System.Drawing.Color.Transparent;
             progressBar1.DrawHatch = false;
-            progressBar1.Gradient = (new System.Drawing.Color[] { System.Drawing.Color.Maroon, System.Drawing.Color.Red });
+            progressBar1.Gradient = new System.Drawing.Color[]
+    {
+    System.Drawing.Color.Maroon,
+    System.Drawing.Color.Red
+    };
             progressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
             progressBar1.Location = new System.Drawing.Point(16, 342);
             progressBar1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
@@ -1007,7 +1068,7 @@
             progressBar1.ShowValue = true;
             progressBar1.Size = new System.Drawing.Size(179, 16);
             progressBar1.TabIndex = 42;
-            progressBar1.Text = "70,00%";
+            progressBar1.Text = "70.00%";
             progressBar1.Value = 70L;
             // 
             // separator2
@@ -1018,7 +1079,6 @@
             separator2.Name = "separator2";
             separator2.Size = new System.Drawing.Size(307, 2);
             separator2.TabIndex = 34;
-            separator2.Text = "separator1";
             // 
             // separator1
             // 
@@ -1028,7 +1088,6 @@
             separator1.Name = "separator1";
             separator1.Size = new System.Drawing.Size(2, 222);
             separator1.TabIndex = 75;
-            separator1.Text = "separator1";
             // 
             // GeneralPage
             // 

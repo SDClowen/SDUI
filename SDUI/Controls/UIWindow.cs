@@ -800,7 +800,7 @@ public class UIWindow : UIWindowBase
             graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
         }
         else
-            graphics.FillRectangle(ColorScheme.BackColor.Alpha(90), 0, 0, Width, Height);
+            graphics.FillRectangle(ColorScheme.BackColor.Alpha(222), 0, 0, Width, Height);
 
         if (Width <= 0 || Height <= 0)
             return;
