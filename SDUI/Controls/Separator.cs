@@ -3,14 +3,11 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Separator : Control
+public class Separator : UserControl
 {
     public Separator()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-                  ControlStyles.OptimizedDoubleBuffer |
-                  ControlStyles.ResizeRedraw |
-                  ControlStyles.UserPaint, true);
+        SetStyle(ControlStyles.UserPaint, true);
 
         UpdateStyles();
 

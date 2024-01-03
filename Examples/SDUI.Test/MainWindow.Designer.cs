@@ -668,7 +668,7 @@ public partial class MainWindow
         Padding = new Padding(0, 32, 0, 0);
         StartPosition = FormStartPosition.CenterScreen;
         Text = "MainWindow";
-        TitleFont = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+        Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
         WindowPageControl = windowPageControl;
         Load += MainWindow_Load;
         contextMenuStrip1.ResumeLayout(false);

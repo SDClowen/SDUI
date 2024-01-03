@@ -79,13 +79,14 @@ namespace SDUI.Controls
         public NumUpDown()
         {
             SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
+            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+            SetStyle(ControlStyles.DoubleBuffer, true);
+
             BackColor = Color.Transparent;
             _min = 0;
             _max = 100;
-            Font = new Font("Segoe UI", 9.25f);
             Size = new Size(80, 25);
             MinimumSize = Size;
-            DoubleBuffered = true;
 
             _longPressTimer.Tick += LongPressTimer_Tick;
             _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
@@ -217,7 +218,7 @@ namespace SDUI.Controls
             ButtonRenderer.DrawParentBackground(e.Graphics, Bounds, this);
 
             using var borderPen = new Pen(ColorScheme.BorderColor);
-            using var backColorBrush = ColorScheme.BackColor.Brush();
+            using var backColorBrush = ColorScheme.BackColor.Alpha(90).Brush();
             using var foreColorBrush = ColorScheme.ForeColor.Brush();
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
@@ -226,10 +227,10 @@ namespace SDUI.Controls
             graphics.DrawPath(borderPen, round);
 
             using var plusMinusFont = new Font("Tahoma", 12.75f, FontStyle.Bold);
-            graphics.DrawString("+", plusMinusFont, foreColorBrush, Width - 22, 1);
-            graphics.DrawLine(borderPen, Width - 25, 1, Width - 25, Height - 2);
-            graphics.DrawString("-", plusMinusFont, foreColorBrush, Width - 41, 1);
-            graphics.DrawLine(borderPen, Width - 45, 1, Width - 45, Height - 2);
+            graphics.DrawString("+", plusMinusFont, foreColorBrush, Width - (22 * (DeviceDpi / 96)), 1);
+            graphics.DrawLine(borderPen, Width - (25 * (DeviceDpi / 96)), 1, (Width - 25 * (DeviceDpi / 96)), Height - 2 * (DeviceDpi / 96));
+            graphics.DrawString("-", plusMinusFont, foreColorBrush, (Width - 41 * (DeviceDpi / 96)), 1);
+            graphics.DrawLine(borderPen, Width - (45 * (DeviceDpi / 96)), 1, (Width - 45 * (DeviceDpi / 96)), Height - 2 * (DeviceDpi / 96));
 
             TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(1, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
         }

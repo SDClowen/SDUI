@@ -46,9 +46,6 @@ public class UIWindowBase : Form
     public UIWindowBase()
     {
         //BackColor = Color.FromArgb(0, 0, 0, 0);
-
-        SetStyle(ControlStyles.UserPaint, true);
-        UpdateStyles();
         ResizeRedraw = true;
     }
 
@@ -102,6 +99,7 @@ public class UIWindowBase : Form
             style &= ~(uint)SetWindowLongFlags.WS_MINIMIZEBOX;
             style &= ~(uint)SetWindowLongFlags.WS_MAXIMIZE;
             style &= ~(uint)SetWindowLongFlags.WS_MAXIMIZEBOX;
+            //style &= ~(uint)SetWindowLongFlags.WS_BORDER;
             style |= (uint)SetWindowLongFlags.WS_TILED;
             cp.Style = (int)style;
 
@@ -134,10 +132,16 @@ public class UIWindowBase : Form
     private const int htBottomRight = 17;
     protected override void WndProc(ref Message m)
     {
+        if(DesignMode)
+        {
+            base.WndProc(ref m);
+            return;
+        }
+
         switch (m.Msg)
         {
-            case 0x84:
-                {  
+            case WM_NCHITTEST:
+                {
                     if (WindowState != FormWindowState.Maximized)
                     {
                         int gripDist = 10;
@@ -198,6 +202,8 @@ public class UIWindowBase : Form
                         }
                     }
 
+                    if ((int)m.Result == HTCLIENT)     // drag the form
+                        m.Result = (IntPtr)HTCAPTION;
 
                     break;
                 }
@@ -210,10 +216,6 @@ public class UIWindowBase : Form
                 else
                     break;
         }
-
-
-        if (m.Msg == WM_NCHITTEST && (int)m.Result == HTCLIENT)     // drag the form
-            m.Result = (IntPtr)HTCAPTION;
 
         base.WndProc(ref m);
     }
@@ -281,7 +283,7 @@ public class UIWindowBase : Form
         if (!WindowsHelper.IsModern)
             return;
 
-        //EnableAcrylic(this, Color.FromArgb(0,0,0,0));
+        //EnableAcrylic(this, Color.Wheat);
 
         var flag = DWMSBT_TABBEDWINDOW;
         DwmSetWindowAttribute(

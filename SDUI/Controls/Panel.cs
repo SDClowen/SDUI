@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Panel : System.Windows.Forms.Panel
+public class Panel : DoubleBufferedControl
 {
     private int _radius = 10;
     public int Radius
@@ -65,13 +65,9 @@ public class Panel : System.Windows.Forms.Panel
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
                   ControlStyles.OptimizedDoubleBuffer |
-                  ControlStyles.Opaque |
-                  ControlStyles.ResizeRedraw |
                   ControlStyles.UserPaint, true);
 
-        this.DoubleBuffered = true;
         BackColor = Color.Transparent;
-        UpdateStyles();
     }
 
     protected override void OnParentBackColorChanged(EventArgs e)

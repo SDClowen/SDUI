@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Test
 {
-    public partial class GeneralPage : UserControl
+    public partial class GeneralPage : DoubleBufferedControl
     {
         public GeneralPage()
         {

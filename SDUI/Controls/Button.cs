@@ -66,6 +66,8 @@ public class Button : System.Windows.Forms.Button
     public Button()
     {
         SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+        SetStyle(ControlStyles.DoubleBuffer, true);
 
         animationManager = new AnimationManager(false)
         {

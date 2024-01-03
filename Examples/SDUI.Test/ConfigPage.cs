@@ -13,7 +13,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Test
 {
-    public partial class ConfigPage : UserControl
+    public partial class ConfigPage : DoubleBufferedControl
     {
         public ConfigPage()
         {
@@ -120,13 +120,13 @@ namespace SDUI.Test
             var parent = form as UIWindow;
 
             var fontDialog = new FontDialog();
-            fontDialog.Font = parent.TitleFont;
+            fontDialog.Font = parent.Font;
             fontDialog.ShowColor = true;
             fontDialog.ShowApply = true;
             fontDialog.Apply += FontDialog_Apply;
             if (fontDialog.ShowDialog() == DialogResult.OK)
             {
-                parent.TitleFont = fontDialog.Font;
+                parent.Font = fontDialog.Font;
                 parent.Invalidate();
             }
         }
@@ -139,7 +139,7 @@ namespace SDUI.Test
 
             var dialog = sender as FontDialog;
             var parent = form as UIWindow;
-            parent.TitleFont = dialog.Font;
+            parent.Font = dialog.Font;
             parent.Invalidate();
         }
 

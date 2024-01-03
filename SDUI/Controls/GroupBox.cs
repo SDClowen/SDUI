@@ -42,6 +42,8 @@ public class GroupBox : System.Windows.Forms.GroupBox
                   ControlStyles.ResizeRedraw |
                   ControlStyles.Opaque |
                   ControlStyles.UserPaint, true);
+        SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+        SetStyle(ControlStyles.DoubleBuffer, true);
 
         UpdateStyles();
         this.DoubleBuffered = true;

@@ -321,25 +321,6 @@ public class UIWindow : UIWindowBase
     }
 
     /// <summary>
-    /// The title font
-    /// </summary>
-    private Font _titleFont;
-
-    /// <summary>
-    /// Gets or sets the title font
-    /// </summary>
-    [Description("The title font")]
-    public Font TitleFont
-    {
-        get => _titleFont ?? this.Font;
-        set
-        {
-            _titleFont = value;
-            Invalidate();
-        }
-    }
-
-    /// <summary>
     /// Draw hatch brush on form
     /// </summary>
     public bool FullDrawHatch { get; set; }
@@ -800,6 +781,9 @@ public class UIWindow : UIWindowBase
 
     protected override void OnPaint(PaintEventArgs e)
     {
+        base.OnPaint(e);
+        NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
+
         var foreColor = ColorScheme.ForeColor;
         if (titleColor != Color.Empty)
             foreColor = titleColor.Determine();
@@ -810,16 +794,13 @@ public class UIWindow : UIWindowBase
 
         var graphics = e.Graphics;
 
-        //base.OnPaint(e);
-        //graphics.Clear(BackColor);
-
         if (FullDrawHatch)
         {
             using var hatchBrush = new HatchBrush(_hatch, hoverColor, titleColor);
             graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
         }
         else
-            graphics.FillRectangle(ColorScheme.BackColor, 0, 0, Width, Height);
+            graphics.FillRectangle(ColorScheme.BackColor.Alpha(90), 0, 0, Width, Height);
 
         if (Width <= 0 || Height <= 0)
             return;
@@ -940,9 +921,9 @@ public class UIWindow : UIWindowBase
         if (_windowPageControl == null)
         {
             var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter;
-            var stringSize = TextRenderer.MeasureText(Text, TitleFont);
+            var stringSize = TextRenderer.MeasureText(Text, Font);
             var textPoint = new Point(14 + (Icon != null ? faviconSize : 0), (int)(_titleHeightDPI / 2f));
-            TextRenderer.DrawText(e.Graphics, Text, TitleFont, textPoint, foreColor, flags);
+            TextRenderer.DrawText(e.Graphics, Text, Font, textPoint, foreColor, flags);
         }
 
         if (_windowPageControl == null)
@@ -983,11 +964,11 @@ public class UIWindow : UIWindowBase
         graphics.FillRectangle(Color.DeepSkyBlue, x, y, width, TAB_INDICATOR_HEIGHT);
 
         //Draw tab headers
-        foreach (UserControl page in _windowPageControl.Controls)
+        foreach (Control page in _windowPageControl.Controls)
         {
             var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
             var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
-            TextRenderer.DrawText(graphics, page.Text, _titleFont, pageRect[currentTabIndex].ToRectangle(), foreColor, flags);
+            TextRenderer.DrawText(graphics, page.Text, Font, pageRect[currentTabIndex].ToRectangle(), foreColor, flags);
         }
 
         if (_drawTitleBorder)
@@ -1096,8 +1077,8 @@ public class UIWindow : UIWindowBase
             return;
 
         //Calculate the bounds of each tab header specified in the base tab control
-        pageRect.Add(new Rectangle(44, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_windowPageControl.Controls[0].Text, _titleFont).Width, (int)_titleHeightDPI));
+        pageRect.Add(new Rectangle(44, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_windowPageControl.Controls[0].Text, Font).Width, (int)_titleHeightDPI));
         for (int i = 1; i < _windowPageControl.Count; i++)
-            pageRect.Add(new(pageRect[i - 1].Right, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_windowPageControl.Controls[i].Text, _titleFont).Width, (int)_titleHeightDPI));
+            pageRect.Add(new(pageRect[i - 1].Right, 0, TAB_HEADER_PADDING * 2 + TextRenderer.MeasureText(_windowPageControl.Controls[i].Text, Font).Width, (int)_titleHeightDPI));
     }
 }

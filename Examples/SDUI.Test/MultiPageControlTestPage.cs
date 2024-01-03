@@ -1,9 +1,10 @@
-﻿using System;
+﻿using SDUI.Controls;
+using System;
 using System.Windows.Forms;
 
 namespace SDUI.Test
 {
-    public partial class MultiPageControlTestPage : UserControl
+    public partial class MultiPageControlTestPage : DoubleBufferedControl
     {
         private Type[] _types = { typeof(GeneralPage), typeof(ListViewPage), typeof(ConfigPage) };
         public MultiPageControlTestPage()

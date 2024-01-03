@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SDUI.Controls;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -10,7 +11,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Test
 {
-    public partial class ListViewPage : UserControl
+    public partial class ListViewPage : DoubleBufferedControl
     {
         public ListViewPage()
         {

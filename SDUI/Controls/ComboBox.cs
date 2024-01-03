@@ -1,5 +1,4 @@
-﻿using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -43,8 +42,10 @@ public class ComboBox : System.Windows.Forms.ComboBox
             ControlStyles.Selectable |
             ControlStyles.SupportsTransparentBackColor, true
         );
+        SetStyle(ControlStyles.AllPaintingInWmPaint, true);
+        SetStyle(ControlStyles.DoubleBuffer, true);
 
-        DrawMode = DrawMode.OwnerDrawFixed;
+        DrawMode = DrawMode.OwnerDrawVariable;
         DropDownStyle = ComboBoxStyle.DropDownList;
     }
 
@@ -53,8 +54,6 @@ public class ComboBox : System.Windows.Forms.ComboBox
         var index = e.Index;
         if (index < 0 || index >= Items.Count)
             return;
-
-        base.OnDrawItem(e);
 
         var foreColor = ColorScheme.ForeColor;
         if ((e.State & DrawItemState.Selected) == DrawItemState.Selected)
@@ -66,6 +65,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
             e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), e.Bounds);
 
         TextRenderer.DrawText(e.Graphics, GetItemText(Items[index]), e.Font, e.Bounds, foreColor, TextFormatFlags.Left);
+
     }
 
     protected override void OnParentBackColorChanged(EventArgs e)
@@ -99,38 +99,36 @@ public class ComboBox : System.Windows.Forms.ComboBox
         }
 
         var inflate = _shadowDepth / 4f;
-        rectf.Inflate(-inflate, -inflate);
+        //rectf.Inflate(-inflate, -inflate);
 
-        var textRectangle = new Rectangle(3, 0, Width - 18, Height);
+        var textRectangle = new Rectangle(3 * (DeviceDpi / 96), 0, Width - (18 * (DeviceDpi / 96)), Height);
 
         var backColor = ColorScheme.BackColor.Alpha(80);
         var borderColor = ColorScheme.BorderColor;
 
-        using (var path = rectf.Radius(_radius))
-        {
-            e.Graphics.FillPath(new SolidBrush(backColor), path);
+        using var path = rectf.Radius(_radius);
+        e.Graphics.FillPath(new SolidBrush(backColor), path);
 
-            var borderPen = new Pen(borderColor);
-            var _extendBoxRect = new RectangleF(rectf.Width - 24f, 0, 16, rectf.Height - 4 + _shadowDepth);
+        var borderPen = new Pen(borderColor);
+        var _extendBoxRect = new RectangleF(rectf.Width - (24f * (DeviceDpi / 96)), 0, (16 * (DeviceDpi / 96)), rectf.Height - (4 * (DeviceDpi / 96)) + _shadowDepth);
 
-            var symbolPen = new Pen(ColorScheme.ForeColor);
-            graphics.DrawLine(symbolPen,
-                    _extendBoxRect.Left + _extendBoxRect.Width / 2 - 5 - 1,
-                    _extendBoxRect.Top + _extendBoxRect.Height / 2 - 2,
-                    _extendBoxRect.Left + _extendBoxRect.Width / 2 - 1,
-                    _extendBoxRect.Top + _extendBoxRect.Height / 2 + 3);
+        var symbolPen = new Pen(ColorScheme.ForeColor);
+        graphics.DrawLine(symbolPen,
+                _extendBoxRect.Left + _extendBoxRect.Width / 2 - (5 * (DeviceDpi / 96)) - 1,
+                _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * (DeviceDpi / 96)),
+                _extendBoxRect.Left + _extendBoxRect.Width / 2 - (1 * (DeviceDpi / 96)),
+                _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96)));
 
-            graphics.DrawLine(symbolPen,
-                _extendBoxRect.Left + _extendBoxRect.Width / 2 + 5 - 1,
-                _extendBoxRect.Top + _extendBoxRect.Height / 2 - 2,
-                _extendBoxRect.Left + _extendBoxRect.Width / 2 - 1,
-                _extendBoxRect.Top + _extendBoxRect.Height / 2 + 3);
+        graphics.DrawLine(symbolPen,
+            _extendBoxRect.Left + _extendBoxRect.Width / 2 + (5 * (DeviceDpi / 96)) - 1,
+            _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * (DeviceDpi / 96)),
+            _extendBoxRect.Left + _extendBoxRect.Width / 2 - (1 * (DeviceDpi / 96)),
+            _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96)));
 
-            graphics.DrawShadow(rectf, _shadowDepth, _radius);
-            e.Graphics.DrawPath(borderPen, path);
+        graphics.DrawShadow(rectf, _shadowDepth, _radius);
+        e.Graphics.DrawPath(borderPen, path);
 
-            var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
-            TextRenderer.DrawText(graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);
-        }
+        var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
+        TextRenderer.DrawText(graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);
     }
 }

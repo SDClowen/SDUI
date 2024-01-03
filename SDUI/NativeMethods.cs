@@ -201,9 +201,6 @@ public class NativeMethods
     [DllImport(user32, EntryPoint = "SetWindowLongPtr", SetLastError = true)]
     public static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
-    [DllImport(gdi32, EntryPoint = "DeleteObject")]
-    public static extern bool DeleteObject(IntPtr hObject);
-
     [DllImport(user32)]
     public static extern bool SetWindowCompositionAttribute(IntPtr hwnd, ref WindowCompositionAttributeData data);
 
@@ -213,6 +210,14 @@ public class NativeMethods
 
     [DllImport(user32)]
     public static extern IntPtr GetDC(IntPtr hwnd);
+
+    /// <summary>
+    /// The SaveDC function saves the current state of the specified device context (DC) by copying data describing selected objects and graphic modes
+    /// </summary>
+    /// <param name="hdc"></param>
+    /// <returns></returns>
+    [DllImport("gdi32.dll")]
+    internal static extern int SaveDC(IntPtr hdc);
 
     [DllImport(user32)]
     public static extern IntPtr ReleaseDC(IntPtr hwnd, IntPtr hdc);
@@ -253,6 +258,68 @@ public class NativeMethods
         IntPtr wParam,
         IntPtr lParam
     );
+
+    /// <summary>
+    /// The CreateDIBSection function creates a DIB that applications can write to directly.
+    /// </summary>
+    /// <param name="hdc"></param>
+    /// <param name="pbmi"></param>
+    /// <param name="iUsage"></param>
+    /// <param name="ppvBits"></param>
+    /// <param name="hSection"></param>
+    /// <param name="dwOffset"></param>
+    /// <returns></returns>
+    [DllImport("gdi32.dll")]
+    private static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPINFO pbmi, uint iUsage, IntPtr ppvBits, IntPtr hSection, uint dwOffset);
+
+    /// <summary>
+    /// This function transfers pixels from a specified source rectangle to a specified destination rectangle, altering the pixels according to the selected raster operation (ROP) code.
+    /// </summary>
+    /// <param name="hdc"></param>
+    /// <param name="nXDest"></param>
+    /// <param name="nYDest"></param>
+    /// <param name="nWidth"></param>
+    /// <param name="nHeight"></param>
+    /// <param name="hdcSrc"></param>
+    /// <param name="nXSrc"></param>
+    /// <param name="nYSrc"></param>
+    /// <param name="dwRop"></param>
+    /// <returns></returns>
+    [DllImport("gdi32.dll")]
+    internal static extern bool BitBlt(IntPtr hdc, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hdcSrc, int nXSrc, int nYSrc, uint dwRop);
+
+    /// <summary>
+    /// This function selects an object into a specified device context. The new object replaces the previous object of the same type.
+    /// </summary>
+    /// <param name="hDC"></param>
+    /// <param name="hObject"></param>
+    /// <returns></returns>
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr SelectObject(IntPtr hDC, IntPtr hObject);
+
+    /// <summary>
+    /// The DeleteObject function deletes a logical pen, brush, font, bitmap, region, or palette, freeing all system resources associated with the object. After the object is deleted, the specified handle is no longer valid.
+    /// </summary>
+    /// <param name="hObject"></param>
+    /// <returns></returns>
+    [DllImport("gdi32.dll")]
+    internal static extern bool DeleteObject(IntPtr hObject);
+
+    /// <summary>
+    /// This function creates a memory device context (DC) compatible with the specified device.
+    /// </summary>
+    /// <param name="hDC"></param>
+    /// <returns></returns>
+    [DllImport("gdi32.dll")]
+    internal static extern IntPtr CreateCompatibleDC(IntPtr hDC);
+
+    /// <summary>
+    /// The DeleteDC function deletes the specified device context (DC).
+    /// </summary>
+    /// <param name="hdc"></param>
+    /// <returns></returns>
+    [DllImport("gdi32.dll")]
+    internal static extern bool DeleteDC(IntPtr hdc);
 
     private static bool EnumWindow(IntPtr handle, IntPtr pointer)
     {
@@ -305,6 +372,57 @@ public class NativeMethods
                 window.Handle,
                 ref data);
         }
+    }
+    
+    /// <summary>
+     /// Fills an area for glass rendering
+     /// </summary>
+     /// <param name="g"></param>
+     /// <param name="r"></param>
+    public static void FillForGlass(Graphics g, Rectangle r)
+    {
+        var rc = new Rect
+        {
+            Left = r.Left,
+            Right = r.Right,
+            Top = r.Top,
+            Bottom = r.Bottom
+        };
+
+        IntPtr destdc = g.GetHdc();    //hwnd must be the handle of form,not control
+        IntPtr Memdc = CreateCompatibleDC(destdc);
+        IntPtr bitmap;
+        IntPtr bitmapOld = IntPtr.Zero;
+
+        var dib = new BITMAPINFO();
+        dib.bmiHeader.biHeight = -(rc.Bottom - rc.Top);
+        dib.bmiHeader.biWidth = rc.Right - rc.Left;
+        dib.bmiHeader.biPlanes = 1;
+        dib.bmiHeader.biSize = Marshal.SizeOf(typeof(BITMAPINFOHEADER));
+        dib.bmiHeader.biBitCount = 32;
+        dib.bmiHeader.biCompression = BI_RGB;
+        if (!(SaveDC(Memdc) == 0))
+        {
+            bitmap = CreateDIBSection(Memdc, ref dib, DIB_RGB_COLORS, (IntPtr)0, IntPtr.Zero, 0);
+            if (!(bitmap == IntPtr.Zero))
+            {
+                bitmapOld = SelectObject(Memdc, bitmap);
+                BitBlt(destdc, rc.Left, rc.Top, rc.Right - rc.Left, rc.Bottom - rc.Top, Memdc, 0, 0, SRCCOPY);
+
+            }
+
+            //Remember to clean up
+            SelectObject(Memdc, bitmapOld);
+
+            DeleteObject(bitmap);
+
+            ReleaseDC(Memdc, (IntPtr)(-1));
+            DeleteDC(Memdc);
+
+
+        }
+        g.ReleaseHdc();
+
     }
 
     [Flags]
@@ -890,5 +1008,60 @@ public class NativeMethods
         /// The maximum recognized DWMWINDOWATTRIBUTE value, used for validation purposes.
         /// </summary>
         DWMWA_SYSTEMBACKDROP_TYPE,
+    }
+
+    /// <summary>
+    /// An uncompressed format.
+    /// </summary>
+    private const int BI_RGB = 0;
+
+    /// <summary>
+    /// The BITMAPINFO structure contains an array of literal RGB values.
+    /// </summary>
+    public const int DIB_RGB_COLORS = 0;
+
+    /// <summary>
+    /// Copies the source rectangle directly to the destination rectangle.
+    /// </summary>
+    public const int SRCCOPY = 0x00CC0020;
+
+    /// <summary>
+    /// This structure contains information about the dimensions and color format of a device-independent bitmap (DIB).
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BITMAPINFOHEADER
+    {
+        public int biSize;
+        public int biWidth;
+        public int biHeight;
+        public short biPlanes;
+        public short biBitCount;
+        public int biCompression;
+        public readonly int biSizeImage;
+        public readonly int biXPelsPerMeter;
+        public readonly int biYPelsPerMeter;
+        public readonly int biClrUsed;
+        public readonly int biClrImportant;
+    }
+
+    /// <summary>
+    /// This structure describes a color consisting of relative intensities of red, green, and blue.
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RGBQUAD
+    {
+        public readonly byte rgbBlue;
+        public readonly byte rgbGreen;
+        public readonly byte rgbRed;
+        public readonly byte rgbReserved;
+    }
+    /// <summary>
+    /// This structure defines the dimensions and color information of a Windows-based device-independent bitmap (DIB).
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    private struct BITMAPINFO
+    {
+        public BITMAPINFOHEADER bmiHeader;
+        public readonly RGBQUAD bmiColors;
     }
 }
