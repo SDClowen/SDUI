@@ -44,14 +44,15 @@
             // 
             // buttonSelectColor
             // 
+            buttonSelectColor.AutoSize = true;
             buttonSelectColor.Color = System.Drawing.Color.Navy;
             buttonSelectColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             buttonSelectColor.ForeColor = System.Drawing.Color.White;
-            buttonSelectColor.Location = new System.Drawing.Point(252, 124);
+            buttonSelectColor.Location = new System.Drawing.Point(257, 124);
             buttonSelectColor.Name = "buttonSelectColor";
             buttonSelectColor.Radius = 6;
             buttonSelectColor.ShadowDepth = 4F;
-            buttonSelectColor.Size = new System.Drawing.Size(103, 27);
+            buttonSelectColor.Size = new System.Drawing.Size(117, 36);
             buttonSelectColor.TabIndex = 46;
             buttonSelectColor.Text = "Select Color";
             buttonSelectColor.UseVisualStyleBackColor = true;
@@ -85,7 +86,7 @@
             checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
             checkBoxDrawFullHatch.Ripple = true;
-            checkBoxDrawFullHatch.Size = new System.Drawing.Size(111, 30);
+            checkBoxDrawFullHatch.Size = new System.Drawing.Size(133, 30);
             checkBoxDrawFullHatch.TabIndex = 45;
             checkBoxDrawFullHatch.Text = "Draw full hatch";
             checkBoxDrawFullHatch.UseVisualStyleBackColor = true;
@@ -137,7 +138,7 @@
             label5.GradientAnimation = false;
             label5.Location = new System.Drawing.Point(171, 90);
             label5.Name = "label5";
-            label5.Size = new System.Drawing.Size(65, 15);
+            label5.Size = new System.Drawing.Size(80, 20);
             label5.TabIndex = 43;
             label5.Text = "IconWidth:";
             // 
@@ -155,20 +156,21 @@
             label6.GradientAnimation = false;
             label6.Location = new System.Drawing.Point(391, 90);
             label6.Name = "label6";
-            label6.Size = new System.Drawing.Size(71, 15);
+            label6.Size = new System.Drawing.Size(90, 20);
             label6.TabIndex = 44;
             label6.Text = "Title Height:";
             // 
             // buttonSelectFont
             // 
+            buttonSelectFont.AutoSize = true;
             buttonSelectFont.Color = System.Drawing.Color.RosyBrown;
             buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             buttonSelectFont.ForeColor = System.Drawing.Color.White;
-            buttonSelectFont.Location = new System.Drawing.Point(155, 124);
+            buttonSelectFont.Location = new System.Drawing.Point(140, 124);
             buttonSelectFont.Name = "buttonSelectFont";
             buttonSelectFont.Radius = 8;
             buttonSelectFont.ShadowDepth = 0F;
-            buttonSelectFont.Size = new System.Drawing.Size(91, 27);
+            buttonSelectFont.Size = new System.Drawing.Size(111, 36);
             buttonSelectFont.TabIndex = 47;
             buttonSelectFont.Text = "Select Font";
             buttonSelectFont.UseVisualStyleBackColor = true;
@@ -196,14 +198,15 @@
             // 
             // buttonBorderColor
             // 
+            buttonBorderColor.AutoSize = true;
             buttonBorderColor.Color = System.Drawing.Color.Crimson;
             buttonBorderColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             buttonBorderColor.ForeColor = System.Drawing.Color.White;
-            buttonBorderColor.Location = new System.Drawing.Point(361, 124);
+            buttonBorderColor.Location = new System.Drawing.Point(380, 124);
             buttonBorderColor.Name = "buttonBorderColor";
             buttonBorderColor.Radius = 6;
             buttonBorderColor.ShadowDepth = 4F;
-            buttonBorderColor.Size = new System.Drawing.Size(140, 27);
+            buttonBorderColor.Size = new System.Drawing.Size(173, 36);
             buttonBorderColor.TabIndex = 49;
             buttonBorderColor.Text = "Select Border Color";
             buttonBorderColor.UseVisualStyleBackColor = true;
@@ -219,7 +222,7 @@
             checkBoxTitleBorder.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxTitleBorder.Name = "checkBoxTitleBorder";
             checkBoxTitleBorder.Ripple = true;
-            checkBoxTitleBorder.Size = new System.Drawing.Size(124, 30);
+            checkBoxTitleBorder.Size = new System.Drawing.Size(149, 30);
             checkBoxTitleBorder.TabIndex = 45;
             checkBoxTitleBorder.Text = "Draw Title Border";
             checkBoxTitleBorder.UseVisualStyleBackColor = true;
@@ -235,7 +238,7 @@
             checkBoxToggleTitle.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxToggleTitle.Name = "checkBoxToggleTitle";
             checkBoxToggleTitle.Ripple = true;
-            checkBoxToggleTitle.Size = new System.Drawing.Size(94, 30);
+            checkBoxToggleTitle.Size = new System.Drawing.Size(111, 30);
             checkBoxToggleTitle.TabIndex = 45;
             checkBoxToggleTitle.Text = "Toggle Title";
             checkBoxToggleTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -244,6 +247,7 @@
             // 
             // ConfigPage
             // 
+            BackColor = System.Drawing.Color.Transparent;
             Controls.Add(buttonBorderColor);
             Controls.Add(label1);
             Controls.Add(buttonSelectFont);

@@ -102,6 +102,9 @@ public class NativeMethods
     public const int HDM_FIRST = 0x1200;
     public const int HDM_GETITEM = HDM_FIRST + 11;
     public const int HDM_SETITEM = HDM_FIRST + 12;
+    public const int TCM_FIRST = 4864;
+    public const int TCM_ADJUSTRECT = TCM_FIRST + 40;
+    public const int TCS_MULTILINE = 0x0200;
 
     public struct MARGINS                           // struct for box shadow
     {
@@ -116,6 +119,9 @@ public class NativeMethods
         public COLORREF headerTextColor;
     };
 
+    [DllImport("kernel32", EntryPoint = "RtlMoveMemory", SetLastError = false)]
+    public static extern void MoveMemory(IntPtr Destination, IntPtr Source, IntPtr Length);
+
     [DllImport("gdi32.dll", SetLastError = true, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
     [ResourceExposure(ResourceScope.None)]
     public static extern int CombineRgn(IntPtr hRgn, IntPtr hRgn1, IntPtr hRgn2, int nCombineMode);
@@ -127,8 +133,7 @@ public class NativeMethods
     public static extern bool FillRgn(IntPtr hdc, IntPtr hrgn, IntPtr hbr);
 
     [DllImport("gdi32.dll")]
-    public static extern IntPtr CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect,
-            int nBottomRect);
+    public static extern IntPtr CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
     [DllImport("gdi32.dll")]
     public static extern IntPtr CreateSolidBrush(uint crColor);
@@ -136,6 +141,10 @@ public class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetDCEx(IntPtr hwnd, IntPtr hrgnclip, uint fdwOptions);
+    
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool SetRect(Rect rect, int w, int h, int x, int y);
 
     [DllImport(gdi32)]
     public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pvd, [In] ref uint pcFonts);
@@ -167,6 +176,9 @@ public class NativeMethods
     [DllImport(user32, SetLastError = true)]
     public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref COLORREF lParam);
 
+    [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, ref Rect lParam);
+
     [DllImport(user32)]
     public static extern bool RedrawWindow(IntPtr hWnd, IntPtr lprcUpdate, IntPtr hrgnUpdate, int flags);
 
@@ -181,6 +193,13 @@ public class NativeMethods
 
     [DllImport(dwmapi)]
     public static extern int DwmIsCompositionEnabled(ref int pfEnabled);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool InvalidateRect(IntPtr hWnd, Rect rect, bool bErase);
+
+    [DllImport("user32.dll")]
+    public static extern bool GetClientRect(IntPtr hWnd, ref Rect rect);
 
 
     [DllImport(uxtheme, ExactSpelling = true)]
@@ -345,6 +364,42 @@ public class NativeMethods
     [DllImport("gdi32.dll")]
     internal static extern bool DeleteDC(IntPtr hdc);
 
+    internal const int WM_PRINT = 0x0317;
+
+    [Flags]
+    internal enum DrawingOptions
+    {
+        PRF_CHECKVISIBLE = 0x01,
+        PRF_NONCLIENT = 0x02,
+        PRF_CLIENT = 0x04,
+        PRF_ERASEBKGND = 0x08,
+        PRF_CHILDREN = 0x10,
+        PRF_OWNED = 0x20
+    }
+
+    public static void TakeScreenshot(IntPtr hwnd, Graphics g)
+    {
+        IntPtr hdc = IntPtr.Zero;
+        try
+        {
+            hdc = g.GetHdc();
+
+            SendMessage(hwnd, WM_PRINT, hdc,
+                new IntPtr((int)(
+                    DrawingOptions.PRF_CHILDREN |
+                    DrawingOptions.PRF_CLIENT |
+                    DrawingOptions.PRF_NONCLIENT |
+                    DrawingOptions.PRF_OWNED
+                    ))
+                );
+        }
+        finally
+        {
+            if (hdc != IntPtr.Zero)
+                g.ReleaseHdc(hdc);
+        }
+    }
+
     private static bool EnumWindow(IntPtr handle, IntPtr pointer)
     {
         GCHandle gch = GCHandle.FromIntPtr(pointer);
@@ -467,13 +522,13 @@ public class NativeMethods
         DWLP_DLGPROC = 0x4,
     }
 
-    private delegate IntPtr dWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+    public delegate IntPtr dWndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
 
     [DllImport(user32)]
-    static extern IntPtr GetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex);
+    public static extern IntPtr GetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex);
 
     [DllImport(user32)]
-    private static extern IntPtr SetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex, SetWindowLongFlags newProc);
+    public static extern IntPtr SetWindowLong(IntPtr hWnd, WindowLongIndexFlags nIndex, SetWindowLongFlags newProc);
 
     public enum SetWindowPosFlags : uint
     {
@@ -813,6 +868,18 @@ public class NativeMethods
         public uint cItems;
         public IntPtr pszSubsetTitle;
         public uint cchSubsetTitle;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct WINDOWPOS
+    {
+        public IntPtr HWND;
+        public IntPtr hwndAfter;
+        public int x;
+        public int y;
+        public int cx;
+        public int cy;
+        public SetWindowPosFlags flags;
     }
 
     [StructLayout(LayoutKind.Sequential)]

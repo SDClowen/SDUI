@@ -1,6 +1,7 @@
 ﻿using SDUI.Helpers;
 using System;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using static SDUI.NativeMethods;
 
@@ -207,7 +208,7 @@ public class UIWindowBase : Form
 
                     break;
                 }
-            case WM_NCCALCSIZE:
+            case 222:
                 if (FormBorderStyle != FormBorderStyle.None && m.WParam.ToInt32() == 1)
                 {
                     m.Result = new IntPtr(0xF0);
@@ -215,12 +216,74 @@ public class UIWindowBase : Form
                 }
                 else
                     break;
+            case WM_NCCALCSIZE:
+
+                var handle = Handle;
+
+                var lpwp = (WINDOWPOS)Marshal.PtrToStructure(m.LParam, typeof(WINDOWPOS));
+                if (lpwp.HWND == IntPtr.Zero)
+                    return;
+
+                if ((lpwp.flags & (SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOREDRAW)) != 0)
+                {
+                    return;
+                }
+                // TEMPORARY CODE
+                // if (OS.IsAppThemed ()) {
+                // OS.InvalidateRect (handle, null, true);
+                // return result;
+                // }
+                int bits = GetWindowLong(handle, WindowLongIndexFlags.GWL_STYLE).ToInt32();
+                if ((bits & TCS_MULTILINE) != 0)
+                {
+                    InvalidateRect(handle, new Rect(), true);
+                    return;
+                }
+
+                var rect = new Rect();
+                SetRect(rect, 0, 0, lpwp.cx, lpwp.cy);
+
+                SendMessage(handle, WM_NCCALCSIZE, 0, ref rect);
+                int newWidth = rect.Right - rect.Left;
+                int newHeight = rect.Bottom - rect.Top;
+                GetClientRect(handle, ref rect);
+                int oldWidth = rect.Right - rect.Left;
+                int oldHeight = rect.Bottom - rect.Top;
+                if (newWidth == oldWidth && newHeight == oldHeight)
+                {
+                    return;
+                }
+                var inset = new Rect();
+                SendMessage(handle, TCM_ADJUSTRECT, 0, ref inset);
+                int marginX = -inset.Right, marginY = -inset.Bottom;
+                if (newWidth != oldWidth)
+                {
+                    int left = oldWidth;
+                    if (newWidth < oldWidth)
+                        left = newWidth;
+                    SetRect(rect, left - marginX, 0, newWidth, newHeight);
+                    InvalidateRect(handle, rect, true);
+                }
+                if (newHeight != oldHeight)
+                {
+                    int bottom = oldHeight;
+                    if (newHeight < oldHeight)
+                        bottom = newHeight;
+                    if (newWidth < oldWidth)
+                        oldWidth -= marginX;
+                    SetRect(rect, 0, bottom - marginY, oldWidth, newHeight);
+                    InvalidateRect(handle, rect, true);
+                    
+                }
+                return;
         }
 
         base.WndProc(ref m);
     }
     public void ChangeControlsTheme(Control control)
     {
+        control.Enabled = false;
+
         var isDark = ColorScheme.BackColor.IsDark();
         if (control is ListView)
         {
@@ -244,6 +307,7 @@ public class UIWindowBase : Form
         {
             ChangeControlsTheme(subControl);
         }
+        control.Enabled = true;
     }
     protected override void OnHandleCreated(EventArgs e)
     {
@@ -260,14 +324,16 @@ public class UIWindowBase : Form
         base.OnBackColorChanged(e);
         if (DesignMode)
             return;
+
         ChangeControlsTheme(this);
         ForeColor = ColorScheme.ForeColor;
+
         if (_aeroEnabled)
         {
             var v = 2;
 
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
-            var margins = new NativeMethods.MARGINS()
+            var margins = new MARGINS()
             {
                 Bottom = dwmMargin,
                 Left = dwmMargin,

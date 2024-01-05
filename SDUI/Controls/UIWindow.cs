@@ -409,27 +409,27 @@ public class UIWindow : UIWindowBase
         pageAreaAnimationManager = new AnimationManager
         {
             AnimationType = AnimationType.EaseOut,
-            Increment = 0.06
+            Increment = 0.07
         };
 
         minBoxHoverAnimationManager = new AnimationManager
         {
-            Increment = 0.1,
+            Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
         maxBoxHoverAnimationManager = new AnimationManager
         {
-            Increment = 0.1,
+            Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
         closeBoxHoverAnimationManager = new AnimationManager
         {
-            Increment = 0.1,
+            Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
         extendBoxHoverAnimationManager = new AnimationManager
         {
-            Increment = 0.1,
+            Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
 
