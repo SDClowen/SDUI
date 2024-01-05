@@ -782,7 +782,7 @@ public class UIWindow : UIWindowBase
     protected override void OnPaint(PaintEventArgs e)
     {
         base.OnPaint(e);
-        NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
+        //NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
 
         var foreColor = ColorScheme.ForeColor;
         if (titleColor != Color.Empty)

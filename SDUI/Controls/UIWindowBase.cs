@@ -133,7 +133,7 @@ public class UIWindowBase : Form
     private const int htBottomRight = 17;
     protected override void WndProc(ref Message m)
     {
-        if(DesignMode)
+        if (DesignMode)
         {
             base.WndProc(ref m);
             return;
@@ -208,14 +208,6 @@ public class UIWindowBase : Form
 
                     break;
                 }
-            case 222:
-                if (FormBorderStyle != FormBorderStyle.None && m.WParam.ToInt32() == 1)
-                {
-                    m.Result = new IntPtr(0xF0);
-                    return;
-                }
-                else
-                    break;
             case WM_NCCALCSIZE:
 
                 var handle = Handle;
@@ -273,7 +265,7 @@ public class UIWindowBase : Form
                         oldWidth -= marginX;
                     SetRect(rect, 0, bottom - marginY, oldWidth, newHeight);
                     InvalidateRect(handle, rect, true);
-                    
+
                 }
                 return;
         }
@@ -349,7 +341,7 @@ public class UIWindowBase : Form
         if (!WindowsHelper.IsModern)
             return;
 
-        //EnableAcrylic(this, Color.Wheat);
+        //EnableAcrylic(this, Color.Transparent);
 
         var flag = DWMSBT_TABBEDWINDOW;
         DwmSetWindowAttribute(
