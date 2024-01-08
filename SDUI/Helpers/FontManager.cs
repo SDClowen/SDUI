@@ -10,9 +10,9 @@ namespace SDUI.Helpers
     public class FontManager
     {
         private static readonly PrivateFontCollection privateFontCollection = new();
-        public static Font Inter = new(LoadFont(SDUI.Resources.InterFont), 13.3333f, FontStyle.Regular, GraphicsUnit.Pixel);
+        public static Font Inter = GetFont(Resources.InterFont, 13.3333f, FontStyle.Regular);
 
-        private static FontFamily LoadFont(byte[] fontResource)
+        private static Font GetFont(byte[] fontResource, float size, FontStyle style)
         {
             int dataLength = fontResource.Length;
             IntPtr fontPtr = Marshal.AllocCoTaskMem(dataLength);
@@ -22,7 +22,9 @@ namespace SDUI.Helpers
             AddFontMemResourceEx(fontPtr, (uint)fontResource.Length, IntPtr.Zero, ref cFonts);
             privateFontCollection.AddMemoryFont(fontPtr, dataLength);
 
-            return privateFontCollection.Families.Last();
+            var family = privateFontCollection.Families.FirstOrDefault(p => p.IsStyleAvailable(style));
+
+            return new(family, size, style, GraphicsUnit.Pixel);
         }
     }
 }
