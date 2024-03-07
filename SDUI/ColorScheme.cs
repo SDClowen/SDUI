@@ -38,4 +38,19 @@ public class ColorScheme
     /// Gets or sets the debug borders
     /// </summary>
     public static bool DrawDebugBorders;
+
+    /// <summary>
+    /// Gets or sets backcolor brush for cache
+    /// </summary>
+    public static SolidBrush BackColorBrush = new(BackColor);
+
+    /// <summary>
+    /// Gets or sets bordercolor brush for cache
+    /// </summary>
+    public static SolidBrush BorderBrush = new(BorderColor);
+
+    /// <summary>
+    /// Gets or sets bordercolor brush for cache
+    /// </summary>
+    public static Pen BorderPen = new(BorderColor);
 }

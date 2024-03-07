@@ -1,9 +1,7 @@
-﻿using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace SDUI.Controls;
 
@@ -64,10 +62,11 @@ public class ComboBox : System.Windows.Forms.ComboBox
                (e.State & DrawItemState.NoFocusRect) != DrawItemState.NoFocusRect)
         {
             foreColor = Color.White;
-            e.Graphics.FillRectangle(new SolidBrush(Color.Blue), e.Bounds);
+            using var brush = new SolidBrush(Color.Blue);
+            e.Graphics.FillRectangle(brush, e.Bounds);
         }
         else
-            e.Graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), e.Bounds);
+            e.Graphics.FillRectangle(ColorScheme.BackColorBrush, e.Bounds);
 
         var stringFormat = new StringFormat
         {
@@ -77,7 +76,8 @@ public class ComboBox : System.Windows.Forms.ComboBox
             Trimming = StringTrimming.EllipsisCharacter
         };
 
-        e.Graphics.DrawString(Items[index].ToString(), e.Font, new SolidBrush(foreColor), e.Bounds, stringFormat);
+        using var textBrush = new SolidBrush(foreColor);
+        e.Graphics.DrawString(Items[index].ToString(), e.Font, textBrush, e.Bounds, stringFormat);
         //TextRenderer.DrawText(e.Graphics, Items[index].ToString(), e.Font, e.Bounds, foreColor, TextFormatFlags.SingleLine);
 
     }
@@ -107,7 +107,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
 
         if (ColorScheme.DrawDebugBorders)
         {
-            var redPen = new Pen(Color.Red, 1);
+            using var redPen = new Pen(Color.Red, 1);
             redPen.Alignment = PenAlignment.Outset;
             graphics.DrawRectangle(redPen, 0, 0, rectf.Width - 1, rectf.Height - 1);
         }
@@ -121,12 +121,14 @@ public class ComboBox : System.Windows.Forms.ComboBox
         var borderColor = ColorScheme.BorderColor;
 
         using var path = rectf.Radius(_radius);
-        e.Graphics.FillPath(new SolidBrush(backColor), path);
 
-        var borderPen = new Pen(borderColor);
+        using var backBrush = new SolidBrush(backColor);
+        e.Graphics.FillPath(backBrush, path);
+
+        
         var _extendBoxRect = new RectangleF(rectf.Width - (24f * (DeviceDpi / 96)), 0, (16 * (DeviceDpi / 96)), rectf.Height - (4 * (DeviceDpi / 96)) + _shadowDepth);
 
-        var symbolPen = new Pen(ColorScheme.ForeColor);
+        using var symbolPen = new Pen(ColorScheme.ForeColor);
         graphics.DrawLine(symbolPen,
                 _extendBoxRect.Left + _extendBoxRect.Width / 2 - (5 * (DeviceDpi / 96)) - 1,
                 _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * (DeviceDpi / 96)),
@@ -140,7 +142,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
             _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96)));
 
         graphics.DrawShadow(rectf, _shadowDepth, _radius);
-        e.Graphics.DrawPath(borderPen, path);
+        e.Graphics.DrawPath(ColorScheme.BorderPen, path);
 
         var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
         TextRenderer.DrawText(graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);

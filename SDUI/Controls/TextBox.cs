@@ -169,15 +169,16 @@ public class TextBox : Control
         textbox.ForeColor = ColorScheme.ForeColor;
         textbox.BackColor = backColor;
 
-        graphics.FillPath(new SolidBrush(backColor), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
+        using var backBrush = new SolidBrush(backColor);
+        graphics.FillPath(backBrush, new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
 
         var colorBegin = determinedColor.Brightness(.1f).Alpha(90);
         var colorEnd = determinedColor.Brightness(-.1f).Alpha(60);
 
-        var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 2, Height - 2), colorBegin, colorEnd, 90);
-        var innerBorderPen = new Pen(innerBorderBrush);
+        using var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 2, Height - 2), colorBegin, colorEnd, 90);
+        using var innerBorderPen = new Pen(innerBorderBrush);
 
         graphics.DrawPath(innerBorderPen, new Rectangle(1, 1, Width - _radius, Height - _radius).Radius(_radius));
-        graphics.DrawLine(new Pen(ColorScheme.BorderColor), new Point(1, 1), new Point(Width - 3, 1));
+        graphics.DrawLine(ColorScheme.BorderPen, new Point(1, 1), new Point(Width - 3, 1));
     }
 }

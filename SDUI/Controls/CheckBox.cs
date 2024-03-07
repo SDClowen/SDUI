@@ -14,7 +14,7 @@ namespace SDUI.Controls
 
         private const int CHECKBOX_SIZE_HALF = CHECKBOX_SIZE / 2;
 
-        private static readonly Point[] CHECKMARK_LINE = { new Point(1, 6), new Point(5, 10), new Point(12, 3) };
+        private static readonly Point[] CHECKMARK_LINE = { new (1, 6), new (5, 10), new (12, 3) };
 
         private readonly AnimationManager animationManager;
 
@@ -22,7 +22,7 @@ namespace SDUI.Controls
 
         private int boxOffset;
 
-        private Rectangle boxRectangle;
+        private RectangleF boxRectangle;
 
         private bool ripple;
 
@@ -78,7 +78,6 @@ namespace SDUI.Controls
 
             SetStyle(ControlStyles.ResizeRedraw, true);
 
-
             animationManager = new AnimationManager
             {
                 AnimationType = AnimationType.EaseInOut,
@@ -125,7 +124,7 @@ namespace SDUI.Controls
 
         public override Size GetPreferredSize(Size proposedSize)
         {
-            int w = boxOffset + CHECKBOX_SIZE + 2 + (int)CreateGraphics().MeasureString(Text, Font).Width;
+            int w = boxOffset + CHECKBOX_SIZE + 2 + TextRenderer.MeasureText(Text, Font).Width;
             return Ripple ? new Size(w, 30) : new Size(w, 20);
         }
 

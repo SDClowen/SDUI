@@ -38,12 +38,12 @@ public class GroupBox : System.Windows.Forms.GroupBox
     public GroupBox()
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
+            ControlStyles.AllPaintingInWmPaint |
                   ControlStyles.OptimizedDoubleBuffer |
+                  ControlStyles.DoubleBuffer |
                   ControlStyles.ResizeRedraw |
                   ControlStyles.Opaque |
                   ControlStyles.UserPaint, true);
-        SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-        SetStyle(ControlStyles.DoubleBuffer, true);
 
         UpdateStyles();
         this.DoubleBuffered = true;
@@ -71,7 +71,7 @@ public class GroupBox : System.Windows.Forms.GroupBox
         GroupBoxRenderer.DrawParentBackground(graphics, ClientRectangle, this);
         if (ColorScheme.DrawDebugBorders)
         {
-            var redPen = new Pen(Color.Red, 1);
+            using var redPen = new Pen(Color.Red, 1);
             redPen.Alignment = PenAlignment.Inset;
             e.Graphics.DrawRectangle(redPen, new Rectangle(0, 0, Width - 1, Height - 1));
         }
@@ -82,29 +82,28 @@ public class GroupBox : System.Windows.Forms.GroupBox
         var shadowRect = rect;
 
         //using (var path = e.Graphics.GenerateRoundedRectangle(rect, _radius))
-        using (var path = rect.Radius(_radius))
-        {
-            rect = new RectangleF(0, 0, rect.Width, Font.Height + 7);
+        using var path = rect.Radius(_radius);
+        rect = new RectangleF(0, 0, rect.Width, Font.Height + 7);
 
-            var color = ColorScheme.BorderColor;
-            BackColor = Color.Transparent;
+        var color = ColorScheme.BorderColor;
+        BackColor = Color.Transparent;
 
-            using (var brush = new SolidBrush(ColorScheme.BackColor2))
-                e.Graphics.FillPath(brush, path);
+        using (var brush = new SolidBrush(ColorScheme.BackColor2))
+            e.Graphics.FillPath(brush, path);
 
-            var clip = e.Graphics.ClipBounds;
-            e.Graphics.SetClip(rect);
-            e.Graphics.DrawLine(new Pen(color), 0, rect.Height - 1, rect.Width, rect.Height - 1);
-            e.Graphics.FillPath(new SolidBrush(ColorScheme.BackColor2.Alpha(15)), path);
+        using var backColorBrush = new SolidBrush(ColorScheme.BackColor2.Alpha(15));
 
-            TextRenderer.DrawText(e.Graphics, Text, Font, rect.ToRectangle(), ColorScheme.ForeColor);
-            e.Graphics.SetClip(clip);
+        var clip = e.Graphics.ClipBounds;
+        e.Graphics.SetClip(rect);
+        e.Graphics.DrawLine(ColorScheme.BorderPen, 0, rect.Height - 1, rect.Width, rect.Height - 1);
+        e.Graphics.FillPath(backColorBrush, path);
 
-            e.Graphics.DrawShadow(shadowRect, _shadowDepth, _radius);
+        TextRenderer.DrawText(e.Graphics, Text, Font, rect.ToRectangle(), ColorScheme.ForeColor);
+        e.Graphics.SetClip(clip);
 
-            using (var pen = new Pen(ColorScheme.BorderColor, 1))
-                e.Graphics.DrawPath(pen, path);
-        }
+        e.Graphics.DrawShadow(shadowRect, _shadowDepth, _radius);
+
+        e.Graphics.DrawPath(ColorScheme.BorderPen, path);
     }
 
     public override Size GetPreferredSize(Size proposedSize)
