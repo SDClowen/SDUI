@@ -98,12 +98,15 @@ namespace SDUI.Test
                 return;
 
             var parent = form as UIWindow;
-            ColorScheme.BackColor = Color.FromArgb(r, g, b);
-            parent.BackColor = ColorScheme.BackColor;
-            if (ColorScheme.BackColor.IsDark())
-                (parent as UIWindow).DwmMargin = -1;
-            else
-                (parent as UIWindow).DwmMargin = 1;
+            if(parent != null)
+            {
+                ColorScheme.BackColor = Color.FromArgb(r, g, b);
+                parent.BackColor = ColorScheme.BackColor;
+                if (ColorScheme.BackColor.IsDark())
+                    (parent as UIWindow).DwmMargin = -1;
+                else
+                    (parent as UIWindow).DwmMargin = 1;
+            }
         }
 
         private void buttonDark_Click(object sender, EventArgs e)

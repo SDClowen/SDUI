@@ -11,7 +11,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{A4
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Examples.Mac", "Examples\SDUI.Examples.Mac\SDUI.Examples.Mac.csproj", "{789C8834-22D0-4AEF-8643-C051704949D6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDUI.Demo", "Examples\SDUI.Demo\SDUI.Demo.csproj", "{1E1C531F-3828-4039-9773-A87A4F123B7F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Demo", "Examples\SDUI.Demo\SDUI.Demo.csproj", "{1E1C531F-3828-4039-9773-A87A4F123B7F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDUI.AnimationEngineTest", "Examples\SDUI.AnimationEngineTest\SDUI.AnimationEngineTest.csproj", "{C185512F-DB41-4811-9ABA-3341CD63BC61}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,10 @@ Global
 		{1E1C531F-3828-4039-9773-A87A4F123B7F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1E1C531F-3828-4039-9773-A87A4F123B7F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1E1C531F-3828-4039-9773-A87A4F123B7F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C185512F-DB41-4811-9ABA-3341CD63BC61}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C185512F-DB41-4811-9ABA-3341CD63BC61}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C185512F-DB41-4811-9ABA-3341CD63BC61}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C185512F-DB41-4811-9ABA-3341CD63BC61}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,6 +49,7 @@ Global
 		{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
 		{789C8834-22D0-4AEF-8643-C051704949D6} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
 		{1E1C531F-3828-4039-9773-A87A4F123B7F} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
+		{C185512F-DB41-4811-9ABA-3341CD63BC61} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9C264AFA-7C24-4F28-B801-E99CDC68D995}
