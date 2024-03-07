@@ -224,7 +224,7 @@ public class Button : System.Windows.Forms.Button
 
     private Size GetPreferredSize()
     {
-        return GetPreferredSize(new Size(0, 0));
+        return GetPreferredSize(Size.Empty);
     }
 
     public override Size GetPreferredSize(Size proposedSize)
@@ -237,6 +237,6 @@ public class Button : System.Windows.Forms.Button
             // 4 is for the space between icon & text
             extra += 24 + 4;
 
-        return new Size((int)Math.Ceiling(textSize.Width) + extra, 36);
+        return new Size((int)Math.Ceiling(textSize.Width) + extra, 23);
     }
 }

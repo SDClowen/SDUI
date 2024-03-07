@@ -160,8 +160,8 @@ public class ProgressBar : Control
         var intValue = ((_value / (float)_maximum) * Width);
         var percent = ((100.0f * Value) / Maximum);
 
-        var linearGradientBrush = new LinearGradientBrush(new RectangleF(0, 0, Width, Height), _gradient[0], _gradient[1], 90);
-        var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));
+        using var linearGradientBrush = new LinearGradientBrush(new RectangleF(0, 0, Width, Height), _gradient[0], _gradient[1], 90);
+        using var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));
 
         var rect = ClientRectangle.ToRectangleF();
 
@@ -171,11 +171,9 @@ public class ProgressBar : Control
         if (intValue != 0)
         {
             var rectValue = new RectangleF(rect.X, rect.Y, intValue, rect.Height - 1);
-            using (var path = rectValue.Radius(_radius))
-            {
-                graphics.FillPath(linearGradientBrush, path);
-                graphics.FillPath(hatchBrush, path);
-            }
+            using var path = rectValue.Radius(_radius);
+            graphics.FillPath(linearGradientBrush, path);
+            graphics.FillPath(hatchBrush, path);
         }
 
         graphics.DrawPath(new Pen(Color.FromArgb(10, Parent.BackColor.Determine())), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));

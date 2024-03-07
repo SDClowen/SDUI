@@ -78,9 +78,15 @@ namespace SDUI.Controls
 
         public NumUpDown()
         {
-            SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
-            SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-            SetStyle(ControlStyles.DoubleBuffer, true);
+            SetStyle(ControlStyles.SupportsTransparentBackColor |
+                ControlStyles.AllPaintingInWmPaint |
+                      ControlStyles.OptimizedDoubleBuffer |
+                      ControlStyles.DoubleBuffer |
+                      ControlStyles.ResizeRedraw |
+                      ControlStyles.UserPaint, true);
+
+            UpdateStyles();
+            this.DoubleBuffered = true;
 
             BackColor = Color.Transparent;
             _min = 0;

@@ -84,7 +84,7 @@ public class Panel : DoubleBufferedControl
         GroupBoxRenderer.DrawParentBackground(graphics, ClientRectangle, this);
         if (ColorScheme.DrawDebugBorders)
         {
-            var redPen = new Pen(Color.Red, 1);
+            using var redPen = new Pen(Color.Red, 1);
             redPen.Alignment = PenAlignment.Inset;
             e.Graphics.DrawRectangle(redPen, new Rectangle(0, 0, Width - 1, Height - 1));
         }
@@ -99,25 +99,23 @@ public class Panel : DoubleBufferedControl
 
         if (_radius > 0)
         {
-            using (var path = rect.Radius(_radius))
-            {
-                /*var shadow = DropShadow.Create(path, Color.Black.Alpha(20), _shadowDepth);
+            using var path = rect.Radius(_radius);
+            /*var shadow = DropShadow.Create(path, Color.Black.Alpha(20), _shadowDepth);
 
-                var shadowBounds = DropShadow.GetBounds(shadowRect, _shadowDepth);
-                //shadowBounds.Offset(0, 0);
+            var shadowBounds = DropShadow.GetBounds(shadowRect, _shadowDepth);
+            //shadowBounds.Offset(0, 0);
 
-                e.Graphics.DrawImageUnscaled(shadow, shadowBounds.Location);
+            e.Graphics.DrawImageUnscaled(shadow, shadowBounds.Location);
 
-                */
+            */
 
-                using (var brush = new SolidBrush(color))
-                    e.Graphics.FillPath(brush, path);
+            using (var brush = new SolidBrush(color))
+                e.Graphics.FillPath(brush, path);
 
-                e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
+            e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
 
-                using (var pen = new Pen(borderColor, 1))
-                    e.Graphics.DrawPath(pen, path);
-            }
+            using var pen = new Pen(borderColor, 1);
+            e.Graphics.DrawPath(pen, path);
 
             return;
         }
