@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using System.Windows.Forms.VisualStyles;
 
 namespace SDUI.Controls;
 
@@ -352,27 +353,27 @@ public class UIWindow : UIWindowBase
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly AnimationManager minBoxHoverAnimationManager;
+    private readonly  Animation.AnimationEngine minBoxHoverAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly AnimationManager maxBoxHoverAnimationManager;
+    private readonly  Animation.AnimationEngine maxBoxHoverAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly AnimationManager closeBoxHoverAnimationManager;
+    private readonly  Animation.AnimationEngine closeBoxHoverAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly AnimationManager extendBoxHoverAnimationManager;
+    private readonly  Animation.AnimationEngine extendBoxHoverAnimationManager;
 
     /// <summary>
     /// tab area animation manager
     /// </summary>
-    private readonly AnimationManager pageAreaAnimationManager;
+    private readonly  Animation.AnimationEngine pageAreaAnimationManager;
 
     private int previousSelectedPageIndex;
     private Point animationSource;
@@ -406,28 +407,28 @@ public class UIWindow : UIWindowBase
 
         enableFullDraggable = false;
 
-        pageAreaAnimationManager = new AnimationManager
+        pageAreaAnimationManager = new  Animation.AnimationEngine
         {
             AnimationType = AnimationType.EaseOut,
             Increment = 0.07
         };
 
-        minBoxHoverAnimationManager = new AnimationManager
+        minBoxHoverAnimationManager = new  Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
-        maxBoxHoverAnimationManager = new AnimationManager
+        maxBoxHoverAnimationManager = new  Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
-        closeBoxHoverAnimationManager = new AnimationManager
+        closeBoxHoverAnimationManager = new  Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
-        extendBoxHoverAnimationManager = new AnimationManager
+        extendBoxHoverAnimationManager = new  Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
@@ -781,8 +782,12 @@ public class UIWindow : UIWindowBase
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        base.OnPaint(e);
-        //NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
+        //base.OnPaint(e);
+
+        var graphics = e.Graphics;
+
+        graphics.SetHighQuality();
+        NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
 
         var foreColor = ColorScheme.ForeColor;
         if (titleColor != Color.Empty)
@@ -792,15 +797,13 @@ public class UIWindow : UIWindowBase
         if (titleColor != Color.Empty)
             hoverColor = foreColor.Alpha(20);
 
-        var graphics = e.Graphics;
-
         if (FullDrawHatch)
         {
             using var hatchBrush = new HatchBrush(_hatch, hoverColor, titleColor);
             graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
         }
         else
-            graphics.FillRectangle(ColorScheme.BackColor.Alpha(235), 0, 0, Width, Height);
+            graphics.FillRectangle(ColorScheme.BackColor.Alpha(200), ClientRectangle);
 
         if (Width <= 0 || Height <= 0)
             return;
@@ -808,7 +811,6 @@ public class UIWindow : UIWindowBase
         if (!ShowTitle)
             return;
 
-        graphics.SetHighQuality();
 
         if (titleColor != Color.Empty)
             graphics.FillRectangle(titleColor, 0, 0, Width, _titleHeightDPI);
@@ -912,18 +914,18 @@ public class UIWindow : UIWindowBase
                 _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * DPI));
         }
 
-        graphics.SetDefaultQuality();
-
         var faviconSize = 16;
         if (Icon != null)
             graphics.DrawImage(Icon.ToBitmap(), 10, (_titleHeightDPI / 2) - (faviconSize / 2), faviconSize, faviconSize);
 
         if (_windowPageControl == null)
         {
-            var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter;
-            var stringSize = TextRenderer.MeasureText(Text, Font);
-            var textPoint = new Point(14 + (Icon != null ? faviconSize : 0), (int)(_titleHeightDPI / 2f));
-            TextRenderer.DrawText(e.Graphics, Text, Font, textPoint, foreColor, flags);
+            var stringSize = graphics.MeasureString(Text, Font);
+            var textPoint = new PointF(14 + (Icon != null ? faviconSize : 0), (_titleHeightDPI / 2 - stringSize.Height / 2));
+
+            using var textBrush = new SolidBrush(foreColor);
+
+            graphics.DrawString(Text, Font, textBrush, textPoint, StringFormat.GenericDefault);
         }
 
         if (_windowPageControl == null)
@@ -963,12 +965,14 @@ public class UIWindow : UIWindowBase
         graphics.FillRectangle(hoverColor, x, 0, width, _titleHeightDPI);
         graphics.FillRectangle(Color.DeepSkyBlue, x, y, width, TAB_INDICATOR_HEIGHT);
 
+        graphics.CompositingQuality = CompositingQuality.HighQuality;
+        graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+
         //Draw tab headers
         foreach (Control page in _windowPageControl.Controls)
         {
             var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
-            var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter;
-            TextRenderer.DrawText(graphics, page.Text, Font, pageRect[currentTabIndex].ToRectangle(), foreColor, flags);
+            page.DrawString(graphics, foreColor, pageRect[currentTabIndex]);
         }
 
         if (_drawTitleBorder)
@@ -984,6 +988,8 @@ public class UIWindow : UIWindowBase
                 graphics.DrawLine(pen, Width, _titleHeightDPI - 1, 0, _titleHeightDPI - 1);
             }
         }
+
+        graphics.SetDefaultQuality();
     }
 
     protected override void OnTextChanged(EventArgs e)

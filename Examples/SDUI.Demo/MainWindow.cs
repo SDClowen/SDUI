@@ -16,6 +16,9 @@ namespace SDUI.Demo
         public MainWindow()
         {
             InitializeComponent();
+
+            BackColor = Color.Transparent;
+            ColorScheme.BackColor = Color.Black;
         }
     }
 }

@@ -5,13 +5,14 @@ using System.Windows.Forms;
 
 namespace SDUI.Animation;
 
-public class AnimationManager
+public class AnimationEngine
 {
     public bool InterruptAnimation { get; set; }
     public double Increment { get; set; }
     public double SecondaryIncrement { get; set; }
     public AnimationType AnimationType { get; set; }
     public bool Singular { get; set; }
+    public bool Running { get; set; }
 
     public delegate void AnimationFinished(object sender);
 
@@ -29,13 +30,11 @@ public class AnimationManager
     private const double MIN_VALUE = 0.00;
     private const double MAX_VALUE = 1.00;
 
-    private readonly Timer animationTimer = new() { Interval = 5, Enabled = false };
-
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="singular">If true, only one animation is supported. The current animation will be replaced with the new one. If false, a new animation is added to the list.</param>
-    public AnimationManager(bool singular = true)
+    public AnimationEngine(bool singular = true)
     {
         animationProgresses = new List<double>();
         animationSources = new List<Point>();
@@ -55,10 +54,10 @@ public class AnimationManager
             animationDirections.Add(AnimationDirection.In);
         }
 
-        animationTimer.Tick += AnimationTimerOnTick;
+        AnimationEngineProvider.Handle(this);
     }
 
-    private void AnimationTimerOnTick(object sender, EventArgs eventArgs)
+    public void AnimationTimerOnTick(object sender, EventArgs eventArgs)
     {
         for (int i = 0; i < animationProgresses.Count; i++)
         {
@@ -114,7 +113,7 @@ public class AnimationManager
 
     public bool IsAnimating()
     {
-        return animationTimer.Enabled;
+        return Running;
     }
 
     public void StartNewAnimation(AnimationDirection animationDirection, object[] data = null)
@@ -175,7 +174,7 @@ public class AnimationManager
             }
         }
 
-        animationTimer.Start();
+        Running = true;
     }
 
     public void UpdateProgress(int index)
@@ -215,7 +214,7 @@ public class AnimationManager
                 if (animationDirections[i] == AnimationDirection.In && animationProgresses[i] != MAX_VALUE) return;
             }
 
-            animationTimer.Stop();
+            Running = false;
             if (OnAnimationFinished != null) OnAnimationFinished(this);
         }
     }
@@ -236,7 +235,7 @@ public class AnimationManager
                 if (animationDirections[i] == AnimationDirection.Out && animationProgresses[i] != MIN_VALUE) return;
             }
 
-            animationTimer.Stop();
+            Running = false;
             if (OnAnimationFinished != null) OnAnimationFinished(this);
         }
     }

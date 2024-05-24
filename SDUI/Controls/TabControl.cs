@@ -77,7 +77,7 @@ public class TabControl : System.Windows.Forms.TabControl
                 graphics.FillPath(backBrush, path);
             }
 
-            TextRenderer.DrawText(graphics, TabPages[i].Text, Font, textRect, ColorScheme.ForeColor);
+            TabPages[i].DrawString(graphics, ColorScheme.ForeColor, textRect);
 
             if (TabPages[i].BackColor != ColorScheme.BackColor)
                 TabPages[i].BackColor = ColorScheme.BackColor;

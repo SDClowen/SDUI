@@ -16,9 +16,9 @@ namespace SDUI.Controls
 
         private static readonly Point[] CHECKMARK_LINE = { new (1, 6), new (5, 10), new (12, 3) };
 
-        private readonly AnimationManager animationManager;
+        private readonly Animation.AnimationEngine animationManager;
 
-        private readonly AnimationManager rippleAnimationManager;
+        private readonly Animation.AnimationEngine rippleAnimationManager;
 
         private int boxOffset;
 
@@ -78,12 +78,12 @@ namespace SDUI.Controls
 
             SetStyle(ControlStyles.ResizeRedraw, true);
 
-            animationManager = new AnimationManager
+            animationManager = new Animation.AnimationEngine
             {
                 AnimationType = AnimationType.EaseInOut,
-                Increment = 0.05
+                Increment = 0.10
             };
-            rippleAnimationManager = new AnimationManager(false)
+            rippleAnimationManager = new Animation.AnimationEngine(false)
             {
                 AnimationType = AnimationType.Linear,
                 Increment = 0.10,
@@ -220,7 +220,8 @@ namespace SDUI.Controls
 
             // draw checkbox text
             var textColor = Enabled ? ColorScheme.ForeColor : Color.Gray;
-            TextRenderer.DrawText(graphics, Text, Font, new Point(boxOffset + (int)Width + CHECKBOX_SIZE, (int)Height / 2), textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+
+            this.DrawString(graphics, TextAlign,  textColor, new RectangleF(new Point(boxOffset + CHECKBOX_SIZE, 0), ClientRectangle.Size));
 
             if (ColorScheme.DrawDebugBorders)
             {

@@ -11,7 +11,6 @@ namespace SDUI.Demo
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            Application.SetDefaultFont(Helpers.FontManager.Inter);
             Application.Run(new MainWindow());
         }
     }

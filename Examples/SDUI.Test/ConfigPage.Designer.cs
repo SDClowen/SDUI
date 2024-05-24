@@ -52,7 +52,7 @@
             buttonSelectColor.Name = "buttonSelectColor";
             buttonSelectColor.Radius = 6;
             buttonSelectColor.ShadowDepth = 4F;
-            buttonSelectColor.Size = new System.Drawing.Size(117, 36);
+            buttonSelectColor.Size = new System.Drawing.Size(117, 23);
             buttonSelectColor.TabIndex = 46;
             buttonSelectColor.Text = "Select Color";
             buttonSelectColor.UseVisualStyleBackColor = true;
@@ -86,7 +86,7 @@
             checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
             checkBoxDrawFullHatch.Ripple = true;
-            checkBoxDrawFullHatch.Size = new System.Drawing.Size(133, 30);
+            checkBoxDrawFullHatch.Size = new System.Drawing.Size(135, 30);
             checkBoxDrawFullHatch.TabIndex = 45;
             checkBoxDrawFullHatch.Text = "Draw full hatch";
             checkBoxDrawFullHatch.UseVisualStyleBackColor = true;
@@ -170,7 +170,7 @@
             buttonSelectFont.Name = "buttonSelectFont";
             buttonSelectFont.Radius = 8;
             buttonSelectFont.ShadowDepth = 0F;
-            buttonSelectFont.Size = new System.Drawing.Size(111, 36);
+            buttonSelectFont.Size = new System.Drawing.Size(111, 23);
             buttonSelectFont.TabIndex = 47;
             buttonSelectFont.Text = "Select Font";
             buttonSelectFont.UseVisualStyleBackColor = true;
@@ -206,7 +206,7 @@
             buttonBorderColor.Name = "buttonBorderColor";
             buttonBorderColor.Radius = 6;
             buttonBorderColor.ShadowDepth = 4F;
-            buttonBorderColor.Size = new System.Drawing.Size(173, 36);
+            buttonBorderColor.Size = new System.Drawing.Size(173, 23);
             buttonBorderColor.TabIndex = 49;
             buttonBorderColor.Text = "Select Border Color";
             buttonBorderColor.UseVisualStyleBackColor = true;
@@ -222,7 +222,7 @@
             checkBoxTitleBorder.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxTitleBorder.Name = "checkBoxTitleBorder";
             checkBoxTitleBorder.Ripple = true;
-            checkBoxTitleBorder.Size = new System.Drawing.Size(149, 30);
+            checkBoxTitleBorder.Size = new System.Drawing.Size(152, 30);
             checkBoxTitleBorder.TabIndex = 45;
             checkBoxTitleBorder.Text = "Draw Title Border";
             checkBoxTitleBorder.UseVisualStyleBackColor = true;
@@ -238,7 +238,7 @@
             checkBoxToggleTitle.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxToggleTitle.Name = "checkBoxToggleTitle";
             checkBoxToggleTitle.Ripple = true;
-            checkBoxToggleTitle.Size = new System.Drawing.Size(111, 30);
+            checkBoxToggleTitle.Size = new System.Drawing.Size(114, 30);
             checkBoxToggleTitle.TabIndex = 45;
             checkBoxToggleTitle.Text = "Toggle Title";
             checkBoxToggleTitle.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -247,7 +247,7 @@
             // 
             // ConfigPage
             // 
-            BackColor = System.Drawing.Color.Transparent;
+            BackColor = System.Drawing.SystemColors.Control;
             Controls.Add(buttonBorderColor);
             Controls.Add(label1);
             Controls.Add(buttonSelectFont);

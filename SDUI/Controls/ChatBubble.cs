@@ -151,8 +151,9 @@ public class ChatBubble : Control
                 e.Graphics.DrawImageUnscaled(bitmap, 0, 0);
             }
 
-            var textRectangle = new Rectangle(15, 4, Width - 17, Height - 5);
-            TextRenderer.DrawText(e.Graphics, Text, Font, textRectangle, ForeColor, TextFormatFlags.Left | TextFormatFlags.WordBreak);
+            var textRect = new Rectangle(15, 4, Width - 17, Height - 5);
+
+            this.DrawString(e.Graphics, ContentAlignment.TopLeft, ForeColor, textRect);
         }
     }
 }

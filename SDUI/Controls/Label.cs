@@ -55,40 +55,20 @@ public class Label : System.Windows.Forms.Label
     }
     protected override void OnPaint(PaintEventArgs e)
     {
+        if (GradientAnimation)
+            Angle = Angle % 360 + 1;
+
+        e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+
         if (ApplyGradient)
         {
-            if (GradientAnimation)
-                Angle = Angle % 360 + 1;
-
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             using var brush = new LinearGradientBrush(ClientRectangle, _gradient[0], _gradient[1], Angle/*LinearGradientMode.Horizontal */);
 
             using var format = this.CreateStringFormat(TextAlign, AutoEllipsis, UseMnemonic);
             e.Graphics.DrawString(Text, Font, brush, ClientRectangle, format);
-
-            /*
-            using var p = new Pen(brush, 8);
-            p.LineJoin = LineJoin.Round;
-            p.DashCap = DashCap.Triangle;
-            p.DashStyle = DashStyle.Solid;
-
-            using var gp = new GraphicsPath();
-
-            gp.AddString(Text, Font.FontFamily, (int)Font.Style, Font.Size, ClientRectangle, format);
-
-            e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-            e.Graphics.DrawPath(p, gp);
-            e.Graphics.FillPath(brush, gp);
-            */
-            return;
         }
-
-
-        if (ForeColor != ColorScheme.ForeColor)
-            ForeColor = ColorScheme.ForeColor;
-
-        base.OnPaint(e);
+        else
+            this.DrawString(e.Graphics, TextAlign, ColorScheme.ForeColor, AutoEllipsis, UseMnemonic);
     }
 }

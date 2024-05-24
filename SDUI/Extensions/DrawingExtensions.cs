@@ -228,12 +228,12 @@ public static class DrawingExtensions
         return result;
     }
 
-    internal static StringFormat StringFormatForAlignment(System.Drawing.ContentAlignment align)
+    internal static StringFormat StringFormatForAlignment(ContentAlignment align)
     {
         return new StringFormat { Alignment = TranslateAlignment(align), LineAlignment = TranslateLineAlignment(align) };
     }
 
-    internal static StringFormat CreateStringFormat(this Control ctl, System.Drawing.ContentAlignment textAlign, bool showEllipsis, bool useMnemonic)
+    internal static StringFormat CreateStringFormat(this Control ctl, ContentAlignment textAlign, bool showEllipsis, bool useMnemonic)
     {
         StringFormat format = StringFormatForAlignment(textAlign);
         if (ctl.RightToLeft == RightToLeft.Yes)
@@ -262,5 +262,42 @@ public static class DrawingExtensions
             format.FormatFlags |= StringFormatFlags.MeasureTrailingSpaces;
         }
         return format;
+    }
+
+    internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
+    {
+        using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
+        using var textBrush = new SolidBrush(control.ForeColor);
+
+        graphics.DrawString(control.Text, control.Font, textBrush, control.ClientRectangle, textFormat);
+    }
+
+    internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, bool showEllipsis = false, bool useMnemonic = false)
+    {
+        using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
+        using var textBrush = new SolidBrush(color);
+
+        graphics.DrawString(control.Text, control.Font, textBrush, control.ClientRectangle, textFormat);
+    }
+
+    internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, RectangleF rectangle, bool showEllipsis = false, bool useMnemonic = false)
+    {
+        using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
+        using var textBrush = new SolidBrush(color);
+
+        graphics.DrawString(control.Text, control.Font, textBrush, rectangle, textFormat);
+    }
+
+    internal static void DrawString(this Control control, Graphics graphics, Color color, RectangleF rectangle)
+    {
+        using var textBrush = new SolidBrush(color);
+        using var textFormat = new StringFormat()
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center,
+            Trimming = StringTrimming.EllipsisCharacter
+        };
+
+        graphics.DrawString(control.Text, control.Font, textBrush, rectangle, textFormat);
     }
 }

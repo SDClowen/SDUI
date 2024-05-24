@@ -102,10 +102,6 @@ namespace SDUI.Test
             {
                 ColorScheme.BackColor = Color.FromArgb(r, g, b);
                 parent.BackColor = ColorScheme.BackColor;
-                if (ColorScheme.BackColor.IsDark())
-                    (parent as UIWindow).DwmMargin = -1;
-                else
-                    (parent as UIWindow).DwmMargin = 1;
             }
         }
 
@@ -118,10 +114,6 @@ namespace SDUI.Test
             var parent = form as UIWindow;
             ColorScheme.BackColor = Color.Black;
             parent.BackColor = ColorScheme.BackColor;
-            if (ColorScheme.BackColor.IsDark())
-                (parent as UIWindow).DwmMargin = -1;
-            else
-                (parent as UIWindow).DwmMargin = 1;
         }
 
         private void buttonLight_Click(object sender, EventArgs e)
@@ -133,10 +125,6 @@ namespace SDUI.Test
             var parent = form as UIWindow;
             ColorScheme.BackColor = Color.White;
             parent.BackColor = ColorScheme.BackColor;
-            if (ColorScheme.BackColor.IsDark())
-                (parent as UIWindow).DwmMargin = -1;
-            else
-                (parent as UIWindow).DwmMargin = 1;
         }
     }
 }

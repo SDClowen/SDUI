@@ -434,7 +434,7 @@ public class NativeMethods
 
         var accentPolicy = new AccentPolicy
         {
-            AccentState = ACCENT.ENABLE_ACRYLICBLURBEHIND,
+            AccentState = ACCENT.ENABLE_GRADIENT,
             GradientColor = blurColor.ToAbgr()
         };
 

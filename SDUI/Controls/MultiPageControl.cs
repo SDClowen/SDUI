@@ -299,7 +299,7 @@ public class MultiPageControl : UserControl
                 graphics.DrawIcon(SystemIcons.Hand, control.RectangleIcon);
 
             i++;
-            TextRenderer.DrawText(graphics, control.Text, Font, rectangle, ColorScheme.ForeColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter | TextFormatFlags.EndEllipsis);
+            control.DrawString(graphics, ColorScheme.ForeColor, rectangle);
         }
 
         // new tab button

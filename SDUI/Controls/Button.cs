@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace SDUI.Controls;
 
@@ -60,8 +61,8 @@ public class Button : System.Windows.Forms.Button
         }
     }
 
-    private readonly AnimationManager animationManager;
-    private readonly AnimationManager hoverAnimationManager;
+    private readonly Animation.AnimationEngine animationManager;
+    private readonly Animation.AnimationEngine hoverAnimationManager;
 
     public Button()
     {
@@ -69,13 +70,13 @@ public class Button : System.Windows.Forms.Button
         SetStyle(ControlStyles.AllPaintingInWmPaint, true);
         SetStyle(ControlStyles.DoubleBuffer, true);
 
-        animationManager = new AnimationManager(false)
+        animationManager = new Animation.AnimationEngine(false)
         {
             Increment = 0.03,
             AnimationType = AnimationType.EaseOut
         };
 
-        hoverAnimationManager = new AnimationManager
+        hoverAnimationManager = new Animation.AnimationEngine
         {
             Increment = 0.07,
             AnimationType = AnimationType.Linear,
@@ -219,7 +220,7 @@ public class Button : System.Windows.Forms.Button
             textRect.X += 8 + 24 + 4;
         }
 
-        TextRenderer.DrawText(graphics, Text, Font, textRect, foreColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+        this.DrawString(graphics, TextAlign, foreColor, textRect, AutoEllipsis, UseMnemonic);
     }
 
     private Size GetPreferredSize()

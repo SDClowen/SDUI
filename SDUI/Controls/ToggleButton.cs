@@ -8,7 +8,7 @@ namespace SDUI.Controls;
 
 public class ToggleButton : System.Windows.Forms.CheckBox
 {
-    private readonly AnimationManager animationManager;
+    private readonly Animation.AnimationEngine animationManager;
 
     [Browsable(true)]
     public override string Text
@@ -22,7 +22,7 @@ public class ToggleButton : System.Windows.Forms.CheckBox
         this.DoubleBuffered = true;
         this.MinimumSize = new Size(46, 22);
 
-        animationManager = new AnimationManager()
+        animationManager = new Animation.AnimationEngine()
         {
             AnimationType = AnimationType.EaseInOut,
             Increment = 0.10,

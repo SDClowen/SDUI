@@ -21,9 +21,9 @@ public class Radio : RadioButton
     private const int RADIOBUTTON_SIZE_HALF = RADIOBUTTON_SIZE / 2;
 
     // animation managers
-    private readonly AnimationManager animationManager;
+    private readonly Animation.AnimationEngine animationManager;
 
-    private readonly AnimationManager rippleAnimationManager;
+    private readonly Animation.AnimationEngine rippleAnimationManager;
 
     private int boxOffset;
     private int _mouseState;
@@ -58,12 +58,12 @@ public class Radio : RadioButton
     {
         SetStyle(ControlStyles.DoubleBuffer | ControlStyles.OptimizedDoubleBuffer, true);
 
-        animationManager = new AnimationManager
+        animationManager = new Animation.AnimationEngine
         {
             AnimationType = AnimationType.EaseInOut,
             Increment = 0.06
         };
-        rippleAnimationManager = new AnimationManager(false)
+        rippleAnimationManager = new Animation.AnimationEngine(false)
         {
             AnimationType = AnimationType.Linear,
             Increment = 0.10,
@@ -208,7 +208,7 @@ public class Radio : RadioButton
 
         var textColor = Enabled ? ColorScheme.ForeColor : Color.Gray;
 
-        TextRenderer.DrawText(graphics, Text, Font, new Point(boxOffset + Width + RADIOBUTTON_SIZE, Height / 2 ) ,textColor, TextFormatFlags.VerticalCenter | TextFormatFlags.HorizontalCenter);
+        this.DrawString(graphics, TextAlign, textColor, new RectangleF(new Point(boxOffset + RADIOBUTTON_SIZE, 0), ClientRectangle.Size));
     }
 
     private bool IsMouseInCheckArea()

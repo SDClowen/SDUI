@@ -70,6 +70,14 @@ namespace SDUI.AnimationEngine
         public virtual T TargetValue { get; set; }
 
         /// <summary>
+        /// Gets or sets the target value.
+        /// </summary>
+        /// <value>
+        /// The target value.
+        /// </value>
+        public bool Completed => CurrentProgress >= 1; 
+
+        /// <summary>
         /// Gets or sets the start time.
         /// </summary>
         /// <value>
@@ -118,6 +126,10 @@ namespace SDUI.AnimationEngine
             }
         }
 
+        public delegate void AnimationProgress(object sender);
+
+        public event AnimationProgress OnAnimationProgress;
+
         /// <summary>
         /// Starts a transition from the current value to the specified target value.
         /// </summary>
@@ -126,6 +138,17 @@ namespace SDUI.AnimationEngine
         public virtual void StartTransition(T targetValue, TimeSpan duration)
         {
             this.StartTransition(this.CurrentValue, targetValue, duration);
+        }
+
+        /// <summary>
+        /// Starts a transition from the current value to the specified target value.
+        /// </summary>
+        /// <param name="targetValue">The target value.</param>
+        /// <param name="duration">The duration.</param>
+        public virtual void StartTransition(EasingMethod easingMethod)
+        {
+            EasingMethod = easingMethod;
+            this.StartTransition(this.CurrentValue, TargetValue, Duration);
         }
 
         /// <summary>

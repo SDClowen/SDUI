@@ -15,7 +15,6 @@ public partial class MainWindow : UIWindow
         base.OnBackColorChanged(e);
         if (Controls.Count == 0)
             return;
-
     }
 
     private void MainWindow_Load(object sender, EventArgs e)

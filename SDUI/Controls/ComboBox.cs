@@ -78,8 +78,6 @@ public class ComboBox : System.Windows.Forms.ComboBox
 
         using var textBrush = new SolidBrush(foreColor);
         e.Graphics.DrawString(Items[index].ToString(), e.Font, textBrush, e.Bounds, stringFormat);
-        //TextRenderer.DrawText(e.Graphics, Items[index].ToString(), e.Font, e.Bounds, foreColor, TextFormatFlags.SingleLine);
-
     }
 
     protected override void OnParentBackColorChanged(EventArgs e)

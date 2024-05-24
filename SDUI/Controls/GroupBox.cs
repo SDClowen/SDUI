@@ -98,11 +98,10 @@ public class GroupBox : System.Windows.Forms.GroupBox
         e.Graphics.DrawLine(ColorScheme.BorderPen, 0, rect.Height - 1, rect.Width, rect.Height - 1);
         e.Graphics.FillPath(backColorBrush, path);
 
-        TextRenderer.DrawText(e.Graphics, Text, Font, rect.ToRectangle(), ColorScheme.ForeColor);
+        this.DrawString(graphics, ColorScheme.ForeColor, rect);
+
         e.Graphics.SetClip(clip);
-
         e.Graphics.DrawShadow(shadowRect, _shadowDepth, _radius);
-
         e.Graphics.DrawPath(ColorScheme.BorderPen, path);
     }
 
