@@ -266,6 +266,8 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
     {
+        graphics.SmoothingMode = SmoothingMode.Default;
+        graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(control.ForeColor);
 
@@ -274,6 +276,8 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, bool showEllipsis = false, bool useMnemonic = false)
     {
+        graphics.SmoothingMode = SmoothingMode.Default;
+        graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(color);
 
@@ -282,6 +286,8 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, RectangleF rectangle, bool showEllipsis = false, bool useMnemonic = false)
     {
+        graphics.SmoothingMode = SmoothingMode.Default;
+        graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(color);
 
@@ -290,6 +296,8 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, Color color, RectangleF rectangle)
     {
+        graphics.SmoothingMode = SmoothingMode.Default;
+        graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
         using var textBrush = new SolidBrush(color);
         using var textFormat = new StringFormat()
         {

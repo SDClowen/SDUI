@@ -10,7 +10,7 @@ namespace SDUI.Helpers
     public class FontManager
     {
         private static readonly PrivateFontCollection privateFontCollection = new();
-        public static Font Inter = GetFont(Resources.InterFont, 13.3333f, FontStyle.Regular);
+        public static Font Inter = GetFont(Resources.InterFont, 16f, FontStyle.Regular);
 
         private static Font GetFont(byte[] fontResource, float size, FontStyle style)
         {

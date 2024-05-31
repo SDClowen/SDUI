@@ -99,7 +99,8 @@ public class ShapeProgressBar : Control
     {
         Size = new Size(100, 100);
         Font = new Font("Segoe UI", 15);
-        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        SetStyle(ControlStyles.UserPaint |
+            ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
     }
 

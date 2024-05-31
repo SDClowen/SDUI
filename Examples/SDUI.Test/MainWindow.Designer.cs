@@ -668,9 +668,9 @@ public partial class MainWindow
         // 
         // MainWindow
         // 
-        AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
-        AutoScaleMode = AutoScaleMode.Dpi;
-        BackColor = System.Drawing.SystemColors.Control;
+        AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
+        AutoScaleMode = AutoScaleMode.Font;
+        BackColor = System.Drawing.Color.Transparent;
         ClientSize = new System.Drawing.Size(1241, 768);
         ContextMenuStrip = contextMenuStrip1;
         Controls.Add(windowPageControl);

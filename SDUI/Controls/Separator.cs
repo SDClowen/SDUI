@@ -7,7 +7,7 @@ public class Separator : UserControl
 {
     public Separator()
     {
-        SetStyle(ControlStyles.UserPaint, true);
+        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
 
         UpdateStyles();
 
@@ -27,8 +27,6 @@ public class Separator : UserControl
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        //GroupBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
-
         using (var pen = new Pen(ColorScheme.BorderColor))
         {
             if (_isVertical)

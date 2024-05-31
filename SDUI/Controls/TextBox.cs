@@ -6,7 +6,16 @@ namespace SDUI.Controls;
 
 public class TextBox : Control
 {
-    private int _radius = 2;
+    public class InternalTextBox : System.Windows.Forms.TextBox
+    {
+        public InternalTextBox()
+        {
+            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
+            BackColor = Color.Transparent;
+        }
+    }
+
+        private int _radius = 2;
     public int Radius
     {
         get => _radius;
@@ -17,7 +26,7 @@ public class TextBox : Control
             Invalidate();
         }
     }
-    private System.Windows.Forms.TextBox _textBox;
+    private InternalTextBox _textBox;
 
     private bool _passmask = false;
     public bool UseSystemPasswordChar
@@ -118,11 +127,12 @@ public class TextBox : Control
 
     public TextBox()
     {
-        _textBox = new System.Windows.Forms.TextBox();
+        _textBox = new InternalTextBox();
         _textBox.Multiline = false;
         _textBox.Text = string.Empty;
         _textBox.TextAlign = HorizontalAlignment.Center;
         _textBox.BorderStyle = BorderStyle.None;
+        _textBox.BackColor = Color.Transparent;
         _textBox.Location = new Point(3, 2);
         _textBox.Font = Font;
         _textBox.Size = new Size(Width - 10, Height - 11);

@@ -1,4 +1,5 @@
 ﻿using SDUI.Animation;
+using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -9,6 +10,8 @@ namespace SDUI.Controls;
 public class ToggleButton : System.Windows.Forms.CheckBox
 {
     private readonly Animation.AnimationEngine animationManager;
+    private Point _mouseLocation;
+    private int _mouseState;
 
     [Browsable(true)]
     public override string Text
@@ -19,6 +22,12 @@ public class ToggleButton : System.Windows.Forms.CheckBox
 
     public ToggleButton()
     {
+        SetStyle(ControlStyles.SupportsTransparentBackColor |
+                 ControlStyles.OptimizedDoubleBuffer |
+                 ControlStyles.ResizeRedraw |
+                 ControlStyles.AllPaintingInWmPaint |
+                 ControlStyles.UserPaint, true);
+
         this.DoubleBuffered = true;
         this.MinimumSize = new Size(46, 22);
 
@@ -27,6 +36,44 @@ public class ToggleButton : System.Windows.Forms.CheckBox
             AnimationType = AnimationType.EaseInOut,
             Increment = 0.10,
             SecondaryIncrement = 0.07
+        };
+    }
+
+
+    protected override void OnCreateControl()
+    {
+        base.OnCreateControl();
+        if (DesignMode) return;
+
+        _mouseState = 0;
+        MouseEnter += (sender, args) =>
+        {
+            _mouseState = 1;
+        };
+        MouseLeave += (sender, args) =>
+        {
+            _mouseLocation = new Point(-1, -1);
+            _mouseState = 0;
+        };
+        MouseDown += (sender, args) =>
+        {
+            _mouseState = 2;
+
+            if (args.Button == MouseButtons.Left && ClientRectangle.Contains(_mouseLocation))
+            {
+                animationManager.SecondaryIncrement = 0;
+                animationManager.StartNewAnimation(AnimationDirection.InOutIn, new object[] { Checked });
+            }
+        };
+        MouseUp += (sender, args) =>
+        {
+            _mouseState = 1;
+            animationManager.SecondaryIncrement = 0.08;
+        };
+        MouseMove += (sender, args) =>
+        {
+            _mouseLocation = args.Location;
+            Cursor = ClientRectangle.Contains(_mouseLocation) ? Cursors.Hand : Cursors.Default;
         };
     }
 
@@ -60,7 +107,7 @@ public class ToggleButton : System.Windows.Forms.CheckBox
         using var solidBrush = new SolidBrush(ColorScheme.BorderColor.Alpha(50));
         var progress = (float)animationManager.GetProgress();
 
-        if (this.Checked)
+          if (this.Checked)
             e.Graphics.FillEllipse(solidBrush, new RectangleF(this.Width - this.Height + 1 * progress, 2, toggleSize, toggleSize));
         else
             e.Graphics.FillEllipse(solidBrush, new Rectangle(2, 2, toggleSize, toggleSize));

@@ -272,6 +272,7 @@ public class UIWindowBase : Form
 
         base.WndProc(ref m);
     }
+
     public void ChangeControlsTheme(Control control)
     {
         control.Enabled = false;
@@ -301,6 +302,7 @@ public class UIWindowBase : Form
         }
         control.Enabled = true;
     }
+
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
@@ -308,18 +310,8 @@ public class UIWindowBase : Form
         if (DesignMode)
             return;
 
-        WindowsHelper.ApplyRoundCorner(this.Handle);
-    }
-
-    protected override void OnBackColorChanged(EventArgs e)
-    {
-        base.OnBackColorChanged(e);
-        if (DesignMode)
-            return;
-
-        ChangeControlsTheme(this);
-        ForeColor = ColorScheme.ForeColor;
-
+        WindowsHelper.ApplyRoundCorner(this.Handle); 
+        
         if (_aeroEnabled)
         {
             var v = 2;
@@ -334,14 +326,24 @@ public class UIWindowBase : Form
             };
 
             DwmExtendFrameIntoClientArea(this.Handle, ref margins);
-
         }
+    }
+
+    protected override void OnBackColorChanged(EventArgs e)
+    {
+        base.OnBackColorChanged(e);
+        if (DesignMode)
+            return;
+
+        ChangeControlsTheme(this);
+        ForeColor = ColorScheme.ForeColor;
 
         WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+
         if (!WindowsHelper.IsModern)
             return;
 
-        //EnableAcrylic(this, Color.Transparent);
+        EnableAcrylic(this, Color.Transparent);
 
         var flag = DWMSBT_TABBEDWINDOW;
         DwmSetWindowAttribute(

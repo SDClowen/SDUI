@@ -65,6 +65,7 @@ public class Panel : DoubleBufferedControl
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
                   ControlStyles.OptimizedDoubleBuffer |
+                    ControlStyles.AllPaintingInWmPaint |
                   ControlStyles.UserPaint, true);
 
         BackColor = Color.Transparent;

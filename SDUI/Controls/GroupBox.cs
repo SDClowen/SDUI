@@ -38,9 +38,8 @@ public class GroupBox : System.Windows.Forms.GroupBox
     public GroupBox()
     {
         SetStyle(ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.AllPaintingInWmPaint |
+                  ControlStyles.AllPaintingInWmPaint |
                   ControlStyles.OptimizedDoubleBuffer |
-                  ControlStyles.DoubleBuffer |
                   ControlStyles.ResizeRedraw |
                   ControlStyles.Opaque |
                   ControlStyles.UserPaint, true);

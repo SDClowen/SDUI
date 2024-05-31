@@ -39,11 +39,10 @@ public class ComboBox : System.Windows.Forms.ComboBox
             ControlStyles.UserPaint |
             ControlStyles.ResizeRedraw |
             ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.AllPaintingInWmPaint |
             ControlStyles.Selectable |
             ControlStyles.SupportsTransparentBackColor, true
         );
-        SetStyle(ControlStyles.AllPaintingInWmPaint, true);
-        SetStyle(ControlStyles.DoubleBuffer, true);
 
         DrawMode = DrawMode.OwnerDrawVariable;
         DropDownStyle = ComboBoxStyle.DropDownList;

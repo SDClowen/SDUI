@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using System.Windows.Forms.VisualStyles;
 
 namespace SDUI.Controls;
 
@@ -785,8 +784,8 @@ public class UIWindow : UIWindowBase
         //base.OnPaint(e);
 
         var graphics = e.Graphics;
-
-        graphics.SetHighQuality();
+        graphics.Clear(BackColor);
+        
         NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
 
         var foreColor = ColorScheme.ForeColor;
@@ -803,7 +802,7 @@ public class UIWindow : UIWindowBase
             graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
         }
         else
-            graphics.FillRectangle(ColorScheme.BackColor.Alpha(200), ClientRectangle);
+            graphics.FillRectangle(ColorScheme.BackColor.Alpha(100), ClientRectangle);
 
         if (Width <= 0 || Height <= 0)
             return;
@@ -812,6 +811,8 @@ public class UIWindow : UIWindowBase
             return;
 
 
+
+        //graphics.SetHighQuality();
         if (titleColor != Color.Empty)
             graphics.FillRectangle(titleColor, 0, 0, Width, _titleHeightDPI);
 

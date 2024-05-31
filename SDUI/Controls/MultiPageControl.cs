@@ -7,11 +7,9 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Design;
 using System.Drawing.Drawing2D;
-using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 
 namespace SDUI.Controls;
 

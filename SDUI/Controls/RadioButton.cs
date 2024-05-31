@@ -56,7 +56,7 @@ public class Radio : RadioButton
 
     public Radio()
     {
-        SetStyle(ControlStyles.DoubleBuffer | ControlStyles.OptimizedDoubleBuffer, true);
+        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
 
         animationManager = new Animation.AnimationEngine
         {

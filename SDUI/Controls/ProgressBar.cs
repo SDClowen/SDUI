@@ -133,6 +133,7 @@ public class ProgressBar : Control
                   ControlStyles.OptimizedDoubleBuffer |
                   ControlStyles.ResizeRedraw |
                   ControlStyles.Opaque |
+            ControlStyles.AllPaintingInWmPaint |
                   ControlStyles.UserPaint, true);
 
         UpdateStyles();
