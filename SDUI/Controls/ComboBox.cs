@@ -65,7 +65,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
             e.Graphics.FillRectangle(brush, e.Bounds);
         }
         else
-            e.Graphics.FillRectangle(ColorScheme.BackColorBrush, e.Bounds);
+            e.Graphics.FillRectangle(ColorScheme.BackColor, e.Bounds);
 
         var stringFormat = new StringFormat
         {
@@ -114,7 +114,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
 
         var textRectangle = new Rectangle(3 * (DeviceDpi / 96), 0, Width - (18 * (DeviceDpi / 96)), Height);
 
-        var backColor = ColorScheme.BackColor.Alpha(80);
+        var backColor = ColorScheme.BackColor.Alpha(100);
         var borderColor = ColorScheme.BorderColor;
 
         using var path = rectf.Radius(_radius);
@@ -139,7 +139,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
             _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96)));
 
         graphics.DrawShadow(rectf, _shadowDepth, _radius);
-        e.Graphics.DrawPath(ColorScheme.BorderPen, path);
+        e.Graphics.DrawPath(ColorScheme.BorderColor, path);
 
         var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
         TextRenderer.DrawText(graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);

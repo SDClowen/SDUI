@@ -268,10 +268,16 @@ public class ListView : System.Windows.Forms.ListView
         }
         else if (m.Msg == WM_THEMECHANGED)
         {
-           //AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
+            //AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
+            try
+            {
 
-            BackColor = ColorScheme.BackColor;
-            ForeColor = ColorScheme.ForeColor;
+                BackColor = ColorScheme.BackColor;
+                ForeColor = ColorScheme.ForeColor;
+            }
+            catch (Exception)
+            {
+            }
         }
         else if (m.Msg != WM_KILLFOCUS &&
             (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))

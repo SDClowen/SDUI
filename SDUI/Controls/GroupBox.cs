@@ -94,14 +94,14 @@ public class GroupBox : System.Windows.Forms.GroupBox
 
         var clip = e.Graphics.ClipBounds;
         e.Graphics.SetClip(rect);
-        e.Graphics.DrawLine(ColorScheme.BorderPen, 0, rect.Height - 1, rect.Width, rect.Height - 1);
+        e.Graphics.DrawLine(ColorScheme.BorderColor, 0, rect.Height - 1, rect.Width, rect.Height - 1);
         e.Graphics.FillPath(backColorBrush, path);
 
         this.DrawString(graphics, ColorScheme.ForeColor, rect);
 
         e.Graphics.SetClip(clip);
         e.Graphics.DrawShadow(shadowRect, _shadowDepth, _radius);
-        e.Graphics.DrawPath(ColorScheme.BorderPen, path);
+        e.Graphics.DrawPath(ColorScheme.BorderColor, path);
     }
 
     public override Size GetPreferredSize(Size proposedSize)

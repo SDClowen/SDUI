@@ -290,8 +290,14 @@ public class UIWindowBase : Form
 
         if (control is RichTextBox || control is ListBox)
         {
-            control.BackColor = ColorScheme.BackColor;
-            control.ForeColor = ColorScheme.ForeColor;
+            try
+            {
+                control.BackColor = ColorScheme.BackColor;
+                control.ForeColor = ColorScheme.ForeColor;
+            }
+            catch (Exception)
+            {
+            }
         }
 
         WindowsHelper.UseImmersiveDarkMode(control.Handle, isDark);
@@ -309,24 +315,22 @@ public class UIWindowBase : Form
 
         if (DesignMode)
             return;
-
-        WindowsHelper.ApplyRoundCorner(this.Handle); 
         
-        if (_aeroEnabled)
+        /*if (_aeroEnabled)
         {
             var v = 2;
 
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
             var margins = new MARGINS()
             {
-                Bottom = dwmMargin,
-                Left = dwmMargin,
-                Right = dwmMargin,
-                Top = dwmMargin
+                Bottom = 0,
+                Left = 0,
+                Right = 0,
+                Top = Height + 10000000
             };
 
             DwmExtendFrameIntoClientArea(this.Handle, ref margins);
-        }
+        }*/
     }
 
     protected override void OnBackColorChanged(EventArgs e)
@@ -336,20 +340,18 @@ public class UIWindowBase : Form
             return;
 
         ChangeControlsTheme(this);
-        ForeColor = ColorScheme.ForeColor;
-
-        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
 
         if (!WindowsHelper.IsModern)
             return;
-
-        EnableAcrylic(this, Color.Transparent);
-
-        var flag = DWMSBT_TABBEDWINDOW;
-        DwmSetWindowAttribute(
-            Handle,
-            DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
-            ref flag,
-            sizeof(int));
+        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        /*
+        
+                var flag = DWMSBT_TRANSIENTWINDOW;
+                DwmSetWindowAttribute(
+                    Handle,
+                    DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
+                    ref flag,
+                     Marshal.SizeOf<int>());
+        */
     }
 }

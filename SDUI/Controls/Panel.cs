@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SDUI.Helpers;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -96,7 +97,7 @@ public class Panel : DoubleBufferedControl
         var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
 
         var inflate = _shadowDepth / 4f;
-        rect.Inflate(-inflate, -inflate);
+        //rect.Inflate(-inflate, -inflate);
 
         if (_radius > 0)
         {
@@ -113,8 +114,8 @@ public class Panel : DoubleBufferedControl
             using (var brush = new SolidBrush(color))
                 e.Graphics.FillPath(brush, path);
 
-            e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
-
+            //e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
+            ShadowUtils.DrawShadow(graphics, ColorScheme.ShadowColor, rect.ToRectangle(), (int)(_shadowDepth + 1) + 40, DockStyle.Right);
             using var pen = new Pen(borderColor, 1);
             e.Graphics.DrawPath(pen, path);
 

@@ -15,7 +15,7 @@ public class TextBox : Control
         }
     }
 
-        private int _radius = 2;
+    private int _radius = 2;
     public int Radius
     {
         get => _radius;
@@ -189,6 +189,6 @@ public class TextBox : Control
         using var innerBorderPen = new Pen(innerBorderBrush);
 
         graphics.DrawPath(innerBorderPen, new Rectangle(1, 1, Width - _radius, Height - _radius).Radius(_radius));
-        graphics.DrawLine(ColorScheme.BorderPen, new Point(1, 1), new Point(Width - 3, 1));
+        graphics.DrawLine(ColorScheme.BorderColor, new Point(1, 1), new Point(Width - 3, 1));
     }
 }

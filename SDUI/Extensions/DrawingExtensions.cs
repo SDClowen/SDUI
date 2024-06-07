@@ -117,6 +117,12 @@ public static class DrawingExtensions
         gfx.FillRectangle(brush, rect);
     }
 
+    public static void DrawPath(this Graphics gfx, Color color, GraphicsPath path)
+    {
+        using var pen = color.Pen();
+        gfx.DrawPath(pen, path);
+    }
+
     public static void FillRectangle(this Graphics gfx, Color color, int x, int y, int width, int height)
     {
         using var brush = color.Brush();
@@ -277,7 +283,7 @@ public static class DrawingExtensions
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, bool showEllipsis = false, bool useMnemonic = false)
     {
         graphics.SmoothingMode = SmoothingMode.Default;
-        graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
+        graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(color);
 
@@ -287,7 +293,7 @@ public static class DrawingExtensions
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, RectangleF rectangle, bool showEllipsis = false, bool useMnemonic = false)
     {
         graphics.SmoothingMode = SmoothingMode.Default;
-        graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
+        graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(color);
 
@@ -297,7 +303,7 @@ public static class DrawingExtensions
     internal static void DrawString(this Control control, Graphics graphics, Color color, RectangleF rectangle)
     {
         graphics.SmoothingMode = SmoothingMode.Default;
-        graphics.TextRenderingHint = TextRenderingHint.AntiAlias;
+        graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textBrush = new SolidBrush(color);
         using var textFormat = new StringFormat()
         {

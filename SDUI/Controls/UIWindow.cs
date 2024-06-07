@@ -802,7 +802,7 @@ public class UIWindow : UIWindowBase
             graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
         }
         else
-            graphics.FillRectangle(ColorScheme.BackColor.Alpha(100), ClientRectangle);
+            graphics.FillRectangle(ColorScheme.BackColor, ClientRectangle);
 
         if (Width <= 0 || Height <= 0)
             return;
