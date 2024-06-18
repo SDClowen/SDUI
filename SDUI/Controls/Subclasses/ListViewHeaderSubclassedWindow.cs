@@ -124,9 +124,9 @@ namespace SDUI.Controls.Subclasses
                         break;
                     case WM_THEMECHANGED:
 
-                        IntPtr hHeader = SendMessage(m.HWnd, LVM_GETHEADER, 0, 0);
+                        IntPtr hHeader = SendMessage(Handle, LVM_GETHEADER, 0, 0);
 
-                        AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
+                        AllowDarkModeForWindow(Handle, ColorScheme.BackColor.IsDark());
                         AllowDarkModeForWindow(hHeader, ColorScheme.BackColor.IsDark());
 
                         var hTheme = OpenThemeData(IntPtr.Zero, "ItemsView");
@@ -140,12 +140,12 @@ namespace SDUI.Controls.Subclasses
                             COLORREF color;
                             if (GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, out color) > 0)
                             {
-                                SendMessage(m.HWnd, LVM_FIRST + 36, IntPtr.Zero, ref color);
+                                SendMessage(Handle, LVM_FIRST + 36, IntPtr.Zero, ref color);
                             }
                             if (GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, out color) > 0)
                             {
-                                SendMessage(m.HWnd, LVM_FIRST + 38, IntPtr.Zero, ref color);
-                                SendMessage(m.HWnd, LVM_FIRST + 1, IntPtr.Zero, ref color);
+                                SendMessage(Handle, LVM_FIRST + 38, IntPtr.Zero, ref color);
+                                SendMessage(Handle, LVM_FIRST + 1, IntPtr.Zero, ref color);
                             }
                             CloseThemeData(hTheme);
                         }
@@ -162,14 +162,14 @@ namespace SDUI.Controls.Subclasses
 
                         SendMessage(hHeader, WM_THEMECHANGED, m.WParam, m.LParam);
 
-                        RedrawWindow(m.HWnd, IntPtr.Zero, IntPtr.Zero, 0x0400 | 0x0001);
+                        RedrawWindow(Handle, IntPtr.Zero, IntPtr.Zero, 0x0400 | 0x0001);
 
                         break;
                     default:
                         break;
                 }
 
-                m.Result = DefSubclassProc(m.HWnd, m.Msg, m.WParam, m.LParam);
+                m.Result = DefSubclassProc(Handle, m.Msg, m.WParam, m.LParam);
                 return m.Result;
             }
             catch (Exception e)

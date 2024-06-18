@@ -149,13 +149,13 @@ public class NativeMethods
     [DllImport(gdi32)]
     public static extern IntPtr AddFontMemResourceEx(IntPtr pbFont, uint cbFont, IntPtr pvd, [In] ref uint pcFonts);
 
-    [DllImport(uxtheme, ExactSpelling = true, CharSet = CharSet.Unicode)]
-    public static extern IntPtr OpenThemeData(IntPtr hWnd, String classList);
+    [DllImport(uxtheme, CharSet = CharSet.Unicode, EntryPoint = "OpenThemeData")]
+    public static extern IntPtr OpenThemeData(IntPtr hWnd, string classList);
 
-    [DllImport(uxtheme, ExactSpelling = true)]
+    [DllImport(uxtheme, EntryPoint = "CloseThemeData")]
     public extern static Int32 CloseThemeData(IntPtr hTheme);
 
-    [DllImport(uxtheme, ExactSpelling = true)]
+    [DllImport(uxtheme, EntryPoint = "GetThemeColor")]
     public extern static Int32 GetThemeColor(IntPtr hTheme, int iPartId, int iStateId, int iPropId, out COLORREF pColor);
 
     [DllImport(gdi32)]

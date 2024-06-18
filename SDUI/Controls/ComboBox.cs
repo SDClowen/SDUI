@@ -144,4 +144,13 @@ public class ComboBox : System.Windows.Forms.ComboBox
         var flags = TextFormatFlags.EndEllipsis | TextFormatFlags.VerticalCenter | TextFormatFlags.TextBoxControl;
         TextRenderer.DrawText(graphics, Text, Font, textRectangle, ColorScheme.ForeColor, flags);
     }
+
+    public override Size GetPreferredSize(Size proposedSize)
+    {
+        var preferredSize = base.GetPreferredSize(proposedSize);
+        preferredSize.Width += (int)_shadowDepth;
+        preferredSize.Height += (int)_shadowDepth;
+
+        return preferredSize;
+    }
 }
