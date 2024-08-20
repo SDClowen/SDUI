@@ -1,4 +1,4 @@
-﻿namespace SDUI.Controls
+namespace SDUI.Controls
 {
     partial class InputDialog
     {
@@ -42,7 +42,7 @@
             // lblTitle
             // 
             lblTitle.ApplyGradient = false;
-            lblTitle.AutoSize = true;
+            lblTitle.Dock = System.Windows.Forms.DockStyle.Top;
             lblTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             lblTitle.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
             lblTitle.Gradient = new System.Drawing.Color[]
@@ -51,16 +51,16 @@
     System.Drawing.Color.Black
     };
             lblTitle.GradientAnimation = false;
-            lblTitle.Location = new System.Drawing.Point(7, 9);
+            lblTitle.Location = new System.Drawing.Point(0, 0);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new System.Drawing.Size(37, 15);
+            lblTitle.Size = new System.Drawing.Size(319, 20);
             lblTitle.TabIndex = 1;
             lblTitle.Text = "Input";
             // 
             // lblMessage
             // 
             lblMessage.ApplyGradient = false;
-            lblMessage.AutoSize = true;
+            lblMessage.Dock = System.Windows.Forms.DockStyle.Top;
             lblMessage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             lblMessage.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
             lblMessage.Gradient = new System.Drawing.Color[]
@@ -69,9 +69,9 @@
     System.Drawing.Color.Black
     };
             lblMessage.GradientAnimation = false;
-            lblMessage.Location = new System.Drawing.Point(7, 24);
+            lblMessage.Location = new System.Drawing.Point(0, 20);
             lblMessage.Name = "lblMessage";
-            lblMessage.Size = new System.Drawing.Size(110, 15);
+            lblMessage.Size = new System.Drawing.Size(319, 46);
             lblMessage.TabIndex = 2;
             lblMessage.Text = "Please enter a value";
             // 
@@ -83,7 +83,7 @@
             txtValue.Name = "txtValue";
             txtValue.PassFocusShow = false;
             txtValue.Radius = 2;
-            txtValue.Size = new System.Drawing.Size(299, 21);
+            txtValue.Size = new System.Drawing.Size(299, 25);
             txtValue.TabIndex = 0;
             txtValue.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             txtValue.UseSystemPasswordChar = false;
@@ -157,19 +157,19 @@
             panel1.Controls.Add(btnOK);
             panel1.Controls.Add(btnCancel);
             panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            panel1.Location = new System.Drawing.Point(0, 105);
+            panel1.Location = new System.Drawing.Point(0, 101);
             panel1.Name = "panel1";
             panel1.Radius = 0;
             panel1.ShadowDepth = 4F;
-            panel1.Size = new System.Drawing.Size(323, 39);
+            panel1.Size = new System.Drawing.Size(319, 39);
             panel1.TabIndex = 6;
             // 
             // InputDialog
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+            AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             BackColor = System.Drawing.Color.White;
-            ClientSize = new System.Drawing.Size(323, 144);
+            ClientSize = new System.Drawing.Size(319, 140);
             ControlBox = false;
             Controls.Add(panel1);
             Controls.Add(numValue);
@@ -180,7 +180,6 @@
             Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             ForeColor = System.Drawing.Color.Black;
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
-            Location = new System.Drawing.Point(0, 0);
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "InputDialog";
@@ -191,7 +190,6 @@
             FormClosing += InputDialog_FormClosing;
             panel1.ResumeLayout(false);
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
