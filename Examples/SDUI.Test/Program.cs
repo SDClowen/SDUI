@@ -15,7 +15,7 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitor | HighDpiMode.PerMonitorV2);
         Application.SetCompatibleTextRenderingDefault(false);
 
-        Application.SetDefaultFont(SDUI.Helpers.FontManager.Segoe);
+        //Application.SetDefaultFont(SDUI.Helpers.FontManager.Segoe);
         Application.Run(new MainWindow());
     }
 }

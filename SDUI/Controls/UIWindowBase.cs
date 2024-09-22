@@ -315,7 +315,9 @@ public class UIWindowBase : Form
 
         if (DesignMode)
             return;
-        
+
+        WindowsHelper.ApplyRoundCorner(this.Handle);
+
         /*if (_aeroEnabled)
         {
             var v = 2;
@@ -323,10 +325,10 @@ public class UIWindowBase : Form
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
             var margins = new MARGINS()
             {
-                Bottom = 0,
-                Left = 0,
-                Right = 0,
-                Top = Height + 10000000
+                Bottom = 1,
+                Left = 1,
+                Right = 1,
+                Top = 1
             };
 
             DwmExtendFrameIntoClientArea(this.Handle, ref margins);

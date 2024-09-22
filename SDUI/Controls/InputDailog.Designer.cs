@@ -53,7 +53,7 @@ namespace SDUI.Controls
             lblTitle.GradientAnimation = false;
             lblTitle.Location = new System.Drawing.Point(0, 0);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new System.Drawing.Size(319, 20);
+            lblTitle.Size = new System.Drawing.Size(324, 20);
             lblTitle.TabIndex = 1;
             lblTitle.Text = "Input";
             // 
@@ -71,13 +71,13 @@ namespace SDUI.Controls
             lblMessage.GradientAnimation = false;
             lblMessage.Location = new System.Drawing.Point(0, 20);
             lblMessage.Name = "lblMessage";
-            lblMessage.Size = new System.Drawing.Size(319, 46);
+            lblMessage.Size = new System.Drawing.Size(324, 46);
             lblMessage.TabIndex = 2;
             lblMessage.Text = "Please enter a value";
             // 
             // txtValue
             // 
-            txtValue.Location = new System.Drawing.Point(11, 69);
+            txtValue.Location = new System.Drawing.Point(11, 83);
             txtValue.MaxLength = 32767;
             txtValue.MultiLine = false;
             txtValue.Name = "txtValue";
@@ -94,11 +94,11 @@ namespace SDUI.Controls
             btnOK.Color = System.Drawing.Color.DodgerBlue;
             btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
             btnOK.ForeColor = System.Drawing.Color.White;
-            btnOK.Location = new System.Drawing.Point(11, 8);
+            btnOK.Location = new System.Drawing.Point(11, 6);
             btnOK.Name = "btnOK";
-            btnOK.Radius = 2;
+            btnOK.Radius = 6;
             btnOK.ShadowDepth = 4F;
-            btnOK.Size = new System.Drawing.Size(75, 23);
+            btnOK.Size = new System.Drawing.Size(106, 29);
             btnOK.TabIndex = 0;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = true;
@@ -109,11 +109,11 @@ namespace SDUI.Controls
             btnCancel.Color = System.Drawing.Color.Firebrick;
             btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             btnCancel.ForeColor = System.Drawing.Color.White;
-            btnCancel.Location = new System.Drawing.Point(239, 8);
+            btnCancel.Location = new System.Drawing.Point(223, 6);
             btnCancel.Name = "btnCancel";
-            btnCancel.Radius = 2;
+            btnCancel.Radius = 6;
             btnCancel.ShadowDepth = 4F;
-            btnCancel.Size = new System.Drawing.Size(75, 23);
+            btnCancel.Size = new System.Drawing.Size(91, 29);
             btnCancel.TabIndex = 1;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
@@ -125,12 +125,12 @@ namespace SDUI.Controls
             comboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             comboBox.FormattingEnabled = true;
             comboBox.IntegralHeight = false;
-            comboBox.ItemHeight = 17;
-            comboBox.Location = new System.Drawing.Point(12, 69);
+            comboBox.ItemHeight = 23;
+            comboBox.Location = new System.Drawing.Point(12, 80);
             comboBox.Name = "comboBox";
             comboBox.Radius = 5;
             comboBox.ShadowDepth = 4F;
-            comboBox.Size = new System.Drawing.Size(298, 23);
+            comboBox.Size = new System.Drawing.Size(277, 29);
             comboBox.TabIndex = 4;
             comboBox.Visible = false;
             // 
@@ -139,12 +139,12 @@ namespace SDUI.Controls
             numValue.BackColor = System.Drawing.Color.Transparent;
             numValue.Font = new System.Drawing.Font("Segoe UI", 9.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             numValue.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
-            numValue.Location = new System.Drawing.Point(12, 69);
+            numValue.Location = new System.Drawing.Point(12, 77);
             numValue.Maximum = new decimal(new int[] { 32765, 0, 0, 0 });
             numValue.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             numValue.MinimumSize = new System.Drawing.Size(80, 25);
             numValue.Name = "numValue";
-            numValue.Size = new System.Drawing.Size(156, 25);
+            numValue.Size = new System.Drawing.Size(156, 34);
             numValue.TabIndex = 5;
             numValue.Value = new decimal(new int[] { 1, 0, 0, 0 });
             numValue.KeyUp += numValue_KeyUp;
@@ -157,19 +157,18 @@ namespace SDUI.Controls
             panel1.Controls.Add(btnOK);
             panel1.Controls.Add(btnCancel);
             panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            panel1.Location = new System.Drawing.Point(0, 101);
+            panel1.Location = new System.Drawing.Point(0, 125);
             panel1.Name = "panel1";
             panel1.Radius = 0;
             panel1.ShadowDepth = 4F;
-            panel1.Size = new System.Drawing.Size(319, 39);
+            panel1.Size = new System.Drawing.Size(324, 39);
             panel1.TabIndex = 6;
             // 
             // InputDialog
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            BackColor = System.Drawing.Color.White;
-            ClientSize = new System.Drawing.Size(319, 140);
+            ClientSize = new System.Drawing.Size(324, 164);
             ControlBox = false;
             Controls.Add(panel1);
             Controls.Add(numValue);
@@ -177,7 +176,6 @@ namespace SDUI.Controls
             Controls.Add(txtValue);
             Controls.Add(lblMessage);
             Controls.Add(lblTitle);
-            Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             ForeColor = System.Drawing.Color.Black;
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             MaximizeBox = false;

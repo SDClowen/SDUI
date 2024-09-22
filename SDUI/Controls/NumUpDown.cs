@@ -219,24 +219,26 @@ namespace SDUI.Controls
 
         protected override void OnPaint(PaintEventArgs e)
         {
+            var dpi = DeviceDpi / 96f;
             //base.OnPaint(e);
             var graphics = e.Graphics;
             ButtonRenderer.DrawParentBackground(e.Graphics, Bounds, this);
 
             using var borderPen = new Pen(ColorScheme.BorderColor);
             using var backColorBrush = ColorScheme.BackColor.Alpha(90).Brush();
-            using var foreColorBrush = ColorScheme.ForeColor.Brush();
+            using var foreColorBrush = ColorScheme.ForeColor.Alpha(200).Brush();
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
             using var round = ClientRectangle.Radius(8);
             graphics.FillPath(backColorBrush, round);
             graphics.DrawPath(borderPen, round);
 
-            using var plusMinusFont = new Font("Tahoma", 12.75f, FontStyle.Bold);
-            graphics.DrawString("+", plusMinusFont, foreColorBrush, Width - (22 * (DeviceDpi / 96)), 1);
-            graphics.DrawLine(borderPen, Width - (25 * (DeviceDpi / 96)), 1, (Width - 25 * (DeviceDpi / 96)), Height - 2 * (DeviceDpi / 96));
-            graphics.DrawString("-", plusMinusFont, foreColorBrush, (Width - 41 * (DeviceDpi / 96)), 1);
-            graphics.DrawLine(borderPen, Width - (45 * (DeviceDpi / 96)), 1, (Width - 45 * (DeviceDpi / 96)), Height - 2 * (DeviceDpi / 96));
+            using var plusMinusFont = new Font("Tahoma", 10.4f * dpi, FontStyle.Regular);
+
+            graphics.DrawString("▲", Font, foreColorBrush, Width - 18 * dpi, 1.25f * dpi);
+            graphics.DrawLine(borderPen, Width - (22 * dpi), 1, (Width - 22 * dpi), Height - 2);
+            graphics.DrawString("▼", Font, foreColorBrush, (Width - 40 * dpi), 1.25f * dpi);
+            graphics.DrawLine(borderPen, Width - (45 * dpi), 1, (Width - 45 * dpi), Height - 2);
 
             TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(1, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
         }

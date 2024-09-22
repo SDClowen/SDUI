@@ -15,9 +15,9 @@ namespace SDUI.Controls;
 
 public class MultiPageControlItem : Panel
 {
-    public Rectangle Rectangle { get; set; }
-    public Rectangle RectangleClose { get; set; }
-    public Rectangle RectangleIcon { get; set; }
+    public RectangleF Rectangle { get; set; }
+    public RectangleF RectangleClose { get; set; }
+    public RectangleF RectangleIcon { get; set; }
 
     [Localizable(true), Browsable(true), EditorBrowsable(EditorBrowsableState.Always)]
     public override string Text
@@ -52,6 +52,8 @@ public class MultiPageControlItem : Panel
 [Designer(typeof(MultiPageControlDesigner))]
 public class MultiPageControl : UserControl
 {
+    public float DPI => DeviceDpi / 96.0f;
+
     private EventHandler<int> _onSelectedIndexChanged;
     private EventHandler _onNewPageButtonClicked;
     private EventHandler _onClosePageButtonClicked;
@@ -143,7 +145,7 @@ public class MultiPageControl : UserControl
     private Point _mouseLocation;
     private GraphicsPath _newButtonPath;
     private int _mouseState;
-    private int _lastTabX;
+    private float _lastTabX;
 
     public bool _renderNewPageButton = true;
     public bool RenderNewPageButton
@@ -180,22 +182,24 @@ public class MultiPageControl : UserControl
 
     private void ReorganizePages()
     {
-        _lastTabX = 6;// this.Radius / 2;
+        _lastTabX = 6 * DPI;// this.Radius / 2;
 
         for(int i = 0; i < Controls.Count; i++)
         {
             var control = Controls[i];
 
             var stringSize = TextRenderer.MeasureText(control.Text, Font);
-            var width = stringSize.Width + 80;
-            var rectangle = new Rectangle(_lastTabX, 6, width, _headerControlSize.Height - 6);
+            var width = stringSize.Width + 80 * DPI;
+            RectangleF rectangle = new(_lastTabX, 6 * DPI, width, _headerControlSize.Height * DPI - 6);
+            
             control.Rectangle = rectangle;
-            control.RectangleClose = new Rectangle(rectangle.X + rectangle.Width - 20, rectangle.Y + 6, 12, 12);
-            control.RectangleIcon = new Rectangle(rectangle.X + 6, rectangle.Y + 5, 16, 16);
+            control.RectangleClose = new(rectangle.X + rectangle.Width - 20 * DPI, rectangle.Y + 6 * DPI, 12 * DPI, 12 * DPI);
+            control.RectangleIcon = new(rectangle.X + 6 * DPI, rectangle.Y + 5 * DPI, 16 * DPI, 16 * DPI);
+
             _lastTabX += width;
         }
 
-        _newButtonPath = new RectangleF(_lastTabX + 4, 9, 24, 16).Radius(6, 12, 12, 6);
+        _newButtonPath = new RectangleF(_lastTabX + 4, 9 * DPI, 24 * DPI, 16 * DPI).Radius(6, 12, 12, 6);
     }
 
     public MultiPageControlItem Add()
@@ -271,7 +275,7 @@ public class MultiPageControl : UserControl
             var rectangle = control.Rectangle;
 
             if (i == SelectedIndex)
-                graphics.FillPath(borderPen.Brush, rectangle.ToRectangleF().Radius(6, 6));
+                graphics.FillPath(borderPen.Brush, rectangle.Radius(6 * DPI, 6 * DPI));
 
             // is mouse in close button
             if (_renderPageClose)
@@ -290,11 +294,11 @@ public class MultiPageControl : UserControl
                 inlineCloseRect.Offset(0, 0);
                 inlineCloseRect.Inflate(-2, -2);
 
-                graphics.FillPie(closeBrush, inlineCloseRect, 0, 360);
+                graphics.FillPie(closeBrush, inlineCloseRect.X, inlineCloseRect.Y, inlineCloseRect.Width, inlineCloseRect.Height, 0, 360);
             }
 
             if (_renderPageIcon)
-                graphics.DrawIcon(SystemIcons.Hand, control.RectangleIcon);
+                graphics.DrawIcon(SystemIcons.Hand, control.RectangleIcon.ToRectangle());
 
             i++;
             control.DrawString(graphics, ColorScheme.ForeColor, rectangle);
