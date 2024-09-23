@@ -256,6 +256,13 @@ public class MultiPageControl : UserControl
         ResumeLayout();
     }
 
+    protected override void OnDpiChangedAfterParent(EventArgs e)
+    {
+        ReorganizePages();
+
+        base.OnDpiChangedAfterParent(e);
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
         GroupBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
@@ -265,13 +272,14 @@ public class MultiPageControl : UserControl
 
         using var borderPen = new Pen(ColorScheme.BorderColor);
 
-        graphics.SetHighQuality();
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
 
         //graphics.DrawLine(borderPen, 2, _headerControlSize.Height, Width - 3, _headerControlSize.Height);
 
         var i = 0;
         foreach (MultiPageControlItem control in Controls)
         {
+            graphics.SmoothingMode = SmoothingMode.AntiAlias;
             var rectangle = control.Rectangle;
 
             if (i == SelectedIndex)
@@ -325,8 +333,8 @@ public class MultiPageControl : UserControl
             graphics.FillPath(newPageButtonBrush, _newButtonPath);
         }
 
-        graphics.SetDefaultQuality();
-        graphics.DrawString("Index:" + _selectedIndex + " State:" + _mouseState +  " Pos:" + _mouseLocation, Font, Brushes.Red, new PointF(Width - 200, Height - 32));
+        graphics.SmoothingMode = SmoothingMode.Default;
+        //graphics.DrawString("Index:" + _selectedIndex + " State:" + _mouseState +  " Pos:" + _mouseLocation, Font, Brushes.Red, new PointF(Width - 200, Height - 32));
     }
 
     protected override void OnMouseMove(MouseEventArgs e)

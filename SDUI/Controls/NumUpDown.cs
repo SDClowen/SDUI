@@ -235,9 +235,9 @@ namespace SDUI.Controls
 
             using var plusMinusFont = new Font("Tahoma", 10.4f * dpi, FontStyle.Regular);
 
-            graphics.DrawString("▲", Font, foreColorBrush, Width - 18 * dpi, 1.25f * dpi);
+            graphics.DrawString("▲", Font, foreColorBrush, Width - 18 * dpi, 4 * dpi);
             graphics.DrawLine(borderPen, Width - (22 * dpi), 1, (Width - 22 * dpi), Height - 2);
-            graphics.DrawString("▼", Font, foreColorBrush, (Width - 40 * dpi), 1.25f * dpi);
+            graphics.DrawString("▼", Font, foreColorBrush, (Width - 40 * dpi), 4 * dpi);
             graphics.DrawLine(borderPen, Width - (45 * dpi), 1, (Width - 45 * dpi), Height - 2);
 
             TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(1, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);

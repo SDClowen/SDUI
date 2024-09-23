@@ -961,7 +961,7 @@ public class UIWindow : UIWindowBase
             var rippleSize = (int)(animationProgress * pageRect[_windowPageControl.SelectedIndex].Width * 1.75);
 
             graphics.SetClip(pageRect[_windowPageControl.SelectedIndex]);
-            graphics.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
+            //graphics.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
             graphics.ResetClip();
             rippleBrush.Dispose();
         }
@@ -979,12 +979,21 @@ public class UIWindow : UIWindowBase
         var x = previousActivePageRect.X + (int)((activePageRect.X - previousActivePageRect.X) * animationProgress);
         var width = previousActivePageRect.Width + (int)((activePageRect.Width - previousActivePageRect.Width) * animationProgress);
 
-        graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
-        graphics.FillRectangle(hoverColor, x, 0, width, _titleHeightDPI);
-        graphics.FillRectangle(Color.DeepSkyBlue, x, y, width, TAB_INDICATOR_HEIGHT);
-
         graphics.CompositingQuality = CompositingQuality.HighQuality;
-        graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+        graphics.SetHighQuality();
+
+        //graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
+        //graphics.FillRectangle(hoverColor, x, 0, width, TAB_INDICATOR_HEIGHT);
+
+        var measure = graphics.MeasureString(_windowPageControl.Controls[_windowPageControl.SelectedIndex].Text, Font);
+
+        if (!BackColor.IsDark())
+            hoverColor = ForeColor.Alpha(60);
+
+        using var hoverBrush = new SolidBrush(hoverColor);
+
+        graphics.FillPath(hoverBrush, new RectangleF(x + 2, measure.Height / 2 - 2, width - 4, measure.Height + 6).Radius(12));
+
 
         //Draw tab headers
         foreach (Control page in _windowPageControl.Controls)
