@@ -992,7 +992,7 @@ public class UIWindow : UIWindowBase
 
         using var hoverBrush = new SolidBrush(hoverColor);
 
-        graphics.FillPath(hoverBrush, new RectangleF(x + 2, measure.Height / 2 - 2, width - 4, measure.Height + 6).Radius(12));
+        graphics.FillPath(hoverBrush, new RectangleF(x + 2, measure.Height / 2 - 4, width - 4, measure.Height + 6).Radius(8));
 
 
         //Draw tab headers
