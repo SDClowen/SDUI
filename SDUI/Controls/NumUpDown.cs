@@ -2,6 +2,7 @@
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Security.Policy;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
@@ -15,9 +16,15 @@ namespace SDUI.Controls
         private decimal _value;
         private decimal _min;
         private decimal _max;
-        private int Xval;
+        private Point _mouseLocation;
         private bool _isUsingKeyboard;
         private Timer _longPressTimer = new();
+
+        private RectangleF _upButtonRect;
+        private RectangleF _downButtonRect;
+
+        private const int SIZE = 20;
+        private float _dpi => DeviceDpi / 96f;
 
         public decimal Value
         {
@@ -96,49 +103,30 @@ namespace SDUI.Controls
 
             _longPressTimer.Tick += LongPressTimer_Tick;
             _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
+
+            _upButtonRect = new(Width - SIZE * _dpi, 0, SIZE * _dpi, Height);
+            _downButtonRect = new(Width - SIZE * _dpi * 2, 0, SIZE * _dpi, Height);
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            Xval = e.Location.X;
-            Invalidate();
-
-            if (e.X < Width - 50)
-            {
-                Cursor = Cursors.IBeam;
-            }
-            else
-            {
-                Cursor = Cursors.Default;
-            }
-            if (e.X > Width - 25 && e.X < Width - 10)
-            {
-                Cursor = Cursors.Default;
-            }
-            if (e.X > Width - 44 && e.X < Width - 33)
-            {
-                Cursor = Cursors.Default;
-            }
+            _mouseLocation = e.Location;
         }
 
         private void ClickButton()
         {
-            if (Xval > Width - 25 && Xval < Width - 10)
+            if (_mouseLocation.InRect(_upButtonRect))
             {
                 if (_value + 1 <= _max)
-                {
                     Value++;
-                }
             }
             else
             {
-                if (Xval > Width - 44 && Xval < Width - 33)
+                if (_mouseLocation.InRect(_downButtonRect))
                 {
                     if (_value - 1 >= _min)
-                    {
                         Value--;
-                    }
                 }
                 _isUsingKeyboard = !_isUsingKeyboard;
             }
@@ -217,30 +205,45 @@ namespace SDUI.Controls
             }
         }
 
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+
+            _upButtonRect = new(Width - SIZE * _dpi, 0, SIZE * _dpi, Height);
+            _downButtonRect = new(Width - SIZE * _dpi * 2, 0, SIZE * _dpi, Height);
+        }
+
+        protected override void OnDpiChangedAfterParent(EventArgs e)
+        {
+            base.OnDpiChangedAfterParent(e);
+
+            _upButtonRect = new(Width - SIZE * _dpi, 0, SIZE * _dpi, Height);
+            _downButtonRect = new(Width - SIZE * _dpi * 2, 0, SIZE * _dpi, Height);
+        }
+
         protected override void OnPaint(PaintEventArgs e)
         {
-            var dpi = DeviceDpi / 96f;
             //base.OnPaint(e);
             var graphics = e.Graphics;
             ButtonRenderer.DrawParentBackground(e.Graphics, Bounds, this);
 
             using var borderPen = new Pen(ColorScheme.BorderColor);
             using var backColorBrush = ColorScheme.BackColor.Alpha(90).Brush();
-            using var foreColorBrush = ColorScheme.ForeColor.Alpha(200).Brush();
 
             graphics.SmoothingMode = SmoothingMode.AntiAlias;
             using var round = ClientRectangle.Radius(8);
+
             graphics.FillPath(backColorBrush, round);
             graphics.DrawPath(borderPen, round);
 
-            using var plusMinusFont = new Font("Tahoma", 10.4f * dpi, FontStyle.Regular);
 
-            graphics.DrawString("▲", Font, foreColorBrush, Width - 18 * dpi, 4 * dpi);
-            graphics.DrawLine(borderPen, Width - (22 * dpi), 1, (Width - 22 * dpi), Height - 2);
-            graphics.DrawString("▼", Font, foreColorBrush, (Width - 40 * dpi), 4 * dpi);
-            graphics.DrawLine(borderPen, Width - (45 * dpi), 1, (Width - 45 * dpi), Height - 2);
+            this.DrawString(graphics, "▲", ColorScheme.ForeColor, _upButtonRect);
+            this.DrawString(graphics, "▼", ColorScheme.ForeColor, _downButtonRect);
 
-            TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(1, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+            graphics.DrawLine(borderPen, _upButtonRect.X, 0, _upButtonRect.X, _upButtonRect.Height);
+            graphics.DrawLine(borderPen, _downButtonRect.X, 0, _downButtonRect.X, _downButtonRect.Height);
+
+            TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(Padding.Left, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
         }
     }
 }

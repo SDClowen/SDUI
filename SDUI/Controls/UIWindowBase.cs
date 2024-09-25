@@ -146,12 +146,9 @@ public class UIWindowBase : Form
                     if (WindowState != FormWindowState.Maximized)
                     {
                         int gripDist = 10;
-                        //int x = (int)(m.LParam.ToInt64() & 0xFFFF);
-                        //int x = Cursor.Position.X;
-                        // int y = (int)((m.LParam.ToInt64() & 0xFFFF0000) >> 16);
-                        //Console.WriteLine(x);
-                        Point pt = PointToClient(Cursor.Position);
-                        //Console.WriteLine(pt);
+                        
+                        var pt = PointToClient(Cursor.Position);
+
                         Size clientSize = ClientSize;
                         ///allow resize on the lower right corner
                         if (pt.X >= clientSize.Width - gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
@@ -318,7 +315,7 @@ public class UIWindowBase : Form
 
         WindowsHelper.ApplyRoundCorner(this.Handle);
 
-        /*if (_aeroEnabled)
+        if (_aeroEnabled)
         {
             var v = 2;
 
@@ -332,7 +329,9 @@ public class UIWindowBase : Form
             };
 
             DwmExtendFrameIntoClientArea(this.Handle, ref margins);
-        }*/
+        }
+
+        SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOOWNERZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
     }
 
     protected override void OnBackColorChanged(EventArgs e)

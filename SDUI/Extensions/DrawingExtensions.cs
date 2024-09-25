@@ -270,6 +270,16 @@ public static class DrawingExtensions
         return format;
     }
 
+    internal static void DrawString(this Control control, string text, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
+    {
+        graphics.SmoothingMode = SmoothingMode.Default;
+        graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+        using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
+        using var textBrush = new SolidBrush(control.ForeColor);
+
+        graphics.DrawString(text, control.Font, textBrush, control.ClientRectangle, textFormat);
+    }
+
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
     {
         graphics.SmoothingMode = SmoothingMode.Default;
@@ -300,6 +310,20 @@ public static class DrawingExtensions
         graphics.DrawString(control.Text, control.Font, textBrush, rectangle, textFormat);
     }
 
+    internal static void DrawString(this Control control, Graphics graphics, string text, Color color, RectangleF rectangle)
+    {
+        graphics.SmoothingMode = SmoothingMode.Default;
+        graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
+        using var textBrush = new SolidBrush(color);
+        using var textFormat = new StringFormat()
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center,
+            Trimming = StringTrimming.EllipsisCharacter
+        };
+
+        graphics.DrawString(text, control.Font, textBrush, rectangle, textFormat);
+    }
     internal static void DrawString(this Control control, Graphics graphics, Color color, RectangleF rectangle)
     {
         graphics.SmoothingMode = SmoothingMode.Default;
