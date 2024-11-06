@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Security.Policy;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
@@ -380,7 +379,7 @@ public class UIWindow : UIWindowBase
     private Point animationSource;
     private List<RectangleF> pageRect;
     private const int TAB_HEADER_PADDING = 9;
-    private const int TAB_INDICATOR_HEIGHT = 2;
+    private const int TAB_INDICATOR_HEIGHT = 3;
 
     private long _stickyBorderTime = 5000000;
     [Description("Set or get the maximum time to stay at the edge of the display(ms)")]
@@ -971,6 +970,9 @@ public class UIWindow : UIWindowBase
             return;
 
         //Animate page indicator
+        if (previousSelectedPageIndex == pageRect.Count)
+            previousSelectedPageIndex = -1;
+
         var previousSelectedPageIndexIfHasOne = previousSelectedPageIndex == -1 ? _windowPageControl.SelectedIndex : previousSelectedPageIndex;
         var previousActivePageRect = pageRect[previousSelectedPageIndexIfHasOne];
         var activePageRect = pageRect[_windowPageControl.SelectedIndex];
@@ -983,7 +985,8 @@ public class UIWindow : UIWindowBase
         graphics.SetHighQuality();
 
         //graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
-        //graphics.FillRectangle(hoverColor, x, 0, width, TAB_INDICATOR_HEIGHT);
+        //graphics.FillRectangle(hoverColor, x, 0, width, _titleHeightDPI);
+        //graphics.FillRectangle(Color.DodgerBlue, x, _titleHeightDPI - TAB_INDICATOR_HEIGHT, width, TAB_INDICATOR_HEIGHT);
 
         var measure = graphics.MeasureString(_windowPageControl.Controls[_windowPageControl.SelectedIndex].Text, Font);
 
@@ -992,7 +995,7 @@ public class UIWindow : UIWindowBase
 
         using var hoverBrush = new SolidBrush(hoverColor);
 
-        graphics.FillPath(hoverBrush, new RectangleF(x + 2, measure.Height / 2 - 4, width - 4, measure.Height + 6).Radius(8));
+        graphics.FillPath(hoverBrush, new RectangleF(x + 2, (_titleHeightDPI / 2) - (measure.Height * DPI / 2), width - 4, measure.Height * DPI).Radius(8));
 
 
         //Draw tab headers
