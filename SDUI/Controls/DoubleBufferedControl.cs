@@ -2,7 +2,7 @@
 
 namespace SDUI.Controls
 {
-    public class DoubleBufferedControl : UserControl
+    public class DoubleBufferedControl : System.Windows.Forms.Panel
     {
         public DoubleBufferedControl() { 
             SetStyle(ControlStyles.OptimizedDoubleBuffer, true);

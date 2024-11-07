@@ -280,6 +280,19 @@ public class UIWindow : UIWindowBase
     }
 
     /// <summary>
+    /// Gradient header colors
+    /// </summary>
+    private Color[] _gradient = new[] { Color.Transparent, Color.Transparent };
+    public Color[] Gradient
+    {
+        get => _gradient;
+        set
+        {
+            _gradient = value; Invalidate();
+        }
+    }
+
+    /// <summary>
     /// The title color
     /// </summary>
     private Color titleColor;
@@ -353,27 +366,27 @@ public class UIWindow : UIWindowBase
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly  Animation.AnimationEngine minBoxHoverAnimationManager;
+    private readonly Animation.AnimationEngine minBoxHoverAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly  Animation.AnimationEngine maxBoxHoverAnimationManager;
+    private readonly Animation.AnimationEngine maxBoxHoverAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly  Animation.AnimationEngine closeBoxHoverAnimationManager;
+    private readonly Animation.AnimationEngine closeBoxHoverAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly  Animation.AnimationEngine extendBoxHoverAnimationManager;
+    private readonly Animation.AnimationEngine extendBoxHoverAnimationManager;
 
     /// <summary>
     /// tab area animation manager
     /// </summary>
-    private readonly  Animation.AnimationEngine pageAreaAnimationManager;
+    private readonly Animation.AnimationEngine pageAreaAnimationManager;
 
     private int previousSelectedPageIndex;
     private Point animationSource;
@@ -407,28 +420,28 @@ public class UIWindow : UIWindowBase
 
         enableFullDraggable = false;
 
-        pageAreaAnimationManager = new  Animation.AnimationEngine
+        pageAreaAnimationManager = new Animation.AnimationEngine
         {
             AnimationType = AnimationType.EaseOut,
             Increment = 0.07
         };
 
-        minBoxHoverAnimationManager = new  Animation.AnimationEngine
+        minBoxHoverAnimationManager = new Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
-        maxBoxHoverAnimationManager = new  Animation.AnimationEngine
+        maxBoxHoverAnimationManager = new Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
-        closeBoxHoverAnimationManager = new  Animation.AnimationEngine
+        closeBoxHoverAnimationManager = new Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
         };
-        extendBoxHoverAnimationManager = new  Animation.AnimationEngine
+        extendBoxHoverAnimationManager = new Animation.AnimationEngine
         {
             Increment = 0.15,
             AnimationType = AnimationType.Linear
@@ -786,20 +799,15 @@ public class UIWindow : UIWindowBase
 
         var graphics = e.Graphics;
         graphics.Clear(BackColor);
-        
+
         NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
 
         var foreColor = ColorScheme.ForeColor;
-        if (titleColor != Color.Empty)
-            foreColor = titleColor.Determine();
-
         var hoverColor = ColorScheme.BorderColor;
-        if (titleColor != Color.Empty)
-            hoverColor = foreColor.Alpha(20);
 
         if (FullDrawHatch)
         {
-            using var hatchBrush = new HatchBrush(_hatch, hoverColor, titleColor);
+            using var hatchBrush = new HatchBrush(_hatch, ColorScheme.BackColor, hoverColor);
             graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
         }
         else
@@ -811,11 +819,24 @@ public class UIWindow : UIWindowBase
         if (!ShowTitle)
             return;
 
+        graphics.SetHighQuality();
 
-
-        //graphics.SetHighQuality();
         if (titleColor != Color.Empty)
+        {
+            foreColor = titleColor.Determine();
+            hoverColor = foreColor.Alpha(20);
             graphics.FillRectangle(titleColor, 0, 0, Width, _titleHeightDPI);
+        }
+
+        if (_gradient.Length == 2 &&
+            !(_gradient[0] == Color.Transparent && _gradient[1] == Color.Transparent))
+        {
+            using var brush = new LinearGradientBrush(new RectangleF(0, 0, Width, _titleHeightDPI), _gradient[0], _gradient[1], 45);
+            graphics.FillRectangle(brush, 0, 0, Width, _titleHeightDPI);
+
+            foreColor = _gradient[0].Determine();
+            hoverColor = foreColor.Alpha(20);
+        }
 
         if (controlBox)
         {
@@ -912,7 +933,7 @@ public class UIWindow : UIWindowBase
                 _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * DPI));
             */
 
-            graphics.SetHighQuality();
+            //graphics.SetHighQuality();
 
             var color = foreColor;
             if (_inExtendBox)
@@ -928,14 +949,14 @@ public class UIWindow : UIWindowBase
             var size = 16 * DPI;
             using var bitmap = svg.Draw();
             graphics.DrawImage(bitmap, _extendBoxRect.X + 24 * DPI, (_titleHeightDPI / 2) - (size / 2), size, size);
-            graphics.SetDefaultQuality();
+            //graphics.SetDefaultQuality();
         }
 
         var faviconSize = 16 * DPI;
         if (Icon != null)
             graphics.DrawImage(Icon.ToBitmap(), 10, (_titleHeightDPI / 2) - (faviconSize / 2), faviconSize, faviconSize);
 
-        if (_windowPageControl == null)
+        if (_windowPageControl == null || _windowPageControl.Count == 0)
         {
             var stringSize = graphics.MeasureString(Text, Font);
             var textPoint = new PointF(14 + (Icon != null ? faviconSize : 0), (_titleHeightDPI / 2 - stringSize.Height / 2));
@@ -960,7 +981,7 @@ public class UIWindow : UIWindowBase
             var rippleSize = (int)(animationProgress * pageRect[_windowPageControl.SelectedIndex].Width * 1.75);
 
             graphics.SetClip(pageRect[_windowPageControl.SelectedIndex]);
-            //graphics.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
+            graphics.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
             graphics.ResetClip();
             rippleBrush.Dispose();
         }
@@ -981,22 +1002,29 @@ public class UIWindow : UIWindowBase
         var x = previousActivePageRect.X + (int)((activePageRect.X - previousActivePageRect.X) * animationProgress);
         var width = previousActivePageRect.Width + (int)((activePageRect.Width - previousActivePageRect.Width) * animationProgress);
 
-        graphics.CompositingQuality = CompositingQuality.HighQuality;
-        graphics.SetHighQuality();
+        //graphics.CompositingQuality = CompositingQuality.HighQuality;
+        //graphics.SetHighQuality();
 
-        //graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
-        //graphics.FillRectangle(hoverColor, x, 0, width, _titleHeightDPI);
-        //graphics.FillRectangle(Color.DodgerBlue, x, _titleHeightDPI - TAB_INDICATOR_HEIGHT, width, TAB_INDICATOR_HEIGHT);
 
-        var measure = graphics.MeasureString(_windowPageControl.Controls[_windowPageControl.SelectedIndex].Text, Font);
+        var chromed = false;
+        if (!chromed)
+        {
+            graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
+            graphics.FillRectangle(hoverColor, x, 0, width, _titleHeightDPI);
+            graphics.FillRectangle(Color.DodgerBlue, x, _titleHeightDPI - TAB_INDICATOR_HEIGHT, width, TAB_INDICATOR_HEIGHT);
+        }
+        else
+        {
+            if (titleColor != Color.Empty && !titleColor.IsDark())
+                hoverColor = ForeColor.Alpha(60);
 
-        if (!BackColor.IsDark())
-            hoverColor = ForeColor.Alpha(60);
+            using var hoverBrush = hoverColor.Brush();
+            var tabRect = new RectangleF(x, 0, width, _titleHeightDPI);
+            tabRect.Inflate(TAB_HEADER_PADDING / 2, -(TAB_HEADER_PADDING / 1.2f));
+            //graphics.DrawShadow(tabRect, 2, 12, hoverColor.Determine().Alpha(155));
 
-        using var hoverBrush = new SolidBrush(hoverColor);
-
-        graphics.FillPath(hoverBrush, new RectangleF(x + 2, (_titleHeightDPI / 2) - (measure.Height * DPI / 2), width - 4, measure.Height * DPI).Radius(8));
-
+            graphics.FillPath(hoverBrush, tabRect.Radius(13));
+        }
 
         //Draw tab headers
         foreach (Control page in _windowPageControl.Controls)
@@ -1019,7 +1047,7 @@ public class UIWindow : UIWindowBase
             }
         }
 
-        graphics.SetDefaultQuality();
+        //graphics.SetDefaultQuality();
     }
 
     protected override void OnTextChanged(EventArgs e)
