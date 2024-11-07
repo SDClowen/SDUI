@@ -1,8 +1,8 @@
-﻿using System.Windows.Forms;
+using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class DoubleBufferedControl : System.Windows.Forms.Panel
+    public class DoubleBufferedControl : UserControl
     {
         public DoubleBufferedControl() { 
             SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
