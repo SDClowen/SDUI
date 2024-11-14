@@ -435,22 +435,22 @@ public class NativeMethods
         var accentPolicy = new AccentPolicy
         {
             AccentState = ACCENT.ENABLE_ACRYLICBLURBEHIND,
-            GradientColor = blurColor.ToAbgr()
+            GradientColor = blurColor.ToArgb()
+        };
+        var accentSize = Marshal.SizeOf(accentPolicy);
+        var accentPolicyPtr = Marshal.AllocHGlobal(accentSize);
+        Marshal.StructureToPtr(accentPolicy, accentPolicyPtr, false);
+
+        var data = new WindowCompositionAttributeData
+        {
+            Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
+            Data = accentPolicyPtr,
+            SizeOfData = Marshal.SizeOf<AccentPolicy>()
         };
 
-        unsafe
-        {
-            var data = new WindowCompositionAttributeData
-            {
-                Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
-                Data = &accentPolicy,
-                SizeOfData = Marshal.SizeOf<AccentPolicy>()
-            };
-
-            SetWindowCompositionAttribute(
-                window.Handle,
-                ref data);
-        }
+        SetWindowCompositionAttribute(
+            window.Handle,
+            ref data);
     }
     
     /// <summary>
@@ -687,7 +687,7 @@ public class NativeMethods
     {
         public ACCENT AccentState;
         public uint AccentFlags;
-        public uint GradientColor;
+        public int GradientColor;
         public uint AnimationId;
     }
 
@@ -720,7 +720,7 @@ public class NativeMethods
     public unsafe struct WindowCompositionAttributeData
     {
         public WindowCompositionAttribute Attribute;
-        public void* Data;
+        public IntPtr Data;
         public int SizeOfData;
     }
 

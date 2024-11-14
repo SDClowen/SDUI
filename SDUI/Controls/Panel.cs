@@ -1,4 +1,4 @@
-﻿using SDUI.Helpers;
+using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Panel : DoubleBufferedControl
+public class Panel : System.Windows.Forms.Panel
 {
     private int _radius = 10;
     public int Radius

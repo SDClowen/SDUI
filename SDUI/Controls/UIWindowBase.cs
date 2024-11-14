@@ -93,7 +93,10 @@ public class UIWindowBase : Form
             cp.ClassStyle |= CS_DBLCLKS;
 
             var style = (uint)cp.Style;
-            //style &= ~(uint)SetWindowLongFlags.WS_CAPTION;
+            
+            if(DesignMode)
+                style &= ~(uint)SetWindowLongFlags.WS_CAPTION;
+
             style &= ~(uint)SetWindowLongFlags.WS_SYSMENU;
             style &= ~(uint)SetWindowLongFlags.WS_THICKFRAME;
             style &= ~(uint)SetWindowLongFlags.WS_MINIMIZE;

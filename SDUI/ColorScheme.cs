@@ -17,7 +17,7 @@ public class ColorScheme
     /// <summary>
     /// Gets theme border color
     /// </summary>
-    public static Color BorderColor => ForeColor.Alpha(20);
+    public static Color BorderColor => ForeColor.Alpha(BackColor.IsDark() ? 10 : 40);
 
     /// <summary>
     /// Gets theme back color 2

@@ -26,11 +26,16 @@ namespace SDUI.Controls
                 if (_selectedIndex == value)
                     return;
 
-                if (value < 0)
-                    value = Controls.Count - 1;
+                if (Controls.Count > 0)
+                {
+                    if (value < 0)
+                        value = Controls.Count - 1;
 
-                if (value > Controls.Count - 1)
-                    value = 0;
+                    if (value > Controls.Count - 1)
+                        value = 0;
+                }
+                else
+                    value = -1;
 
                 var previousSelectedIndex = _selectedIndex;
                 _selectedIndex = value;

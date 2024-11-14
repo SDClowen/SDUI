@@ -99,6 +99,7 @@ public static class DrawingExtensions
 
     public static void SetHighQuality(this Graphics g)
     {
+        //g.PixelOffsetMode = PixelOffsetMode.HighQuality;
         g.SmoothingMode = SmoothingMode.AntiAlias;
         g.InterpolationMode = InterpolationMode.HighQualityBicubic;
         g.CompositingQuality = CompositingQuality.HighQuality;
@@ -272,8 +273,7 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, string text, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
     {
-        graphics.SmoothingMode = SmoothingMode.Default;
-        graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+        graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(control.ForeColor);
 
@@ -282,8 +282,7 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
     {
-        graphics.SmoothingMode = SmoothingMode.Default;
-        graphics.TextRenderingHint = TextRenderingHint.SingleBitPerPixelGridFit;
+        graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(control.ForeColor);
 
@@ -292,7 +291,6 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, bool showEllipsis = false, bool useMnemonic = false)
     {
-        graphics.SmoothingMode = SmoothingMode.Default;
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(color);
@@ -302,7 +300,6 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, RectangleF rectangle, bool showEllipsis = false, bool useMnemonic = false)
     {
-        graphics.SmoothingMode = SmoothingMode.Default;
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
         using var textBrush = new SolidBrush(color);
@@ -312,7 +309,6 @@ public static class DrawingExtensions
 
     internal static void DrawString(this Control control, Graphics graphics, string text, Color color, RectangleF rectangle)
     {
-        graphics.SmoothingMode = SmoothingMode.Default;
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textBrush = new SolidBrush(color);
         using var textFormat = new StringFormat()
@@ -326,7 +322,6 @@ public static class DrawingExtensions
     }
     internal static void DrawString(this Control control, Graphics graphics, Color color, RectangleF rectangle)
     {
-        graphics.SmoothingMode = SmoothingMode.Default;
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textBrush = new SolidBrush(color);
         using var textFormat = new StringFormat()
@@ -337,5 +332,15 @@ public static class DrawingExtensions
         };
 
         graphics.DrawString(control.Text, control.Font, textBrush, rectangle, textFormat);
+    }
+
+    internal static void DrawSvg(this Graphics graphics, string svg, Color color, RectangleF rectangle)
+    {
+        var svgDocument = Svg.SvgDocument.FromSvg<Svg.SvgDocument>(svg);
+        svgDocument.Color = new Svg.SvgColourServer(color);
+
+        using var bitmap = svgDocument.Draw();
+        graphics.DrawImage(bitmap, rectangle);
+
     }
 }
