@@ -138,6 +138,19 @@ public class UIWindow : UIWindowBase
         }
     }
 
+    private bool _drawTabIcons;
+
+    [DefaultValue(false)]
+    public bool DrawTabIcons
+    {
+        get => _drawTabIcons;
+        set
+        {
+            _drawTabIcons = value;
+            Invalidate();
+        }
+    }
+
     private bool _tabCloseButton;
 
     [DefaultValue(false)]
@@ -1159,7 +1172,7 @@ public class UIWindow : UIWindowBase
             graphics.FillRectangle(hoverColor, x, 0, width, _titleHeightDPI);
             graphics.FillRectangle(Color.DodgerBlue, x, _titleHeightDPI - TAB_INDICATOR_HEIGHT, width, TAB_INDICATOR_HEIGHT);
         }
-        else if(_tabDesingMode == TabDesingMode.Rounded)
+        else if (_tabDesingMode == TabDesingMode.Rounded)
         {
             if (titleColor != Color.Empty && !titleColor.IsDark())
                 hoverColor = ForeColor.Alpha(60);
@@ -1227,25 +1240,31 @@ public class UIWindow : UIWindowBase
 
             var closeIconSize = 24 * DPI;
 
-            var startingIconMeasure = graphics.MeasureString("", Font);
-            var iconX = rect.X + (TAB_HEADER_PADDING * DPI);
-
-            var inlinePaddingX = startingIconMeasure.Width + (TAB_HEADER_PADDING * DPI);
-            rect.X += inlinePaddingX;
-            rect.Width -= inlinePaddingX + closeIconSize;
-
-            graphics.DrawString("", Font, foreColor.Alpha(150).Brush(), new RectangleF(iconX, _titleHeightDPI / 2 - startingIconMeasure.Height / 2, startingIconMeasure.Width, startingIconMeasure.Height));
-            graphics.DrawString("", Font, foreColor.Alpha(150).Brush(), new RectangleF(iconX, _titleHeightDPI / 2 - startingIconMeasure.Height / 2, startingIconMeasure.Width, startingIconMeasure.Height));
-
-            using var format = new StringFormat()
+            if (_drawTabIcons)
             {
-                LineAlignment = StringAlignment.Center,
-            };
+                var startingIconMeasure = graphics.MeasureString("", Font);
+                var iconX = rect.X + (TAB_HEADER_PADDING * DPI);
 
-            format.Trimming = StringTrimming.EllipsisCharacter;
-            format.FormatFlags = StringFormatFlags.FitBlackBox | StringFormatFlags.NoWrap;
+                var inlinePaddingX = startingIconMeasure.Width + (TAB_HEADER_PADDING * DPI);
+                rect.X += inlinePaddingX;
+                rect.Width -= inlinePaddingX + closeIconSize;
 
-            graphics.DrawString(page.Text, Font, foreColor.Brush(), rect, format);
+                graphics.DrawString("", Font, foreColor.Brush(), new RectangleF(iconX, _titleHeightDPI / 2 - startingIconMeasure.Height / 2, startingIconMeasure.Width, startingIconMeasure.Height));
+
+                using var format = new StringFormat()
+                {
+                    LineAlignment = StringAlignment.Center,
+                };
+
+                format.Trimming = StringTrimming.EllipsisCharacter;
+                format.FormatFlags = StringFormatFlags.FitBlackBox | StringFormatFlags.NoWrap;
+
+                graphics.DrawString(page.Text, Font, foreColor.Brush(), rect, format);
+            }
+            else
+            {
+                page.DrawString(graphics, foreColor, rect);
+            }
         }
 
 
