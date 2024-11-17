@@ -116,7 +116,7 @@ public class Panel : System.Windows.Forms.Panel
 
             //e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
             ShadowUtils.DrawShadow(graphics, ColorScheme.ShadowColor, rect.ToRectangle(), (int)(_shadowDepth + 1) + 40, DockStyle.Right);
-            using var pen = new Pen(borderColor, 1);
+            using var pen = new Pen(borderColor, _border.All);
             e.Graphics.DrawPath(pen, path);
 
             return;

@@ -22,6 +22,11 @@ public class UIWindow : UIWindowBase
     /// <summary>
     /// If extend box clicked invoke the event
     /// </summary>
+    public event EventHandler OnFormMenuClick;
+
+    /// <summary>
+    /// If extend box clicked invoke the event
+    /// </summary>
     public event EventHandler OnExtendBoxClick;
 
     /// <summary>
@@ -83,6 +88,11 @@ public class UIWindow : UIWindowBase
     /// The rectangle of extend box
     /// </summary>
     private RectangleF _newTabBoxRect;
+
+    /// <summary>
+    /// The rectangle of extend box
+    /// </summary>
+    private RectangleF _formMenuRect;
 
     /// <summary>
     /// The control box left value
@@ -196,6 +206,10 @@ public class UIWindow : UIWindowBase
 
     [DefaultValue(null)]
     public ContextMenuStrip ExtendMenu { get; set; }
+
+    [DefaultValue(null)]
+    public ContextMenuStrip FormMenu { get; set; }
+
     /*
     [Browsable(false)]
     [EditorBrowsable(EditorBrowsableState.Never)]
@@ -228,6 +242,25 @@ public class UIWindow : UIWindowBase
         set
         {
             showTitle = value;
+            CalcSystemBoxPos();
+            Invalidate();
+        }
+    }
+
+    /// <summary>
+    /// Whether to show the title bar of the form
+    /// </summary>
+    private bool showMenuInsteadOfIcon = false;
+
+    /// <summary>
+    /// Gets or sets whether to show the title bar of the form
+    /// </summary>
+    public bool ShowMenuInsteadOfIcon
+    {
+        get => showMenuInsteadOfIcon;
+        set
+        {
+            showMenuInsteadOfIcon = value;
             CalcSystemBoxPos();
             Invalidate();
         }
@@ -484,6 +517,11 @@ public class UIWindow : UIWindowBase
     /// </summary>
     private readonly Animation.AnimationEngine tabCloseHoverAnimationManager;
 
+    /// <summary>
+    /// tab area animation manager
+    /// </summary>
+    private readonly Animation.AnimationEngine formMenuHoverAnimationManager;
+
     private int previousSelectedPageIndex;
     private Point animationSource;
     private List<RectangleF> pageRect;
@@ -556,6 +594,12 @@ public class UIWindow : UIWindowBase
             AnimationType = AnimationType.Linear
         };
 
+        formMenuHoverAnimationManager = new()
+        {
+            Increment = 0.15,
+            AnimationType = AnimationType.Linear
+        };
+
         minBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         maxBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         closeBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
@@ -563,11 +607,12 @@ public class UIWindow : UIWindowBase
         tabCloseHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         newTabHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         pageAreaAnimationManager.OnAnimationProgress += sender => Invalidate();
+        formMenuHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
 
-        WindowsHelper.ApplyRoundCorner(this.Handle);
+        //WindowsHelper.ApplyRoundCorner(this.Handle);
     }
 
-    private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox, _inTabCloseBox, _inNewTabBox;
+    private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox, _inTabCloseBox, _inNewTabBox, _inFormMenuBox;
 
     protected override void OnBackColorChanged(EventArgs e)
     {
@@ -630,6 +675,9 @@ public class UIWindow : UIWindowBase
             _extendBoxRect = _maximizeBoxRect = _minimizeBoxRect = _controlBoxRect = new Rectangle(Width + 1, Height + 1, 1, 1);
         }
 
+        var titleIconSize = 24 * DPI;
+        _formMenuRect = new(10, _titleHeightDPI / 2 - (titleIconSize / 2), titleIconSize, titleIconSize);
+
         Padding = new Padding(Padding.Left, (int)(showTitle ? _titleHeightDPI : 0), Padding.Right, Padding.Bottom);
     }
 
@@ -671,6 +719,19 @@ public class UIWindow : UIWindowBase
             }
         }
 
+        if (_inFormMenuBox)
+        {
+            _inFormMenuBox = false;
+            if (FormMenu != null)
+            {
+                FormMenu.Show(this, Convert.ToInt32(_formMenuRect.Left), Convert.ToInt32(_titleHeightDPI - 1));
+            }
+            else
+            {
+                OnFormMenuClick?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
         if (_inTabCloseBox)
         {
             _inTabCloseBox = false;
@@ -709,7 +770,7 @@ public class UIWindow : UIWindowBase
     {
         base.OnMouseDown(e);
 
-        if (_inCloseBox || _inMaxBox || _inMinBox || _inExtendBox || _inTabCloseBox || _inNewTabBox)
+        if (_inCloseBox || _inMaxBox || _inMinBox || _inExtendBox || _inTabCloseBox || _inNewTabBox || _inFormMenuBox)
             return;
 
         if (!ShowTitle)
@@ -731,7 +792,15 @@ public class UIWindow : UIWindowBase
         if (!MaximizeBox)
             return;
 
-        if (_inCloseBox || _inMaxBox || _inMinBox || _inExtendBox || _inTabCloseBox || _inNewTabBox)
+        bool inCloseBox = e.Location.InRect(_controlBoxRect);
+        bool inMaxBox = e.Location.InRect(_maximizeBoxRect);
+        bool inMinBox = e.Location.InRect(_minimizeBoxRect);
+        bool inExtendBox = e.Location.InRect(_extendBoxRect);
+        bool inCloseTabBox = _tabCloseButton && e.Location.InRect(_closeTabBoxRect);
+        bool inNewTabBox = _newTabButton && e.Location.InRect(_newTabBoxRect);
+        bool inFormMenuBox = e.Location.InRect(_formMenuRect);
+
+        if (inCloseBox || inMaxBox || inMinBox || inExtendBox || inCloseTabBox || inNewTabBox || inFormMenuBox)
             return;
 
         if (!ShowTitle)
@@ -821,6 +890,7 @@ public class UIWindow : UIWindowBase
             bool inExtendBox = e.Location.InRect(_extendBoxRect);
             bool inCloseTabBox = _tabCloseButton && e.Location.InRect(_closeTabBoxRect);
             bool inNewTabBox = _newTabButton && e.Location.InRect(_newTabBoxRect);
+            bool inFormMenuBox = e.Location.InRect(_formMenuRect);
             bool isChange = false;
 
             if (inCloseBox != _inCloseBox)
@@ -886,6 +956,17 @@ public class UIWindow : UIWindowBase
                     newTabHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
             }
 
+            if (inFormMenuBox != _inFormMenuBox)
+            {
+                _inFormMenuBox = inFormMenuBox;
+                isChange = true;
+
+                if (inFormMenuBox)
+                    formMenuHoverAnimationManager.StartNewAnimation(AnimationDirection.In);
+                else
+                    formMenuHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
+            }
+
             if (isChange)
                 Invalidate();
         }
@@ -896,13 +977,14 @@ public class UIWindow : UIWindowBase
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
-        _inExtendBox = _inCloseBox = _inMaxBox = _inMinBox = _inTabCloseBox = _inNewTabBox = false;
+        _inExtendBox = _inCloseBox = _inMaxBox = _inMinBox = _inTabCloseBox = _inNewTabBox = _inFormMenuBox = false;
         closeBoxHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         minBoxHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         maxBoxHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         extendBoxHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         tabCloseHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         newTabHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
+        formMenuHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
 
         Invalidate();
     }
@@ -1117,16 +1199,35 @@ public class UIWindow : UIWindowBase
         }
 
         var faviconSize = 16 * DPI;
-        if (ShowIcon && Icon != null)
-            graphics.DrawImage(Icon.ToBitmap(), 10, (_titleHeightDPI / 2) - (faviconSize / 2), faviconSize, faviconSize);
+        if (showMenuInsteadOfIcon)
+        {
+            using var brush = new SolidBrush(Color.FromArgb((int)(formMenuHoverAnimationManager.GetProgress() * hoverColor.A), hoverColor.RemoveAlpha()));
+            graphics.FillPath(brush, _formMenuRect.Radius(10));
+
+            graphics.DrawLine(foreColor,
+                        _formMenuRect.Left + _formMenuRect.Width / 2 - (5 * DPI) - 1,
+                        _formMenuRect.Top + _formMenuRect.Height / 2 - (2 * DPI),
+                        _formMenuRect.Left + _formMenuRect.Width / 2 - (1 * DPI),
+                        _formMenuRect.Top + _formMenuRect.Height / 2 + (3 * DPI));
+
+            graphics.DrawLine(foreColor,
+                _formMenuRect.Left + _formMenuRect.Width / 2 + (5 * DPI) - 1,
+                _formMenuRect.Top + _formMenuRect.Height / 2 - (2 * DPI),
+                _formMenuRect.Left + _formMenuRect.Width / 2 - (1 * DPI),
+                _formMenuRect.Top + _formMenuRect.Height / 2 + (3 * DPI));
+        }
+        else
+        {
+            if (ShowIcon && Icon != null)
+                graphics.DrawImage(Icon.ToBitmap(), 10, (_titleHeightDPI / 2) - (faviconSize / 2), faviconSize, faviconSize);
+        }
 
         if (_windowPageControl == null || _windowPageControl.Count == 0)
         {
             var stringSize = graphics.MeasureString(Text, Font);
-            var textPoint = new PointF(14 + (Icon != null ? faviconSize : 0), (_titleHeightDPI / 2 - stringSize.Height / 2));
+            var textPoint = new PointF((showMenuInsteadOfIcon ? _formMenuRect.X + _formMenuRect.Width : faviconSize + 14), (_titleHeightDPI / 2 - stringSize.Height / 2));
 
             using var textBrush = new SolidBrush(foreColor);
-
             graphics.DrawString(Text, Font, textBrush, textPoint, StringFormat.GenericDefault);
         }
 

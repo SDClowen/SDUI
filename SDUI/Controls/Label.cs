@@ -53,8 +53,12 @@ public class Label : System.Windows.Forms.Label
 
         Invalidate();
     }
+
     protected override void OnPaint(PaintEventArgs e)
     {
+        ButtonRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+        e.Graphics.FillRectangle(BackColor.Brush(), ClientRectangle);
+
         if (GradientAnimation)
             Angle = Angle % 360 + 1;
 

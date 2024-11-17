@@ -28,8 +28,7 @@ public class GroupBox : System.Windows.Forms.GroupBox
         get => _radius;
         set
         {
-            //_radius = value;
-            _radius = 10;
+            _radius = value;
 
             Invalidate();
         }
