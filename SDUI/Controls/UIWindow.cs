@@ -1113,44 +1113,36 @@ public class UIWindow : UIWindowBase
             if (_inMaxBox)
                 graphics.FillRectangle(Color.FromArgb((int)(maxBoxHoverAnimationManager.GetProgress() * hoverColor.A), hoverColor.RemoveAlpha()), _maximizeBoxRect);
 
+            graphics.DrawRectangle(foreColor,
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (12 * DPI / 2),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (11 * DPI / 2),
+                12 * DPI, 11 * DPI);
+
             if (WindowState == FormWindowState.Maximized)
             {
-                graphics.DrawRectangle(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (6 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (2 * DPI),
-                    7, 7);
-
-                graphics.DrawLine(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (2 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI));
-
                 graphics.DrawLine(foreColor,
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
                     _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (6 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI));
+                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
+                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI));
 
                 graphics.DrawLine(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (6 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (6 * DPI),
+                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
+                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI),
+                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
+                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI));
+
+                graphics.DrawLine(foreColor,
+                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
+                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (6 * DPI),
+                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
                     _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (4 * DPI));
 
                 graphics.DrawLine(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (6 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (4 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (4 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (4 * DPI));
-            }
-
-            if (WindowState == FormWindowState.Normal)
-            {
-                graphics.DrawRectangle(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (5 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI),
-                    12 * DPI, 11 * DPI);
+                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (8 * DPI),
+                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (5 * DPI),
+                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (5 * DPI),
+                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (5 * DPI));
             }
         }
 
@@ -1168,21 +1160,6 @@ public class UIWindow : UIWindowBase
 
         if (ExtendBox)
         {
-            //if (_inExtendBox)
-            /*
-            graphics.DrawLine(foreColor,
-                    _extendBoxRect.Left + _extendBoxRect.Width / 2 - (5 * DPI) - 1,
-                    _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * DPI),
-                    _extendBoxRect.Left + _extendBoxRect.Width / 2 - (1 * DPI),
-                    _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * DPI));
-
-            graphics.DrawLine(foreColor,
-                _extendBoxRect.Left + _extendBoxRect.Width / 2 + (5 * DPI) - 1,
-                _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * DPI),
-                _extendBoxRect.Left + _extendBoxRect.Width / 2 - (1 * DPI),
-                _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * DPI));
-            */
-
             //graphics.SetHighQuality();
 
             var color = foreColor;
@@ -1266,7 +1243,7 @@ public class UIWindow : UIWindowBase
         var y = activePageRect.Bottom - 2;
         var x = previousActivePageRect.X + (int)((activePageRect.X - previousActivePageRect.X) * animationProgress);
         var width = previousActivePageRect.Width + (int)((activePageRect.Width - previousActivePageRect.Width) * animationProgress);
-
+        
         if (_tabDesingMode == TabDesingMode.Rectangle)
         {
             graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
@@ -1292,17 +1269,17 @@ public class UIWindow : UIWindowBase
                 hoverColor = ForeColor.Alpha(60);
 
             using var hoverBrush = hoverColor.Brush();
-            var tabRect = new RectangleF(x, 5, width, _titleHeightDPI - 10);
+            var tabRect = new RectangleF(x, 5, width, _titleHeightDPI);
 
             var radius = 9 * DPI;
-            graphics.FillPath(hoverBrush, tabRect.Radius(radius, radius, radius, radius));
+            graphics.FillPath(hoverBrush, tabRect.Radius(radius, radius, 0, 0));
             //tabRect.Inflate(0, -4 * DPI);
-            graphics.DrawShadow(tabRect, 5, (int)radius, hoverColor.Determine().Alpha(155));
+            //graphics.DrawShadow(tabRect, 5, (int)radius, hoverColor.Determine().Alpha(155));
 
-            for (int i = 0; i < 0; i++)
+            for (int i = 0; i < 2; i++)
             {
                 // GraphicsPath oluşturuyoruz
-                GraphicsPath path = new GraphicsPath();
+                GraphicsPath path = new();
                 path.StartFigure();
 
                 path.AddBezier(0, 25, 20, 32, 32, 0, 32, 0);  // İlk eğriyi çiz
@@ -1320,7 +1297,7 @@ public class UIWindow : UIWindowBase
                     graphics.TranslateTransform(tabRect.X - bounds.Width, tabRect.Y + bounds.Height - 15);
                 else
                 {
-                    Matrix transform = new Matrix();
+                    Matrix transform = new();
                     transform.Scale(-1, 1);
 
                     path.Transform(transform);
