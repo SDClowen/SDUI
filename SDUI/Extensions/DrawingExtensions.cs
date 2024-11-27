@@ -177,15 +177,15 @@ public static class DrawingExtensions
         gfx.DrawLine(pen, p1, p2);
     }
 
-    internal static GraphicsPath CreateRoundPath(float v1, float v2, float v3, float v4, int v5)
+    public static GraphicsPath CreateRoundPath(float v1, float v2, float v3, float v4, int v5)
     {
         return new RectangleF(v1, v2, v3, v4).Radius(v5);
     }
 
-    internal static void DrawShadow(this Graphics graphics, Rectangle rect, float size, int radius, Color color = default)
+    public static void DrawShadow(this Graphics graphics, Rectangle rect, float size, int radius, Color color = default)
         => DrawShadow(graphics, rect.ToRectangleF(), size, radius, color);
 
-    internal static void DrawShadow(this Graphics graphics, RectangleF rect, float size, int radius, Color color = default)
+    public static void DrawShadow(this Graphics graphics, RectangleF rect, float size, int radius, Color color = default)
     {
         if (size <= 0)
             return;
@@ -206,7 +206,7 @@ public static class DrawingExtensions
         }
     }
 
-    internal static StringAlignment TranslateAlignment(ContentAlignment align)
+    public static StringAlignment TranslateAlignment(ContentAlignment align)
     {
         StringAlignment result;
         if ((align & anyRight) != 0)
@@ -217,7 +217,7 @@ public static class DrawingExtensions
             result = StringAlignment.Near;
         return result;
     }
-    internal static StringAlignment TranslateLineAlignment(ContentAlignment align)
+    public static StringAlignment TranslateLineAlignment(ContentAlignment align)
     {
         StringAlignment result;
         if ((align & anyBottom) != 0)
@@ -235,12 +235,12 @@ public static class DrawingExtensions
         return result;
     }
 
-    internal static StringFormat StringFormatForAlignment(ContentAlignment align)
+    public static StringFormat StringFormatForAlignment(ContentAlignment align)
     {
         return new StringFormat { Alignment = TranslateAlignment(align), LineAlignment = TranslateLineAlignment(align) };
     }
 
-    internal static StringFormat CreateStringFormat(this Control ctl, ContentAlignment textAlign, bool showEllipsis, bool useMnemonic)
+    public static StringFormat CreateStringFormat(this Control ctl, ContentAlignment textAlign, bool showEllipsis, bool useMnemonic)
     {
         StringFormat format = StringFormatForAlignment(textAlign);
         if (ctl.RightToLeft == RightToLeft.Yes)
@@ -271,7 +271,7 @@ public static class DrawingExtensions
         return format;
     }
 
-    internal static void DrawString(this Control control, string text, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
+    public static void DrawString(this Control control, string text, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
     {
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
@@ -280,7 +280,7 @@ public static class DrawingExtensions
         graphics.DrawString(text, control.Font, textBrush, control.ClientRectangle, textFormat);
     }
 
-    internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
+    public static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, bool showEllipsis = false, bool useMnemonic = false)
     {
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
@@ -289,7 +289,7 @@ public static class DrawingExtensions
         graphics.DrawString(control.Text, control.Font, textBrush, control.ClientRectangle, textFormat);
     }
 
-    internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, bool showEllipsis = false, bool useMnemonic = false)
+    public static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, bool showEllipsis = false, bool useMnemonic = false)
     {
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
@@ -298,7 +298,7 @@ public static class DrawingExtensions
         graphics.DrawString(control.Text, control.Font, textBrush, control.ClientRectangle, textFormat);
     }
 
-    internal static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, RectangleF rectangle, bool showEllipsis = false, bool useMnemonic = false)
+    public static void DrawString(this Control control, Graphics graphics, ContentAlignment contentAlignment, Color color, RectangleF rectangle, bool showEllipsis = false, bool useMnemonic = false)
     {
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textFormat = control.CreateStringFormat(contentAlignment, showEllipsis, useMnemonic);
@@ -307,7 +307,7 @@ public static class DrawingExtensions
         graphics.DrawString(control.Text, control.Font, textBrush, rectangle, textFormat);
     }
 
-    internal static void DrawString(this Control control, Graphics graphics, string text, Color color, RectangleF rectangle)
+    public static void DrawString(this Control control, Graphics graphics, string text, Color color, RectangleF rectangle)
     {
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textBrush = new SolidBrush(color);
@@ -320,7 +320,7 @@ public static class DrawingExtensions
 
         graphics.DrawString(text, control.Font, textBrush, rectangle, textFormat);
     }
-    internal static void DrawString(this Control control, Graphics graphics, Color color, RectangleF rectangle)
+    public static void DrawString(this Control control, Graphics graphics, Color color, RectangleF rectangle)
     {
         graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
         using var textBrush = new SolidBrush(color);
@@ -334,7 +334,7 @@ public static class DrawingExtensions
         graphics.DrawString(control.Text, control.Font, textBrush, rectangle, textFormat);
     }
 
-    internal static void DrawSvg(this Graphics graphics, string svg, Color color, RectangleF rectangle)
+    public static void DrawSvg(this Graphics graphics, string svg, Color color, RectangleF rectangle)
     {
         var svgDocument = Svg.SvgDocument.FromSvg<Svg.SvgDocument>(svg);
         svgDocument.Color = new Svg.SvgColourServer(color);

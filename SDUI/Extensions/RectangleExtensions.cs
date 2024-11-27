@@ -1,14 +1,14 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 
-internal static class RectangleExtensions
+public static class RectangleExtensions
 {
-    internal static GraphicsPath Radius(this Rectangle rectangle, int radius)
+    public static GraphicsPath Radius(this Rectangle rectangle, int radius)
     {
         return rectangle.ToRectangleF().Radius(radius);
     }
 
-    internal static GraphicsPath Radius(this RectangleF r, int radius)
+    public static GraphicsPath Radius(this RectangleF r, int radius)
     {
         var path = new GraphicsPath();
         path.AddArc(r.X, r.Y, radius, radius, 180, 90);
@@ -30,7 +30,8 @@ internal static class RectangleExtensions
 
         return path;
     }
-    internal static GraphicsPath Radius(this RectangleF r, float radius)
+
+    public static GraphicsPath Radius(this RectangleF r, float radius)
     {
         var path = new GraphicsPath();
         path.AddArc(r.X, r.Y, radius, radius, 180, 90);
@@ -52,6 +53,7 @@ internal static class RectangleExtensions
 
         return path;
     }
+
     public static GraphicsPath Radius(this RectangleF bounds, float topLeft = 0, float topRight = 0, float bottomLeft = 0, float bottomRight = 0)
     {
         var diameter1 = topLeft * 2;
