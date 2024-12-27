@@ -46,7 +46,8 @@ public class UIWindowBase : Form
 
     public UIWindowBase()
     {
-        //BackColor = Color.FromArgb(0, 0, 0, 0);
+        SetStyle(ControlStyles.SupportsTransparentBackColor | ControlStyles.OptimizedDoubleBuffer, true);
+        BackColor = Color.FromArgb(0, 0, 0, 0);
         ResizeRedraw = true;
     }
 
@@ -93,8 +94,8 @@ public class UIWindowBase : Form
             cp.ClassStyle |= CS_DBLCLKS;
 
             var style = (uint)cp.Style;
-            
-            if(DesignMode)
+
+            if (DesignMode)
                 style &= ~(uint)SetWindowLongFlags.WS_CAPTION;
 
             style &= ~(uint)SetWindowLongFlags.WS_SYSMENU;
@@ -149,7 +150,7 @@ public class UIWindowBase : Form
                     if (WindowState != FormWindowState.Maximized)
                     {
                         int gripDist = 10;
-                        
+
                         var pt = PointToClient(Cursor.Position);
 
                         Size clientSize = ClientSize;
@@ -325,10 +326,10 @@ public class UIWindowBase : Form
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
             var margins = new MARGINS()
             {
-                Bottom = 1,
-                Left = 1,
-                Right = 1,
-                Top = 1
+                Bottom = dwmMargin,
+                Left = dwmMargin,
+                Right = dwmMargin,
+                Top = dwmMargin
             };
 
             DwmExtendFrameIntoClientArea(this.Handle, ref margins);
@@ -347,15 +348,18 @@ public class UIWindowBase : Form
 
         if (!WindowsHelper.IsModern)
             return;
+
         WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
-        /*
-        
-                var flag = DWMSBT_TRANSIENTWINDOW;
-                DwmSetWindowAttribute(
-                    Handle,
-                    DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
-                    ref flag,
-                     Marshal.SizeOf<int>());
-        */
+
+        if (ColorScheme.BackColor.IsDark())
+        {
+            var flag = DWMSBT_TABBEDWINDOW;
+            DwmSetWindowAttribute(
+                Handle,
+                DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
+                ref flag,
+                 Marshal.SizeOf<int>());
+        }
+
     }
 }

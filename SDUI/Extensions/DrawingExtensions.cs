@@ -37,6 +37,39 @@ public static class DrawingExtensions
         }
     }
 
+    public static GraphicsPath ChromePath(this RectangleF bounds, float radius)
+    {
+        var diameter = radius * 2;
+        var x = bounds.Location.X;
+        var y = bounds.Location.Y;
+        var path = new GraphicsPath();
+
+        if (radius == 0)
+        {
+            path.AddRectangle(bounds);
+            return path;
+        }
+
+        // Top left arc
+        path.AddArc(x, y, diameter, diameter, 180, 90);
+
+        // Top right arc
+        x = bounds.Right - diameter;
+        path.AddArc(x, y, diameter, diameter, 270, 90);
+
+        y = bounds.Bottom - diameter;
+
+        // bottom right
+        path.AddArc(x + diameter, y, diameter, diameter, 180, -90);  // Sağ alt dışa doğru eğri
+
+        // Bottom left arc
+        x = bounds.Left - diameter;
+        path.AddArc(x, y, diameter, diameter, 90, -90);
+
+        path.CloseFigure();
+        return path;
+    }
+
     public static GraphicsPath Path(this Point[] points)
     {
         var path = new GraphicsPath();

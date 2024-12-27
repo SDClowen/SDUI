@@ -1113,7 +1113,7 @@ public class UIWindow : UIWindowBase
             if (_inMaxBox)
                 graphics.FillRectangle(Color.FromArgb((int)(maxBoxHoverAnimationManager.GetProgress() * hoverColor.A), hoverColor.RemoveAlpha()), _maximizeBoxRect);
 
-            graphics.DrawRectangle(foreColor,
+                graphics.DrawRectangle(foreColor,
                 _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (12 * DPI / 2),
                 _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (11 * DPI / 2),
                 12 * DPI, 11 * DPI);
@@ -1243,7 +1243,7 @@ public class UIWindow : UIWindowBase
         var y = activePageRect.Bottom - 2;
         var x = previousActivePageRect.X + (int)((activePageRect.X - previousActivePageRect.X) * animationProgress);
         var width = previousActivePageRect.Width + (int)((activePageRect.Width - previousActivePageRect.Width) * animationProgress);
-        
+
         if (_tabDesingMode == TabDesingMode.Rectangle)
         {
             graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
@@ -1269,44 +1269,12 @@ public class UIWindow : UIWindowBase
                 hoverColor = ForeColor.Alpha(60);
 
             using var hoverBrush = hoverColor.Brush();
-            var tabRect = new RectangleF(x, 5, width, _titleHeightDPI);
+            var tabRect = new RectangleF(x, 5, width, _titleHeightDPI - 7);
 
-            var radius = 9 * DPI;
-            graphics.FillPath(hoverBrush, tabRect.Radius(radius, radius, 0, 0));
+            var radius = 12;
+            graphics.FillPath(hoverBrush, tabRect.ChromePath(radius));
             //tabRect.Inflate(0, -4 * DPI);
-            //graphics.DrawShadow(tabRect, 5, (int)radius, hoverColor.Determine().Alpha(155));
-
-            for (int i = 0; i < 2; i++)
-            {
-                // GraphicsPath oluşturuyoruz
-                GraphicsPath path = new();
-                path.StartFigure();
-
-                path.AddBezier(0, 25, 20, 32, 32, 0, 32, 0);  // İlk eğriyi çiz
-
-                path.AddLine(32, 0, 32, 32);
-                path.AddLine(32, 32, 0, 32);
-                path.CloseFigure();
-
-
-                RectangleF bounds = path.GetBounds();
-                float offsetX = tabRect.X / 2 - bounds.X / 2;
-                float offsetY = tabRect.Y / 2 - bounds.Y / 2;
-
-                if (i == 0)
-                    graphics.TranslateTransform(tabRect.X - bounds.Width, tabRect.Y + bounds.Height - 15);
-                else
-                {
-                    Matrix transform = new();
-                    transform.Scale(-1, 1);
-
-                    path.Transform(transform);
-                    graphics.TranslateTransform(tabRect.Width + tabRect.X + bounds.Width, tabRect.Y + bounds.Height - 15);
-                }
-
-                graphics.FillPath(hoverBrush, path);
-                graphics.ResetTransform();
-            }
+            //graphics.DrawShadow(tabRect, 5, radius, hoverColor.Determine().Alpha(155));
         }
 
         //Draw tab headers
