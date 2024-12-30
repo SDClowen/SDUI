@@ -2,10 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Controls.Subclasses
@@ -62,12 +59,13 @@ namespace SDUI.Controls.Subclasses
             ++_uses;
             Handle = handle;
 
-            SetWindowSubclass(handle, _windowProcHandle, UIntPtr.Zero, UIntPtr.Zero);
 
             IntPtr hHeader = SendMessage(handle, LVM_GETHEADER, 0, 0);
 
-            SetWindowTheme(hHeader, "ItemsView", null); // DarkMode
-            SetWindowTheme(handle, "ItemsView", null); // DarkMode
+            var isDark = ColorScheme.BackColor.IsDark();
+            SetWindowTheme(hHeader, isDark ? "DarkMode_ItemsView" : "ItemsView", null); // DarkMode
+            SetWindowTheme(handle, isDark ? "DarkMode_ItemsView" : "ItemsView", null); // DarkMode
+            SetWindowSubclass(handle, _windowProcHandle, UIntPtr.Zero, UIntPtr.Zero);
 
             OnHandleChange();
         }
@@ -125,11 +123,16 @@ namespace SDUI.Controls.Subclasses
                     case WM_THEMECHANGED:
 
                         IntPtr hHeader = SendMessage(Handle, LVM_GETHEADER, 0, 0);
+                        var isDark = ColorScheme.BackColor.IsDark();
 
-                        AllowDarkModeForWindow(Handle, ColorScheme.BackColor.IsDark());
-                        AllowDarkModeForWindow(hHeader, ColorScheme.BackColor.IsDark());
+                        //SetWindowTheme(hHeader, isDark ? "DarkMode_ItemsView" : "ItemsView", null); // DarkMode
+                        //SetWindowTheme(Handle, isDark ? "DarkMode_ItemsView" : "ItemsView", null); // DarkMode
 
-                        var hTheme = OpenThemeData(IntPtr.Zero, "ItemsView");
+
+                        //AllowDarkModeForWindow(Handle, ColorScheme.BackColor.IsDark());
+                        //AllowDarkModeForWindow(hHeader, ColorScheme.BackColor.IsDark());
+
+                        var hTheme = OpenThemeData(IntPtr.Zero, isDark ? "DarkMode_ItemsView" : "ItemsView");
 
                         const int HP_HEADERITEM = 1;
                         const int TMT_FILLCOLOR = 3802;
@@ -138,11 +141,17 @@ namespace SDUI.Controls.Subclasses
                         if (hTheme != IntPtr.Zero)
                         {
                             COLORREF color;
-                            if (GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, out color) > 0)
+                            if (isDark)
+                                color.R = color.G = color.B = 255;
+                            else
+                                color.R = color.G = color.B = 0;
+
+                            //if (GetThemeColor(hTheme, 0, 0, TMT_TEXTCOLOR, out color) > 0)
                             {
                                 SendMessage(Handle, LVM_FIRST + 36, IntPtr.Zero, ref color);
                             }
-                            if (GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, out color) > 0)
+
+                            //if (GetThemeColor(hTheme, 0, 0, TMT_FILLCOLOR, out color) > 0)
                             {
                                 SendMessage(Handle, LVM_FIRST + 38, IntPtr.Zero, ref color);
                                 SendMessage(Handle, LVM_FIRST + 1, IntPtr.Zero, ref color);

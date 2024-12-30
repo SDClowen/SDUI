@@ -40,6 +40,7 @@ public class ListView : System.Windows.Forms.ListView
         UpdateStyles();
 
         _headerSubClass = new();
+        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
     }
 
     protected override void OnSelectedIndexChanged(EventArgs e)
@@ -68,8 +69,6 @@ public class ListView : System.Windows.Forms.ListView
     {
         base.OnHandleCreated(e);
 
-
-        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
         _headerSubClass.AssignHandle(this.Handle);
         SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
     }
