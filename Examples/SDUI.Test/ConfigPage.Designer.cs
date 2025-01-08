@@ -28,31 +28,31 @@
         /// </summary>
         private void InitializeComponent()
         {
-            buttonSelectColor = new Controls.Button();
-            comboBoxHatchType = new Controls.ComboBox();
-            checkBoxDrawFullHatch = new Controls.CheckBox();
-            numTitleHeight = new Controls.NumUpDown();
-            numIconWidth = new Controls.NumUpDown();
-            label5 = new Controls.Label();
-            label6 = new Controls.Label();
-            buttonSelectFont = new Controls.Button();
-            label1 = new Controls.Label();
-            buttonBorderColor = new Controls.Button();
-            checkBoxTitleBorder = new Controls.CheckBox();
-            checkBoxToggleTitle = new Controls.CheckBox();
+            buttonSelectColor = new SDUI.Controls.Button();
+            comboBoxHatchType = new SDUI.Controls.ComboBox();
+            checkBoxDrawFullHatch = new SDUI.Controls.CheckBox();
+            numTitleHeight = new SDUI.Controls.NumUpDown();
+            numIconWidth = new SDUI.Controls.NumUpDown();
+            label5 = new SDUI.Controls.Label();
+            label6 = new SDUI.Controls.Label();
+            buttonSelectFont = new SDUI.Controls.Button();
+            label1 = new SDUI.Controls.Label();
+            buttonBorderColor = new SDUI.Controls.Button();
+            checkBoxTitleBorder = new SDUI.Controls.CheckBox();
+            checkBoxToggleTitle = new SDUI.Controls.CheckBox();
             SuspendLayout();
             // 
             // buttonSelectColor
             // 
             buttonSelectColor.AutoSize = true;
             buttonSelectColor.Color = System.Drawing.Color.Navy;
-            buttonSelectColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            buttonSelectColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
             buttonSelectColor.ForeColor = System.Drawing.Color.White;
             buttonSelectColor.Location = new System.Drawing.Point(257, 124);
             buttonSelectColor.Name = "buttonSelectColor";
             buttonSelectColor.Radius = 6;
             buttonSelectColor.ShadowDepth = 0F;
-            buttonSelectColor.Size = new System.Drawing.Size(95, 23);
+            buttonSelectColor.Size = new System.Drawing.Size(117, 23);
             buttonSelectColor.TabIndex = 46;
             buttonSelectColor.Text = "Select Color";
             buttonSelectColor.UseVisualStyleBackColor = true;
@@ -86,7 +86,7 @@
             checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
             checkBoxDrawFullHatch.Ripple = true;
-            checkBoxDrawFullHatch.Size = new System.Drawing.Size(113, 30);
+            checkBoxDrawFullHatch.Size = new System.Drawing.Size(135, 30);
             checkBoxDrawFullHatch.TabIndex = 45;
             checkBoxDrawFullHatch.Text = "Draw full hatch";
             checkBoxDrawFullHatch.UseVisualStyleBackColor = true;
@@ -95,7 +95,7 @@
             // numTitleHeight
             // 
             numTitleHeight.BackColor = System.Drawing.Color.Transparent;
-            numTitleHeight.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            numTitleHeight.Font = new System.Drawing.Font("Segoe UI", 9F);
             numTitleHeight.ForeColor = System.Drawing.Color.FromArgb(76, 76, 76);
             numTitleHeight.Location = new System.Drawing.Point(462, 84);
             numTitleHeight.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
@@ -111,7 +111,7 @@
             // numIconWidth
             // 
             numIconWidth.BackColor = System.Drawing.Color.Transparent;
-            numIconWidth.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            numIconWidth.Font = new System.Drawing.Font("Segoe UI", 9F);
             numIconWidth.ForeColor = System.Drawing.Color.FromArgb(76, 76, 76);
             numIconWidth.Location = new System.Drawing.Point(257, 84);
             numIconWidth.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
@@ -138,7 +138,7 @@
             label5.GradientAnimation = false;
             label5.Location = new System.Drawing.Point(186, 88);
             label5.Name = "label5";
-            label5.Size = new System.Drawing.Size(65, 15);
+            label5.Size = new System.Drawing.Size(80, 20);
             label5.TabIndex = 43;
             label5.Text = "IconWidth:";
             // 
@@ -156,7 +156,7 @@
             label6.GradientAnimation = false;
             label6.Location = new System.Drawing.Point(385, 88);
             label6.Name = "label6";
-            label6.Size = new System.Drawing.Size(71, 15);
+            label6.Size = new System.Drawing.Size(90, 20);
             label6.TabIndex = 44;
             label6.Text = "Title Height:";
             // 
@@ -164,13 +164,13 @@
             // 
             buttonSelectFont.AutoSize = true;
             buttonSelectFont.Color = System.Drawing.Color.RosyBrown;
-            buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
             buttonSelectFont.ForeColor = System.Drawing.Color.White;
             buttonSelectFont.Location = new System.Drawing.Point(140, 124);
             buttonSelectFont.Name = "buttonSelectFont";
             buttonSelectFont.Radius = 8;
             buttonSelectFont.ShadowDepth = 0F;
-            buttonSelectFont.Size = new System.Drawing.Size(91, 23);
+            buttonSelectFont.Size = new System.Drawing.Size(111, 23);
             buttonSelectFont.TabIndex = 47;
             buttonSelectFont.Text = "Select Font";
             buttonSelectFont.UseVisualStyleBackColor = true;
@@ -180,7 +180,7 @@
             // 
             label1.ApplyGradient = true;
             label1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            label1.Font = new System.Drawing.Font("Segoe UI Semibold", 129.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            label1.Font = new System.Drawing.Font("Segoe UI Semibold", 129.75F, System.Drawing.FontStyle.Bold);
             label1.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
             label1.Gradient = new System.Drawing.Color[]
     {
@@ -200,13 +200,13 @@
             // 
             buttonBorderColor.AutoSize = true;
             buttonBorderColor.Color = System.Drawing.Color.Crimson;
-            buttonBorderColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
+            buttonBorderColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
             buttonBorderColor.ForeColor = System.Drawing.Color.White;
             buttonBorderColor.Location = new System.Drawing.Point(380, 124);
             buttonBorderColor.Name = "buttonBorderColor";
             buttonBorderColor.Radius = 6;
             buttonBorderColor.ShadowDepth = 4F;
-            buttonBorderColor.Size = new System.Drawing.Size(140, 23);
+            buttonBorderColor.Size = new System.Drawing.Size(173, 23);
             buttonBorderColor.TabIndex = 49;
             buttonBorderColor.Text = "Select Border Color";
             buttonBorderColor.UseVisualStyleBackColor = true;
@@ -217,12 +217,12 @@
             checkBoxTitleBorder.AutoSize = true;
             checkBoxTitleBorder.BackColor = System.Drawing.Color.Transparent;
             checkBoxTitleBorder.Depth = 0;
-            checkBoxTitleBorder.Location = new System.Drawing.Point(419, 40);
+            checkBoxTitleBorder.Location = new System.Drawing.Point(432, 40);
             checkBoxTitleBorder.Margin = new System.Windows.Forms.Padding(0);
             checkBoxTitleBorder.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxTitleBorder.Name = "checkBoxTitleBorder";
             checkBoxTitleBorder.Ripple = true;
-            checkBoxTitleBorder.Size = new System.Drawing.Size(123, 30);
+            checkBoxTitleBorder.Size = new System.Drawing.Size(152, 30);
             checkBoxTitleBorder.TabIndex = 45;
             checkBoxTitleBorder.Text = "Draw Title Border";
             checkBoxTitleBorder.UseVisualStyleBackColor = true;
@@ -233,12 +233,12 @@
             checkBoxToggleTitle.AutoSize = true;
             checkBoxToggleTitle.BackColor = System.Drawing.Color.Transparent;
             checkBoxToggleTitle.Depth = 0;
-            checkBoxToggleTitle.Location = new System.Drawing.Point(558, 40);
+            checkBoxToggleTitle.Location = new System.Drawing.Point(584, 40);
             checkBoxToggleTitle.Margin = new System.Windows.Forms.Padding(0);
             checkBoxToggleTitle.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxToggleTitle.Name = "checkBoxToggleTitle";
             checkBoxToggleTitle.Ripple = true;
-            checkBoxToggleTitle.Size = new System.Drawing.Size(93, 30);
+            checkBoxToggleTitle.Size = new System.Drawing.Size(114, 30);
             checkBoxToggleTitle.TabIndex = 45;
             checkBoxToggleTitle.Text = "Toggle Title";
             checkBoxToggleTitle.UseVisualStyleBackColor = true;

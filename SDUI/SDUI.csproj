@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.116.1" />
     <PackageReference Include="Svg" Version="3.4.7" />
   </ItemGroup>
 

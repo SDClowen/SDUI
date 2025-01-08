@@ -36,13 +36,13 @@ namespace SDUI.Test
                 listView1.Items.Add(listItem);
             }
 
-            for (int i = 6; i <= 11; i++)
+            for (int i = 6; i <= 1000; i++)
             {
                 string sItem = "Item " + i.ToString();
                 listView1.Items.Add(new ListViewItem(new[] { i.ToString(), sItem + " Column 2", sItem + " Column 3", sItem + " Column 4" }, group2));
             }
 
-            listView1.SetGroupInfo(listView1.Handle, 1, NativeMethods.LVGS_COLLAPSIBLE);
+            //listView1.SetGroupInfo(listView1.Handle, 1, NativeMethods.LVGS_COLLAPSIBLE);
         }
     }
 }
