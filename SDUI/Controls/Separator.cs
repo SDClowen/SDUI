@@ -1,20 +1,14 @@
-﻿using System.Drawing;
+﻿using SDUI.SK;
+using SkiaSharp;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Separator : UserControl
+public class Separator : SKControl
 {
-    public Separator()
-    {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
-
-        UpdateStyles();
-
-        this.Size = new Size(120, 6);
-    }
-
     private bool _isVertical = false;
+
     public bool IsVertical
     {
         get => _isVertical;
@@ -25,20 +19,41 @@ public class Separator : UserControl
         }
     }
 
-    protected override void OnPaint(PaintEventArgs e)
+    public Separator()
     {
-        using (var pen = new Pen(ColorScheme.BorderColor))
+        SetStyle(
+            ControlStyles.UserPaint |
+            ControlStyles.SupportsTransparentBackColor |
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw, true);
+
+        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
+
+        this.Size = new Size(120, 6);
+    }
+
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    {
+        var canvas = e.Surface.Canvas;
+        canvas.Clear();
+
+        using var paint = new SKPaint
         {
-            if (_isVertical)
-            {
-                var x = Width / 2;
-                e.Graphics.DrawLine(pen, x, 0, x, Height);
-            }
-            else
-            {
-                var y = Height / 2;
-                e.Graphics.DrawLine(pen, 0, y, Width, y);
-            }
+            Color = ColorScheme.BorderColor.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1
+        };
+
+        if (_isVertical)
+        {
+            var x = Width / 2f;
+            canvas.DrawLine(x, 0, x, Height, paint);
+        }
+        else
+        {
+            var y = Height / 2f;
+            canvas.DrawLine(0, y, Width, y, paint);
         }
     }
 }

@@ -1,11 +1,14 @@
-﻿using System;
+﻿using SDUI.Extensions;
+using SDUI.SK;
+using SkiaSharp;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ShapeProgressBar : Control
+public class ShapeProgressBar : SKControl
 {
     private float _weight = 8;
     public float Weight
@@ -49,13 +52,14 @@ public class ShapeProgressBar : Control
         }
     }
 
-    private Color[] _gradient = new Color[2];
+    private SKColor[] _gradient = new SKColor[2];
     public Color[] Gradient
     {
-        get => _gradient;
+        get => new Color[] { _gradient[0].ToColor(), _gradient[1].ToColor() };
         set
         {
-            _gradient = value;
+            _gradient[0] = value[0].ToSKColor();
+            _gradient[1] = value[1].ToSKColor();
             Invalidate();
         }
     }
@@ -63,7 +67,7 @@ public class ShapeProgressBar : Control
     private bool _drawHatch = false;
     public bool DrawHatch
     {
-        get { return _drawHatch; }
+        get => _drawHatch;
         set
         {
             _drawHatch = value;
@@ -71,28 +75,86 @@ public class ShapeProgressBar : Control
         }
     }
 
+    private SKPaint _hatchPaint;
     private HatchStyle _hatchType = HatchStyle.Min;
     public HatchStyle HatchType
     {
-        get
-        {
-            return _hatchType;
-        }
+        get => _hatchType;
         set
         {
             _hatchType = value;
+            UpdateHatchPattern();
             Invalidate();
         }
     }
 
-    protected override void OnResize(EventArgs e)
+    private void UpdateHatchPattern()
     {
-        base.OnResize(e);
-    }
+        _hatchPaint?.Dispose();
 
-    protected override void OnSizeChanged(EventArgs e)
-    {
-        base.OnSizeChanged(e);
+        _hatchPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = _weight * 1.75f,
+            Color = _gradient[0].WithAlpha(50),
+            StrokeCap = SKStrokeCap.Round
+        };
+
+        // Pattern için küçük bir bitmap oluştur
+        using (var surface = SKSurface.Create(new SKImageInfo(8, 8)))
+        {
+            var canvas = surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+
+            using (var paint = new SKPaint
+            {
+                Color = SKColors.White,
+                StrokeWidth = 1,
+                Style = SKPaintStyle.Stroke,
+                IsAntialias = true
+            })
+            {
+                switch (_hatchType)
+                {
+                    case HatchStyle.ForwardDiagonal:
+                        canvas.DrawLine(0, 0, 8, 8, paint);
+                        break;
+
+                    case HatchStyle.BackwardDiagonal:
+                        canvas.DrawLine(8, 0, 0, 8, paint);
+                        break;
+
+                    case HatchStyle.Cross:
+                        canvas.DrawLine(4, 0, 4, 8, paint);
+                        canvas.DrawLine(0, 4, 8, 4, paint);
+                        break;
+
+                    case HatchStyle.DiagonalCross:
+                        canvas.DrawLine(0, 0, 8, 8, paint);
+                        canvas.DrawLine(8, 0, 0, 8, paint);
+                        break;
+
+                    case HatchStyle.Horizontal:
+                        canvas.DrawLine(0, 4, 8, 4, paint);
+                        break;
+
+                    case HatchStyle.Vertical:
+                        canvas.DrawLine(4, 0, 4, 8, paint);
+                        break;
+
+                    default:
+                        canvas.DrawLine(0, 0, 8, 8, paint);
+                        break;
+                }
+            }
+
+            using (var image = surface.Snapshot())
+            using (var shader = SKShader.CreateImage(image, SKShaderTileMode.Repeat, SKShaderTileMode.Repeat))
+            {
+                _hatchPaint.Shader = shader;
+            }
+        }
     }
 
     public ShapeProgressBar()
@@ -100,55 +162,117 @@ public class ShapeProgressBar : Control
         Size = new Size(100, 100);
         Font = new Font("Segoe UI", 15);
         SetStyle(ControlStyles.UserPaint |
-            ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+            ControlStyles.AllPaintingInWmPaint | 
+            ControlStyles.OptimizedDoubleBuffer | 
+            ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
+
+        // Varsayılan gradient renkleri
+        _gradient[0] = ColorScheme.AccentColor.ToSKColor();
+        _gradient[1] = ColorScheme.AccentColor.ToSKColor().WithAlpha(200);
+        
+        UpdateHatchPattern();
     }
 
-    protected override void OnPaint(PaintEventArgs e)
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        var graphics = e.Graphics;
+        var canvas = e.Surface.Canvas;
+        canvas.Clear();
 
-        ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+        // Antialiasing için yüksek kalite ayarı
+        canvas.SetMatrix(SKMatrix.CreateScale(1.0f, 1.0f));
 
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        var calc = (float)((360.0 / _maximum) * _value);
+        
+        // Merkez noktası ve boyutlar
+        float centerX = Width / 2f;
+        float centerY = Height / 2f;
+        float size = Math.Min(Width, Height) - _weight - 2;
+        float left = centerX - size / 2f;
+        float top = centerY - size / 2f;
 
-        var calc = (int)Math.Round((double)((360.0 / _maximum) * _value));
+        var rect = new SKRect(left, top, left + size, top + size);
 
-        var renderWidth = ClientRectangle.Width - _weight - 1;
-        var renderHeight = ClientRectangle.Height - _weight - 1;
-
-        using (var brush = new LinearGradientBrush(ClientRectangle, _gradient[0], _gradient[1], LinearGradientMode.ForwardDiagonal))
+        // Ana gradient çizimi
+        using (var paint = new SKPaint
         {
-            using (var pen = new Pen(brush, _weight))
+            IsAntialias = true,
+            FilterQuality = SKFilterQuality.High,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = _weight,
+            StrokeCap = SKStrokeCap.Round
+        })
+        {
+            // Gradient shader'ı oluştur
+            using (var shader = SKShader.CreateLinearGradient(
+                new SKPoint(left, top),
+                new SKPoint(left + size, top + size),
+                new[] { _gradient[0], _gradient[1] },
+                null,
+                SKShaderTileMode.Clamp))
             {
-                pen.StartCap = LineCap.Round;
-                pen.EndCap = LineCap.Round;
-                graphics.DrawArc(pen, _weight / 2, _weight / 2, renderWidth, renderHeight, -90, calc);
+                paint.Shader = shader;
+                canvas.DrawArc(rect, -90, calc, false, paint);
             }
         }
 
+        // Hatch pattern çizimi
         if (_drawHatch)
         {
-            using (var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1])))
+            canvas.DrawArc(rect, -90, calc, false, _hatchPaint);
+        }
+
+        // İç daire çizimi
+        float innerSize = size - _weight;
+        float innerLeft = centerX - innerSize / 2f;
+        float innerTop = centerY - innerSize / 2f;
+
+        using (var paint = new SKPaint
+        {
+            IsAntialias = true,
+            FilterQuality = SKFilterQuality.High,
+            Style = SKPaintStyle.Fill
+        })
+        {
+            // İç daire için gradient
+            using (var shader = SKShader.CreateLinearGradient(
+                new SKPoint(innerLeft, innerTop),
+                new SKPoint(innerLeft, innerTop + innerSize),
+                new[] { ColorScheme.BackColor.ToSKColor(), ColorScheme.BackColor2.ToSKColor() },
+                null,
+                SKShaderTileMode.Clamp))
             {
-                using (var pen = new Pen(hatchBrush, 14f))
-                {
-                    pen.StartCap = LineCap.Round;
-                    pen.EndCap = LineCap.Round;
-                    graphics.DrawArc(pen, _weight / 2, _weight / 2, renderWidth, renderHeight, -90, calc);
-                }
+                paint.Shader = shader;
+                canvas.DrawCircle(centerX, centerY, innerSize / 2f, paint);
             }
         }
 
-        using (var brush = new LinearGradientBrush(ClientRectangle, ColorScheme.BackColor, ColorScheme.BackColor2, LinearGradientMode.Vertical))
-            graphics.FillEllipse(brush, _weight / 2, _weight / 2, renderWidth, renderHeight);
+        // Yüzde metni çizimi
+        var percent = (100 / (float)_maximum) * _value;
+        var percentString = percent.ToString("0");
 
-        var percent = (100 / _maximum) * _value;
-        var percentString = percent.ToString();
-        var stringSize = graphics.MeasureString(percentString, Font);
+        using (var paint = new SKPaint
+        {
+            Color = ColorScheme.ForeColor.ToSKColor(),
+            TextSize = Math.Min(Width, Height) * 0.2f,
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+            IsAntialias = true,
+            TextAlign = SKTextAlign.Center,
+            SubpixelText = true
+        })
+        {
+            var textBounds = new SKRect();
+            paint.MeasureText(percentString, ref textBounds);
+            canvas.DrawText(percentString, centerX, centerY + textBounds.Height / 3f, paint);
+        }
+    }
 
-        using (var textBrush = new SolidBrush(ColorScheme.ForeColor))
-            graphics.DrawString(percentString, Font, textBrush, Width / 2 - stringSize.Width / 2, Height / 2 - stringSize.Height / 2);
-
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _hatchPaint?.Dispose();
+        }
+        base.Dispose(disposing);
     }
 }

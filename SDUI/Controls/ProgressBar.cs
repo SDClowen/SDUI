@@ -1,12 +1,14 @@
-﻿using System;
+﻿using SDUI.Extensions;
+using SDUI.SK;
+using SkiaSharp;
+using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ProgressBar : Control
+public class ProgressBar : SKControl
 {
     private long _value = 0;
     public long Value
@@ -25,12 +27,7 @@ public class ProgressBar : Control
         get => _maximum;
         set
         {
-            _maximum = value;
-            if (value > 0)
-                _maximum = value;
-            else
-                _maximum = 1;
-
+            _maximum = value <= 0 ? 1 : value;
             Invalidate();
         }
     }
@@ -60,7 +57,7 @@ public class ProgressBar : Control
     private int _percentIndices = 2;
     public int PercentIndices
     {
-        get { return _percentIndices; }
+        get => _percentIndices;
         set
         {
             _percentIndices = value;
@@ -82,7 +79,7 @@ public class ProgressBar : Control
     private bool _showValue = false;
     public bool ShowValue
     {
-        get { return _showValue; }
+        get => _showValue;
         set
         {
             _showValue = value;
@@ -93,10 +90,7 @@ public class ProgressBar : Control
     private int _radius = 4;
     public int Radius
     {
-        get
-        {
-            return _radius;
-        }
+        get => _radius;
         set
         {
             _radius = value <= 0 ? 1 : value;
@@ -107,7 +101,7 @@ public class ProgressBar : Control
     private bool _drawHatch = false;
     public bool DrawHatch
     {
-        get { return _drawHatch; }
+        get => _drawHatch;
         set
         {
             _drawHatch = value;
@@ -122,27 +116,21 @@ public class ProgressBar : Control
         set
         {
             _hatchType = HatchStyle.Percent10;
-            //_hatchType = value;
             Invalidate();
         }
     }
 
     public ProgressBar()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-                  ControlStyles.OptimizedDoubleBuffer |
-                  ControlStyles.ResizeRedraw |
-                  ControlStyles.Opaque |
-            ControlStyles.AllPaintingInWmPaint |
-                  ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.UserPaint |
+            ControlStyles.SupportsTransparentBackColor |
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw, true);
 
-        UpdateStyles();
+        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
+
         BackColor = Color.Transparent;
-    }
-
-    private void Timer_Tick(object? sender, EventArgs e)
-    {
-        this.Invalidate();
     }
 
     protected override void OnParentBackColorChanged(EventArgs e)
@@ -151,73 +139,126 @@ public class ProgressBar : Control
         Invalidate();
     }
 
-    protected override void OnPaint(PaintEventArgs e)
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        var graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
-
-        ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+        var canvas = e.Surface.Canvas;
+        canvas.Clear();
 
         var intValue = ((_value / (float)_maximum) * Width);
         var percent = ((100.0f * Value) / Maximum);
 
-        using var linearGradientBrush = new LinearGradientBrush(new RectangleF(0, 0, Width, Height), _gradient[0], _gradient[1], 90);
-        using var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));
+        var rect = new SKRect(0, 0, Width, Height);
 
-        var rect = ClientRectangle.ToRectangleF();
-
-        using (var path = rect.Radius(_radius))
-            graphics.FillPath(new SolidBrush(ColorScheme.BorderColor), path);
-
-        if (intValue != 0)
+        // Arka plan çizimi
+        using (var paint = new SKPaint
         {
-            var rectValue = new RectangleF(rect.X, rect.Y, intValue, rect.Height - 1);
-            using var path = rectValue.Radius(_radius);
-            graphics.FillPath(linearGradientBrush, path);
-            graphics.FillPath(hatchBrush, path);
+            Color = ColorScheme.BorderColor.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
 
-        graphics.DrawPath(new Pen(Color.FromArgb(10, Parent.BackColor.Determine())), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
+        // İlerleme çubuğu çizimi
+        if (intValue > 0)
+        {
+            var progressRect = new SKRect(0, 0, intValue, Height);
 
+            // Gradient oluştur
+            using var shader = SKShader.CreateLinearGradient(
+                new SKPoint(0, 0),
+                new SKPoint(0, Height),
+                new[] { _gradient[0].ToSKColor(), _gradient[1].ToSKColor() },
+                null,
+                SKShaderTileMode.Clamp);
+
+            using (var paint = new SKPaint
+            {
+                Shader = shader,
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            })
+            {
+                canvas.DrawRoundRect(progressRect, _radius, _radius, paint);
+            }
+
+            // Hatch pattern çizimi
+            if (_drawHatch)
+            {
+                using var hatchPaint = new SKPaint
+                {
+                    Color = SKColors.White.WithAlpha(50),
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 1,
+                    PathEffect = SKPathEffect.Create2DLine(2, new SKMatrix(1, 1, 0, -1, 1, 0, 0, 0, 1))
+                };
+
+                canvas.DrawRoundRect(progressRect, _radius, _radius, hatchPaint);
+            }
+        }
+
+        // Çerçeve çizimi
+        using (var paint = new SKPaint
+        {
+            Color = Parent.BackColor.Determine().ToSKColor().WithAlpha(10),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+        }
+
+        // Değer metni çizimi
         if (ShowValue)
         {
-            e.Graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
-            var textShadowColor = ColorScheme.ForeColor.Determine();
-            var textColor = ColorScheme.ForeColor;
-
+            string text;
             if (_showAsPercent)
             {
                 if (percent == 100)
                     percent = _maxPercentShowValue;
 
-                Text = percent.ToString($"0.{"0".PadRight(_percentIndices, '0')}") + "%";
+                text = percent.ToString($"0.{"0".PadRight(_percentIndices, '0')}") + "%";
             }
             else
-                Text = $"{_value} / {_maximum}";
-
-            if (percent > 50)
             {
-                textColor = Color.White;
-                textShadowColor = Color.Black;
+                text = $"{_value} / {_maximum}";
             }
 
-            // draw shadow
-            var shadowBrush = new SolidBrush(textShadowColor);
-            e.Graphics.DrawString(Text, Font, shadowBrush, new Rectangle(1, 1, Width, Height), new StringFormat
-            {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center
-            });
+            var textColor = percent > 50 ? SKColors.White : ColorScheme.ForeColor.ToSKColor();
+            var shadowColor = percent > 50 ? SKColors.Black : ColorScheme.ForeColor.Determine().ToSKColor();
 
-            shadowBrush.Dispose();
-            // draw text
-            var textBrush = new SolidBrush(textColor);
-            e.Graphics.DrawString(Text, Font, textBrush, new Rectangle(0, 0, Width, Height), new StringFormat
+            // Gölge metni
+            using (var paint = new SKPaint
             {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center
-            });
+                Color = shadowColor,
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                TextAlign = SKTextAlign.Center,
+                IsAntialias = true
+            })
+            {
+                var textBounds = new SKRect();
+                paint.MeasureText(text, ref textBounds);
+                canvas.DrawText(text, Width / 2f + 1, (Height + textBounds.Height) / 2f + 1, paint);
+            }
+
+            // Ana metin
+            using (var paint = new SKPaint
+            {
+                Color = textColor,
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                TextAlign = SKTextAlign.Center,
+                IsAntialias = true
+            })
+            {
+                var textBounds = new SKRect();
+                paint.MeasureText(text, ref textBounds);
+                canvas.DrawText(text, Width / 2f, (Height + textBounds.Height) / 2f, paint);
+            }
         }
     }
-
 }

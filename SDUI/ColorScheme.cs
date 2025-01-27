@@ -34,6 +34,8 @@ public class ColorScheme
     /// </summary>
     public static Color AccentColor => Color.FromArgb(0, 92, 252);
 
+    public static Color PrimaryColor => Color.FromArgb(0, 92, 252);
+
     /// <summary>
     /// Gets or sets the debug borders
     /// </summary>

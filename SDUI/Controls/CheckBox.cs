@@ -1,242 +1,392 @@
 ﻿using SDUI.Animation;
+using SDUI.Extensions;
+using SDUI.SK;
+using SkiaSharp;
 using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class CheckBox : System.Windows.Forms.CheckBox
+    public class CheckBox : SKControl
     {
         private const int CHECKBOX_SIZE = 16;
-
         private const int CHECKBOX_SIZE_HALF = CHECKBOX_SIZE / 2;
+        private const int TEXT_PADDING = 4;
 
-        private static readonly Point[] CHECKMARK_LINE = { new (1, 6), new (5, 10), new (12, 3) };
+        // Tik işareti koordinatları - checkbox içinde ortalı olacak şekilde ayarlandı
+        private static readonly Point[] CHECKMARK_LINE = { new(4, 8), new(7, 11), new(12, 6) };
 
         private readonly Animation.AnimationEngine animationManager;
-
         private readonly Animation.AnimationEngine rippleAnimationManager;
 
         private int boxOffset;
-
         private RectangleF boxRectangle;
-
         private bool ripple;
+        private bool _checked;
+        private Point mouseLocation;
+        private int _mouseState;
+        private CheckState _checkState = CheckState.Unchecked;
+        private bool _threeState;
 
         [Browsable(false)]
         public int Depth { get; set; }
 
         [Browsable(false)]
-        public Point MouseLocation { get; set; }
-
-        private int _mouseState { get; set; }
-
-        public override bool AutoSize
+        public Point MouseLocation
         {
-            get { return base.AutoSize; }
+            get => mouseLocation;
             set
             {
-                base.AutoSize = value;
-                if (value)
-                {
-                    Size = new Size(10, 10);
-                }
+                mouseLocation = value;
+                Invalidate();
             }
         }
 
         [Category("Behavior")]
         public bool Ripple
         {
-            get { return ripple; }
+            get => ripple;
             set
             {
                 ripple = value;
-                AutoSize = AutoSize; //Make AutoSize directly set the bounds.
-
-                if (value)
-                {
-                    Margin = new Padding(0);
-                }
-
+                AutoSize = AutoSize;
+                if (value) Margin = new Padding(0);
                 Invalidate();
             }
         }
 
+        [Category("Behavior")]
+        public bool ThreeState
+        {
+            get => _threeState;
+            set
+            {
+                if (_threeState == value) return;
+                _threeState = value;
+                Invalidate();
+            }
+        }
+
+        [Category("Behavior")]
+        public CheckState CheckState
+        {
+            get => _checkState;
+            set
+            {
+                if (_checkState == value) return;
+                _checkState = value;
+                _checked = value != CheckState.Unchecked;
+                OnCheckStateChanged(EventArgs.Empty);
+                Invalidate();
+            }
+        }
+
+        [Category("Behavior")]
+        public bool Checked
+        {
+            get => _checked;
+            set
+            {
+                if (_checked == value) return;
+                _checked = value;
+                CheckState = value ? CheckState.Checked : CheckState.Unchecked;
+                OnCheckedChanged(EventArgs.Empty);
+                Invalidate();
+            }
+        }
+
+        public event EventHandler CheckedChanged;
+        public event EventHandler CheckStateChanged;
+
+        protected virtual void OnCheckedChanged(EventArgs e) => CheckedChanged?.Invoke(this, e);
+        protected virtual void OnCheckStateChanged(EventArgs e) => CheckStateChanged?.Invoke(this, e);
+
         public CheckBox()
         {
-            //SetExtendedState(ExtendedStates.UserPreferredSizeCache, true);
+            SetStyle(
+                ControlStyles.UserPaint |
+                ControlStyles.SupportsTransparentBackColor |
+                ControlStyles.OptimizedDoubleBuffer |
+                ControlStyles.ResizeRedraw, true);
 
-            SetStyle(ControlStyles.UserPaint |
-                     ControlStyles.SupportsTransparentBackColor |
-                     ControlStyles.OptimizedDoubleBuffer, true);
+            SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
 
-            SetStyle(ControlStyles.FixedHeight |
-                     ControlStyles.Selectable, false);
-
-            SetStyle(ControlStyles.ResizeRedraw, true);
-
-            animationManager = new Animation.AnimationEngine
+            animationManager = new()
             {
                 AnimationType = AnimationType.EaseInOut,
                 Increment = 0.10
             };
-            rippleAnimationManager = new Animation.AnimationEngine(false)
+
+            rippleAnimationManager = new(false)
             {
                 AnimationType = AnimationType.Linear,
                 Increment = 0.10,
                 SecondaryIncrement = 0.07
             };
-            animationManager.OnAnimationProgress += sender => Invalidate();
-            rippleAnimationManager.OnAnimationProgress += sender => Invalidate();
 
-            CheckedChanged += (sender, args) =>
-            {
-                animationManager.StartNewAnimation(Checked ? AnimationDirection.In : AnimationDirection.Out);
-            };
+            animationManager.OnAnimationProgress += _ => Invalidate();
+            rippleAnimationManager.OnAnimationProgress += _ => Invalidate();
+
+            CheckedChanged += (_, _) => animationManager.StartNewAnimation(Checked ? AnimationDirection.In : AnimationDirection.Out);
 
             Ripple = true;
             MouseLocation = new Point(-1, -1);
         }
 
-        private Bitmap DrawCheckMarkBitmap()
-        {
-            var checkMark = new Bitmap(CHECKBOX_SIZE, CHECKBOX_SIZE);
-
-            using (var g = Graphics.FromImage(checkMark))
-            {
-                // clear everything, transparent
-                g.Clear(Color.Transparent);
-                // draw the checkmark lines
-                using var pen = new Pen(Enabled ? Color.White : Color.DarkGray, 2);
-                g.DrawLines(pen, CHECKMARK_LINE);
-            }
-
-            return checkMark;
-        }
-
-        private bool IsMouseInCheckArea()
-        {
-            return boxRectangle.Contains(MouseLocation);
-        }
+        private bool IsMouseInCheckArea() => boxRectangle.Contains(MouseLocation);
 
         public override Size GetPreferredSize(Size proposedSize)
         {
-            int w = boxOffset + CHECKBOX_SIZE + 2 + TextRenderer.MeasureText(Text, Font).Width;
-            return Ripple ? new Size(w, 30) : new Size(w, 20);
+            using var paint = new SKPaint
+            {
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            };
+
+            float textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
+            int width = CHECKBOX_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth);
+            int height = Ripple ? 30 : 20;
+
+            return new Size(width + Padding.Horizontal, height + Padding.Vertical);
         }
 
         protected override void OnCreateControl()
         {
             base.OnCreateControl();
-
             if (DesignMode) return;
 
-            _mouseState = 0;
-            MouseEnter += (sender, args) =>
-            {
-                _mouseState = 1;
-            };
-            MouseLeave += (sender, args) =>
+            MouseEnter += (_, _) => _mouseState = 1;
+            MouseLeave += (_, _) =>
             {
                 MouseLocation = new Point(-1, -1);
                 _mouseState = 0;
             };
-            MouseDown += (sender, args) =>
+            MouseDown += (_, e) =>
             {
                 _mouseState = 2;
-
-                if (Ripple && args.Button == MouseButtons.Left && IsMouseInCheckArea())
+                if (Ripple && e.Button == MouseButtons.Left && IsMouseInCheckArea())
                 {
                     rippleAnimationManager.SecondaryIncrement = 0;
                     rippleAnimationManager.StartNewAnimation(AnimationDirection.InOutIn, new object[] { Checked });
                 }
             };
-            MouseUp += (sender, args) =>
+            MouseUp += (_, _) =>
             {
                 _mouseState = 1;
                 rippleAnimationManager.SecondaryIncrement = 0.08;
             };
-            MouseMove += (sender, args) =>
+            MouseMove += (_, e) =>
             {
-                MouseLocation = args.Location;
+                MouseLocation = e.Location;
                 Cursor = IsMouseInCheckArea() ? Cursors.Hand : Cursors.Default;
             };
         }
 
-        protected override void OnPaint(PaintEventArgs pevent)
+        protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
         {
-            var graphics = pevent.Graphics;
-            graphics.SmoothingMode = SmoothingMode.HighQuality;
-            graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
+            var canvas = e.Surface.Canvas;
+            canvas.Clear();
 
-            CheckBoxRenderer.DrawParentBackground(pevent.Graphics, ClientRectangle, this);
-
-            var CHECKBOX_CENTER = boxOffset + CHECKBOX_SIZE_HALF - 1;
-
-            double animationProgress = animationManager.GetProgress();
-
+            var animationProgress = (float)animationManager.GetProgress();
             var disabledOffColor = ColorScheme.BorderColor;
+            var accentColor = Enabled ? ColorScheme.AccentColor : disabledOffColor;
 
             int colorAlpha = Enabled ? (int)(animationProgress * 255.0) : disabledOffColor.A;
             int backgroundAlpha = Enabled ? (int)(ColorScheme.BorderColor.A * (1.0 - animationProgress)) : disabledOffColor.A;
 
-            using var brush = new SolidBrush(Color.FromArgb(colorAlpha, Enabled ? ColorScheme.AccentColor : disabledOffColor));
-            using var pen = new Pen(brush.Color);
-
-            // draw ripple animation
+            // Ripple efekti
             if (Ripple && rippleAnimationManager.IsAnimating())
             {
-                for (int i = 0; i < rippleAnimationManager.GetAnimationCount(); i++)
-                {
-                    var animationValue = rippleAnimationManager.GetProgress(i);
-                    var animationSource = new Point(CHECKBOX_CENTER, CHECKBOX_CENTER);
-                    using var rippleBrush = new SolidBrush(Color.FromArgb((int)((animationValue * 40)), ((bool)rippleAnimationManager.GetData(i)[0]) ? Color.Black : brush.Color));
-                    var rippleHeight = (Height % 2 == 0) ? Height - 3 : Height - 2;
-                    var rippleSize = (rippleAnimationManager.GetDirection(i) == AnimationDirection.InOutIn) ? (int)(rippleHeight * (0.8d + (0.2d * animationValue))) : rippleHeight;
-
-                    using var path = DrawingExtensions.CreateRoundPath(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize, rippleSize / 2);
-                    graphics.FillPath(rippleBrush, path);
-                }
+                DrawRippleEffect(canvas, accentColor);
             }
 
-            var checkMarkLineFill = new Rectangle(boxOffset, boxOffset, (int)(14.0 * animationProgress), 14);
-            using (var checkmarkPath = DrawingExtensions.CreateRoundPath(boxOffset, boxOffset, 14, 14, 2))
+            // Checkbox çerçeve ve arka plan
+            var boxRect = new SKRect(
+                boxOffset,
+                boxOffset,
+                boxOffset + CHECKBOX_SIZE - 1,
+                boxOffset + CHECKBOX_SIZE - 1
+            );
+
+            // Arka plan
+            using (var paint = new SKPaint
             {
-                using var brush2 = new SolidBrush(ColorScheme.BackColor.BlendWith(Enabled ? ColorScheme.BorderColor : disabledOffColor, backgroundAlpha));
-                using var pen2 = new Pen(brush2.Color);
-
-                graphics.FillPath(ColorScheme.BorderColor.Brush(), checkmarkPath);
-                graphics.DrawPath(ColorScheme.BorderColor.Pen(), checkmarkPath);
-                //graphics.DrawShadow(boxRectangle, 2, 1);
-
-                graphics.FillPath(brush, checkmarkPath);
-                graphics.DrawPath(pen, checkmarkPath);
-
-                graphics.DrawImageUnscaledAndClipped(DrawCheckMarkBitmap(), checkMarkLineFill);
+                Color = ColorScheme.BackColor.BlendWith(Enabled ? ColorScheme.BorderColor : disabledOffColor, backgroundAlpha).ToSKColor(),
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            })
+            {
+                canvas.DrawRoundRect(boxRect, 2, 2, paint);
             }
 
-            // draw checkbox text
-            var textColor = Enabled ? ColorScheme.ForeColor : Color.Gray;
+            // Çerçeve
+            using (var paint = new SKPaint
+            {
+                Color = ColorScheme.BorderColor.ToSKColor(),
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1
+            })
+            {
+                canvas.DrawRoundRect(boxRect, 2, 2, paint);
+            }
 
-            this.DrawString(graphics, TextAlign,  textColor, new RectangleF(new Point(boxOffset + CHECKBOX_SIZE, 0), ClientRectangle.Size));
+            // Checkbox dolgu ve işaret
+            if (Checked || CheckState == CheckState.Indeterminate)
+            {
+                DrawCheckboxFill(canvas, boxRect, accentColor, colorAlpha, animationProgress);
+            }
 
+            // Text
+            if (!string.IsNullOrEmpty(Text))
+            {
+                DrawText(canvas);
+            }
+
+            // Debug çerçevesi
             if (ColorScheme.DrawDebugBorders)
             {
-                using var redPen = new Pen(Color.Red, 1);
-                redPen.Alignment = PenAlignment.Outset;
-                graphics.DrawRectangle(redPen, 0, 0, Width - 1, Height - 1);
+                using var paint = new SKPaint
+                {
+                    Color = SKColors.Red,
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 1
+                };
+                canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
+            }
+        }
+
+        private void DrawRippleEffect(SKCanvas canvas, Color accentColor)
+        {
+            var CHECKBOX_CENTER = boxOffset + CHECKBOX_SIZE_HALF - 1;
+
+            for (int i = 0; i < rippleAnimationManager.GetAnimationCount(); i++)
+            {
+                var animationValue = (float)rippleAnimationManager.GetProgress(i);
+                var animationSource = new SKPoint(CHECKBOX_CENTER, CHECKBOX_CENTER);
+
+                var rippleColor = ((bool)rippleAnimationManager.GetData(i)[0]) ?
+                    SKColors.Black.WithAlpha((byte)(animationValue * 40)) :
+                    accentColor.ToSKColor().WithAlpha((byte)(animationValue * 40));
+
+                var rippleHeight = (Height % 2 == 0) ? Height - 3f : Height - 2f;
+                var rippleSize = (rippleAnimationManager.GetDirection(i) == AnimationDirection.InOutIn) ?
+                    rippleHeight * (0.8f + (0.2f * animationValue)) : rippleHeight;
+
+                using var paint = new SKPaint
+                {
+                    Color = rippleColor,
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Fill
+                };
+
+                canvas.DrawCircle(animationSource.X, animationSource.Y, rippleSize / 2, paint);
+            }
+        }
+
+        private void DrawCheckboxFill(SKCanvas canvas, SKRect boxRect, Color accentColor, int colorAlpha, float animationProgress)
+        {
+            using var paint = new SKPaint
+            {
+                Color = accentColor.ToSKColor().WithAlpha((byte)colorAlpha),
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            };
+            canvas.DrawRoundRect(boxRect, 2, 2, paint);
+
+            using var checkPaint = new SKPaint
+            {
+                Color = SKColors.White,
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 2,
+                StrokeCap = SKStrokeCap.Round,
+                StrokeJoin = SKStrokeJoin.Round
+            };
+
+            if (CheckState == CheckState.Indeterminate)
+            {
+                canvas.DrawLine(
+                    boxOffset + 4,
+                    boxOffset + CHECKBOX_SIZE_HALF,
+                    boxOffset + CHECKBOX_SIZE - 4,
+                    boxOffset + CHECKBOX_SIZE_HALF,
+                    checkPaint
+                );
+            }
+            else
+            {
+                var checkMarkRect = new SKRect(
+                    boxOffset,
+                    boxOffset,
+                    boxOffset + (CHECKBOX_SIZE * animationProgress),
+                    boxOffset + CHECKBOX_SIZE
+                );
+
+                using var clipPath = new SKPath();
+                clipPath.AddRect(checkMarkRect);
+                canvas.Save();
+                canvas.ClipPath(clipPath);
+
+                var path = new SKPath();
+                path.MoveTo(boxOffset + CHECKMARK_LINE[0].X, boxOffset + CHECKMARK_LINE[0].Y);
+                path.LineTo(boxOffset + CHECKMARK_LINE[1].X, boxOffset + CHECKMARK_LINE[1].Y);
+                path.LineTo(boxOffset + CHECKMARK_LINE[2].X, boxOffset + CHECKMARK_LINE[2].Y);
+
+                canvas.DrawPath(path, checkPaint);
+                canvas.Restore();
+            }
+        }
+
+        private void DrawText(SKCanvas canvas)
+        {
+            using var textPaint = canvas.CreateTextPaint(Font, Enabled ? ColorScheme.ForeColor : Color.Gray, this, ContentAlignment.MiddleLeft);
+            
+            float textY = Height / 2f + (textPaint.FontMetrics.XHeight / 2f);
+            float textX = boxOffset + CHECKBOX_SIZE + TEXT_PADDING;
+
+            if (AutoEllipsis)
+            {
+                float maxWidth = Width - textX - Padding.Right;
+                canvas.DrawTextWithEllipsis(Text, textPaint, textX, textY, maxWidth);
+            }
+            else if (UseMnemonic)
+            {
+                canvas.DrawTextWithMnemonic(Text, textPaint, textX, textY);
+            }
+            else
+            {
+                canvas.DrawText(Text, textX, textY, textPaint);
             }
         }
 
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
+            boxOffset = (Height - CHECKBOX_SIZE) / 2;
+            boxRectangle = new RectangleF(boxOffset, boxOffset, CHECKBOX_SIZE - 1, CHECKBOX_SIZE - 1);
+        }
 
-            boxOffset = Height / 2 - 7;
-            boxRectangle = new Rectangle(boxOffset, boxOffset, CHECKBOX_SIZE - 1, CHECKBOX_SIZE - 1);
+        protected override void OnClick(EventArgs e)
+        {
+            if (ThreeState)
+            {
+                CheckState = CheckState switch
+                {
+                    CheckState.Unchecked => CheckState.Checked,
+                    CheckState.Checked => CheckState.Indeterminate,
+                    CheckState.Indeterminate => CheckState.Unchecked,
+                    _ => CheckState.Unchecked
+                };
+            }
+            else
+            {
+                Checked = !Checked;
+            }
+            base.OnClick(e);
         }
     }
 }

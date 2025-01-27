@@ -1,29 +1,31 @@
 ﻿using SDUI.Animation;
+using SDUI.Extensions;
+using SDUI.SK;
+using SkiaSharp;
 using System;
 using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Text;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Radio : RadioButton
+public class Radio : SKControl
 {
-
     private const int RADIOBUTTON_INNER_CIRCLE_SIZE = RADIOBUTTON_SIZE - (2 * RADIOBUTTON_OUTER_CIRCLE_WIDTH);
 
-    private const int RADIOBUTTON_OUTER_CIRCLE_WIDTH = 1;
+    private const int RADIOBUTTON_OUTER_CIRCLE_WIDTH = 2;
 
     // size constants
-    private const int RADIOBUTTON_SIZE = 15;
+    private const int RADIOBUTTON_SIZE = 18;
 
     private const int RADIOBUTTON_SIZE_HALF = RADIOBUTTON_SIZE / 2;
 
-    // animation managers
-    private readonly Animation.AnimationEngine animationManager;
+    private const int TEXT_PADDING = 4;
 
-    private readonly Animation.AnimationEngine rippleAnimationManager;
+    // animation managers
+    private readonly AnimationEngine animationManager;
+
+    private readonly AnimationEngine rippleAnimationManager;
 
     private int boxOffset;
     private int _mouseState;
@@ -32,6 +34,8 @@ public class Radio : RadioButton
     private Rectangle radioButtonBounds;
 
     private bool ripple;
+
+    private bool _checked;
 
     [Browsable(false)]
     private Point _mouseLocation { get; set; }
@@ -54,27 +58,50 @@ public class Radio : RadioButton
         }
     }
 
+    [Category("Behavior")]
+    public bool Checked
+    {
+        get => _checked;
+        set
+        {
+            if (_checked == value) return;
+            _checked = value;
+            OnCheckedChanged(EventArgs.Empty);
+            Invalidate();
+        }
+    }
+
+    public event EventHandler CheckedChanged;
+
+    protected virtual void OnCheckedChanged(EventArgs e) => CheckedChanged?.Invoke(this, e);
+
     public Radio()
     {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+        SetStyle(
+            ControlStyles.UserPaint |
+            ControlStyles.SupportsTransparentBackColor |
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw, true);
 
-        animationManager = new Animation.AnimationEngine
+        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
+
+        animationManager = new()
         {
             AnimationType = AnimationType.EaseInOut,
             Increment = 0.06
         };
-        rippleAnimationManager = new Animation.AnimationEngine(false)
+
+        rippleAnimationManager = new(false)
         {
             AnimationType = AnimationType.Linear,
             Increment = 0.10,
             SecondaryIncrement = 0.08
         };
-        animationManager.OnAnimationProgress += sender => Invalidate();
-        rippleAnimationManager.OnAnimationProgress += sender => Invalidate();
 
-        CheckedChanged += (sender, args) => animationManager.StartNewAnimation(Checked ? AnimationDirection.In : AnimationDirection.Out);
+        animationManager.OnAnimationProgress += _ => Invalidate();
+        rippleAnimationManager.OnAnimationProgress += _ => Invalidate();
 
-        SizeChanged += OnSizeChanged;
+        CheckedChanged += (_, _) => animationManager.StartNewAnimation(Checked ? AnimationDirection.In : AnimationDirection.Out);
 
         Ripple = true;
         _mouseLocation = new Point(-1, -1);
@@ -82,8 +109,17 @@ public class Radio : RadioButton
 
     public override Size GetPreferredSize(Size proposedSize)
     {
-        var width = boxOffset + 20 + (int)CreateGraphics().MeasureString(Text, Font).Width;
-        return Ripple ? new Size(width, 30) : new Size(width, 20);
+        using var paint = new SKPaint
+        {
+            TextSize = Font.Size.PtToPx(this),
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+        };
+
+        float textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
+        int width = RADIOBUTTON_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth);
+        int height = Ripple ? 30 : 20;
+
+        return new Size(width + Padding.Horizontal, height + Padding.Vertical);
     }
 
     protected override void OnCreateControl()
@@ -92,123 +128,126 @@ public class Radio : RadioButton
         if (DesignMode) return;
 
         _mouseState = 0;
-        MouseEnter += (sender, args) =>
+        MouseEnter += (_, _) =>
         {
             _mouseState = 1;
         };
-        MouseLeave += (sender, args) =>
+        MouseLeave += (_, _) =>
         {
             _mouseLocation = new Point(-1, -1);
             _mouseState = 0;
         };
-        MouseDown += (sender, args) =>
+        MouseDown += (_, e) =>
         {
             _mouseState = 2;
 
-            if (Ripple && args.Button == MouseButtons.Left && IsMouseInCheckArea())
+            if (Ripple && e.Button == MouseButtons.Left && IsMouseInCheckArea())
             {
                 rippleAnimationManager.SecondaryIncrement = 0;
                 rippleAnimationManager.StartNewAnimation(AnimationDirection.InOutIn, new object[] { Checked });
             }
         };
-        MouseUp += (sender, args) =>
+        MouseUp += (_, _) =>
         {
             _mouseState = 1;
             rippleAnimationManager.SecondaryIncrement = 0.08;
         };
-        MouseMove += (sender, args) =>
+        MouseMove += (_, e) =>
         {
-            _mouseLocation = args.Location;
+            _mouseLocation = e.Location;
             Cursor = IsMouseInCheckArea() ? Cursors.Hand : Cursors.Default;
         };
     }
 
-    protected override void OnPaint(PaintEventArgs pevent)
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        var graphics = pevent.Graphics;
-        graphics.SmoothingMode = SmoothingMode.HighQuality;
-        graphics.TextRenderingHint = TextRenderingHint.SystemDefault;
-
-        RadioButtonRenderer.DrawParentBackground(pevent.Graphics, ClientRectangle, this);
+        var canvas = e.Surface.Canvas;
+        canvas.Clear();
 
         var RADIOBUTTON_CENTER = boxOffset + RADIOBUTTON_SIZE_HALF;
-
-        var animationProgress = animationManager.GetProgress();
-
+        var animationProgress = (float)animationManager.GetProgress();
         var disabledOffColor = Color.LightGray;
 
-        var colorAlpha = Enabled ? (int)(animationProgress * 255.0) :disabledOffColor.A;
-        var backgroundAlpha = Enabled ? (int)(ColorScheme.BorderColor.A * (1.0 - animationProgress)) :disabledOffColor.A;
-        var animationSize = (float)(animationProgress * 8f);
-        var animationSizeHalf = animationSize / 2;
-        animationSize = (float)(animationProgress * 9f);
+        int colorAlpha = Enabled ? (int)(animationProgress * 255.0) : disabledOffColor.A;
+        int backgroundAlpha = Enabled ? (int)(ColorScheme.BorderColor.A * (1.0 - animationProgress)) : disabledOffColor.A;
+        float animationSize = (float)(animationProgress * 7f);
+        float animationSizeHalf = animationSize / 2;
 
-        using var brush = new SolidBrush(Color.FromArgb(colorAlpha, Enabled ? ColorScheme.AccentColor : disabledOffColor));
-        using var pen = new Pen(brush.Color);
+        var accentColor = Enabled ? ColorScheme.AccentColor : disabledOffColor;
 
-        // draw ripple animation
+        // Ripple efekti
         if (Ripple && rippleAnimationManager.IsAnimating())
         {
-            for (int i = 0; i < rippleAnimationManager.GetAnimationCount(); i++)
-            {
-                var animationValue = rippleAnimationManager.GetProgress(i);
-                var animationSource = new Point(RADIOBUTTON_CENTER, RADIOBUTTON_CENTER);
-
-                using var rippleBrush = new SolidBrush(Color.FromArgb((int)((animationValue * 40)), ((bool)rippleAnimationManager.GetData(i)[0]) ? Color.Black : brush.Color));
-                var rippleHeight = (Height % 2 == 0) ? Height - 3 : Height - 2;
-                var rippleSize = (rippleAnimationManager.GetDirection(i) == AnimationDirection.InOutIn) ? (int)(rippleHeight * (0.8d + (0.2d * animationValue))) : rippleHeight;
-
-                using var path = DrawingExtensions.CreateRoundPath(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize, rippleSize / 2);
-                graphics.FillPath(rippleBrush, path);
-            }
+            DrawRippleEffect(canvas, accentColor, RADIOBUTTON_CENTER);
         }
 
-        using var ellipseBrush = new SolidBrush(ColorScheme.BorderColor);
-
-        graphics.FillEllipse(
-            ellipseBrush,
-            boxOffset,
-            boxOffset,
-            RADIOBUTTON_SIZE,
-            RADIOBUTTON_SIZE);
-
-        using (var path = DrawingExtensions.CreateRoundPath(boxOffset, boxOffset, RADIOBUTTON_SIZE, RADIOBUTTON_SIZE, 7))
+        // Dış çerçeve
+        using (var paint = new SKPaint
         {
-            // draw radiobutton circle
-            var uncheckedColor = ColorScheme.BackColor.BlendWith(Enabled ? ColorScheme.BorderColor : disabledOffColor, backgroundAlpha);
-
-            using var brush2 = new SolidBrush(uncheckedColor);
-            //graphics.FillPath(brush2, path);
-
-            graphics.FillEllipse(
-                brush2,
-                boxOffset,
-                boxOffset,
-                RADIOBUTTON_INNER_CIRCLE_SIZE,
-                RADIOBUTTON_INNER_CIRCLE_SIZE);
-
-            if (Enabled)
-                graphics.FillEllipse(
-                brush,
-                boxOffset,
-                boxOffset,
-                RADIOBUTTON_SIZE,
-                RADIOBUTTON_SIZE);
-
-            //
-            //    graphics.FillPath(brush, path);
-
+            Color = ColorScheme.BorderColor.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        })
+        {
+            canvas.DrawCircle(
+                RADIOBUTTON_CENTER,
+                RADIOBUTTON_CENTER,
+                RADIOBUTTON_SIZE / 2f,
+                paint
+            );
         }
 
+        // İç dolgu
+        using (var paint = new SKPaint
+        {
+            Color = ColorScheme.BackColor.BlendWith(Enabled ? ColorScheme.BorderColor : disabledOffColor, backgroundAlpha).ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        })
+        {
+            canvas.DrawCircle(
+                RADIOBUTTON_CENTER,
+                RADIOBUTTON_CENTER,
+                RADIOBUTTON_INNER_CIRCLE_SIZE / 2f,
+                paint
+            );
+        }
+
+        // Seçili durumda iç nokta
         if (Checked)
         {
-            using (var path = DrawingExtensions.CreateRoundPath(RADIOBUTTON_CENTER - animationSizeHalf, RADIOBUTTON_CENTER - animationSizeHalf, animationSize, animationSize, 7))
-                graphics.FillPath(brush, path);
+            using var paint = new SKPaint
+            {
+                Color = accentColor.ToSKColor().WithAlpha((byte)colorAlpha),
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            };
+            canvas.DrawCircle(
+                RADIOBUTTON_CENTER,
+                RADIOBUTTON_CENTER,
+                animationSizeHalf,
+                paint
+            );
         }
 
-        var textColor = Enabled ? ColorScheme.ForeColor : Color.Gray;
+        // Text
+        if (!string.IsNullOrEmpty(Text))
+        {
+            DrawText(canvas);
+        }
 
-        this.DrawString(graphics, TextAlign, textColor, new RectangleF(new Point(boxOffset + RADIOBUTTON_SIZE, 0), ClientRectangle.Size));
+        // Debug çerçevesi
+        if (ColorScheme.DrawDebugBorders)
+        {
+            using var paint = new SKPaint
+            {
+                Color = SKColors.Red,
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1
+            };
+            canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
+        }
     }
 
     private bool IsMouseInCheckArea()
@@ -216,9 +255,64 @@ public class Radio : RadioButton
         return radioButtonBounds.Contains(_mouseLocation);
     }
 
-    private void OnSizeChanged(object sender, EventArgs eventArgs)
+    private void DrawRippleEffect(SKCanvas canvas, Color accentColor, float center)
     {
+        for (int i = 0; i < rippleAnimationManager.GetAnimationCount(); i++)
+        {
+            var animationValue = (float)rippleAnimationManager.GetProgress(i);
+            var animationSource = new SKPoint(center, center);
+
+            var rippleColor = ((bool)rippleAnimationManager.GetData(i)[0]) ?
+                SKColors.Black.WithAlpha((byte)(animationValue * 40)) :
+                accentColor.ToSKColor().WithAlpha((byte)(animationValue * 40));
+
+            var rippleHeight = (Height % 2 == 0) ? Height - 3f : Height - 2f;
+            var rippleSize = (rippleAnimationManager.GetDirection(i) == AnimationDirection.InOutIn) ?
+                rippleHeight * (0.8f + (0.2f * animationValue)) : rippleHeight;
+
+            using var paint = new SKPaint
+            {
+                Color = rippleColor,
+                IsAntialias = true,
+                Style = SKPaintStyle.Fill
+            };
+
+            canvas.DrawCircle(animationSource.X, animationSource.Y, rippleSize / 2, paint);
+        }
+    }
+
+    private void DrawText(SKCanvas canvas)
+    {
+        using var textPaint = canvas.CreateTextPaint(Font, Enabled ? ColorScheme.ForeColor : Color.Gray, this, ContentAlignment.MiddleLeft);
+        
+        float textY = Height / 2f + (textPaint.FontMetrics.XHeight / 2f);
+        float textX = boxOffset + RADIOBUTTON_SIZE + TEXT_PADDING;
+
+        if (AutoEllipsis)
+        {
+            float maxWidth = Width - textX - Padding.Right;
+            canvas.DrawTextWithEllipsis(Text, textPaint, textX, textY, maxWidth);
+        }
+        else if (UseMnemonic)
+        {
+            canvas.DrawTextWithMnemonic(Text, textPaint, textX, textY);
+        }
+        else
+        {
+            canvas.DrawText(Text, textX, textY, textPaint);
+        }
+    }
+
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
         boxOffset = Height / 2 - (int)Math.Ceiling(RADIOBUTTON_SIZE / 2d);
         radioButtonBounds = new Rectangle(boxOffset, boxOffset, RADIOBUTTON_SIZE, RADIOBUTTON_SIZE);
+    }
+
+    protected override void OnClick(EventArgs e)
+    {
+        Checked = !Checked;
+        base.OnClick(e);
     }
 }

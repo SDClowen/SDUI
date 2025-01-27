@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SDUI.AnimationEngine
+namespace SDUI.Animation2
 {
     /// <summary>
     /// A class for providing transition values. You can use it as a base for animations of custom-drawn controls, game objects, ...

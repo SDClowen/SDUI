@@ -1,24 +1,18 @@
 ﻿using SDUI.Controls;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
-namespace SDUI.Demo
+namespace SDUI.Skia;
+
+public partial class MainWindow : SKForm
 {
-    public partial class MainWindow : UIWindow
+    public MainWindow()
     {
-        public MainWindow()
-        {
-            InitializeComponent();
+        InitializeComponent();
 
-            BackColor = Color.Transparent;
-            ColorScheme.BackColor = Color.Black;
-        }
+        var windowPageController = new WindowPageControl();
+        windowPageController.Controls.Add(new SDUI.Controls.Label() { Text = "Deneme 1", Dock = DockStyle.Fill });
+        windowPageController.Controls.Add(new SDUI.Controls.Label() { Text = "Deneme 2", Dock = DockStyle.Fill });
+        windowPageController.Controls.Add(new SDUI.Controls.Label() { Text = "Deneme 3", Dock = DockStyle.Fill });
+
+        WindowPageControl = windowPageController;
     }
 }

@@ -1,15 +1,18 @@
 ﻿using SDUI.Animation;
 using SDUI.Helpers;
+using SDUI.SK;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class UIWindow : UIWindowBase
+public class SKForm : UIWindowBase
 {
     public enum TabDesingMode
     {
@@ -539,7 +542,7 @@ public class UIWindow : UIWindowBase
     /// <summary>
     /// The contructor
     /// </summary>
-    public UIWindow()
+    public SKForm()
         : base()
     {
         SetStyle(
@@ -609,6 +612,37 @@ public class UIWindow : UIWindowBase
         formMenuHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
 
         //WindowsHelper.ApplyRoundCorner(this.Handle);
+        designMode = DesignMode || LicenseManager.UsageMode == LicenseUsageMode.Designtime;
+    }
+
+    private SKImageInfo CreateBitmap()
+    {
+        var info = new SKImageInfo(Width, Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
+
+        if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
+        {
+            FreeBitmap();
+
+            if (info.Width != 0 && info.Height != 0)
+                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppPArgb);
+        }
+
+        return info;
+    }
+
+    private void FreeBitmap()
+    {
+        if (bitmap != null)
+        {
+            bitmap.Dispose();
+            bitmap = null;
+        }
+    }
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        FreeBitmap();
     }
 
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox, _inTabCloseBox, _inNewTabBox, _inFormMenuBox;
@@ -1042,374 +1076,395 @@ public class UIWindow : UIWindowBase
         Invalidate();
     }
 
+    private readonly bool designMode;
+
+    private Bitmap bitmap;
+
+
     protected override void OnPaint(PaintEventArgs e)
     {
-        //base.OnPaint(e);
-
-        var graphics = e.Graphics;
-        //graphics.Clear(BackColor);
-
-        //NativeMethods.FillForGlass(e.Graphics, ClientRectangle);
-        //return;
-        var foreColor = ColorScheme.ForeColor;
-        var hoverColor = ColorScheme.BorderColor;
-
-        if (FullDrawHatch)
-        {
-            using var hatchBrush = new HatchBrush(_hatch, ColorScheme.BackColor, hoverColor);
-            graphics.FillRectangle(hatchBrush, 0, 0, Width, Height);
-        }
-        else
-            graphics.FillRectangle(ColorScheme.BackColor, ClientRectangle);
-
-        if (Width <= 0 || Height <= 0)
+        if (designMode)
             return;
 
-        if (!ShowTitle)
+        base.OnPaint(e);
+        CheckBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+
+        // get the bitmap
+        var info = CreateBitmap();
+
+        if (info.Width == 0 || info.Height == 0)
             return;
 
-        graphics.SetHighQuality();
+        var data = bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
-        if (titleColor != Color.Empty)
+        // create the surface
+        using (var surface = SKSurface.Create(info, data.Scan0, data.Stride))
         {
-            foreColor = titleColor.Determine();
-            hoverColor = foreColor.Alpha(20);
-            graphics.FillRectangle(titleColor, 0, 0, Width, _titleHeightDPI);
-        }
-        else if (_gradient.Length == 2 &&
-            !(_gradient[0] == Color.Transparent && _gradient[1] == Color.Transparent))
-        {
-            using var brush = new LinearGradientBrush(new RectangleF(0, 0, Width, _titleHeightDPI), _gradient[0], _gradient[1], 45);
-            graphics.FillRectangle(brush, 0, 0, Width, _titleHeightDPI);
+            // start drawing
+            OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
 
-            foreColor = _gradient[0].Determine();
-            hoverColor = foreColor.Alpha(20);
+            surface.Canvas.Flush();
         }
 
-        if (controlBox)
-        {
-            var closeHoverColor = Color.FromArgb(222, 179, 30, 30);
-
-            if (_inCloseBox)
-                graphics.FillRectangle(Color.FromArgb((int)(closeBoxHoverAnimationManager.GetProgress() * closeHoverColor.A), closeHoverColor.RemoveAlpha()), _controlBoxRect);
-
-            using var closePen = new Pen(_inCloseBox ? Color.White : foreColor);
-            graphics.DrawLine(closePen,
-                _controlBoxRect.Left + _controlBoxRect.Width / 2 - (6 * DPI),
-                _controlBoxRect.Top + _controlBoxRect.Height / 2 - (6 * DPI),
-                _controlBoxRect.Left + _controlBoxRect.Width / 2 + (6 * DPI),
-                _controlBoxRect.Top + _controlBoxRect.Height / 2 + (6 * DPI));
-
-            graphics.DrawLine(closePen,
-                _controlBoxRect.Left + _controlBoxRect.Width / 2 - (6 * DPI),
-                _controlBoxRect.Top + _controlBoxRect.Height / 2 + (6 * DPI),
-                _controlBoxRect.Left + _controlBoxRect.Width / 2 + (6 * DPI),
-                _controlBoxRect.Top + _controlBoxRect.Height / 2 - (6 * DPI));
-        }
-
-        if (MaximizeBox)
-        {
-            if (_inMaxBox)
-                graphics.FillRectangle(Color.FromArgb((int)(maxBoxHoverAnimationManager.GetProgress() * hoverColor.A), hoverColor.RemoveAlpha()), _maximizeBoxRect);
-
-                graphics.DrawRectangle(foreColor,
-                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (12 * DPI / 2),
-                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (11 * DPI / 2),
-                12 * DPI, 11 * DPI);
-
-            if (WindowState == FormWindowState.Maximized)
-            {
-                graphics.DrawLine(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI));
-
-                graphics.DrawLine(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI));
-
-                graphics.DrawLine(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (6 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (4 * DPI));
-
-                graphics.DrawLine(foreColor,
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (8 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (5 * DPI),
-                    _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (5 * DPI),
-                    _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (5 * DPI));
-            }
-        }
-
-        if (MinimizeBox)
-        {
-            if (_inMinBox)
-                graphics.FillRectangle(Color.FromArgb((int)(minBoxHoverAnimationManager.GetProgress() * hoverColor.A), hoverColor.RemoveAlpha()), _minimizeBoxRect);
-
-            graphics.DrawLine(foreColor,
-                _minimizeBoxRect.Left + _minimizeBoxRect.Width / 2 - (7 * DPI),
-                _minimizeBoxRect.Top + _minimizeBoxRect.Height / 2,
-                _minimizeBoxRect.Left + _minimizeBoxRect.Width / 2 + (6 * DPI),
-                _minimizeBoxRect.Top + _minimizeBoxRect.Height / 2);
-        }
-
-        if (ExtendBox)
-        {
-            //graphics.SetHighQuality();
-
-            var color = foreColor;
-            if (_inExtendBox)
-            {
-                var hoverSize = 24 * DPI;
-                var brush = new SolidBrush(Color.FromArgb((int)(extendBoxHoverAnimationManager.GetProgress() * hoverColor.A), hoverColor.RemoveAlpha()));
-                graphics.FillPath(brush, new RectangleF(_extendBoxRect.X + 20 * DPI, (_titleHeightDPI / 2) - (hoverSize / 2), hoverSize, hoverSize).Radius(15));
-            }
-
-            var size = 16 * DPI;
-            var _extendBoxIconRect = new RectangleF(_extendBoxRect.X + 24 * DPI, (_titleHeightDPI / 2) - (size / 2), size, size);
-            graphics.DrawLine(foreColor,
-                        _extendBoxIconRect.Left + _extendBoxIconRect.Width / 2 - (5 * DPI) - 1,
-                        _extendBoxIconRect.Top + _extendBoxIconRect.Height / 2 - (2 * DPI),
-                        _extendBoxIconRect.Left + _extendBoxIconRect.Width / 2 - (1 * DPI),
-                        _extendBoxIconRect.Top + _extendBoxIconRect.Height / 2 + (3 * DPI));
-
-            graphics.DrawLine(foreColor,
-                _extendBoxIconRect.Left + _extendBoxIconRect.Width / 2 + (5 * DPI) - 1,
-                _extendBoxIconRect.Top + _extendBoxIconRect.Height / 2 - (2 * DPI),
-                _extendBoxIconRect.Left + _extendBoxIconRect.Width / 2 - (1 * DPI),
-                _extendBoxIconRect.Top + _extendBoxIconRect.Height / 2 + (3 * DPI));
-
-
-        }
-
-        var faviconSize = 16 * DPI;
-        if (showMenuInsteadOfIcon)
-        {
-            using var brush = new SolidBrush(Color.FromArgb((int)(formMenuHoverAnimationManager.GetProgress() * hoverColor.A), hoverColor.RemoveAlpha()));
-            graphics.FillPath(brush, _formMenuRect.Radius(10));
-
-            graphics.DrawLine(foreColor,
-                        _formMenuRect.Left + _formMenuRect.Width / 2 - (5 * DPI) - 1,
-                        _formMenuRect.Top + _formMenuRect.Height / 2 - (2 * DPI),
-                        _formMenuRect.Left + _formMenuRect.Width / 2 - (1 * DPI),
-                        _formMenuRect.Top + _formMenuRect.Height / 2 + (3 * DPI));
-
-            graphics.DrawLine(foreColor,
-                _formMenuRect.Left + _formMenuRect.Width / 2 + (5 * DPI) - 1,
-                _formMenuRect.Top + _formMenuRect.Height / 2 - (2 * DPI),
-                _formMenuRect.Left + _formMenuRect.Width / 2 - (1 * DPI),
-                _formMenuRect.Top + _formMenuRect.Height / 2 + (3 * DPI));
-        }
-        else
-        {
-            if (ShowIcon && Icon != null)
-                graphics.DrawImage(Icon.ToBitmap(), 10, (_titleHeightDPI / 2) - (faviconSize / 2), faviconSize, faviconSize);
-        }
-
-        if (_windowPageControl == null || _windowPageControl.Count == 0)
-        {
-            var stringSize = graphics.MeasureString(Text, Font);
-            var textPoint = new PointF((showMenuInsteadOfIcon ? _formMenuRect.X + _formMenuRect.Width : faviconSize + 14), (_titleHeightDPI / 2 - stringSize.Height / 2));
-
-            using var textBrush = new SolidBrush(foreColor);
-            graphics.DrawString(Text, Font, textBrush, textPoint, StringFormat.GenericDefault);
-        }
-
-        if (_windowPageControl == null || _windowPageControl.Count == 0)
-            return;
-
-        if (!pageAreaAnimationManager.IsAnimating() || pageRect == null || pageRect.Count != _windowPageControl.Count)
-            UpdateTabRects();
-
-        var animationProgress = pageAreaAnimationManager.GetProgress();
-
-        //Click feedback
-        if (pageAreaAnimationManager.IsAnimating())
-        {
-            using var rippleBrush = new SolidBrush(Color.FromArgb((int)(51 - (animationProgress * 50)), foreColor));
-            var rippleSize = (int)(animationProgress * pageRect[_windowPageControl.SelectedIndex].Width * 1.75);
-
-            graphics.SetClip(pageRect[_windowPageControl.SelectedIndex]);
-            graphics.FillEllipse(rippleBrush, new Rectangle(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize));
-            graphics.ResetClip();
-            rippleBrush.Dispose();
-        }
-
-        // fix desing time error
-        if (_windowPageControl.SelectedIndex <= -1 || _windowPageControl.SelectedIndex >= _windowPageControl.Count)
-            return;
-
-        //Animate page indicator
-        if (previousSelectedPageIndex == pageRect.Count)
-            previousSelectedPageIndex = -1;
-
-        var previousSelectedPageIndexIfHasOne = previousSelectedPageIndex == -1 ? _windowPageControl.SelectedIndex : previousSelectedPageIndex;
-        var previousActivePageRect = pageRect[previousSelectedPageIndexIfHasOne];
-        var activePageRect = pageRect[_windowPageControl.SelectedIndex];
-
-        var y = activePageRect.Bottom - 2;
-        var x = previousActivePageRect.X + (int)((activePageRect.X - previousActivePageRect.X) * animationProgress);
-        var width = previousActivePageRect.Width + (int)((activePageRect.Width - previousActivePageRect.Width) * animationProgress);
-
-        if (_tabDesingMode == TabDesingMode.Rectangle)
-        {
-            graphics.DrawRectangle(hoverColor, activePageRect.X, 0, width, _titleHeightDPI);
-            graphics.FillRectangle(hoverColor, x, 0, width, _titleHeightDPI);
-            graphics.FillRectangle(Color.DodgerBlue, x, _titleHeightDPI - TAB_INDICATOR_HEIGHT, width, TAB_INDICATOR_HEIGHT);
-        }
-        else if (_tabDesingMode == TabDesingMode.Rounded)
-        {
-            if (titleColor != Color.Empty && !titleColor.IsDark())
-                hoverColor = ForeColor.Alpha(60);
-
-            using var hoverBrush = hoverColor.Brush();
-            var tabRect = new RectangleF(x, 6, width, _titleHeightDPI);
-
-            var radius = 9 * DPI;
-            graphics.FillPath(hoverBrush, tabRect.Radius(radius, radius, 0, 0));
-            //tabRect.Inflate(0, -4 * DPI);
-            //graphics.DrawShadow(tabRect, 5, (int)radius, BackColor.Determine().Alpha(55));
-        }
-        else
-        {
-            if (titleColor != Color.Empty && !titleColor.IsDark())
-                hoverColor = ForeColor.Alpha(60);
-
-            using var hoverBrush = hoverColor.Brush();
-            var tabRect = new RectangleF(x, 5, width, _titleHeightDPI - 7);
-
-            var radius = 12;
-            graphics.FillPath(hoverBrush, tabRect.ChromePath(radius));
-            //tabRect.Inflate(0, -4 * DPI);
-            //graphics.DrawShadow(tabRect, 5, radius, hoverColor.Determine().Alpha(155));
-        }
-
-        //Draw tab headers
-        foreach (Control page in _windowPageControl.Controls)
-        {
-            var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
-
-            var rect = pageRect[currentTabIndex];
-
-            var closeIconSize = 24 * DPI;
-
-            if (_drawTabIcons)
-            {
-                var startingIconMeasure = graphics.MeasureString("", Font);
-                var iconX = rect.X + (TAB_HEADER_PADDING * DPI);
-
-                var inlinePaddingX = startingIconMeasure.Width + (TAB_HEADER_PADDING * DPI);
-                rect.X += inlinePaddingX;
-                rect.Width -= inlinePaddingX + closeIconSize;
-
-                graphics.DrawString("", Font, foreColor.Brush(), new RectangleF(iconX, _titleHeightDPI / 2 - startingIconMeasure.Height / 2, startingIconMeasure.Width, startingIconMeasure.Height));
-
-                using var format = new StringFormat()
-                {
-                    LineAlignment = StringAlignment.Center,
-                };
-
-                format.Trimming = StringTrimming.EllipsisCharacter;
-                format.FormatFlags = StringFormatFlags.FitBlackBox | StringFormatFlags.NoWrap;
-
-                graphics.DrawString(page.Text, Font, foreColor.Brush(), rect, format);
-            }
-            else
-            {
-                page.DrawString(graphics, foreColor, rect);
-            }
-        }
-
-
-        if (_tabCloseButton)
-        {
-            var size = 20 * DPI;
-
-            var closeHoverColor = hoverColor;
-            //if (_inTabCloseBox)
-            //  closeHoverColor = ColorScheme.BorderColor;
-
-            using var brush = new SolidBrush(Color.FromArgb((int)(tabCloseHoverAnimationManager.GetProgress() * closeHoverColor.A), closeHoverColor.RemoveAlpha()));
-
-            _closeTabBoxRect = new(x + width - TAB_HEADER_PADDING / 2 - size, _titleHeightDPI / 2 - size / 2, size, size);
-
-            graphics.FillPie(brush, _closeTabBoxRect.X, _closeTabBoxRect.Y, _closeTabBoxRect.Width, _closeTabBoxRect.Height, 0, 360);
-
-            using var linePen = new Pen(foreColor);
-            linePen.Width = 1.6f;
-
-            size = 4f * DPI;
-            graphics.DrawLine(linePen,
-                _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 - size,
-                _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 - size,
-                _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 + size,
-                _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 + size);
-
-            graphics.DrawLine(linePen,
-                _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 - size,
-                _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 + size,
-                _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 + size,
-                _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 - size);
-        }
-
-        if (_newTabButton)
-        {
-            var size = 24 * DPI;
-
-            var newHoverColor = hoverColor.Alpha(30);
-            //if (_inNewTabBox)
-            //  newHoverColor = ColorScheme.BorderColor;
-
-            var color = Color.FromArgb((int)(newTabHoverAnimationManager.GetProgress() * newHoverColor.A), newHoverColor.RemoveAlpha());
-            using var brush = new SolidBrush(color);
-
-            color = foreColor.Alpha(220);
-
-            using var linePen = new Pen(color);
-            //linePen.Color = Color.WhiteSmoke;
-            linePen.Width = 1.6f;
-
-            graphics.FillPath(brush, _newTabBoxRect.Radius(4));
-            var lastTabRect = pageRect[pageRect.Count - 1];
-            _newTabBoxRect = new(lastTabRect.X + lastTabRect.Width + size / 2, _titleHeightDPI / 2 - size / 2, size, size);
-
-            size = 6 * DPI;
-
-            graphics.DrawLine(linePen,
-                _newTabBoxRect.Left + _newTabBoxRect.Width / 2 - size,
-                _newTabBoxRect.Top + _newTabBoxRect.Height / 2,
-                _newTabBoxRect.Left + _newTabBoxRect.Width / 2 + size,
-                _newTabBoxRect.Top + _newTabBoxRect.Height / 2);
-
-            graphics.DrawLine(linePen,
-                _newTabBoxRect.Left + _newTabBoxRect.Width / 2,
-                _newTabBoxRect.Top + _newTabBoxRect.Height / 2 - size,
-                _newTabBoxRect.Left + _newTabBoxRect.Width / 2,
-                _newTabBoxRect.Top + _newTabBoxRect.Height / 2 + size);
-        }
-
-        if (_drawTitleBorder)
-        {
-            if (titleColor != Color.Empty)
-            {
-                using var pen = TitleColor.Determine().Alpha(30).Pen();
-                graphics.DrawLine(pen, Width, _titleHeightDPI - 1, 0, _titleHeightDPI - 1);
-            }
-            else
-            {
-                using var pen = ColorScheme.BorderColor.Pen();
-                graphics.DrawLine(pen, Width, _titleHeightDPI - 1, 0, _titleHeightDPI - 1);
-            }
-        }
-
-        //graphics.SetDefaultQuality();
+        // write the bitmap to the graphics
+        bitmap.UnlockBits(data);
+        e.Graphics.DrawImage(bitmap, 0, 0);
     }
 
-    protected override void OnTextChanged(EventArgs e)
+    private void OnPaintSurface(SKPaintSurfaceEventArgs e)
+{
+    var canvas = e.Surface.Canvas;
+    canvas.Clear(SKColors.White);
+
+    var foreColor = ColorScheme.ForeColor.ToSKColor();
+    var hoverColor = ColorScheme.BorderColor.ToSKColor();
+
+    if (FullDrawHatch)
+    {
+        using var hatchBrush = new SKPaint
+        {
+            Shader = SKShader.CreateTwoPointConicalGradient(
+                new SKPoint(0, 0),
+                0,
+                new SKPoint(Width, Height),
+                90, [hoverColor,
+                ColorScheme.BackColor.ToSKColor()],
+                SKShaderTileMode.Clamp)
+        };
+        canvas.DrawRect(new SKRect(0, 0, Width, Height), hatchBrush);
+    }
+    else
+    {
+        using var paint = new SKPaint { Color = ColorScheme.BackColor.ToSKColor() };
+        canvas.DrawRect(new SKRect(0, 0, Width, Height), paint);
+    }
+
+    if (Width <= 0 || Height <= 0)
+        return;
+
+    if (!ShowTitle)
+        return;
+
+
+    if (titleColor != Color.Empty)
+    {
+        foreColor = titleColor.Determine().ToSKColor();
+        hoverColor = foreColor.WithAlpha(20);
+        using var paint = new SKPaint { Color = titleColor.ToSKColor() };
+        canvas.DrawRect(new SKRect(0, 0, Width, _titleHeightDPI), paint);
+    }
+    else if (_gradient.Length == 2 &&
+        !(_gradient[0] == Color.Transparent && _gradient[1] == Color.Transparent))
+    {
+        using var paint = new SKPaint
+        {
+            Shader = SKShader.CreateLinearGradient(
+                new SKPoint(0, 0),
+                new SKPoint(Width, _titleHeightDPI),
+                new[] { _gradient[0].ToSKColor(), _gradient[1].ToSKColor() },
+                null,
+                SKShaderTileMode.Clamp)
+        };
+        canvas.DrawRect(new SKRect(0, 0, Width, _titleHeightDPI), paint);
+
+        foreColor = _gradient[0].Determine().ToSKColor();
+        hoverColor = foreColor.WithAlpha(20);
+    }
+
+    if (controlBox)
+    {
+        var closeHoverColor = new SKColor(179, 30, 30, 222);
+
+        if (_inCloseBox)
+        {
+            using var paint = new SKPaint { Color = closeHoverColor.WithAlpha((byte)(closeBoxHoverAnimationManager.GetProgress() * closeHoverColor.Alpha)) };
+            canvas.DrawRect(_controlBoxRect.ToSKRect(), paint);
+        }
+
+        using var closePen = new SKPaint { Color = _inCloseBox ? SKColors.White : foreColor, StrokeWidth = 2 };
+        canvas.DrawLine(
+            _controlBoxRect.Left + _controlBoxRect.Width / 2 - (6 * DPI),
+            _controlBoxRect.Top + _controlBoxRect.Height / 2 - (6 * DPI),
+            _controlBoxRect.Left + _controlBoxRect.Width / 2 + (6 * DPI),
+            _controlBoxRect.Top + _controlBoxRect.Height / 2 + (6 * DPI),
+        closePen);
+        canvas.DrawLine(
+            _controlBoxRect.Left + _controlBoxRect.Width / 2 - (6 * DPI),
+            _controlBoxRect.Top + _controlBoxRect.Height / 2 + (6 * DPI),
+            _controlBoxRect.Left + _controlBoxRect.Width / 2 + (6 * DPI),
+            _controlBoxRect.Top + _controlBoxRect.Height / 2 - (6 * DPI),
+            closePen);
+    }
+
+    if (MaximizeBox)
+    {
+        if (_inMaxBox)
+        {
+            using var paint = new SKPaint { Color = hoverColor.WithAlpha((byte)(maxBoxHoverAnimationManager.GetProgress() * hoverColor.Alpha)) };
+            canvas.DrawRect(_maximizeBoxRect.ToSKRect(), paint);
+        }
+
+        using var pen = new SKPaint { Color = foreColor, StrokeWidth = 2 };
+        canvas.DrawRect(new SKRect(
+            _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (12 * DPI / 2),
+            _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (11 * DPI / 2),
+            12 * DPI, 11 * DPI), pen);
+
+        if (WindowState == FormWindowState.Maximized)
+        {
+            canvas.DrawLine(
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI),
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
+            _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI),
+            pen);
+            canvas.DrawLine(
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI),
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI),
+                pen);
+            canvas.DrawLine(
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (6 * DPI),
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (4 * DPI),
+                pen);
+            canvas.DrawLine(
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (8 * DPI),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (5 * DPI),
+                _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (5 * DPI),
+                _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (5 * DPI),
+                pen);
+        }
+    }
+
+    if (MinimizeBox)
+    {
+        if (_inMinBox)
+        {
+            using var paint = new SKPaint { Color = hoverColor.WithAlpha((byte)(minBoxHoverAnimationManager.GetProgress() * hoverColor.Alpha)) };
+            canvas.DrawRect(_minimizeBoxRect.ToSKRect(), paint);
+        }
+
+        using var pen = new SKPaint { Color = foreColor, StrokeWidth = 2 };
+        canvas.DrawLine(
+            _minimizeBoxRect.Left + _minimizeBoxRect.Width / 2 - (7 * DPI),
+            _minimizeBoxRect.Top + _minimizeBoxRect.Height / 2,
+            _minimizeBoxRect.Left + _minimizeBoxRect.Width / 2 + (6 * DPI),
+            _minimizeBoxRect.Top + _minimizeBoxRect.Height / 2,
+            pen);
+    }
+
+    if (ExtendBox)
+    {
+        var color = foreColor;
+        if (_inExtendBox)
+        {
+            var hoverSize = 24 * DPI;
+            using var brush = new SKPaint { Color = hoverColor.WithAlpha((byte)(extendBoxHoverAnimationManager.GetProgress() * hoverColor.Alpha)) };
+            canvas.DrawRoundRect(new SKRect(_extendBoxRect.X + 20 * DPI, (_titleHeightDPI / 2) - (hoverSize / 2), hoverSize, hoverSize), 15, 15, brush);
+        }
+
+        var size = 16 * DPI;
+        // DrawSvg equivalent in SkiaSharp
+        // canvas.DrawSvg(SvgIcons.Settings, color, new SKRect(_extendBoxRect.X + 24 * DPI, (_titleHeightDPI / 2) - (size / 2), size, size));
+    }
+
+    var faviconSize = 16 * DPI;
+    if (showMenuInsteadOfIcon)
+    {
+        using var brush = new SKPaint { Color = hoverColor.WithAlpha((byte)(formMenuHoverAnimationManager.GetProgress() * hoverColor.Alpha)) };
+        canvas.DrawRoundRect(_formMenuRect.ToSKRect(), 10, 10, brush);
+
+        using var pen = new SKPaint { Color = foreColor, StrokeWidth = 2 };
+        canvas.DrawLine(
+            _formMenuRect.Left + _formMenuRect.Width / 2 - (5 * DPI) - 1,
+            _formMenuRect.Top + _formMenuRect.Height / 2 - (2 * DPI),
+            _formMenuRect.Left + _formMenuRect.Width / 2 - (1 * DPI),
+        _formMenuRect.Top + _formMenuRect.Height / 2 + (3 * DPI),
+            pen);
+        canvas.DrawLine(
+            _formMenuRect.Left + _formMenuRect.Width / 2 + (5 * DPI) - 1,
+            _formMenuRect.Top + _formMenuRect.Height / 2 - (2 * DPI),
+            _formMenuRect.Left + _formMenuRect.Width / 2 - (1 * DPI),
+            _formMenuRect.Top + _formMenuRect.Height / 2 + (3 * DPI),
+            pen);
+    }
+    else
+    {
+        if (ShowIcon && Icon != null)
+        {
+            using var bitmap = Icon.ToBitmap().ToSKBitmap();
+            canvas.DrawBitmap(bitmap, new SKRect(10, (_titleHeightDPI / 2) - (faviconSize / 2), faviconSize, faviconSize));
+        }
+    }
+
+    if (_windowPageControl == null || _windowPageControl.Count == 0)
+    {
+        using var paint = new SKPaint { Color = foreColor, Typeface = Font.ToSKFont().Typeface, TextSize = Font.Size };
+        var stringSize = paint.MeasureText(Text);
+        var textPoint = new SKPoint((showMenuInsteadOfIcon ? _formMenuRect.X + _formMenuRect.Width : faviconSize + 14), (_titleHeightDPI / 2 - stringSize / 2));
+        canvas.DrawText(Text, textPoint, paint);
+    }
+
+    if (_windowPageControl == null || _windowPageControl.Count == 0)
+        return;
+
+    if (!pageAreaAnimationManager.IsAnimating() || pageRect == null || pageRect.Count != _windowPageControl.Count)
+        UpdateTabRects();
+
+    var animationProgress = pageAreaAnimationManager.GetProgress();
+
+    // Click feedback
+    if (pageAreaAnimationManager.IsAnimating())
+    {
+        using var rippleBrush = new SKPaint { Color = foreColor.WithAlpha((byte)(51 - (animationProgress * 50))) };
+        var rippleSize = (int)(animationProgress * pageRect[_windowPageControl.SelectedIndex].Width * 1.75);
+        canvas.Save();
+        canvas.ClipRect(pageRect[_windowPageControl.SelectedIndex].ToSKRect());
+        canvas.DrawCircle(animationSource.X, animationSource.Y, rippleSize / 2, rippleBrush);
+        canvas.Restore();
+    }
+
+    // Fix design time error
+    if (_windowPageControl.SelectedIndex <= -1 || _windowPageControl.SelectedIndex >= _windowPageControl.Count)
+        return;
+
+    // Animate page indicator
+    if (previousSelectedPageIndex == pageRect.Count)
+        previousSelectedPageIndex = -1;
+
+    var previousSelectedPageIndexIfHasOne = previousSelectedPageIndex == -1 ? _windowPageControl.SelectedIndex : previousSelectedPageIndex;
+    var previousActivePageRect = pageRect[previousSelectedPageIndexIfHasOne];
+    var activePageRect = pageRect[_windowPageControl.SelectedIndex];
+
+    var y = activePageRect.Bottom - 2;
+    var x = previousActivePageRect.X + (int)((activePageRect.X - previousActivePageRect.X) * animationProgress);
+    var width = previousActivePageRect.Width + (int)((activePageRect.Width - previousActivePageRect.Width) * animationProgress);
+
+    if (_tabDesingMode == TabDesingMode.Rectangle)
+    {
+        using var hoverPaint = new SKPaint { Color = hoverColor };
+        canvas.DrawRect(new SKRect(activePageRect.X, 0, width, _titleHeightDPI), hoverPaint);
+        canvas.DrawRect(new SKRect(x, 0, width, _titleHeightDPI), hoverPaint);
+        using var indicatorPaint = new SKPaint { Color = SKColors.DodgerBlue };
+        canvas.DrawRect(new SKRect(x, _titleHeightDPI - TAB_INDICATOR_HEIGHT, width, TAB_INDICATOR_HEIGHT), indicatorPaint);
+    }
+    else if (_tabDesingMode == TabDesingMode.Rounded)
+    {
+        if (titleColor != Color.Empty && !titleColor.IsDark())
+            hoverColor = ForeColor.ToSKColor().WithAlpha(60);
+
+        using var hoverBrush = new SKPaint { Color = hoverColor };
+        var tabRect = new SKRect(x, 6, width, _titleHeightDPI);
+        canvas.DrawRoundRect(tabRect, 9 * DPI, 9 * DPI, hoverBrush);
+    }
+    else
+    {
+        if (titleColor != Color.Empty && !titleColor.IsDark())
+            hoverColor = ForeColor.ToSKColor().WithAlpha(60);
+
+        using var hoverBrush = new SKPaint { Color = hoverColor };
+        var tabRect = new SKRect(x, 5, width, _titleHeightDPI - 7);
+        canvas.DrawRoundRect(tabRect, 12, 12, hoverBrush);
+    }
+
+    // Draw tab headers
+    foreach (Control page in _windowPageControl.Controls)
+    {
+        var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
+        var rect = pageRect[currentTabIndex];
+
+        var closeIconSize = 24 * DPI;
+
+        if (_drawTabIcons)
+        {
+                using var iconPaint = new SKPaint { Color = foreColor, Typeface = Font.ToSKFont().Typeface, TextSize = Font.Size };
+
+                var startingIconMeasure = 16;
+            var iconX = rect.X + (TAB_HEADER_PADDING * DPI);
+
+            var inlinePaddingX = startingIconMeasure + (TAB_HEADER_PADDING * DPI);
+            rect.X += inlinePaddingX;
+            rect.Width -= inlinePaddingX + closeIconSize;
+
+           canvas.DrawText("", new SKPoint(iconX, _titleHeightDPI / 2 - startingIconMeasure / 2), iconPaint);
+
+            using var format = new SKPaint { Color = foreColor, Typeface = Font.ToSKFont().Typeface, TextSize = Font.Size * 1.33333f, IsAntialias = true };
+            canvas.DrawText(page.Text, rect.ToSKRect().Location, format);
+        }
+        else
+        {
+            //page.DrawString(canvas, foreColor, rect);
+        }
+    }
+
+    if (_tabCloseButton)
+    {
+        var size = 20 * DPI;
+
+        var closeHoverColor = hoverColor;
+        using var brush = new SKPaint { Color = closeHoverColor.WithAlpha((byte)(tabCloseHoverAnimationManager.GetProgress() * closeHoverColor.Alpha)) };
+
+        _closeTabBoxRect = new RectangleF(x + width - TAB_HEADER_PADDING / 2 - size, _titleHeightDPI / 2 - size / 2, size, size);
+        canvas.DrawOval(_closeTabBoxRect.ToSKRect(), brush);
+
+        using var linePen = new SKPaint { Color = foreColor, StrokeWidth = 1.6f };
+        size = 4f * DPI;
+        canvas.DrawLine(
+            _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 - size,
+            _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 - size,
+            _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 + size,
+            _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 + size,
+            linePen);
+
+        canvas.DrawLine(
+            _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 - size,
+            _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 + size,
+            _closeTabBoxRect.Left + _closeTabBoxRect.Width / 2 + size,
+            _closeTabBoxRect.Top + _closeTabBoxRect.Height / 2 - size,
+            linePen);
+    }
+
+    if (_newTabButton)
+    {
+        var size = 24 * DPI;
+
+        var newHoverColor = hoverColor.WithAlpha(30);
+        using var brush = new SKPaint { Color = newHoverColor.WithAlpha((byte)(newTabHoverAnimationManager.GetProgress() * newHoverColor.Alpha)) };
+
+        var color = foreColor.WithAlpha(220);
+        using var linePen = new SKPaint { Color = color, StrokeWidth = 1.6f };
+
+        canvas.DrawRoundRect(_newTabBoxRect.ToSKRect(), 4, 4, brush);
+        var lastTabRect = pageRect[pageRect.Count - 1];
+        _newTabBoxRect = new RectangleF(lastTabRect.X + lastTabRect.Width + size / 2, _titleHeightDPI / 2 - size / 2, size, size);
+
+        size = 6 * DPI;
+        canvas.DrawLine(
+            _newTabBoxRect.Left + _newTabBoxRect.Width / 2 - size,
+            _newTabBoxRect.Top + _newTabBoxRect.Height / 2,
+            _newTabBoxRect.Left + _newTabBoxRect.Width / 2 + size,
+            _newTabBoxRect.Top + _newTabBoxRect.Height / 2,
+            linePen);
+
+        canvas.DrawLine(
+            _newTabBoxRect.Left + _newTabBoxRect.Width / 2,
+            _newTabBoxRect.Top + _newTabBoxRect.Height / 2 - size,
+            _newTabBoxRect.Left + _newTabBoxRect.Width / 2,
+            _newTabBoxRect.Top + _newTabBoxRect.Height / 2 + size,
+            linePen);
+    }
+
+    if (_drawTitleBorder)
+    {
+        using var pen = new SKPaint { Color = titleColor != Color.Empty ? titleColor.Determine().ToSKColor().WithAlpha(30) : ColorScheme.BorderColor.ToSKColor(), StrokeWidth = 1 };
+        canvas.DrawLine(new SKPoint(Width, _titleHeightDPI - 1), new SKPoint(0, _titleHeightDPI - 1), pen);
+    }
+}
+
+protected override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
         Invalidate();

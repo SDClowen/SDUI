@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
-namespace SDUI.AnimationEngine
+namespace SDUI.Animation2
 {
     public static class ValueFactoryCreator
     {

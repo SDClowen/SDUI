@@ -1,51 +1,60 @@
-﻿using SDUI.Helpers;
+﻿using SDUI.Extensions;
+using SDUI.SK;
+using SkiaSharp;
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class GroupBox : System.Windows.Forms.GroupBox
+public class GroupBox : SKControl
 {
     private int _shadowDepth = 4;
+    private int _radius = 10;
+    private ContentAlignment _textAlign = ContentAlignment.MiddleCenter;
+
+    public ContentAlignment TextAlign
+    {
+        get => _textAlign;
+        set
+        {
+            if (_textAlign == value) return;
+            _textAlign = value;
+            Invalidate();
+        }
+    }
+
     public int ShadowDepth
     {
         get => _shadowDepth;
         set
         {
-            if (_shadowDepth == value)
-                return;
-
+            if (_shadowDepth == value) return;
             _shadowDepth = value;
             Invalidate();
         }
     }
 
-    private int _radius = 10;
     public int Radius
     {
         get => _radius;
         set
         {
             _radius = value;
-
             Invalidate();
         }
     }
 
     public GroupBox()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.AllPaintingInWmPaint |
-                  ControlStyles.OptimizedDoubleBuffer |
-                  ControlStyles.DoubleBuffer |
-                  ControlStyles.ResizeRedraw |
-                  ControlStyles.Opaque |
-                  ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.UserPaint |
+            ControlStyles.SupportsTransparentBackColor |
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw, true);
 
-        UpdateStyles();
-        this.DoubleBuffered = true;
+        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
+
         this.BackColor = Color.Transparent;
         this.Padding = new Padding(3, 8, 3, 3);
     }
@@ -62,46 +71,127 @@ public class GroupBox : System.Windows.Forms.GroupBox
         Invalidate(true);
     }
 
-    protected override void OnPaint(PaintEventArgs e)
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        var graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        var canvas = e.Surface.Canvas;
+        canvas.Clear();
 
-        GroupBoxRenderer.DrawParentBackground(graphics, ClientRectangle, this);
+        // Debug çerçevesi
         if (ColorScheme.DrawDebugBorders)
         {
-            using var redPen = new Pen(Color.Red, 1);
-            redPen.Alignment = PenAlignment.Inset;
-            e.Graphics.DrawRectangle(redPen, new Rectangle(0, 0, Width - 1, Height - 1));
+            using var paint = new SKPaint
+            {
+                Color = SKColors.Red,
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1
+            };
+            canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
         }
 
-        var rect = ClientRectangle.ToRectangleF();
+        var rect = new SKRect(0, 0, Width, Height);
         var inflate = _shadowDepth / 4f;
         rect.Inflate(-inflate, -inflate);
         var shadowRect = rect;
 
-        //using (var path = e.Graphics.GenerateRoundedRectangle(rect, _radius))
-        using var path = rect.Radius(_radius);
-        rect = new RectangleF(0, 0, rect.Width, Font.Height + 7);
+        // Başlık alanı için rect
+        var titleRect = new SKRect(0, 0, rect.Width, Font.Height + 7);
 
-        var color = ColorScheme.BorderColor;
-        BackColor = Color.Transparent;
+        // Gölge çizimi
+        using (var paint = new SKPaint
+        {
+            Color = SKColors.Black.WithAlpha(20),
+            IsAntialias = true,
+            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, _shadowDepth / 2f)
+        })
+        {
+            canvas.DrawRoundRect(shadowRect, _radius, _radius, paint);
+        }
 
-        using (var brush = new SolidBrush(ColorScheme.BackColor2))
-            e.Graphics.FillPath(brush, path);
+        // Arka plan çizimi
+        using (var paint = new SKPaint
+        {
+            Color = ColorScheme.BackColor2.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+        }
 
-        using var backColorBrush = new SolidBrush(ColorScheme.BackColor2.Alpha(15));
+        // Başlık alanı çizimi
+        canvas.Save();
+        canvas.ClipRect(titleRect);
+        
+        // Başlık çizgisi
+        using (var paint = new SKPaint
+        {
+            Color = ColorScheme.BorderColor.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1
+        })
+        {
+            canvas.DrawLine(0, titleRect.Height - 1, titleRect.Width, titleRect.Height - 1, paint);
+        }
 
-        var clip = e.Graphics.ClipBounds;
-        e.Graphics.SetClip(rect);
-        e.Graphics.DrawLine(ColorScheme.BorderColor, 0, rect.Height - 1, rect.Width, rect.Height - 1);
-        e.Graphics.FillPath(backColorBrush, path);
+        // Başlık arka plan
+        using (var paint = new SKPaint
+        {
+            Color = ColorScheme.BackColor2.ToSKColor().WithAlpha(15),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+        }
 
-        this.DrawString(graphics, ColorScheme.ForeColor, rect);
+        canvas.Restore();
 
-        e.Graphics.SetClip(clip);
-        e.Graphics.DrawShadow(shadowRect, _shadowDepth, _radius);
-        e.Graphics.DrawPath(ColorScheme.BorderColor, path);
+        // Başlık metni çizimi
+        if (!string.IsNullOrEmpty(Text))
+        {
+            using var textPaint = new SKPaint
+            {
+                Color = ColorScheme.ForeColor.ToSKColor(),
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                IsAntialias = true
+            };
+
+            var textWidth = textPaint.MeasureText(Text);
+            var textHeight = textPaint.FontMetrics.XHeight;
+            float textX;
+            float textY = titleRect.Height / 2f + textHeight / 2f;
+
+            switch (TextAlign)
+            {
+                case ContentAlignment.MiddleLeft:
+                    textX = rect.Left + Padding.Left;
+                    break;
+                case ContentAlignment.MiddleRight:
+                    textX = rect.Right - textWidth - Padding.Right;
+                    break;
+                case ContentAlignment.MiddleCenter:
+                default:
+                    textX = rect.Left + (rect.Width - textWidth) / 2f;
+                    break;
+            }
+
+            canvas.DrawText(Text, textX, textY, textPaint);
+        }
+
+        // Çerçeve çizimi
+        using (var paint = new SKPaint
+        {
+            Color = ColorScheme.BorderColor.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+        }
     }
 
     public override Size GetPreferredSize(Size proposedSize)

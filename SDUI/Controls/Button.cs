@@ -1,38 +1,33 @@
 ﻿using SDUI.Animation;
+using SDUI.Extensions;
+using SDUI.SK;
+using SkiaSharp;
 using System;
+using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Button : System.Windows.Forms.Button
+public class Button : SKControl
 {
-    /// <summary>
-    /// Button raised color
-    /// </summary>
+    [Category("Appearance")]
     public Color Color { get; set; } = Color.Transparent;
 
-    /// <summary>
-    /// Mouse state
-    /// </summary>
     private int _mouseState = 0;
+    private SizeF _textSize;
 
-    private SizeF textSize;
-    public override string Text
-    {
-        get { return base.Text; }
-        set
-        {
-            base.Text = value;
-            textSize = TextRenderer.MeasureText(value, Font);
-            if (AutoSize)
-                Size = GetPreferredSize();
-            Invalidate();
-        }
-    }
+    [Category("Behavior")]
+    public DialogResult DialogResult { get; set; }
+
+    [Category("Behavior")]
+    public bool IsDefault { get; set; }
+
+    [Category("Behavior")]
+    public bool IsCancel { get; set; }
 
     private float _shadowDepth = 4f;
+    [Category("Appearance")]
     public float ShadowDepth
     {
         get => _shadowDepth;
@@ -47,6 +42,7 @@ public class Button : System.Windows.Forms.Button
     }
 
     private int _radius = 6;
+    [Category("Appearance")]
     public int Radius
     {
         get => _radius;
@@ -65,7 +61,8 @@ public class Button : System.Windows.Forms.Button
 
     public Button()
     {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor, true);
+        SetStyle(ControlStyles.Selectable, true);
+        TabStop = true;
 
         animationManager = new Animation.AnimationEngine(false)
         {
@@ -76,16 +73,62 @@ public class Button : System.Windows.Forms.Button
         hoverAnimationManager = new Animation.AnimationEngine
         {
             Increment = 0.07,
-            AnimationType = AnimationType.Linear,
+            AnimationType = AnimationType.Linear
         };
 
-        hoverAnimationManager.OnAnimationFinished += (sender) =>
-        {
-        };
         hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
-
         animationManager.OnAnimationProgress += sender => Invalidate();
-        UpdateStyles();
+    }
+
+    protected override void OnTextChanged(EventArgs e)
+    {
+        base.OnTextChanged(e);
+        using (var paint = new SKPaint())
+        {
+            paint.TextSize = Font.Size.PtToPx(this);
+            paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal);
+            var metrics = paint.FontMetrics;
+            _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
+        }
+        if (AutoSize)
+            Size = GetPreferredSize(Size.Empty);
+    }
+
+    protected override void OnClick(EventArgs e)
+    {
+        if (DialogResult != DialogResult.None && FindForm() is Form form)
+        {
+            form.DialogResult = DialogResult;
+        }
+        base.OnClick(e);
+    }
+
+    public void PerformClick()
+    {
+        if (CanSelect)
+            OnClick(EventArgs.Empty);
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)
+        {
+            PerformClick();
+            e.Handled = true;
+        }
+        base.OnKeyDown(e);
+    }
+
+    protected override void OnGotFocus(EventArgs e)
+    {
+        base.OnGotFocus(e);
+        Invalidate();
+    }
+
+    protected override void OnLostFocus(EventArgs e)
+    {
+        base.OnLostFocus(e);
+        Invalidate();
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
@@ -114,127 +157,142 @@ public class Button : System.Windows.Forms.Button
     protected override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
-
         _mouseState = 0;
         hoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         Invalidate();
     }
 
-    protected override void OnPaint(PaintEventArgs e)
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        var graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        var canvas = e.Surface.Canvas;
+        canvas.Clear();
 
-        ButtonRenderer.DrawParentBackground(graphics, ClientRectangle, this);
-
-        var rectf = ClientRectangle.ToRectangleF();
-
-        if (ColorScheme.DrawDebugBorders)
-        {
-            var redPen = new Pen(Color.Red, 1);
-            redPen.Alignment = PenAlignment.Outset;
-            graphics.DrawRectangle(redPen, 0, 0, rectf.Width - 1, rectf.Height - 1);
-        }
-
+        var rect = new SKRect(0, 0, Width, Height);
         var inflate = _shadowDepth / 4f;
-        rectf.Inflate(-inflate, -inflate);
+        rect.Inflate(-inflate, -inflate);
 
+        // Ana renk ayarları
         var color = Color.Empty;
         if (Color != Color.Transparent)
-            color = Enabled ? Color : Color.Alpha(200);
+            color = Enabled ? Color : Color.FromArgb(200, Color);
         else
-            color = ColorScheme.ForeColor.Alpha(20);
+            color = Color.FromArgb(20, ColorScheme.ForeColor);
 
-
-        using var brush = new SolidBrush(color);
-        using var outerPen = new Pen(ColorScheme.BorderColor);
-
-        using (var path = rectf.Radius(_radius))
+        var paint = new SKPaint
         {
-            if (Color == Color.Transparent)
-                graphics.DrawPath(outerPen, path);
+            Color = color.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        };
 
-            graphics.FillPath(brush, path);
+        // Gölge çizimi
+        using (var shadowPaint = new SKPaint
+        {
+            Color = SKColors.Black.WithAlpha(60),
+            ImageFilter = SKImageFilter.CreateDropShadow(
+                _shadowDepth,
+                _shadowDepth,
+                3,
+                3,
+                SKColors.Black.WithAlpha(60)
+            ),
+            IsAntialias = true
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, shadowPaint);
+        }
 
-            var animationColor = Color.Transparent;
-            if (Color != Color.Transparent)
-                animationColor = Color.FromArgb((int)(hoverAnimationManager.GetProgress() * 65), color.Determine());
-            else
-                animationColor = Color.FromArgb((int)(hoverAnimationManager.GetProgress() * color.A), brush.Color);
+        // Ana buton çizimi
+        canvas.DrawRoundRect(rect, _radius, _radius, paint);
 
-            using var b = new SolidBrush(animationColor);
-            graphics.FillPath(b, path);
-
-            graphics.DrawShadow(rectf, _shadowDepth, _radius);
-
-            //Ripple
-            if (animationManager.IsAnimating())
+        // Hover efekti
+        var hoverProgress = hoverAnimationManager.GetProgress();
+        if (hoverProgress > 0)
+        {
+            using var hoverPaint = new SKPaint
             {
-                var mode = graphics.SmoothingMode;
-                graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                for (int i = 0; i < animationManager.GetAnimationCount(); i++)
+                Color = color.ToSKColor().WithAlpha((byte)(hoverProgress * 65)),
+                IsAntialias = true
+            };
+            canvas.DrawRoundRect(rect, _radius, _radius, hoverPaint);
+        }
+
+        // Ripple efekti
+        if (animationManager.IsAnimating())
+        {
+            for (int i = 0; i < animationManager.GetAnimationCount(); i++)
+            {
+                var animationValue = animationManager.GetProgress(i);
+                var animationSource = animationManager.GetSource(i);
+
+                using var ripplePaint = new SKPaint
                 {
-                    var animationValue = animationManager.GetProgress(i);
-                    var animationSource = animationManager.GetSource(i);
+                    Color = ColorScheme.BackColor.ToSKColor().WithAlpha((byte)(101 - (animationValue * 100))),
+                    IsAntialias = true
+                };
 
-                    using var rippleBrush = new SolidBrush(ColorScheme.BackColor.Alpha((int)(101 - (animationValue * 100))));
-                    var rippleSize = (float)(animationValue * Width * 2.0);
+                var rippleSize = (float)(animationValue * Width * 2.0);
+                var rippleRect = new SKRect(
+                    animationSource.X - rippleSize / 2,
+                    animationSource.Y - rippleSize / 2,
+                    animationSource.X + rippleSize / 2,
+                    animationSource.Y + rippleSize / 2
+                );
 
-                    var rippleRect = new RectangleF(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize);
-                    path.AddEllipse(rippleRect);
-                    graphics.FillPath(rippleBrush, path);
-                }
-                graphics.SmoothingMode = mode;
+                canvas.DrawOval(rippleRect, ripplePaint);
             }
         }
 
-        var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
-        if (!Enabled)
-            foreColor = Color.Gray;
-
-        var textRect = rectf.ToRectangle();
+        // İkon çizimi
         if (Image != null)
         {
-            //Image
-            Rectangle imageRect = new Rectangle(8, 6, 24, 24);
-
+            var imageRect = new Rectangle(8, (Height - 24) / 2, 24, 24);
             if (string.IsNullOrEmpty(Text))
-                // Center Image
                 imageRect.X += 2;
 
-            if (Image != null)
-                graphics.DrawImage(Image, imageRect);
-
-            // First 8: left padding
-            // 24: Image width
-            // Second 4: space between Image and Text
-            // Third 8: right padding
-            textRect.Width -= 8 + 24 + 4 + 8;
-
-            // First 8: left padding
-            // 24: Image width
-            // Second 4: space between Image and Text
-            textRect.X += 8 + 24 + 4;
+            using (var stream = new System.IO.MemoryStream())
+            {
+                Image.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                stream.Position = 0;
+                using var skImage = SKImage.FromEncodedData(SKData.Create(stream));
+                canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y, imageRect.Width, imageRect.Height));
+            }
         }
 
-        this.DrawString(graphics, TextAlign, foreColor, textRect, AutoEllipsis, UseMnemonic);
-    }
+        // Text çizimi
+        if (!string.IsNullOrEmpty(Text))
+        {
+            var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
+            if (!Enabled)
+                foreColor = Color.Gray;
 
-    private Size GetPreferredSize()
-    {
-        return GetPreferredSize(Size.Empty);
+            using var textPaint = canvas.CreateTextPaint(Font, foreColor, this, TextAlign);
+            var x = textPaint.GetTextX(Width, textPaint.MeasureText(Text), TextAlign, Image != null);
+            var y = textPaint.GetTextY(Height, TextAlign);
+
+            if (AutoEllipsis)
+            {
+                var maxWidth = Width - (Image != null ? 40 : 16);
+                canvas.DrawTextWithEllipsis(Text, textPaint, x, y, maxWidth);
+            }
+            else if (UseMnemonic)
+            {
+                canvas.DrawTextWithMnemonic(Text, textPaint, x, y);
+            }
+            else
+            {
+                canvas.DrawText(Text, x, y, textPaint);
+            }
+        }
     }
 
     public override Size GetPreferredSize(Size proposedSize)
     {
-        // Provides extra space for proper padding for content
         int extra = 16;
 
         if (Image != null)
-            // 24 is for icon size
-            // 4 is for the space between icon & text
             extra += 24 + 4;
 
-        return new Size((int)Math.Ceiling(textSize.Width) + extra, 23);
+        return new Size((int)Math.Ceiling(_textSize.Width) + extra, 32);
     }
 }

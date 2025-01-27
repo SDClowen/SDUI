@@ -4,7 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 
-namespace SDUI.AnimationEngine
+namespace SDUI.Animation2
 {
     public static class ValueFactories
     {

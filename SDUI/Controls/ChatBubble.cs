@@ -1,159 +1,168 @@
-﻿using System.Drawing;
-using System.Drawing.Drawing2D;
+﻿using SDUI.Extensions;
+using SDUI.SK;
+using SkiaSharp;
+using System;
+using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ChatBubble : Control
+public class ChatBubble : SKControl
 {
-    private GraphicsPath _shape;
-    private Color _bubbleColor = Color.FromArgb(217, 217, 217);
-    private bool _drawBubbleArrow = true;
+    private SizeF _textSize;
 
-    private AnchorStyles _arrowPosition;
-    public AnchorStyles ArrowPosition
+    [Category("Appearance")]
+    public Color Color { get; set; } = ColorScheme.PrimaryColor;
+
+    private float _radius = 12f;
+    [Category("Appearance")]
+    public float Radius
     {
-        get => _arrowPosition;
+        get => _radius;
         set
         {
-            _arrowPosition = value;
-            InitializeShape();
+            if (_radius == value)
+                return;
+
+            _radius = value;
             Invalidate();
         }
     }
 
-    public override Color ForeColor
+    private float _tailSize = 8f;
+    [Category("Appearance")]
+    public float TailSize
     {
-        get => base.ForeColor;
+        get => _tailSize;
         set
         {
-            base.ForeColor = value;
-            this.Invalidate();
+            if (_tailSize == value)
+                return;
+
+            _tailSize = value;
+            Invalidate();
         }
     }
 
-    public Color BubbleColor
+    private bool _isIncoming = true;
+    [Category("Appearance")]
+    public bool IsIncoming
     {
-        get => _bubbleColor;
+        get => _isIncoming;
         set
         {
-            _bubbleColor = value;
-            this.Invalidate();
-        }
-    }
+            if (_isIncoming == value)
+                return;
 
-    public bool DrawBubbleArrow
-    {
-        get { return _drawBubbleArrow; }
-        set
-        {
-            _drawBubbleArrow = value;
-            InitializeShape();
+            _isIncoming = value;
             Invalidate();
         }
     }
 
     public ChatBubble()
     {
-        SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
-
-        _arrowPosition = AnchorStyles.Left;
-        Size = new Size(152, 38);
-
-        BackColor = Color.Transparent;
-        ForeColor = Color.FromArgb(52, 52, 52);
-        InitializeShape();
-
-        UpdateStyles();
+        SetStyle(ControlStyles.Selectable, true);
+        MinimumSize = new Size(32, 32);
+        TextAlign = ContentAlignment.MiddleLeft;
+        Padding = new Padding(12);
     }
 
-    private void InitializeShape()
+    protected override void OnTextChanged(EventArgs e)
     {
-        var shape = new GraphicsPath();
-
-        switch (_arrowPosition)
+        base.OnTextChanged(e);
+        using (var paint = new SKPaint())
         {
-            case AnchorStyles.Top:
-                break;
-            case AnchorStyles.Bottom:
-                break;
-            case AnchorStyles.Left:
-                shape.AddArc(9, 0, 10, 10, 180, 90);
-                shape.AddArc(Width - 11, 0, 10, 10, -90, 90);
-                shape.AddArc(Width - 11, Height - 11, 10, 10, 0, 90);
-                shape.AddArc(9, Height - 11, 10, 10, 90, 90);
-                break;
-            case AnchorStyles.Right:
-                shape.AddArc(0, 0, 10, 10, 180, 90);
-                shape.AddArc(Width - 18, 0, 10, 10, -90, 90);
-                shape.AddArc(Width - 18, Height - 11, 10, 10, 0, 90);
-                shape.AddArc(0, Height - 11, 10, 10, 90, 90);
-                break;
-            case AnchorStyles.None:
-                break;
-            default:
-                break;
+            paint.TextSize = Font.Size.PtToPx(this);
+            paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal);
+            var metrics = paint.FontMetrics;
+            _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
+        }
+        if (AutoSize)
+            Size = GetPreferredSize(Size.Empty);
+    }
+
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    {
+        var canvas = e.Surface.Canvas;
+        canvas.Clear();
+
+        if (string.IsNullOrEmpty(Text))
+            return;
+
+        // Baloncuk şeklini çiz
+        var bubblePath = new SKPath();
+        var rect = new SKRect(0, 0, Width, Height);
+
+        // Tail (kuyruk) için alan bırak
+        if (IsIncoming)
+            rect.Left += _tailSize;
+        else
+            rect.Right -= _tailSize;
+
+        // Ana baloncuk şekli
+        bubblePath.AddRoundRect(rect, _radius, _radius);
+
+        // Tail (kuyruk) şekli
+        var tailPoints = new SKPoint[3];
+        if (IsIncoming)
+        {
+            tailPoints[0] = new SKPoint(_tailSize, Height / 2 - _tailSize);
+            tailPoints[1] = new SKPoint(0, Height / 2);
+            tailPoints[2] = new SKPoint(_tailSize, Height / 2 + _tailSize);
+        }
+        else
+        {
+            tailPoints[0] = new SKPoint(Width - _tailSize, Height / 2 - _tailSize);
+            tailPoints[1] = new SKPoint(Width, Height / 2);
+            tailPoints[2] = new SKPoint(Width - _tailSize, Height / 2 + _tailSize);
+        }
+        bubblePath.MoveTo(tailPoints[0]);
+        bubblePath.LineTo(tailPoints[1]);
+        bubblePath.LineTo(tailPoints[2]);
+        bubblePath.Close();
+
+        // Baloncuğu çiz
+        using (var paint = new SKPaint
+        {
+            Color = Color.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill
+        })
+        {
+            canvas.DrawPath(bubblePath, paint);
         }
 
-        shape.CloseAllFigures();
-        _shape = shape;
-    }
-
-    protected override void OnResize(System.EventArgs e)
-    {
-        InitializeShape();
-
-        base.OnResize(e);
-    }
-
-    protected override void OnPaint(PaintEventArgs e)
-    {
-        using (var bitmap = new Bitmap(this.Width, this.Height))
+        // Text çizimi
+        using (var textPaint = canvas.CreateTextPaint(Font, ForeColor, this, TextAlign))
         {
-            using (var graphics = Graphics.FromImage(bitmap))
+            var x = textPaint.GetTextX(Width - Padding.Horizontal - (_tailSize * 2), textPaint.MeasureText(Text), TextAlign);
+            var y = textPaint.GetTextY(Height - Padding.Vertical, TextAlign);
+
+            // Text pozisyonunu tail'e göre ayarla
+            x += IsIncoming ? _tailSize + Padding.Left : Padding.Left;
+
+            if (AutoEllipsis)
             {
-                graphics.Clear(BackColor);
-                graphics.SmoothingMode = SmoothingMode.AntiAlias;
-                graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
-
-                graphics.FillPath(new SolidBrush(_bubbleColor), _shape);
-
-                // Draw a polygon on the right side of the bubble
-                if (_drawBubbleArrow == true)
-                {
-                    Point[] p = null;
-                    switch (_arrowPosition)
-                    {
-                        case AnchorStyles.Left:
-                            p = new Point[] {
-                            new Point(9, Height - 19),
-                            new Point(0, Height - 25),
-                            new Point(9, Height - 30)
-                        };
-                            break;
-                        case AnchorStyles.Right:
-                            p = new Point[] {
-                            new Point(Width - 8, Height - 19),
-                            new Point(Width, Height - 25),
-                            new Point(Width - 8, Height - 30)
-                        };
-                            break;
-                        default:
-                            return;
-                    }
-
-                    graphics.FillPolygon(new SolidBrush(_bubbleColor), p);
-                    graphics.DrawPolygon(new Pen(new SolidBrush(_bubbleColor)), p);
-                }
-
-                e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                e.Graphics.DrawImageUnscaled(bitmap, 0, 0);
+                var maxWidth = Width - Padding.Horizontal - (_tailSize * 2);
+                canvas.DrawTextWithEllipsis(Text, textPaint, x, y, maxWidth);
             }
-
-            var textRect = new Rectangle(15, 4, Width - 17, Height - 5);
-
-            this.DrawString(e.Graphics, ContentAlignment.TopLeft, ForeColor, textRect);
+            else
+            {
+                canvas.DrawText(Text, x, y, textPaint);
+            }
         }
+    }
+
+    public override Size GetPreferredSize(Size proposedSize)
+    {
+        var width = (int)Math.Ceiling(_textSize.Width) + Padding.Horizontal + (int)(_tailSize * 2);
+        var height = (int)Math.Ceiling(_textSize.Height) + Padding.Vertical;
+        
+        // Minimum boyut kontrolü
+        width = Math.Max(width, MinimumSize.Width);
+        height = Math.Max(height, MinimumSize.Height);
+
+        return new Size(width, height);
     }
 }

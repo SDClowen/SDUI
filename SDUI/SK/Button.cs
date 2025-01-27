@@ -14,7 +14,6 @@ public class Button : SKControl
     public Color Color { get; set; } = Color.Transparent;
     public Bitmap Image { get; set; }
     private int _mouseState = 0;
-    private SKSize textSize;
     private string _text;
     public override string Text
     {
@@ -22,14 +21,10 @@ public class Button : SKControl
         set
         {
             _text = value;
-            using (var paint = new SKPaint { TextSize = Font.Size * 1.3333f })
-            {
-                var s = paint.MeasureText(value);
-                textSize = new(s, s);
-            }
 
             if (AutoSize)
                 Size = GetPreferredSize();
+
             Invalidate();
         }
     }
@@ -140,7 +135,7 @@ public class Button : SKControl
             using var b = new SKPaint { Color = animationColor, IsAntialias = true };
             canvas.DrawPath(path, b);
 
-            DrawShadow(canvas, rectf, _shadowDepth, _radius);
+            //DrawShadow(canvas, rectf, _shadowDepth, _radius);
 
 
             // Ripple
@@ -153,8 +148,8 @@ public class Button : SKControl
                     using var rippleBrush = new SKPaint { Color = new SKColor(255, 255, 255, (byte)(101 - (animationValue * 100))), IsAntialias = true };
                     var rippleSize = (float)(animationValue * Width * 2.0);
 
-                    var rippleRect = new SKRect(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize);
-                    path.AddOval(rippleRect);
+                    var rippleRect = new RectangleF(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize);
+                    path.AddOval(rippleRect.ToSKRect());
                     canvas.DrawPath(path, rippleBrush);
                 }
             }
@@ -164,7 +159,7 @@ public class Button : SKControl
         if (!Enabled)
             foreColor = ColorScheme.ForeColor.ToSKColor().WithAlpha(200);
 
-        var textRect = rectf;
+        var textRect = rectf.ToDrawingRect();
         if (Image != null)
         {
             // Image
@@ -182,13 +177,12 @@ public class Button : SKControl
             textRect.Offset(8 + 24 + 4, 0);
         }
 
-        using var textPaint = new SKPaint { Color = foreColor, IsAntialias = true, TextSize = 13.333f, HintingLevel = SKPaintHinting.Full, IsLinearText = true, TextAlign = SKTextAlign.Center };
-        DrawText(canvas, _text, textRect, textPaint);
+        using var textPaint = new SKPaint { Color = foreColor, IsAntialias = true, TextSize = 13.333f, TextAlign = SKTextAlign.Center };
+        DrawText(canvas, _text, textRect.ToSKRect(), textPaint);
     }
 
     private static SKPath RoundedRect(SKRect rect, float radius)
     {
-        radius /= 2;
         var path = new SKPath();
         path.AddRoundRect(rect, radius, radius);
         return path;
@@ -196,12 +190,11 @@ public class Button : SKControl
 
     private void DrawShadow(SKCanvas canvas, SKRect rect, float shadowDepth, float radius)
     {
-        shadowDepth /= 3;
         using var paint = new SKPaint
         {
             Color = new SKColor(0, 0, 0, 50),
             IsAntialias = true,
-            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Outer, shadowDepth)
+            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, shadowDepth)
         };
 
         rect.Offset(0, shadowDepth);
@@ -216,15 +209,5 @@ public class Button : SKControl
     private Size GetPreferredSize()
     {
         return GetPreferredSize(Size.Empty);
-    }
-
-    public override Size GetPreferredSize(Size proposedSize)
-    {
-        int extra = 16;
-
-        if (Image != null)
-            extra += 24 + 4;
-
-        return new Size((int)Math.Ceiling(textSize.Width) + extra, 23);
     }
 }

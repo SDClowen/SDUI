@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SDUI.AnimationEngine
+namespace SDUI.Animation2
 {
     /// <summary>
     /// A method that provides corresponding values of a specified type for a progress value.
