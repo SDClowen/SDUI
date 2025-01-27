@@ -1,9 +1,11 @@
 ﻿using SDUI.Controls;
 using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace SDUI.Test
 {
+    [ToolboxItem(false)]
     public partial class MultiPageControlTestPage : DoubleBufferedControl
     {
         private Type[] _types = { typeof(GeneralPage), typeof(ListViewPage), typeof(ConfigPage) };

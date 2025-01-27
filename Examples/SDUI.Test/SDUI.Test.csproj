@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>disable</ImplicitUsings>
-    <OutputType>Exe</OutputType>
+    <OutputType>WinExe</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
