@@ -1,5 +1,4 @@
-﻿using SDUI.SK;
-using SkiaSharp;
+﻿using SkiaSharp;
 using System.Drawing;
 using System.Windows.Forms;
 

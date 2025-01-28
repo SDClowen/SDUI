@@ -1,26 +1,65 @@
-using SDUI.Helpers;
+using SDUI.Animation;
+using SDUI.Extensions;
+using SkiaSharp;
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Drawing;
-using System.Drawing.Drawing2D;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class FlowLayoutPanel : System.Windows.Forms.FlowLayoutPanel
+public class FlowLayoutPanel : SKControl
 {
+    #region Enums
+
+    public enum FlowAlignment
+    {
+        Near,
+        Center,
+        Far
+    }
+
+    #endregion
+
+    #region Variables
+
     private int _radius = 10;
+    private Padding _border;
+    private Color _borderColor = Color.Transparent;
+    private float _shadowDepth = 4;
+    private FlowDirection _flowDirection = FlowDirection.LeftToRight;
+    private bool _wrapContents = true;
+    private bool _autoScroll = false;
+    private FlowAlignment _verticalAlignment = FlowAlignment.Near;
+    private FlowAlignment _horizontalAlignment = FlowAlignment.Near;
+    private Padding _itemPadding = new(3);
+    private readonly Dictionary<Control, Point> _targetLocations = new();
+    private readonly Dictionary<Control, AnimationEngine> _animations = new();
+    private readonly VScrollBar _vScrollBar;
+    private readonly HScrollBar _hScrollBar;
+    private bool _isLayouting;
+
+    #endregion
+
+    #region Properties
+
+    [Category("Appearance")]
     public int Radius
     {
         get => _radius;
         set
         {
-            _radius = value;
+            if (_radius == value)
+                return;
 
+            _radius = value;
             Invalidate();
         }
     }
 
-    private Padding _border;
+    [Category("Appearance")]
     public Padding Border
     {
         get => _border;
@@ -34,7 +73,7 @@ public class FlowLayoutPanel : System.Windows.Forms.FlowLayoutPanel
         }
     }
 
-    private Color _borderColor = Color.Transparent;
+    [Category("Appearance")]
     public Color BorderColor
     {
         get => _borderColor;
@@ -48,7 +87,7 @@ public class FlowLayoutPanel : System.Windows.Forms.FlowLayoutPanel
         }
     }
 
-    private float _shadowDepth = 4;
+    [Category("Appearance")]
     public float ShadowDepth
     {
         get => _shadowDepth;
@@ -62,76 +101,589 @@ public class FlowLayoutPanel : System.Windows.Forms.FlowLayoutPanel
         }
     }
 
-    public FlowLayoutPanel()
+    [Category("Layout")]
+    public FlowDirection FlowDirection
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-                  ControlStyles.OptimizedDoubleBuffer |
-                    ControlStyles.AllPaintingInWmPaint |
-                  ControlStyles.UserPaint, true);
+        get => _flowDirection;
+        set
+        {
+            if (_flowDirection == value)
+                return;
 
-        BackColor = Color.Transparent;
-        DoubleBuffered = true;
+            _flowDirection = value;
+            PerformLayout();
+        }
     }
 
-    protected override void OnParentBackColorChanged(EventArgs e)
+    [Category("Layout")]
+    public bool WrapContents
     {
-        base.OnParentBackColorChanged(e);
+        get => _wrapContents;
+        set
+        {
+            if (_wrapContents == value)
+                return;
+
+            _wrapContents = value;
+            PerformLayout();
+        }
+    }
+
+    [Category("Layout")]
+    public bool AutoScroll
+    {
+        get => _autoScroll;
+        set
+        {
+            if (_autoScroll == value)
+                return;
+
+            _autoScroll = value;
+            _vScrollBar.Visible = _hScrollBar.Visible = value;
+            PerformLayout();
+        }
+    }
+
+    [Category("Layout")]
+    public FlowAlignment VerticalAlignment
+    {
+        get => _verticalAlignment;
+        set
+        {
+            if (_verticalAlignment == value)
+                return;
+
+            _verticalAlignment = value;
+            PerformLayout();
+        }
+    }
+
+    [Category("Layout")]
+    public FlowAlignment HorizontalAlignment
+    {
+        get => _horizontalAlignment;
+        set
+        {
+            if (_horizontalAlignment == value)
+                return;
+
+            _horizontalAlignment = value;
+            PerformLayout();
+        }
+    }
+
+    [Category("Layout")]
+    public Padding ItemPadding
+    {
+        get => _itemPadding;
+        set
+        {
+            if (_itemPadding == value)
+                return;
+
+            _itemPadding = value;
+            PerformLayout();
+        }
+    }
+
+    #endregion
+
+    public FlowLayoutPanel()
+    {
+        SetStyle(ControlStyles.Selectable | 
+                ControlStyles.AllPaintingInWmPaint | 
+                ControlStyles.UserPaint | 
+                ControlStyles.ResizeRedraw, true);
+
+        BackColor = Color.Transparent;
+
+        _vScrollBar = new VScrollBar
+        {
+            Dock = DockStyle.Right,
+            Visible = false
+        };
+        _hScrollBar = new HScrollBar
+        {
+            Dock = DockStyle.Bottom,
+            Visible = false
+        };
+
+        _vScrollBar.ValueChanged += ScrollBar_ValueChanged;
+        _hScrollBar.ValueChanged += ScrollBar_ValueChanged;
+
+        Controls.Add(_vScrollBar);
+        Controls.Add(_hScrollBar);
+    }
+
+    private void ScrollBar_ValueChanged(object sender, EventArgs e)
+    {
+        if (_isLayouting) return;
+        PerformLayout();
         Invalidate();
     }
 
-    protected override void OnPaint(PaintEventArgs e)
+    protected override void OnControlAdded(ControlEventArgs e)
     {
-        var graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        base.OnControlAdded(e);
+        if (e.Control == _vScrollBar || e.Control == _hScrollBar) return;
 
-        GroupBoxRenderer.DrawParentBackground(graphics, ClientRectangle, this);
-        if (ColorScheme.DrawDebugBorders)
+        // Yeni kontrol için animasyon motoru oluştur
+        _animations[e.Control] = new AnimationEngine
         {
-            using var redPen = new Pen(Color.Red, 1);
-            redPen.Alignment = PenAlignment.Inset;
-            e.Graphics.DrawRectangle(redPen, new Rectangle(0, 0, Width - 1, Height - 1));
+            Increment = 0.08f,
+            AnimationType = AnimationType.EaseInOut
+        };
+        _animations[e.Control].OnAnimationProgress += (s) => Invalidate();
+
+        PerformLayout();
+    }
+
+    protected override void OnControlRemoved(ControlEventArgs e)
+    {
+        base.OnControlRemoved(e);
+        if (e.Control == _vScrollBar || e.Control == _hScrollBar) return;
+
+        // Kontrol kaldırıldığında animasyonu temizle
+        if (_animations.ContainsKey(e.Control))
+        {
+            _animations.Remove(e.Control);
+        }
+        if (_targetLocations.ContainsKey(e.Control))
+        {
+            _targetLocations.Remove(e.Control);
         }
 
-        var rect = ClientRectangle.ToRectangleF();
+        PerformLayout();
+    }
 
-        var color = BackColor == Color.Transparent ? ColorScheme.BackColor2 : BackColor;
-        var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
+    protected override void OnLayout(LayoutEventArgs e)
+    {
+        base.OnLayout(e);
+        if (_isLayouting) return;
 
-        var inflate = _shadowDepth / 4f;
-        //rect.Inflate(-inflate, -inflate);
+        _isLayouting = true;
 
-        if (_radius > 0)
+        var controls = Controls.Cast<Control>()
+            .Where(c => c != _vScrollBar && c != _hScrollBar && c.Visible)
+            .ToList();
+
+        if (controls.Count == 0)
         {
-            using var path = rect.Radius(_radius);
-            /*var shadow = DropShadow.Create(path, Color.Black.Alpha(20), _shadowDepth);
-
-            var shadowBounds = DropShadow.GetBounds(shadowRect, _shadowDepth);
-            //shadowBounds.Offset(0, 0);
-
-            e.Graphics.DrawImageUnscaled(shadow, shadowBounds.Location);
-
-            */
-
-            using (var brush = new SolidBrush(color))
-                e.Graphics.FillPath(brush, path);
-
-            //e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
-            ShadowUtils.DrawShadow(graphics, ColorScheme.ShadowColor, rect.ToRectangle(), (int)(_shadowDepth + 1) + 40, DockStyle.Right);
-            using var pen = new Pen(borderColor, _border.All);
-            e.Graphics.DrawPath(pen, path);
-
+            _isLayouting = false;
             return;
         }
 
-        using (var brush = new SolidBrush(color))
-            e.Graphics.FillRectangle(brush, rect);
+        var clientArea = GetClientArea();
+        var currentX = clientArea.Left;
+        var currentY = clientArea.Top;
+        var rowHeight = 0;
+        var columnWidth = 0;
+        var maxContentWidth = 0;
+        var maxContentHeight = 0;
 
-        e.Graphics.DrawShadow(rect, _shadowDepth, _radius == 0 ? 1 : _radius);
+        // Yatay düzenleme
+        if (_flowDirection == FlowDirection.LeftToRight || _flowDirection == FlowDirection.RightToLeft)
+        {
+            var row = new List<Control>();
 
-        ControlPaint.DrawBorder(e.Graphics, ClientRectangle,
-                              borderColor, _border.Left, ButtonBorderStyle.Solid,
-                              borderColor, _border.Top, ButtonBorderStyle.Solid,
-                              borderColor, _border.Right, ButtonBorderStyle.Solid,
-                              borderColor, _border.Bottom, ButtonBorderStyle.Solid);
+            foreach (var control in controls)
+            {
+                // Satır sonuna gelindi mi kontrol et
+                if (_wrapContents && currentX + control.Width + _itemPadding.Horizontal > clientArea.Right)
+                {
+                    // Mevcut satırı hizala
+                    AlignRow(row, currentY, rowHeight, clientArea);
+                    row.Clear();
+
+                    currentX = clientArea.Left;
+                    currentY += rowHeight + _itemPadding.Vertical;
+                    rowHeight = 0;
+                }
+
+                var targetPoint = new Point(currentX, currentY);
+                _targetLocations[control] = targetPoint;
+
+                // Animasyon başlat
+                if (!control.Location.Equals(targetPoint))
+                {
+                    StartAnimation(control, targetPoint);
+                }
+
+                currentX += control.Width + _itemPadding.Horizontal;
+                rowHeight = Math.Max(rowHeight, control.Height);
+                maxContentWidth = Math.Max(maxContentWidth, currentX);
+                row.Add(control);
+            }
+
+            // Son satırı hizala
+            if (row.Count > 0)
+            {
+                AlignRow(row, currentY, rowHeight, clientArea);
+            }
+
+            maxContentHeight = currentY + rowHeight;
+        }
+        // Dikey düzenleme
+        else
+        {
+            var column = new List<Control>();
+
+            foreach (var control in controls)
+            {
+                // Sütun sonuna gelindi mi kontrol et
+                if (_wrapContents && currentY + control.Height + _itemPadding.Vertical > clientArea.Bottom)
+                {
+                    // Mevcut sütunu hizala
+                    AlignColumn(column, currentX, columnWidth, clientArea);
+                    column.Clear();
+
+                    currentY = clientArea.Top;
+                    currentX += columnWidth + _itemPadding.Horizontal;
+                    columnWidth = 0;
+                }
+
+                var targetPoint = new Point(currentX, currentY);
+                _targetLocations[control] = targetPoint;
+
+                // Animasyon başlat
+                if (!control.Location.Equals(targetPoint))
+                {
+                    StartAnimation(control, targetPoint);
+                }
+
+                currentY += control.Height + _itemPadding.Vertical;
+                columnWidth = Math.Max(columnWidth, control.Width);
+                maxContentHeight = Math.Max(maxContentHeight, currentY);
+                column.Add(control);
+            }
+
+            // Son sütunu hizala
+            if (column.Count > 0)
+            {
+                AlignColumn(column, currentX, columnWidth, clientArea);
+            }
+
+            maxContentWidth = currentX + columnWidth;
+        }
+
+        // ScrollBar'ları güncelle
+        if (_autoScroll)
+        {
+            UpdateScrollBars(maxContentWidth, maxContentHeight);
+        }
+
+        _isLayouting = false;
+    }
+
+    private void StartAnimation(Control control, Point targetPoint)
+    {
+        if (!_animations.TryGetValue(control, out var animation)) return;
+
+        var currentLoc = control.Location;
+        animation.OnAnimationProgress += (progress) =>
+        {
+            control.Location = new Point(
+                (int)(currentLoc.X + (targetPoint.X - currentLoc.X) * (float)progress),
+                (int)(currentLoc.Y + (targetPoint.Y - currentLoc.Y) * (float)progress)
+            );
+            Invalidate();
+        };
+        animation.StartNewAnimation(AnimationDirection.In);
+    }
+
+    private void AlignRow(List<Control> row, int y, int height, Rectangle clientArea)
+    {
+        if (row.Count == 0) return;
+
+        var totalWidth = row.Sum(c => c.Width) + (row.Count - 1) * _itemPadding.Horizontal;
+        var startX = clientArea.Left;
+
+        switch (_horizontalAlignment)
+        {
+            case FlowAlignment.Center:
+                startX = clientArea.Left + (clientArea.Width - totalWidth) / 2;
+                break;
+            case FlowAlignment.Far:
+                startX = clientArea.Right - totalWidth;
+                break;
+        }
+
+        foreach (var control in row)
+        {
+            var targetY = y;
+            switch (_verticalAlignment)
+            {
+                case FlowAlignment.Center:
+                    targetY += (height - control.Height) / 2;
+                    break;
+                case FlowAlignment.Far:
+                    targetY += height - control.Height;
+                    break;
+            }
+
+            _targetLocations[control] = new Point(startX, targetY);
+            startX += control.Width + _itemPadding.Horizontal;
+        }
+    }
+
+    private void AlignColumn(List<Control> column, int x, int width, Rectangle clientArea)
+    {
+        if (column.Count == 0) return;
+
+        var totalHeight = column.Sum(c => c.Height) + (column.Count - 1) * _itemPadding.Vertical;
+        var startY = clientArea.Top;
+
+        switch (_verticalAlignment)
+        {
+            case FlowAlignment.Center:
+                startY = clientArea.Top + (clientArea.Height - totalHeight) / 2;
+                break;
+            case FlowAlignment.Far:
+                startY = clientArea.Bottom - totalHeight;
+                break;
+        }
+
+        foreach (var control in column)
+        {
+            var targetX = x;
+            switch (_horizontalAlignment)
+            {
+                case FlowAlignment.Center:
+                    targetX += (width - control.Width) / 2;
+                    break;
+                case FlowAlignment.Far:
+                    targetX += width - control.Width;
+                    break;
+            }
+
+            _targetLocations[control] = new Point(targetX, startY);
+            startY += control.Height + _itemPadding.Vertical;
+        }
+    }
+
+    private Rectangle GetClientArea()
+    {
+        var area = ClientRectangle;
+        if (_autoScroll)
+        {
+            if (_vScrollBar.Visible)
+                area.Width -= _vScrollBar.Width;
+            if (_hScrollBar.Visible)
+                area.Height -= _hScrollBar.Height;
+        }
+        return area;
+    }
+
+    private void UpdateScrollBars(int contentWidth, int contentHeight)
+    {
+        var needHScroll = contentWidth > ClientRectangle.Width;
+        var needVScroll = contentHeight > ClientRectangle.Height;
+
+        if (needHScroll && !_hScrollBar.Visible)
+            needVScroll = contentHeight > (ClientRectangle.Height - _hScrollBar.Height);
+        if (needVScroll && !_vScrollBar.Visible)
+            needHScroll = contentWidth > (ClientRectangle.Width - _vScrollBar.Width);
+
+        _hScrollBar.Visible = needHScroll;
+        _vScrollBar.Visible = needVScroll;
+
+        if (needHScroll)
+        {
+            _hScrollBar.Minimum = 0;
+            _hScrollBar.Maximum = contentWidth;
+            _hScrollBar.LargeChange = ClientRectangle.Width;
+            _hScrollBar.SmallChange = _itemPadding.Horizontal;
+        }
+
+        if (needVScroll)
+        {
+            _vScrollBar.Minimum = 0;
+            _vScrollBar.Maximum = contentHeight;
+            _vScrollBar.LargeChange = ClientRectangle.Height;
+            _vScrollBar.SmallChange = _itemPadding.Vertical;
+        }
+    }
+
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    {
+        var canvas = e.Surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+
+        var rect = new SKRect(0, 0, Width, Height);
+        var color = BackColor == Color.Transparent ? ColorScheme.BackColor2 : BackColor;
+        var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
+
+        // Gölge çizimi
+        if (_shadowDepth > 0)
+        {
+            using var shadowPaint = new SKPaint
+            {
+                Color = SKColors.Black.WithAlpha(30),
+                ImageFilter = SKImageFilter.CreateDropShadow(
+                    _shadowDepth,
+                    _shadowDepth,
+                    3,
+                    3,
+                    SKColors.Black.WithAlpha(30)),
+                IsAntialias = true
+            };
+
+            if (_radius > 0)
+            {
+                using var path = new SKPath();
+                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                canvas.DrawPath(path, shadowPaint);
+            }
+            else
+            {
+                canvas.DrawRect(rect, shadowPaint);
+            }
+        }
+
+        // Panel arka planı
+        using (var paint = new SKPaint
+        {
+            Color = color.ToSKColor(),
+            IsAntialias = true
+        })
+        {
+            if (_radius > 0)
+            {
+                using var path = new SKPath();
+                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                canvas.DrawPath(path, paint);
+            }
+            else
+            {
+                canvas.DrawRect(rect, paint);
+            }
+        }
+
+        // Kenarlık çizimi
+        if (_border.All > 0 || _border.Left > 0 || _border.Top > 0 || _border.Right > 0 || _border.Bottom > 0)
+        {
+            using var paint = new SKPaint
+            {
+                Color = borderColor.ToSKColor(),
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1,
+                IsAntialias = true
+            };
+
+            if (_radius > 0)
+            {
+                using var path = new SKPath();
+                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+
+                if (_border.All > 0)
+                {
+                    paint.StrokeWidth = _border.All;
+                    canvas.DrawPath(path, paint);
+                }
+                else
+                {
+                    // Sol kenarlık
+                    if (_border.Left > 0)
+                    {
+                        paint.StrokeWidth = _border.Left;
+                        var left = new SKPath();
+                        left.MoveTo(rect.Left + _radius * DPI, rect.Top);
+                        left.LineTo(rect.Left + _radius * DPI, rect.Bottom);
+                        canvas.DrawPath(left, paint);
+                    }
+
+                    // Üst kenarlık
+                    if (_border.Top > 0)
+                    {
+                        paint.StrokeWidth = _border.Top;
+                        var top = new SKPath();
+                        top.MoveTo(rect.Left, rect.Top + _radius * DPI);
+                        top.LineTo(rect.Right, rect.Top + _radius * DPI);
+                        canvas.DrawPath(top, paint);
+                    }
+
+                    // Sağ kenarlık
+                    if (_border.Right > 0)
+                    {
+                        paint.StrokeWidth = _border.Right;
+                        var right = new SKPath();
+                        right.MoveTo(rect.Right - _radius * DPI, rect.Top);
+                        right.LineTo(rect.Right - _radius * DPI, rect.Bottom);
+                        canvas.DrawPath(right, paint);
+                    }
+
+                    // Alt kenarlık
+                    if (_border.Bottom > 0)
+                    {
+                        paint.StrokeWidth = _border.Bottom;
+                        var bottom = new SKPath();
+                        bottom.MoveTo(rect.Left, rect.Bottom - _radius * DPI);
+                        bottom.LineTo(rect.Right, rect.Bottom - _radius * DPI);
+                        canvas.DrawPath(bottom, paint);
+                    }
+                }
+            }
+            else
+            {
+                if (_border.All > 0)
+                {
+                    paint.StrokeWidth = _border.All;
+                    canvas.DrawRect(rect, paint);
+                }
+                else
+                {
+                    // Sol kenarlık
+                    if (_border.Left > 0)
+                    {
+                        paint.StrokeWidth = _border.Left;
+                        canvas.DrawLine(rect.Left, rect.Top, rect.Left, rect.Bottom, paint);
+                    }
+
+                    // Üst kenarlık
+                    if (_border.Top > 0)
+                    {
+                        paint.StrokeWidth = _border.Top;
+                        canvas.DrawLine(rect.Left, rect.Top, rect.Right, rect.Top, paint);
+                    }
+
+                    // Sağ kenarlık
+                    if (_border.Right > 0)
+                    {
+                        paint.StrokeWidth = _border.Right;
+                        canvas.DrawLine(rect.Right, rect.Top, rect.Right, rect.Bottom, paint);
+                    }
+
+                    // Alt kenarlık
+                    if (_border.Bottom > 0)
+                    {
+                        paint.StrokeWidth = _border.Bottom;
+                        canvas.DrawLine(rect.Left, rect.Bottom, rect.Right, rect.Bottom, paint);
+                    }
+                }
+            }
+        }
+
+        // Debug çerçevesi
+        if (ColorScheme.DrawDebugBorders)
+        {
+            using var paint = new SKPaint
+            {
+                Color = SKColors.Red,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1,
+                IsAntialias = true
+            };
+            canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _animations.Clear();
+            _targetLocations.Clear();
+        }
+        base.Dispose(disposing);
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace SDUI.Test
+﻿using SDUI.Controls;
+
+namespace SDUI.Test
 {
     partial class ListViewPage
     {
@@ -78,8 +80,6 @@
             // 
             // ListViewPage
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.listView1);
             this.Name = "ListViewPage";
             this.Size = new System.Drawing.Size(1075, 646);
@@ -89,7 +89,7 @@
 
         #endregion
 
-        private SDUI.SK.ListView listView1;
+        private ListView listView1;
         private System.Windows.Forms.ColumnHeader columnHeader1;
         private System.Windows.Forms.ColumnHeader columnHeader2;
         private System.Windows.Forms.ColumnHeader columnHeader3;

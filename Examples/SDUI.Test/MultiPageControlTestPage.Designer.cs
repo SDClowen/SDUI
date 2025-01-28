@@ -49,8 +49,6 @@
             // 
             // MultiPageControlTestPage
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.multiPageControl);
             this.Name = "MultiPageControlTestPage";
             this.Size = new System.Drawing.Size(1083, 552);

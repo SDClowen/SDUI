@@ -1,314 +1,424 @@
-﻿using SDUI.Controls.Subclasses;
-using SDUI.Helpers;
+﻿using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
-using System.Runtime.InteropServices;
+using System.Linq;
+using System.Timers;
 using System.Windows.Forms;
-using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
-public class ListView : System.Windows.Forms.ListView
+public class ListView : SKControl
 {
-    /// <summary>
-    /// The column sorter
-    /// </summary>
-    private ListViewColumnSorter LvwColumnSorter { get; set; }
+    public View View { get; set; } = View.Details;
+    public BorderStyle BorderStyle { get; set; } = BorderStyle.None;
+    public bool FullRowSelect { get; set; } = false;
+    public bool CheckBoxes { get; set; } = false;
+    public bool ShowItemToolTips { get; set; } = false;
+    public bool UseCompatibleStateImageBehavior { get; set; } = false;
 
-    /// <summary>
-    /// The header sub class
-    /// </summary>
-    private ListViewHeaderSubclassedWindow _headerSubClass;
+    public List<ColumnHeader> Columns { get; } = new List<ColumnHeader>();
+    public List<ListViewItem> Items { get; } = new List<ListViewItem>();
+    public List<ListViewGroup> Groups { get; } = new List<ListViewGroup>();
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="AeroListView"/> class.
-    /// </summary>
+    private float _horizontalScrollOffset = 0;
+    private float _verticalScrollOffset = 0;
+    private bool _isResizingColumn = false;
+    private int _resizingColumnIndex = -1;
+    private int _columnResizeStartX = 0;
+    private bool _isDraggingScrollbar = false;
+    private bool _isVerticalScrollbar = false;
+    private Point _scrollbarDragStart;
+
+    private readonly int rowBoundsHeight = 30;
+    private int maxVisibleRows => Height / rowBoundsHeight;
+
+    private System.Timers.Timer _elasticTimer;
+    private const float ElasticDecay = 0.85f;
+    private const int ElasticInterval = 15;
+
+    public event EventHandler<int> RowClicked;
+
     public ListView()
-        : base()
     {
-        SetStyle(
-            ControlStyles.Opaque |
-            ControlStyles.AllPaintingInWmPaint |
-            ControlStyles.ResizeRedraw |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.EnableNotifyMessage, true);
-
-        LvwColumnSorter = new ListViewColumnSorter();
-        ListViewItemSorter = LvwColumnSorter;
-        View = View.Details;
-        FullRowSelect = true;
-        UpdateStyles();
-
-        _headerSubClass = new();
-        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        _elasticTimer = new(ElasticInterval);
+        _elasticTimer.Elapsed += ElasticTimer_Tick;
     }
 
-    protected override void OnSelectedIndexChanged(EventArgs e)
+    private void ElasticTimer_Tick(object sender, ElapsedEventArgs e)
     {
-        base.OnSelectedIndexChanged(e);
-        Invalidate();
+        bool needsRefresh = false;
+
+        if ((ModifierKeys & Keys.Shift) == Keys.Shift)
+        {
+            // Horizontal pull-back
+            if (_horizontalScrollOffset < 0)
+            {
+                _horizontalScrollOffset *= ElasticDecay;
+                if (_horizontalScrollOffset > -1) _horizontalScrollOffset = 0;
+                needsRefresh = true;
+            }
+            else if (_horizontalScrollOffset > Columns.Sum(c => c.Width) - Width)
+            {
+                _horizontalScrollOffset -= (_horizontalScrollOffset - (Columns.Sum(c => c.Width) - Width)) * (1 - ElasticDecay);
+                if (_horizontalScrollOffset < Columns.Sum(c => c.Width) - Width + 1)
+                    _horizontalScrollOffset = Columns.Sum(c => c.Width) - Width;
+                needsRefresh = true;
+            }
+
+        }
+
+        // Vertical pull-back
+        if (_verticalScrollOffset < 0)
+        {
+            _verticalScrollOffset *= ElasticDecay;
+            if (_verticalScrollOffset > -1) _verticalScrollOffset = 0;
+            needsRefresh = true;
+        }
+        else if (_verticalScrollOffset > (Items.Count - maxVisibleRows) * rowBoundsHeight)
+        {
+            _verticalScrollOffset -= (_verticalScrollOffset - (Items.Count - maxVisibleRows) * rowBoundsHeight) * (1 - ElasticDecay);
+            if (_verticalScrollOffset < (Items.Count - maxVisibleRows) * rowBoundsHeight + 1)
+                _verticalScrollOffset = (Items.Count - maxVisibleRows) * rowBoundsHeight;
+            needsRefresh = true;
+        }
+
+        if (needsRefresh)
+        {
+            Invalidate();
+        }
+        else
+        {
+            _elasticTimer.Stop();
+        }
     }
 
-    protected override void OnMouseDown(MouseEventArgs e)
+    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
-        base.OnMouseDown(e);
-        Invalidate();
+        var canvas = e.Surface.Canvas;
+        canvas.Clear(SKColors.White);
+
+        DrawGroups(canvas);
+        DrawColumns(canvas);
+        DrawScrollBars(canvas);
+    }
+
+    private void DrawColumns(SKCanvas canvas)
+    {
+        var x = -_horizontalScrollOffset;
+        using var gridPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = SKColors.LightGray,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = .5f
+        };
+
+        using var headerPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = SKColors.WhiteSmoke,
+            Style = SKPaintStyle.StrokeAndFill,
+            TextSize = 16f,
+        };
+
+        var rect = new SKRect(x, 0, Width, 30);
+        canvas.DrawRect(rect, headerPaint);
+
+        headerPaint.Color = SKColors.DarkSlateGray;
+        foreach (var column in Columns)
+        {
+            canvas.DrawText(column.Text, x + 5, 20, headerPaint);
+
+            // Draw grid lines for columns
+            x += column.Width;
+            canvas.DrawLine(x, 0, x, Height, gridPaint);
+        }
+
+        // Draw bottom line for the header
+        canvas.DrawLine(0, 30, Width, 30, gridPaint);
+    }
+
+    private void DrawGroups(SKCanvas canvas)
+    {
+        var y = 30 - _verticalScrollOffset;
+        using var groupPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            TextSize = 16f,
+        };
+
+        using var groupTextPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = SKColors.DarkSlateGray,
+            Style = SKPaintStyle.Fill,
+            TextSize = 16f,
+        };
+
+        foreach (var group in Groups)
+        {
+            var rect = new SKRect();
+            rect.Location = new SKPoint(5, y + 8);
+            rect.Size = new SKSize(16, 16);
+
+            groupPaint.Style = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? SKPaintStyle.Fill : SKPaintStyle.Stroke;
+            groupPaint.Color = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? SKColors.DarkSlateGray : SKColors.LightSlateGray;
+
+            canvas.DrawRoundRect(rect, 4, 4, groupPaint);
+            canvas.DrawText(group.Header, 25, y + 20, groupTextPaint);
+
+            y += rowBoundsHeight;
+
+            if (group.CollapsedState != ListViewGroupCollapsedState.Collapsed)
+            {
+                foreach (ListViewItem item in group.Items)
+                {
+                    DrawRow(canvas, item, y);
+                    y += rowBoundsHeight;
+                }
+            }
+        }
+    }
+
+    private void DrawRow(SKCanvas canvas, ListViewItem row, float y)
+    {
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Style = SKPaintStyle.Fill,
+            TextSize = 15,
+            IsAutohinted = true,
+        };
+
+        using var gridPaint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = SKColors.WhiteSmoke,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1f
+        };
+
+        paint.Color = row.Selected ? SKColors.WhiteSmoke : SKColors.White;
+        var rect = new SKRect(0, y, Width, y + rowBoundsHeight);
+        canvas.DrawRect(rect, paint);
+
+        // Draw row content (parameters)
+        var x = -_horizontalScrollOffset;
+        for (int i = 0; i < row.SubItems.Count; i++)
+        {
+            if (i < Columns.Count)
+            {
+                paint.Color = SKColors.Black;
+                canvas.DrawText(row.SubItems[i].Text, x + 5, y + rowBoundsHeight / 2 + 5, paint);
+                x += Columns[i].Width;
+            }
+        }
+
+        // Draw row grid lines
+        canvas.DrawLine(0, y, Width, y, gridPaint);
+    }
+
+    private void DrawScrollBars(SKCanvas canvas)
+    {
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = SKColors.Silver,
+            Style = SKPaintStyle.StrokeAndFill
+        };
+
+        // Horizontal ScrollBar
+        if (Columns.Sum(c => c.Width) > Width)
+        {
+            float scrollbarWidth = Width * (Width / (float)Columns.Sum(c => c.Width));
+            float scrollbarX = _horizontalScrollOffset * (Width - scrollbarWidth) / (Columns.Sum(c => c.Width) - Width);
+            var rect = new SKRect(scrollbarX + 5, Height - 15, scrollbarX + scrollbarWidth - 5, Height - 5);
+            canvas.DrawRoundRect(rect, 4, 4, paint);
+        }
+
+        // Vertical ScrollBar
+        if (Items.Sum(r => rowBoundsHeight) > Height - 30)
+        {
+            float scrollbarHeight = (Height - 30) * ((Height - 30) / (float)Items.Sum(r => rowBoundsHeight));
+            float scrollbarY = _verticalScrollOffset * (Height - 30 - scrollbarHeight) / (Items.Sum(r => rowBoundsHeight) - (Height - 30));
+            var rect = new SKRect(Width - 5, 35 + scrollbarY, Width - 15, 15 + scrollbarY + scrollbarHeight);
+            canvas.DrawRoundRect(rect, 8, 8, paint);
+        }
     }
 
     protected override void OnMouseWheel(MouseEventArgs e)
     {
         base.OnMouseWheel(e);
-        Invalidate();
-    }
+        var delta = e.Delta / 120f;
 
-    /// <summary>
-    /// Raises the <see cref="E:HandleCreated" /> event.
-    /// </summary>
-    /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
-    protected override void OnHandleCreated(EventArgs e)
-    {
-        base.OnHandleCreated(e);
-
-        _headerSubClass.AssignHandle(this.Handle);
-        SendMessage(Handle, LVM_SETEXTENDEDLISTVIEWSTYLE, LVS_EX_DOUBLEBUFFER, LVS_EX_DOUBLEBUFFER);
-    }
-
-    protected override void OnNotifyMessage(Message m)
-    {
-        if (m.Msg != 0x14)
+        if ((ModifierKeys & Keys.Shift) == Keys.Shift)
         {
-            base.OnNotifyMessage(m);
-        }
-    }
-
-    /// <summary>
-    /// Raises the <see cref="E:ColumnClick" /> event.
-    /// </summary>
-    /// <param name="e">The <see cref="ColumnClickEventArgs"/> instance containing the event data.</param>
-    protected override void OnColumnClick(ColumnClickEventArgs e)
-    {
-        base.OnColumnClick(e);
-
-        for (int i = 0; i < Columns.Count; i++)
-            SetSortArrow(i, SortOrder.None);
-
-        // Determine if clicked column is already the column that is being sorted.
-        if (e.Column == LvwColumnSorter.SortColumn)
-        {
-            // Reverse the current sort direction for this column.
-            LvwColumnSorter.Order = (LvwColumnSorter.Order == SortOrder.Ascending)
-                ? SortOrder.Descending
-                : SortOrder.Ascending;
+            _horizontalScrollOffset = Math.Max(-Width / 4, Math.Min(_horizontalScrollOffset - delta * 30, Columns.Sum(c => c.Width) - Width + Width / 4));
         }
         else
         {
-            // Set the column number that is to be sorted; default to ascending.
-            LvwColumnSorter.SortColumn = e.Column;
-            LvwColumnSorter.Order = SortOrder.Ascending;
+            _verticalScrollOffset = Math.Max(-Height / 4, _verticalScrollOffset - delta * 30);
+            _verticalScrollOffset = Math.Min(_verticalScrollOffset, (Items.Count - maxVisibleRows) * 30 + Height / 4);
         }
 
-        SetSortArrow(e.Column, LvwColumnSorter.Order);
-
-        // Perform the sort with these new sort options.
-        if (!VirtualMode)
-            Sort();
-    }
-
-    /// <summary>
-    /// Select all rows on the given listview
-    /// </summary>
-    /// <param name="list">The listview whose items are to be selected</param>
-    public void SelectAllItems()
-    {
-        var s = System.Diagnostics.Stopwatch.StartNew();
-        Focus();
-        SetItemState(-1, 2, 2);
-        //MessageBox.Show($"Selected in: {s.ElapsedMilliseconds} ms");
-    }
-
-    /// <summary>
-    /// Deselect all rows on the given listview
-    /// </summary>
-    /// <param name="list">The listview whose items are to be deselected</param>
-    public void DeselectAllItems()
-    {
-        SetItemState(-1, 2, 0);
-    }
-
-    /// <summary>
-    /// Set the item state on the given item
-    /// </summary>
-    /// <param name="list">The listview whose item's state is to be changed</param>
-    /// <param name="itemIndex">The index of the item to be changed</param>
-    /// <param name="mask">Which bits of the value are to be set?</param>
-    /// <param name="value">The value to be set</param>
-    public void SetItemState(int itemIndex, int mask, int value)
-    {
-        LVITEM lvItem = new LVITEM();
-        lvItem.stateMask = mask;
-        lvItem.state = value;
-        SendMessageLVItem(Handle, LVM_SETITEMSTATE, itemIndex, ref lvItem);
-
-        EnsureVisible(itemIndex);
-    }
-
-    public int SetGroupInfo(IntPtr hWnd, int nGroupID, uint nSate)
-    {
-        var lvg = new LVGROUP();
-        lvg.cbSize = (uint)Marshal.SizeOf(lvg);
-        lvg.mask = LVGF_STATE | LVGF_GROUPID | LVGF_HEADER;
-        // for test
-        SendMessage(hWnd, LVM_GETGROUPINFO, nGroupID, ref lvg);
-        lvg.state = nSate;
-        lvg.mask = LVGF_STATE;
-        SendMessage(hWnd, LVM_SETGROUPINFO, nGroupID, ref lvg);
-        return -1;
-    }
-
-    protected override void WndProc(ref Message m)
-    {
-        if (m.Msg == WM_REFLECT + WM_NOFITY)
+        if (!_elasticTimer.Enabled)
         {
-            var pnmhdr = (NMHDR)m.GetLParam(typeof(NMHDR));
-            if (pnmhdr.code == NM_CUSTOMDRAW)
+            _elasticTimer.Start();
+        }
+
+        Invalidate();
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        // Check if clicking on a scrollbar
+        if (e.X >= Width - 15 && e.Y >= 30 && e.Y <= Height)
+        {
+            _isDraggingScrollbar = true;
+            _isVerticalScrollbar = true;
+            _scrollbarDragStart = e.Location;
+            return;
+        }
+        if (e.Y >= Height - 15 && e.X >= 0 && e.X <= Width)
+        {
+            _isDraggingScrollbar = true;
+            _isVerticalScrollbar = false;
+            _scrollbarDragStart = e.Location;
+            return;
+        }
+
+        var x = -_horizontalScrollOffset;
+        for (int i = 0; i < Columns.Count; i++)
+        {
+            if (Math.Abs(e.X - (x + Columns[i].Width)) < 5)
             {
-                var pnmlv = (NMLVCUSTOMDRAW)m.GetLParam(typeof(NMLVCUSTOMDRAW));
-                switch ((CDDS)pnmlv.nmcd.dwDrawStage)
+                _isResizingColumn = true;
+                _resizingColumnIndex = i;
+                _columnResizeStartX = e.X;
+                return;
+            }
+
+            x += Columns[i].Width;
+        }
+
+        var y = 30 - _verticalScrollOffset;
+        foreach (var group in Groups)
+        {
+            var groupRect = new SKRect(0, y, Width, y + rowBoundsHeight);
+            if (groupRect.Contains(e.X, e.Y))
+            {
+                group.CollapsedState = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? ListViewGroupCollapsedState.Collapsed : ListViewGroupCollapsedState.Expanded;
+
+                Invalidate();
+                return;
+            }
+
+            y += rowBoundsHeight;
+
+            if (group.CollapsedState != ListViewGroupCollapsedState.Collapsed)
+            {
+                foreach (ListViewItem item in group.Items)
                 {
-                    case CDDS.CDDS_PREPAINT:
-                        if (pnmlv.dwItemType == LVCDI_GROUP)
-                        {
-                            var rectHeader = new Rect
-                            {
-                                Top = LVGGR_HEADER
-                            };
-                            var nItem = (int)pnmlv.nmcd.dwItemSpec;
+                    var itemRect = new SKRect(0, y, Width, y + rowBoundsHeight);
+                    if (itemRect.Contains(e.X, e.Y))
+                    {
+                        Items.ForEach(r => r.Selected = false);
+                        item.Selected = true;
+                        RowClicked?.Invoke(this, Items.IndexOf(item));
 
-                            SendMessage(m.HWnd, LVM_GETGROUPRECT, nItem, ref rectHeader);
-
-                            using (var graphics = Graphics.FromHdc(pnmlv.nmcd.hdc))
-                            {
-                                var rect = new Rectangle(rectHeader.Left, rectHeader.Top, rectHeader.Right - rectHeader.Left, rectHeader.Bottom - rectHeader.Top);
-
-                                //var backgroundBrush = new SolidBrush(_groupHeadingBackColor);
-                                //graphics.FillRectangle(backgroundBrush, rect);
-
-                                var lvg = new LVGROUP();
-                                lvg.cbSize = (uint)Marshal.SizeOf(lvg);
-                                lvg.mask = LVGF_STATE | LVGF_GROUPID | LVGF_HEADER;
-
-                                SendMessage(m.HWnd, LVM_GETGROUPINFO, nItem, ref lvg);
-                                var sText = Marshal.PtrToStringUni(lvg.pszHeader);
-                                var textSize = graphics.MeasureString(sText, Font);
-
-                                var rectHeightMiddle = (int)Math.Round((rect.Height - textSize.Height) / 2f);
-
-                                rect.Offset(10, rectHeightMiddle);
-
-                                var color = Color.FromArgb(80, 1, 52, 153).Brightness(ColorScheme.BackColor.Determine().GetBrightness());
-                                using (var drawBrush = new SolidBrush(color))
-                                {
-                                    TextRenderer.DrawText(graphics, sText, Font, rect, color, TextFormatFlags.Left);
-
-                                    rect.Offset(0, -rectHeightMiddle);
-
-                                    using (var lineBrush = new SolidBrush(color))
-                                    {
-                                        graphics.DrawLine(new Pen(lineBrush), rect.X + graphics.MeasureString(sText, Font).Width + 10, rect.Y + (int)Math.Round(rect.Height / 2d), rect.X + (int)Math.Round(rect.Width * 95 / 100d), rect.Y + (int)Math.Round(rect.Height / 2d));
-                                    }
-                                }
-                            }
-
-                            m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULT); return;
-                        }
-                        else
-                        {
-                            m.Result = new IntPtr((int)CDRF.CDRF_NOTIFYITEMDRAW);
-                        }
-
-                        break;
-
-                        /*case CDDS.CDDS_ITEMPREPAINT:
-                            m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
-
-                            ListView lv = this;
-                            IntPtr hHeader = GetHeaderControl(lv);
-                            IntPtr hdc = GetDC(hHeader);
-
-                            using (var graphics = Graphics.FromHdc(hdc))
-                            {
-                                graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), graphics.ClipBounds);
-
-                                var width = 0;
-                                foreach (ColumnHeader column in Columns)
-                                {
-                                    var size = TextRenderer.MeasureText(column.Text, Font);
-                                    var bounds = new Rectangle(new Point(width, 0), new Size(column.Width + 5, 24));
-
-                                    if(column.TextAlign == HorizontalAlignment.Left)
-                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis | TextFormatFlags.VerticalCenter);
-                                    else if (column.TextAlign == HorizontalAlignment.Right)
-                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
-                                    else
-                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-
-                                    var x = bounds.X - 2;
-                                    graphics.DrawLine(new Pen(ColorScheme.BorderColor), x, 0, x, Height);
-
-                                    width += column.Width;
-                                }
-                            }
-
-                            //ReleaseDC(hHeader, hdc);
-
-                                break;*/
+                        Invalidate();
+                        return;
+                    }
+                    y += rowBoundsHeight;
                 }
             }
         }
-        else if (m.Msg == WM_THEMECHANGED)
-        {
-            //AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
-            try
-            {
-
-                BackColor = ColorScheme.BackColor;
-                ForeColor = ColorScheme.ForeColor;
-            }
-            catch (Exception)
-            {
-            }
-        }
-        else if (m.Msg != WM_KILLFOCUS &&
-            (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
-            Invalidate();
-
-        base.WndProc(ref m);
     }
 
-    public void SetSortArrow(int column, SortOrder sortOrder)
+    protected override void OnMouseUp(MouseEventArgs e)
     {
-        var pHeader = SendMessage(this.Handle, LVM_GETHEADER, 0, 0);
+        _isResizingColumn = false;
+        _isDraggingScrollbar = false;
+    }
 
-        var pColumn = new IntPtr(column);
-        var headerItem = new HDITEM { mask = HDITEM.Mask.Format };
-
-        SendMessage(pHeader, HDM_GETITEM, pColumn, ref headerItem);
-
-        switch (sortOrder)
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        if (_isResizingColumn && _resizingColumnIndex >= 0)
         {
-            case SortOrder.Ascending:
-                headerItem.fmt &= ~HDITEM.Format.SortDown;
-                headerItem.fmt |= HDITEM.Format.SortUp;
-                break;
-            case SortOrder.Descending:
-                headerItem.fmt &= ~HDITEM.Format.SortUp;
-                headerItem.fmt |= HDITEM.Format.SortDown;
-                break;
-            case SortOrder.None:
-                headerItem.fmt &= ~(HDITEM.Format.SortDown | HDITEM.Format.SortUp);
-                break;
+            int delta = e.X - _columnResizeStartX;
+            Columns[_resizingColumnIndex].Width = Math.Max(30, Columns[_resizingColumnIndex].Width + delta);
+            _columnResizeStartX = e.X;
+
+            Invalidate();
         }
 
-        SendMessage(pHeader, HDM_SETITEM, pColumn, ref headerItem);
+        bool isResizingColumn = false;
+        for (int i = 0; i < Columns.Count; i++)
+        {
+            int columnStartX = Columns.Take(i).Sum(p => p.Width);
+            int columnEndX = columnStartX + Columns[i].Width;
+
+            if (e.X > columnEndX - 5 && e.X < columnEndX + 5)
+            {
+                isResizingColumn = true;
+                break;
+            }
+        }
+
+        if (isResizingColumn)
+        {
+            Cursor = Cursors.SizeWE; // Resize cursor
+        }
+        else
+        {
+            Cursor = Cursors.Default; // Default cursor
+        }
+
+        if (_isDraggingScrollbar)
+        {
+            int delta = _isVerticalScrollbar ? e.Y - _scrollbarDragStart.Y : e.X - _scrollbarDragStart.X;
+            if (_isVerticalScrollbar)
+            {
+                _verticalScrollOffset = Math.Max(-Height / 4, Math.Min(_verticalScrollOffset + delta * 3, Items.Sum(r => rowBoundsHeight) - Height + 30 + Height / 4));
+            }
+            else
+            {
+                _horizontalScrollOffset = Math.Max(-Width / 4, Math.Min(_horizontalScrollOffset + delta * 3, Columns.Sum(c => c.Width) - Width + Width / 4));
+            }
+        }
+        _scrollbarDragStart = e.Location;
+        Invalidate();
+    }
+
+    protected override void OnMouseDoubleClick(MouseEventArgs e)
+    {
+        base.OnMouseDoubleClick(e);
+
+        var x = -_horizontalScrollOffset;
+        for (int i = 0; i < Columns.Count; i++)
+        {
+            if (Math.Abs(e.X - (x + Columns[i].Width)) < 5)
+            {
+                // Auto-size column based on the widest content in the column
+                int maxWidth = 30; // Minimum column width
+                using (var paint = new SKPaint { TextSize = 14, IsAntialias = true })
+                {
+                    foreach (var row in Items)
+                    {
+                        if (i < row.SubItems.Count)
+                        {
+                            var textWidth = (int)paint.MeasureText(row.SubItems[i].Text);
+                            maxWidth = Math.Max(maxWidth, textWidth + 10); // Add padding
+                        }
+                    }
+                }
+                Columns[i].Width = maxWidth;
+                Invalidate(); // Redraw the control
+                return;
+            }
+            x += Columns[i].Width;
+        }
     }
 }

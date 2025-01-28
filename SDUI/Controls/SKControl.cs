@@ -5,10 +5,12 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
 
-namespace SDUI.SK;
+namespace SDUI.Controls;
 
 public class SKControl : Control
 {
+    public float DPI => DeviceDpi / 96f;
+
     #region TODO
     public bool UseVisualStyleBackColor { get; set; }
     #endregion

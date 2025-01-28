@@ -1,6 +1,6 @@
 ﻿using SkiaSharp;
 
-namespace SDUI.SK;
+namespace SDUI;
 
 public class SKPaintSurfaceEventArgs(SKSurface surface, SKImageInfo info)
 {

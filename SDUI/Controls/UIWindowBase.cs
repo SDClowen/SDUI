@@ -1,5 +1,4 @@
 ﻿using SDUI.Helpers;
-using SDUI.SK;
 using SkiaSharp;
 using System;
 using System.ComponentModel;
@@ -90,8 +89,8 @@ public class UIWindowBase : Form
         using (var surface = SKSurface.Create(info, data.Scan0, data.Stride))
         {
             // start drawing
+            surface.Canvas.Clear(SKColors.Transparent);
             OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
-
             surface.Canvas.Flush();
         }
 
@@ -109,7 +108,7 @@ public class UIWindowBase : Form
 
     private SKImageInfo CreateBitmap()
     {
-        var info = new SKImageInfo(Width, Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
+        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
 
         if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
         {

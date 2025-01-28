@@ -1,13 +1,14 @@
 ﻿using SDUI;
+using SDUI.Animation;
+using SDUI.Extensions;
+using SkiaSharp;
 using System;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Security.Policy;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class NumUpDown : Control
+    public class NumUpDown : SKControl
     {
         private const int LONG_PRESS_TIMER_INTERVAL = 250;
 
@@ -24,14 +25,18 @@ namespace SDUI.Controls
         private RectangleF _downButtonRect;
 
         private const int SIZE = 20;
-        private float _dpi => DeviceDpi / 96f;
+
+        private readonly Animation.AnimationEngine upButtonHoverAnimation;
+        private readonly Animation.AnimationEngine downButtonHoverAnimation;
+        private readonly Animation.AnimationEngine upButtonPressAnimation;
+        private readonly Animation.AnimationEngine downButtonPressAnimation;
+
+        private bool _inUpButton, _inDownButton;
+        private bool _upButtonPressed, _downButtonPressed;
 
         public decimal Value
         {
-            get
-            {
-                return _value;
-            }
+            get => _value;
             set
             {
                 if (value <= _max & value >= _min)
@@ -45,10 +50,7 @@ namespace SDUI.Controls
 
         public decimal Minimum
         {
-            get
-            {
-                return _min;
-            }
+            get => _min;
             set
             {
                 if (value < _max)
@@ -65,10 +67,7 @@ namespace SDUI.Controls
 
         public decimal Maximum
         {
-            get
-            {
-                return _max;
-            }
+            get => _max;
             set
             {
                 if (value > _min)
@@ -81,37 +80,82 @@ namespace SDUI.Controls
             }
         }
 
-        public override Color BackColor { get => base.BackColor; set => base.BackColor = Color.Transparent; }
-
         public NumUpDown()
         {
-            SetStyle(ControlStyles.SupportsTransparentBackColor |
-                ControlStyles.AllPaintingInWmPaint |
-                      ControlStyles.OptimizedDoubleBuffer |
-                      ControlStyles.DoubleBuffer |
-                      ControlStyles.ResizeRedraw |
-                      ControlStyles.UserPaint, true);
-
-            UpdateStyles();
-            this.DoubleBuffered = true;
-
-            BackColor = Color.Transparent;
             _min = 0;
             _max = 100;
             Size = new Size(80, 25);
             MinimumSize = Size;
 
+            upButtonHoverAnimation = new()
+            {
+                Increment = 0.08f,
+                AnimationType = AnimationType.Linear
+            };
+            downButtonHoverAnimation = new()
+            {
+                Increment = 0.08f,
+                AnimationType = AnimationType.Linear
+            };
+
+            upButtonPressAnimation = new()
+            {
+                Increment = 0.15f,
+                AnimationType = AnimationType.Linear
+            };
+            downButtonPressAnimation = new()
+            {
+                Increment = 0.15f,
+                AnimationType = AnimationType.Linear
+            };
+
+            upButtonHoverAnimation.OnAnimationProgress += sender => Invalidate();
+            downButtonHoverAnimation.OnAnimationProgress += sender => Invalidate();
+            upButtonPressAnimation.OnAnimationProgress += sender => Invalidate();
+            downButtonPressAnimation.OnAnimationProgress += sender => Invalidate();
+
             _longPressTimer.Tick += LongPressTimer_Tick;
             _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
 
-            _upButtonRect = new(Width - SIZE * _dpi, 0, SIZE * _dpi, Height);
-            _downButtonRect = new(Width - SIZE * _dpi * 2, 0, SIZE * _dpi, Height);
+            UpdateButtonRects();
+        }
+
+        private void UpdateButtonRects()
+        {
+            _upButtonRect = new(Width - SIZE * DPI, 0, SIZE * DPI, Height / 2f);
+            _downButtonRect = new(Width - SIZE * DPI, Height / 2f, SIZE * DPI, Height / 2f);
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
             _mouseLocation = e.Location;
+
+            bool inUpButton = e.Location.InRect(_upButtonRect);
+            bool inDownButton = e.Location.InRect(_downButtonRect);
+
+            if (inUpButton != _inUpButton)
+            {
+                _inUpButton = inUpButton;
+                upButtonHoverAnimation.StartNewAnimation(_inUpButton ? AnimationDirection.In : AnimationDirection.Out);
+            }
+
+            if (inDownButton != _inDownButton)
+            {
+                _inDownButton = inDownButton;
+                downButtonHoverAnimation.StartNewAnimation(_inDownButton ? AnimationDirection.In : AnimationDirection.Out);
+            }
+
+            Invalidate();
+        }
+
+        protected override void OnMouseLeave(EventArgs e)
+        {
+            base.OnMouseLeave(e);
+            _inUpButton = _inDownButton = false;
+            upButtonHoverAnimation.StartNewAnimation(AnimationDirection.Out);
+            downButtonHoverAnimation.StartNewAnimation(AnimationDirection.Out);
+            Invalidate();
         }
 
         private void ClickButton()
@@ -121,13 +165,13 @@ namespace SDUI.Controls
                 if (_value + 1 <= _max)
                     Value++;
             }
+            else if (_mouseLocation.InRect(_downButtonRect))
+            {
+                if (_value - 1 >= _min)
+                    Value--;
+            }
             else
             {
-                if (_mouseLocation.InRect(_downButtonRect))
-                {
-                    if (_value - 1 >= _min)
-                        Value--;
-                }
                 _isUsingKeyboard = !_isUsingKeyboard;
             }
             Focus();
@@ -136,7 +180,19 @@ namespace SDUI.Controls
 
         protected override void OnMouseDown(MouseEventArgs e)
         {
-            base.OnMouseClick(e);
+            base.OnMouseDown(e);
+
+            if (_mouseLocation.InRect(_upButtonRect))
+            {
+                _upButtonPressed = true;
+                upButtonPressAnimation.StartNewAnimation(AnimationDirection.In);
+            }
+            else if (_mouseLocation.InRect(_downButtonRect))
+            {
+                _downButtonPressed = true;
+                downButtonPressAnimation.StartNewAnimation(AnimationDirection.In);
+            }
+
             ClickButton();
             _longPressTimer.Start();
         }
@@ -144,6 +200,18 @@ namespace SDUI.Controls
         protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
+
+            if (_upButtonPressed)
+            {
+                _upButtonPressed = false;
+                upButtonPressAnimation.StartNewAnimation(AnimationDirection.Out);
+            }
+            if (_downButtonPressed)
+            {
+                _downButtonPressed = false;
+                downButtonPressAnimation.StartNewAnimation(AnimationDirection.Out);
+            }
+
             _longPressTimer.Stop();
             _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
         }
@@ -208,42 +276,160 @@ namespace SDUI.Controls
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
-
-            _upButtonRect = new(Width - SIZE * _dpi, 0, SIZE * _dpi, Height);
-            _downButtonRect = new(Width - SIZE * _dpi * 2, 0, SIZE * _dpi, Height);
+            UpdateButtonRects();
         }
 
         protected override void OnDpiChangedAfterParent(EventArgs e)
         {
             base.OnDpiChangedAfterParent(e);
-
-            _upButtonRect = new(Width - SIZE * _dpi, 0, SIZE * _dpi, Height);
-            _downButtonRect = new(Width - SIZE * _dpi * 2, 0, SIZE * _dpi, Height);
+            UpdateButtonRects();
         }
 
-        protected override void OnPaint(PaintEventArgs e)
+        protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
         {
-            //base.OnPaint(e);
-            var graphics = e.Graphics;
-            ButtonRenderer.DrawParentBackground(e.Graphics, Bounds, this);
+            e.Surface.Canvas.Clear(SKColors.Transparent);
 
-            using var borderPen = new Pen(ColorScheme.BorderColor);
-            using var backColorBrush = ColorScheme.BackColor.Alpha(90).Brush();
+            var canvas = e.Surface.Canvas;
+            var info = e.ImageInfo;
 
-            graphics.SmoothingMode = SmoothingMode.AntiAlias;
-            using var round = ClientRectangle.Radius(8);
+            if (info.Width <= 0 || info.Height <= 0)
+                return;
 
-            graphics.FillPath(backColorBrush, round);
-            graphics.DrawPath(borderPen, round);
+            // Arka plan çizimi
+            using (var backColorBrush = new SKPaint { Color = ColorScheme.BackColor.Alpha(20).ToSKColor() })
+            using (var path = new SKPath())
+            {
+                path.AddRoundRect(new SKRect(0, 0, Width, Height), 6 * DPI, 6 * DPI);
+                canvas.DrawPath(path, backColorBrush);
+            }
 
+            // Kenarlık çizimi
+            using (var borderPaint = new SKPaint 
+            { 
+                Color = ColorScheme.BorderColor.Alpha(80).ToSKColor(),
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1f,
+                IsAntialias = true
+            })
+            using (var path = new SKPath())
+            {
+                path.AddRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 6 * DPI, 6 * DPI);
+                canvas.DrawPath(path, borderPaint);
+            }
 
-            this.DrawString(graphics, "▲", ColorScheme.ForeColor, _upButtonRect);
-            this.DrawString(graphics, "▼", ColorScheme.ForeColor, _downButtonRect);
+            // Buton ayraç çizgileri
+            using (var linePaint = new SKPaint 
+            { 
+                Color = ColorScheme.BorderColor.Alpha(80).ToSKColor(),
+                StrokeWidth = 1f,
+                IsAntialias = true
+            })
+            {
+                canvas.DrawLine(_upButtonRect.X, 0, _upButtonRect.X, Height, linePaint);
+                canvas.DrawLine(_upButtonRect.X, Height / 2f, Width, Height / 2f, linePaint);
+            }
 
-            graphics.DrawLine(borderPen, _upButtonRect.X, 0, _upButtonRect.X, _upButtonRect.Height);
-            graphics.DrawLine(borderPen, _downButtonRect.X, 0, _downButtonRect.X, _downButtonRect.Height);
+            // Buton hover ve press efektleri
+            var upHoverProgress = upButtonHoverAnimation.GetProgress();
+            var upPressProgress = upButtonPressAnimation.GetProgress();
+            if (upHoverProgress > 0 || upPressProgress > 0)
+            {
+                using var buttonPaint = new SKPaint 
+                { 
+                    Color = ColorScheme.ForeColor.ToSKColor()
+                        .WithAlpha((byte)(Math.Max(upHoverProgress * 30, upPressProgress * 80))),
+                    IsAntialias = true
+                };
 
-            TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(Padding.Left, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+                using var path = new SKPath();
+                var rect = _upButtonRect.ToSKRect();
+                path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top + 1, rect.Right - 1, rect.Bottom), 
+                    6 * DPI, 0, SKPathDirection.Clockwise);
+                canvas.DrawPath(path, buttonPaint);
+            }
+
+            var downHoverProgress = downButtonHoverAnimation.GetProgress();
+            var downPressProgress = downButtonPressAnimation.GetProgress();
+            if (downHoverProgress > 0 || downPressProgress > 0)
+            {
+                using var buttonPaint = new SKPaint 
+                { 
+                    Color = ColorScheme.ForeColor.ToSKColor()
+                        .WithAlpha((byte)(Math.Max(downHoverProgress * 30, downPressProgress * 80))),
+                    IsAntialias = true
+                };
+
+                using var path = new SKPath();
+                var rect = _downButtonRect.ToSKRect();
+                path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top, rect.Right - 1, rect.Bottom - 1), 
+                    6 * DPI, 0, SKPathDirection.Clockwise);
+                canvas.DrawPath(path, buttonPaint);
+            }
+
+            // Buton simgeleri
+            using (var textPaint = new SKPaint
+            {
+                Color = ColorScheme.ForeColor.ToSKColor(),
+                TextSize = 9f.PtToPx(this),
+                TextAlign = SKTextAlign.Center,
+                IsAntialias = true,
+                SubpixelText = true,
+                Typeface = SKTypeface.FromFamilyName("Segoe UI Symbol")
+            })
+            {
+                var metrics = textPaint.FontMetrics;
+                var textHeight = Math.Abs(metrics.Ascent + metrics.Descent);
+
+                // Up button
+                var upColor = ColorScheme.ForeColor;
+                if (_upButtonPressed)
+                    upColor = upColor.Alpha(255);
+                else if (_inUpButton)
+                    upColor = upColor.Alpha(230);
+                else
+                    upColor = upColor.Alpha(180);
+
+                textPaint.Color = upColor.ToSKColor();
+                canvas.DrawText("▲", 
+                    _upButtonRect.X + _upButtonRect.Width / 2,
+                    _upButtonRect.Height / 2 + textHeight / 3,
+                    textPaint);
+
+                // Down button
+                var downColor = ColorScheme.ForeColor;
+                if (_downButtonPressed)
+                    downColor = downColor.Alpha(255);
+                else if (_inDownButton)
+                    downColor = downColor.Alpha(230);
+                else
+                    downColor = downColor.Alpha(180);
+
+                textPaint.Color = downColor.ToSKColor();
+                canvas.DrawText("▼",
+                    _downButtonRect.X + _downButtonRect.Width / 2,
+                    _downButtonRect.Height * 1.5f + textHeight / 3,
+                    textPaint);
+            }
+
+            // Değer metni
+            using (var textPaint = new SKPaint
+            {
+                Color = ColorScheme.ForeColor.ToSKColor(),
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName("Segoe UI"),
+                TextAlign = SKTextAlign.Left,
+                IsAntialias = true,
+                SubpixelText = true
+            })
+            {
+                var metrics = textPaint.FontMetrics;
+                var textHeight = Math.Abs(metrics.Ascent + metrics.Descent);
+
+                canvas.DrawText(Value.ToString(),
+                    10 * DPI,
+                    Height / 2 + textHeight / 3,
+                    textPaint);
+            }
         }
     }
 }
