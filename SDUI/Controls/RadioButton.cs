@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Radio : SKControl
+public class Radio : UIElementBase
 {
     private const int RADIOBUTTON_INNER_CIRCLE_SIZE = RADIOBUTTON_SIZE - (2 * RADIOBUTTON_OUTER_CIRCLE_WIDTH);
 
@@ -76,14 +76,6 @@ public class Radio : SKControl
 
     public Radio()
     {
-        SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.ResizeRedraw, true);
-
-        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
-
         animationManager = new()
         {
             AnimationType = AnimationType.EaseInOut,
@@ -104,27 +96,6 @@ public class Radio : SKControl
 
         Ripple = true;
         _mouseLocation = new Point(-1, -1);
-    }
-
-    public override Size GetPreferredSize(Size proposedSize)
-    {
-        using var paint = new SKPaint
-        {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
-        };
-
-        float textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
-        int width = RADIOBUTTON_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth);
-        int height = Ripple ? 30 : 20;
-
-        return new Size(width + Padding.Horizontal, height + Padding.Vertical);
-    }
-
-    protected override void OnCreateControl()
-    {
-        base.OnCreateControl();
-        if (DesignMode) return;
 
         _mouseState = 0;
         MouseEnter += (_, _) =>
@@ -158,7 +129,22 @@ public class Radio : SKControl
         };
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override Size GetPreferredSize(Size proposedSize)
+    {
+        using var paint = new SKPaint
+        {
+            TextSize = Font.Size.PtToPx(this),
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+        };
+
+        float textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
+        int width = RADIOBUTTON_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth);
+        int height = Ripple ? 30 : 20;
+
+        return new Size(width + Padding.Horizontal, height + Padding.Vertical);
+    }
+
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();

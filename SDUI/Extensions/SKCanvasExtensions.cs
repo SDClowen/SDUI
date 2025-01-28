@@ -1,3 +1,4 @@
+using SDUI.Controls;
 using SkiaSharp;
 using System;
 using System.Drawing;
@@ -7,15 +8,25 @@ namespace SDUI.Extensions;
 
 public static class SKCanvasExtensions
 {
-    public static float PtToPx(this float pt, Control control)
-    {
-        using (var g = control.CreateGraphics())
-        {
-            return pt * g.DpiY / 72f * 1.05f;
-        }
-    }
+    public static float PtToPx(this float pt, Control control) => (pt * 1.333f) * control.DeviceDpi / 96f;
+    public static float PtToPx(this float pt, Controls.UIElementBase control) => (pt * 1.333f);
 
     public static SKPaint CreateTextPaint(this SKCanvas canvas, Font font, Color color, Control control, ContentAlignment alignment = ContentAlignment.MiddleCenter)
+    {
+        var paint = new SKPaint
+        {
+            Color = color.ToSKColor(),
+            TextSize = font.Size.PtToPx(control),
+            IsAntialias = true,
+            TextAlign = alignment.ToSKTextAlign(),
+            Typeface = SKTypeface.FromFamilyName(font.FontFamily.Name, SKFontStyle.Normal),
+            SubpixelText = true,
+            LcdRenderText = true
+        };
+
+        return paint;
+    }
+    public static SKPaint CreateTextPaint(this SKCanvas canvas, Font font, Color color, UIElementBase control, ContentAlignment alignment = ContentAlignment.MiddleCenter)
     {
         var paint = new SKPaint
         {

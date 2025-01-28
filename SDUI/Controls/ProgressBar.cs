@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ProgressBar : SKControl
+public class ProgressBar : UIElementBase
 {
     private long _value = 0;
     public long Value
@@ -121,24 +121,10 @@ public class ProgressBar : SKControl
 
     public ProgressBar()
     {
-        SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.ResizeRedraw, true);
-
-        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
-
         BackColor = Color.Transparent;
     }
 
-    protected override void OnParentBackColorChanged(EventArgs e)
-    {
-        base.OnParentBackColorChanged(e);
-        Invalidate();
-    }
-
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();
@@ -201,7 +187,7 @@ public class ProgressBar : SKControl
         // Çerçeve çizimi
         using (var paint = new SKPaint
         {
-            Color = Parent.BackColor.Determine().ToSKColor().WithAlpha(10),
+            Color = ColorScheme.BorderColor.ToSKColor(),
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 1

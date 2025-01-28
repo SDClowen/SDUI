@@ -6,6 +6,8 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Collections.Generic;
+using System.Linq;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
@@ -16,7 +18,14 @@ public class UIWindowBase : Form
     private int dwmMargin = 1;
     private bool right = false;
     private Point location;
+    private readonly List<UIElementBase> _elements = new();
+    private UIElementBase _focusedElement;
+    private UIElementBase _lastHoveredElement;
+    private bool _mouseInClient;
+    private Cursor _currentCursor;
 
+    // Z-order için yeni özellikler
+    private int _maxZOrder = 0;
 
     public int DwmMargin
     {
@@ -53,20 +62,131 @@ public class UIWindowBase : Form
 
     [Category("Appearance")]
     public event EventHandler<SKPaintSurfaceEventArgs> PaintSurface;
+
+    public UIElementBase FocusedElement
+    {
+        get => _focusedElement;
+        private set
+        {
+            if (_focusedElement == value) return;
+            
+            var oldFocus = _focusedElement;
+            _focusedElement = value;
+
+            if (oldFocus != null)
+            {
+                oldFocus.OnLostFocus(EventArgs.Empty);
+                oldFocus.OnLeave(EventArgs.Empty);
+            }
+
+            if (_focusedElement != null)
+            {
+                _focusedElement.OnGotFocus(EventArgs.Empty);
+                _focusedElement.OnEnter(EventArgs.Empty);
+            }
+        }
+    }
+
+    internal UIElementBase LastHoveredElement
+    {
+        get => _lastHoveredElement;
+        set
+        {
+            if (_lastHoveredElement != value)
+            {
+                _lastHoveredElement = value;
+                UpdateCursor(value);
+            }
+        }
+    }
+
+    internal void UpdateCursor(UIElementBase element)
+    {
+        if (element == null || !element.Enabled || !element.Visible)
+        {
+            _currentCursor = Cursors.Default;
+            return;
+        }
+
+        var newCursor = element.Cursor ?? Cursors.Default;
+        if (_currentCursor != newCursor)
+        {
+            _currentCursor = newCursor;
+            if (Handle != IntPtr.Zero)
+            {
+                SetCursor(_currentCursor.Handle);
+            }
+        }
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr SetCursor(IntPtr hCursor);
+
     public UIWindowBase()
     {
-        SetStyle(ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
-        DoubleBuffered = true;
+        SetStyle(
+            ControlStyles.AllPaintingInWmPaint |
+            ControlStyles.UserPaint |
+            ControlStyles.OptimizedDoubleBuffer |
+            ControlStyles.ResizeRedraw, true
+        );
 
         designMode = DesignMode || LicenseManager.UsageMode == LicenseUsageMode.Designtime;
+        UpdateStyles();
+    }
 
-        BackColor = Color.FromArgb(0, 0, 0, 0);
-        ResizeRedraw = true;
+    public new List<UIElementBase> Controls => _elements;
+
+    public void AddElement(UIElementBase element)
+    {
+        if (!_elements.Contains(element))
+        {
+            element.Parent = this;
+            _maxZOrder++;
+            element.ZOrder = _maxZOrder;
+            _elements.Add(element);
+            
+            if (_focusedElement == null && element.TabStop)
+            {
+                FocusedElement = element;
+            }
+            
+            PerformLayout();
+        }
+    }
+
+    public void RemoveElement(UIElementBase element)
+    {
+        if (_elements.Remove(element))
+        {
+            element.Parent = null;
+            if (_focusedElement == element)
+            {
+                FocusedElement = null;
+            }
+            PerformLayout();
+        }
     }
 
     protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
         PaintSurface?.Invoke(this, e);
+
+        // Elementleri Z-order'a göre sırala ve render et
+        foreach (var element in _elements.OrderBy(el => el.ZOrder))
+        {
+            if (element.Visible)
+            {
+                using (var elementSurface = SKSurface.Create(e.Info))
+                {
+                    element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, new SKImageInfo(element.Size.Width, element.Size.Height)));
+                    
+                    // Element'in surface'ini ana surface'e kopyala
+                    var elementImage = elementSurface.Snapshot();
+                    e.Surface.Canvas.DrawImage(elementImage, element.Location.X, element.Location.Y);
+                }
+            }
+        }
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -75,45 +195,175 @@ public class UIWindowBase : Form
             return;
 
         base.OnPaint(e);
-        CheckBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
 
-        // get the bitmap
         var info = CreateBitmap();
-
         if (info.Width == 0 || info.Height == 0)
             return;
 
         var data = bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
 
-        // create the surface
         using (var surface = SKSurface.Create(info, data.Scan0, data.Stride))
         {
-            // start drawing
-            surface.Canvas.Clear(SKColors.Transparent);
             OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
             surface.Canvas.Flush();
         }
 
-        // write the bitmap to the graphics
         bitmap.UnlockBits(data);
         e.Graphics.DrawImage(bitmap, 0, 0);
     }
 
-    protected override void Dispose(bool disposing)
+    protected override void OnKeyDown(KeyEventArgs e)
     {
-        base.Dispose(disposing);
+        base.OnKeyDown(e);
 
-        FreeBitmap();
+        if (e.KeyCode == Keys.Tab && !e.Control && !e.Alt)
+        {
+            HandleTabKey(e.Shift);
+            e.Handled = true;
+            return;
+        }
+
+        if (_focusedElement != null)
+        {
+            _focusedElement.OnKeyDown(e);
+        }
+    }
+
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+
+        if (_focusedElement != null)
+        {
+            _focusedElement.OnKeyUp(e);
+        }
+    }
+
+    protected override void OnKeyPress(KeyPressEventArgs e)
+    {
+        base.OnKeyPress(e);
+
+        if (_focusedElement != null)
+        {
+            _focusedElement.OnKeyPress(e);
+        }
+    }
+
+    private void HandleTabKey(bool isShift)
+    {
+        var tabbableElements = _elements
+            .Where(e => e.Visible && e.Enabled && e.TabStop)
+            .OrderBy(e => e.TabIndex)
+            .ToList();
+
+        if (tabbableElements.Count == 0) return;
+
+        int currentIndex = _focusedElement != null ? tabbableElements.IndexOf(_focusedElement) : -1;
+
+        if (isShift)
+        {
+            currentIndex--;
+            if (currentIndex < 0) currentIndex = tabbableElements.Count - 1;
+        }
+        else
+        {
+            currentIndex++;
+            if (currentIndex >= tabbableElements.Count) currentIndex = 0;
+        }
+
+        FocusedElement = tabbableElements[currentIndex];
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        
+        UIElementBase hoveredElement = null;
+
+        // Z-order'a göre tersten kontrol et
+        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                hoveredElement = element;
+                element.OnMouseMove(e);
+                break; // İlk hover edilen elementten sonra diğerlerini kontrol etmeye gerek yok
+            }
+        }
+
+        if (hoveredElement != _lastHoveredElement)
+        {
+            _lastHoveredElement?.OnMouseLeave(EventArgs.Empty);
+            hoveredElement?.OnMouseEnter(EventArgs.Empty);
+            _lastHoveredElement = hoveredElement;
+        }
+    }
+
+    protected override void OnMouseDown(MouseEventArgs e)
+    {
+        base.OnMouseDown(e);
+
+        bool elementClicked = false;
+        // Z-order'a göre tersten kontrol et (üstteki elementten başla)
+        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                elementClicked = true;
+                FocusedElement = element;
+                element.OnMouseDown(e);
+                // Tıklanan elementi en üste getir
+                BringToFront(element);
+                break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
+            }
+        }
+
+        if (!elementClicked)
+        {
+            FocusedElement = null;
+        }
+
+        if (enableFullDraggable && e.Button == MouseButtons.Left)
+        {
+            right = e.Button == MouseButtons.Right;
+            location = e.Location;
+            DragForm(Handle);
+        }
+    }
+
+    protected override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+
+        // Z-order'a göre tersten kontrol et
+        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                element.OnMouseUp(e);
+                element.OnMouseClick(e);
+                break;
+            }
+        }
+    }
+
+    protected override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _lastHoveredElement?.OnMouseLeave(e);
+        _lastHoveredElement = null;
     }
 
     private SKImageInfo CreateBitmap()
     {
-        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        var info = new SKImageInfo(Width, Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
 
         if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
         {
             FreeBitmap();
-
             if (info.Width != 0 && info.Height != 0)
                 bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppPArgb);
         }
@@ -130,6 +380,14 @@ public class UIWindowBase : Form
         }
     }
 
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            FreeBitmap();
+
+        base.Dispose(disposing);
+    }
+
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
         if (msg.Msg == 256 | msg.Msg == 260)
@@ -137,23 +395,6 @@ public class UIWindowBase : Form
                 Close();
 
         return base.ProcessCmdKey(ref msg, keyData);
-    }
-
-    protected override void OnMouseDown(MouseEventArgs e)
-    {
-        base.OnMouseDown(e);
-        right = e.Button == MouseButtons.Right;
-        if (right)
-        {
-            location = e.Location;
-            Invalidate();
-        }
-
-        if (!enableFullDraggable)
-            return;
-
-        if (e.Button == MouseButtons.Left)
-            DragForm(Handle);
     }
 
     protected void DragForm(IntPtr handle)
@@ -440,5 +681,193 @@ public class UIWindowBase : Form
                  Marshal.SizeOf<int>());
         }
 
+    }
+
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
+        PerformLayout();
+    }
+
+    protected override void OnControlAdded(ControlEventArgs e)
+    {
+        base.OnControlAdded(e);
+        PerformLayout();
+    }
+
+    protected override void OnControlRemoved(ControlEventArgs e)
+    {
+        base.OnControlRemoved(e);
+        PerformLayout();
+    }
+
+    public void PerformLayout()
+    {
+        if (designMode) return;
+
+        // Önce Dock'lu elementleri yerleştir
+        LayoutDockElements();
+
+        // Sonra Anchor'lu elementleri yerleştir
+        LayoutAnchoredElements();
+
+        Invalidate();
+    }
+
+    private void LayoutDockElements()
+    {
+        var clientArea = ClientRectangle;
+        var remainingArea = clientArea;
+
+        // Dock.Top elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Top))
+        {
+            element.Size = new Size(remainingArea.Width, element.Size.Height);
+            element.Location = new Point(remainingArea.Left, remainingArea.Top);
+            remainingArea = new Rectangle(
+                remainingArea.Left,
+                remainingArea.Top + element.Size.Height,
+                remainingArea.Width,
+                remainingArea.Height - element.Size.Height
+            );
+        }
+
+        // Dock.Bottom elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Bottom))
+        {
+            element.Size = new Size(remainingArea.Width, element.Size.Height);
+            element.Location = new Point(remainingArea.Left, remainingArea.Bottom - element.Size.Height);
+            remainingArea = new Rectangle(
+                remainingArea.Left,
+                remainingArea.Top,
+                remainingArea.Width,
+                remainingArea.Height - element.Size.Height
+            );
+        }
+
+        // Dock.Left elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Left))
+        {
+            element.Size = new Size(element.Size.Width, remainingArea.Height);
+            element.Location = new Point(remainingArea.Left, remainingArea.Top);
+            remainingArea = new Rectangle(
+                remainingArea.Left + element.Size.Width,
+                remainingArea.Top,
+                remainingArea.Width - element.Size.Width,
+                remainingArea.Height
+            );
+        }
+
+        // Dock.Right elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Right))
+        {
+            element.Size = new Size(element.Size.Width, remainingArea.Height);
+            element.Location = new Point(remainingArea.Right - element.Size.Width, remainingArea.Top);
+            remainingArea = new Rectangle(
+                remainingArea.Left,
+                remainingArea.Top,
+                remainingArea.Width - element.Size.Width,
+                remainingArea.Height
+            );
+        }
+
+        // Dock.Fill elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Fill))
+        {
+            element.Location = new Point(remainingArea.Left, remainingArea.Top);
+            element.Size = new Size(remainingArea.Width, remainingArea.Height);
+        }
+    }
+
+    private void LayoutAnchoredElements()
+    {
+        var clientArea = ClientRectangle;
+
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.None))
+        {
+            var anchor = element.Anchor;
+            var location = element.Location;
+            var size = element.Size;
+
+            // Yatay konumlandırma
+            if ((anchor & AnchorStyles.Left) != 0 && (anchor & AnchorStyles.Right) != 0)
+            {
+                // Her iki tarafa da bağlı, genişliği ayarla
+                size.Width = clientArea.Width - (location.X + (clientArea.Width - (location.X + size.Width)));
+            }
+            else if ((anchor & AnchorStyles.Right) != 0)
+            {
+                // Sadece sağa bağlı, X konumunu ayarla
+                location.X = clientArea.Width - (clientArea.Width - location.X);
+            }
+
+            // Dikey konumlandırma
+            if ((anchor & AnchorStyles.Top) != 0 && (anchor & AnchorStyles.Bottom) != 0)
+            {
+                // Her iki tarafa da bağlı, yüksekliği ayarla
+                size.Height = clientArea.Height - (location.Y + (clientArea.Height - (location.Y + size.Height)));
+            }
+            else if ((anchor & AnchorStyles.Bottom) != 0)
+            {
+                // Sadece alta bağlı, Y konumunu ayarla
+                location.Y = clientArea.Height - (clientArea.Height - location.Y);
+            }
+
+            element.Location = location;
+            element.Size = size;
+        }
+    }
+
+    public void BringToFront(UIElementBase element)
+    {
+        if (!_elements.Contains(element)) return;
+
+        _maxZOrder++;
+        element.ZOrder = _maxZOrder;
+        InvalidateElement(element);
+    }
+
+    public void SendToBack(UIElementBase element)
+    {
+        if (!_elements.Contains(element)) return;
+
+        var minZOrder = _elements.Min(e => e.ZOrder);
+        element.ZOrder = minZOrder - 1;
+        InvalidateElement(element);
+    }
+
+    private void InvalidateElement(UIElementBase element)
+    {
+        var bounds = new Rectangle(element.Location, element.Size);
+        Invalidate(bounds);
+    }
+
+    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    {
+        base.OnDpiChanged(e);
+
+        // Alt kontrollere DPI değişikliğini bildir
+        foreach (var element in _elements)
+        {
+            element.OnDpiChanged(EventArgs.Empty);
+        }
+
+        // Pencere boyutunu ve konumunu güncelle
+        var oldDpi = e.DeviceDpiOld;
+        var newDpi = e.DeviceDpiNew;
+        var scaleFactor = (float)newDpi / oldDpi;
+
+        Size = new Size(
+            (int)(Width * scaleFactor),
+            (int)(Height * scaleFactor)
+        );
+
+        Location = new Point(
+            (int)(Location.X * scaleFactor),
+            (int)(Location.Y * scaleFactor)
+        );
+
+        // Yeniden çizim
+        Invalidate();
     }
 }

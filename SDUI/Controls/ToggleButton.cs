@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ToggleButton : SKControl
+public class ToggleButton : UIElementBase
 {
     private readonly AnimationEngine animationManager;
     private Point _mouseLocation;
@@ -40,14 +40,6 @@ public class ToggleButton : SKControl
 
     public ToggleButton()
     {
-        SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.ResizeRedraw, true);
-
-        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
-
         this.MinimumSize = new Size(56, 22);
 
         animationManager = new()
@@ -59,10 +51,9 @@ public class ToggleButton : SKControl
         animationManager.OnAnimationProgress += _ => Invalidate();
     }
 
-    protected override void OnCreateControl()
+    internal override void OnCreateControl()
     {
         base.OnCreateControl();
-        if (DesignMode) return;
 
         _mouseState = 0;
         MouseEnter += (_, _) => _mouseState = 1;
@@ -97,7 +88,7 @@ public class ToggleButton : SKControl
         // OnClick'i kaldırıyoruz çünkü MouseDown'da işlemi yapıyoruz
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();

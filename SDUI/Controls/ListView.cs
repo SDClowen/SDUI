@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ListView : SKControl
+public class ListView : UIElementBase
 {
     public View View { get; set; } = View.Details;
     public BorderStyle BorderStyle { get; set; } = BorderStyle.None;
@@ -93,7 +93,7 @@ public class ListView : SKControl
         }
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.White);
@@ -248,7 +248,7 @@ public class ListView : SKControl
         }
     }
 
-    protected override void OnMouseWheel(MouseEventArgs e)
+    internal override void OnMouseWheel(MouseEventArgs e)
     {
         base.OnMouseWheel(e);
         var delta = e.Delta / 120f;
@@ -271,7 +271,7 @@ public class ListView : SKControl
         Invalidate();
     }
 
-    protected override void OnMouseDown(MouseEventArgs e)
+    internal override void OnMouseDown(MouseEventArgs e)
     {
         // Check if clicking on a scrollbar
         if (e.X >= Width - 15 && e.Y >= 30 && e.Y <= Height)
@@ -337,13 +337,13 @@ public class ListView : SKControl
         }
     }
 
-    protected override void OnMouseUp(MouseEventArgs e)
+    internal override void OnMouseUp(MouseEventArgs e)
     {
         _isResizingColumn = false;
         _isDraggingScrollbar = false;
     }
 
-    protected override void OnMouseMove(MouseEventArgs e)
+    internal override void OnMouseMove(MouseEventArgs e)
     {
         if (_isResizingColumn && _resizingColumnIndex >= 0)
         {
@@ -392,7 +392,7 @@ public class ListView : SKControl
         Invalidate();
     }
 
-    protected override void OnMouseDoubleClick(MouseEventArgs e)
+    internal override void OnMouseDoubleClick(MouseEventArgs e)
     {
         base.OnMouseDoubleClick(e);
 

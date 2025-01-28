@@ -38,14 +38,8 @@ namespace SDUI.Controls
         Glass
     }
 
-    public class TrackBar : SKControl
+    public class TrackBar : UIElementBase
     {
-        #region Enums
-
-       
-
-        #endregion
-
         #region Variables
 
         private bool _isDragging;
@@ -55,7 +49,7 @@ namespace SDUI.Controls
         private readonly AnimationEngine _thumbPressAnimation;
         private readonly AnimationEngine _trackHoverAnimation;
         private readonly AnimationEngine _valueAnimation;
-        private readonly ToolTip _tooltip;
+        private readonly Tooltip _tooltip;
 
         private int _minimum = 0;
         private int _maximum = 100;
@@ -386,11 +380,6 @@ namespace SDUI.Controls
 
         public TrackBar()
         {
-            SetStyle(ControlStyles.Selectable | 
-                    ControlStyles.AllPaintingInWmPaint | 
-                    ControlStyles.UserPaint | 
-                    ControlStyles.ResizeRedraw, true);
-
             Size = new Size(200, 22);
             MinimumSize = new Size(50, 22);
 
@@ -425,8 +414,7 @@ namespace SDUI.Controls
                 Invalidate();
             };
 
-            _tooltip = new ToolTip();
-            _tooltip.ShowAlways = true;
+            _tooltip = new();
 
             // Varsayılan renkler
             _trackColor = ColorScheme.BackColor;
@@ -458,7 +446,7 @@ namespace SDUI.Controls
             ValueChanged?.Invoke(this, EventArgs.Empty);
         }
 
-        protected override void OnKeyDown(KeyEventArgs e)
+        internal override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
 
@@ -492,13 +480,13 @@ namespace SDUI.Controls
             }
         }
 
-        protected override void OnMouseWheel(MouseEventArgs e)
+        internal override void OnMouseWheel(MouseEventArgs e)
         {
             base.OnMouseWheel(e);
             Value += Math.Sign(e.Delta) * _smallChange;
         }
 
-        protected override void OnMouseDown(MouseEventArgs e)
+        internal override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
             if (e.Button != MouseButtons.Left) return;
@@ -529,7 +517,7 @@ namespace SDUI.Controls
             Focus();
         }
 
-        protected override void OnMouseMove(MouseEventArgs e)
+        internal override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
             _mouseLocation = e.Location;
@@ -563,7 +551,7 @@ namespace SDUI.Controls
             Invalidate();
         }
 
-        protected override void OnMouseUp(MouseEventArgs e)
+        internal override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
             if (_isDragging)
@@ -571,11 +559,11 @@ namespace SDUI.Controls
                 _isDragging = false;
                 _thumbPressAnimation.StartNewAnimation(AnimationDirection.Out);
                 if (_showTooltip)
-                    _tooltip.Hide(this);
+                    _tooltip.Hide();
             }
         }
 
-        protected override void OnMouseLeave(EventArgs e)
+        internal override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
             _isHovered = false;
@@ -586,9 +574,9 @@ namespace SDUI.Controls
         private RectangleF GetTrackRect()
         {
             if (_orientation == Orientation.Horizontal)
-                return new RectangleF(10 * DPI, Height / 2f - DPI, Width - 20 * DPI, 2 * DPI);
+                return new RectangleF(10 * ScaleFactor, Height / 2f - ScaleFactor, Width - 20 * ScaleFactor, 2 * ScaleFactor);
             else
-                return new RectangleF(Width / 2f - DPI, 10 * DPI, 2 * DPI, Height - 20 * DPI);
+                return new RectangleF(Width / 2f - ScaleFactor, 10 * ScaleFactor, 2 * ScaleFactor, Height - 20 * ScaleFactor);
         }
 
         private RectangleF GetThumbRect()
@@ -676,7 +664,7 @@ namespace SDUI.Controls
             {
                 Color = (_tickColor == Color.Empty ? ColorScheme.ForeColor : _tickColor)
                     .Alpha(150).ToSKColor(),
-                StrokeWidth = 1 * DPI,
+                StrokeWidth = 1 * ScaleFactor,
                 IsAntialias = true
             };
 
@@ -691,14 +679,14 @@ namespace SDUI.Controls
                 if (isHorizontal)
                 {
                     x = trackRect.Left + trackRect.Width * position;
-                    y = trackRect.Bottom + 3 * DPI;
-                    canvas.DrawLine(x, y, x, y + 5 * DPI, paint);
+                    y = trackRect.Bottom + 3 * ScaleFactor;
+                    canvas.DrawLine(x, y, x, y + 5 * ScaleFactor, paint);
                 }
                 else
                 {
-                    x = trackRect.Right + 3 * DPI;
+                    x = trackRect.Right + 3 * ScaleFactor;
                     y = trackRect.Top + trackRect.Height * (1 - position);
-                    canvas.DrawLine(x, y, x + 5 * DPI, y, paint);
+                    canvas.DrawLine(x, y, x + 5 * ScaleFactor, y, paint);
                 }
 
                 // Tick değerini yaz
@@ -717,9 +705,9 @@ namespace SDUI.Controls
                     };
 
                     if (isHorizontal)
-                        canvas.DrawText(text, x, y + 15 * DPI, textPaint);
+                        canvas.DrawText(text, x, y + 15 * ScaleFactor, textPaint);
                     else
-                        canvas.DrawText(text, x + 8 * DPI, y + 4 * DPI, textPaint);
+                        canvas.DrawText(text, x + 8 * ScaleFactor, y + 4 * ScaleFactor, textPaint);
                 }
             }
         }
@@ -729,7 +717,7 @@ namespace SDUI.Controls
             switch (_trackStyle)
             {
                 case TrackStyle.Simple:
-                    canvas.DrawRoundRect(trackRect.ToSKRect(), 1 * DPI, 1 * DPI, paint);
+                    canvas.DrawRoundRect(trackRect.ToSKRect(), 1 * ScaleFactor, 1 * ScaleFactor, paint);
                     break;
 
                 case TrackStyle.Rounded:
@@ -740,8 +728,8 @@ namespace SDUI.Controls
                     var oldMaskFilter = paint.MaskFilter;
                     paint.MaskFilter = null;
                     
-                        paint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 1f * DPI);
-                        canvas.DrawRoundRect(trackRect.ToSKRect(), 2 * DPI, 2 * DPI, paint);
+                        paint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 1f * ScaleFactor);
+                        canvas.DrawRoundRect(trackRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor, paint);
                     paint.MaskFilter = oldMaskFilter;
                     oldMaskFilter?.Dispose();
 
@@ -750,7 +738,7 @@ namespace SDUI.Controls
                 case TrackStyle.Glass:
                     using (var path = new SKPath())
                     {
-                        path.AddRoundRect(trackRect.ToSKRect(), 2 * DPI, 2 * DPI);
+                        path.AddRoundRect(trackRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor);
                         
                         // Ana track
                         canvas.DrawPath(path, paint);
@@ -761,13 +749,13 @@ namespace SDUI.Controls
                             Style = SKPaintStyle.Fill,
                             Color = SKColors.White.WithAlpha(40),
                             IsAntialias = true,
-                            ImageFilter = SKImageFilter.CreateBlur(2 * DPI, 2 * DPI)
+                            ImageFilter = SKImageFilter.CreateBlur(2 * ScaleFactor, 2 * ScaleFactor)
                         };
 
                         var shimmerRect = trackRect;
                         shimmerRect.Height /= 2;
                         using var shimmerPath = new SKPath();
-                        shimmerPath.AddRoundRect(shimmerRect.ToSKRect(), 2 * DPI, 2 * DPI);
+                        shimmerPath.AddRoundRect(shimmerRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor);
                         canvas.DrawPath(shimmerPath, shimmerPaint);
                     }
                     break;
@@ -800,7 +788,7 @@ namespace SDUI.Controls
             return paint;
         }
 
-        protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+        public override void OnPaint(SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
@@ -860,9 +848,9 @@ namespace SDUI.Controls
                     Color = SKColors.Black.WithAlpha(20),
                     ImageFilter = SKImageFilter.CreateDropShadow(
                         0,
-                        1 * DPI,
-                        2 * DPI,
-                        2 * DPI,
+                        1 * ScaleFactor,
+                        2 * ScaleFactor,
+                        2 * ScaleFactor,
                         SKColors.Black.WithAlpha(30)
                     ),
                     IsAntialias = true
@@ -888,7 +876,7 @@ namespace SDUI.Controls
                     .Alpha(thumbAlpha)
                     .ToSKColor(),
                 Style = SKPaintStyle.Stroke,
-                StrokeWidth = 1.5f * DPI,
+                StrokeWidth = 1.5f * ScaleFactor,
                 IsAntialias = true
             })
             {
@@ -913,8 +901,8 @@ namespace SDUI.Controls
                 {
                     canvas.DrawText(
                         formattedValue,
-                        5 * DPI,
-                        Height - 8 * DPI,
+                        5 * ScaleFactor,
+                        Height - 8 * ScaleFactor,
                         paint
                     );
                 }
@@ -924,8 +912,8 @@ namespace SDUI.Controls
                     canvas.RotateDegrees(90);
                     canvas.DrawText(
                         formattedValue,
-                        5 * DPI,
-                        -Width + 8 * DPI,
+                        5 * ScaleFactor,
+                        -Width + 8 * ScaleFactor,
                         paint
                     );
                     canvas.Restore();

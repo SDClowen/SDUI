@@ -4,7 +4,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Separator : SKControl
+public class Separator : UIElementBase
 {
     private bool _isVertical = false;
 
@@ -20,18 +20,10 @@ public class Separator : SKControl
 
     public Separator()
     {
-        SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.ResizeRedraw, true);
-
-        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
-
         this.Size = new Size(120, 6);
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();

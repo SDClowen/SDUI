@@ -144,7 +144,7 @@ public partial class InputDialog : UIWindowBase
     /// </summary>
     /// <param name="sender">The source of the event.</param>
     /// <param name="e">The <see cref="PreviewKeyDownEventArgs"/> instance containing the event data.</param>
-    private void txtValue_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+    private void TxtValue_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter)
         {

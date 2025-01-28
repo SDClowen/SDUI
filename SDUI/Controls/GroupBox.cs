@@ -6,7 +6,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class GroupBox : SKControl
+public class GroupBox : UIElementBase
 {
     private int _shadowDepth = 4;
     private int _radius = 10;
@@ -46,31 +46,11 @@ public class GroupBox : SKControl
 
     public GroupBox()
     {
-        SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.ResizeRedraw, true);
-
-        SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
-
         this.BackColor = Color.Transparent;
         this.Padding = new Padding(3, 8, 3, 3);
     }
 
-    protected override void OnParentBackColorChanged(EventArgs e)
-    {
-        base.OnParentBackColorChanged(e);
-        Invalidate();
-    }
-
-    protected override void OnControlAdded(ControlEventArgs e)
-    {
-        base.OnControlAdded(e);
-        Invalidate(true);
-    }
-
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();

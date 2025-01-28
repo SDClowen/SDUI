@@ -1043,7 +1043,7 @@ public class UIWindow : UIWindowBase
     protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
-        var info = e.ImageInfo;
+        var info = e.Info;
 
         if (info.Width <= 0 || info.Height <= 0)
             return;
@@ -1451,7 +1451,7 @@ public class UIWindow : UIWindowBase
             }
 
             // Draw tab headers
-            foreach (Control page in _windowPageControl.Controls)
+            foreach (var page in _windowPageControl.Controls)
             {
                 var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
                 var rect = pageRect[currentTabIndex];

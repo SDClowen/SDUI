@@ -1,14 +1,13 @@
 ﻿using SDUI.Extensions;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Collections.Generic;
-using System.Text;
 
 namespace SDUI.Controls;
 
-public class Label : SKControl
+public class Label : UIElementBase
 {
     private bool _autoEllipsis;
     public bool AutoEllipsis
@@ -94,22 +93,18 @@ public class Label : SKControl
 
     public Label()
     {
-        SetStyle(ControlStyles.UserPaint | 
-            ControlStyles.SupportsTransparentBackColor | 
-            ControlStyles.OptimizedDoubleBuffer, true);
-
         // Varsayılan gradient renkleri
         _gradient[0] = Color.Gray.ToSKColor();
         _gradient[1] = Color.Black.ToSKColor();
     }
 
-    protected override void OnTextChanged(EventArgs e)
+    internal override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
         if (AutoSize) AdjustSize();
     }
 
-    protected override void OnFontChanged(EventArgs e)
+    internal override void OnFontChanged(EventArgs e)
     {
         base.OnFontChanged(e);
         if (AutoSize) AdjustSize();
@@ -158,7 +153,7 @@ public class Label : SKControl
         }
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();

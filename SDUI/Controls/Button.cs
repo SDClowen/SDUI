@@ -8,8 +8,11 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Button : SKControl
+public class Button : UIElementBase
 {
+    [Category("Appearance")]
+    public Image Image { get; set; }
+
     [Category("Appearance")]
     public Color Color { get; set; } = Color.Transparent;
 
@@ -60,7 +63,6 @@ public class Button : SKControl
 
     public Button()
     {
-        SetStyle(ControlStyles.Selectable, true);
         TabStop = true;
 
         animationManager = new Animation.AnimationEngine(false)
@@ -79,7 +81,7 @@ public class Button : SKControl
         animationManager.OnAnimationProgress += sender => Invalidate();
     }
 
-    protected override void OnTextChanged(EventArgs e)
+    internal override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
         using (var paint = new SKPaint())
@@ -102,13 +104,7 @@ public class Button : SKControl
         base.OnClick(e);
     }
 
-    public void PerformClick()
-    {
-        if (CanSelect)
-            OnClick(EventArgs.Empty);
-    }
-
-    protected override void OnKeyDown(KeyEventArgs e)
+    internal override void OnKeyDown(KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Space)
         {
@@ -118,19 +114,19 @@ public class Button : SKControl
         base.OnKeyDown(e);
     }
 
-    protected override void OnGotFocus(EventArgs e)
+    internal override void OnGotFocus(EventArgs e)
     {
         base.OnGotFocus(e);
         Invalidate();
     }
 
-    protected override void OnLostFocus(EventArgs e)
+    internal override void OnLostFocus(EventArgs e)
     {
         base.OnLostFocus(e);
         Invalidate();
     }
 
-    protected override void OnMouseDown(MouseEventArgs e)
+    internal override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
         _mouseState = 2;
@@ -138,14 +134,14 @@ public class Button : SKControl
         Invalidate();
     }
 
-    protected override void OnMouseUp(MouseEventArgs e)
+    internal override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
         _mouseState = 1;
         Invalidate();
     }
 
-    protected override void OnMouseEnter(EventArgs e)
+    internal override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
         _mouseState = 1;
@@ -153,7 +149,7 @@ public class Button : SKControl
         Invalidate();
     }
 
-    protected override void OnMouseLeave(EventArgs e)
+    internal override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
         _mouseState = 0;
@@ -161,7 +157,7 @@ public class Button : SKControl
         Invalidate();
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();
@@ -173,9 +169,30 @@ public class Button : SKControl
         // Ana renk ayarları
         var color = Color.Empty;
         if (Color != Color.Transparent)
+        {
             color = Enabled ? Color : Color.FromArgb(200, Color);
+        }
+        else if (UseVisualStyleBackColor)
+        {
+            // Visual style renkleri kullan
+            if (Enabled)
+            {
+                color = _mouseState switch
+                {
+                    2 => SystemColors.ControlDark,  // Pressed
+                    1 => SystemColors.ControlLight, // Hover
+                    _ => SystemColors.Control       // Normal
+                };
+            }
+            else
+            {
+                color = SystemColors.Control;
+            }
+        }
         else
+        {
             color = Color.FromArgb(20, ColorScheme.ForeColor);
+        }
 
         var paint = new SKPaint
         {
@@ -183,6 +200,14 @@ public class Button : SKControl
             IsAntialias = true,
             Style = SKPaintStyle.Fill
         };
+
+        // Validasyon durumuna göre kenar rengi
+        if (!IsValid)
+        {
+            paint.Style = SKPaintStyle.Stroke;
+            paint.StrokeWidth = 2;
+            paint.Color = Color.Red.ToSKColor();
+        }
 
         // Gölge çizimi
         using (var shadowPaint = new SKPaint
@@ -283,6 +308,24 @@ public class Button : SKControl
                 canvas.DrawText(Text, x, y, textPaint);
             }
         }
+
+        // Validasyon mesajı çizimi
+        if (!IsValid && !string.IsNullOrEmpty(ValidationText))
+        {
+            using var validationPaint = new SKPaint
+            {
+                Color = Color.Red.ToSKColor(),
+                IsAntialias = true,
+                TextSize = Font.Size,
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            };
+
+            canvas.DrawText(
+                ValidationText,
+                5,
+                Height + 15,
+                validationPaint);
+        }
     }
 
     public override Size GetPreferredSize(Size proposedSize)
@@ -291,6 +334,13 @@ public class Button : SKControl
 
         if (Image != null)
             extra += 24 + 4;
+
+        using (var paint = new SKPaint())
+        {
+            paint.TextSize = Font.Size * 1.5f;
+            paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
+            _textSize = new SizeF(paint.MeasureText(Text), paint.FontMetrics.Descent - paint.FontMetrics.Ascent);
+        }
 
         return new Size((int)Math.Ceiling(_textSize.Width) + extra, 32);
     }

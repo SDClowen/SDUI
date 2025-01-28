@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class WindowPageControl : SKControl
+    public class WindowPageControl : UIElementBase
     {
         private EventHandler<int> _onSelectedIndexChanged;
 
@@ -52,28 +52,22 @@ namespace SDUI.Controls
 
         public WindowPageControl() 
         {
-            DoubleBuffered = true;
-            SetStyle(
-                ControlStyles.OptimizedDoubleBuffer, true
-            );
-
-            //BackColor = Color.Transparent;
-            UpdateStyles();
+            BackColor = Color.Transparent;
         }
 
-        protected override void OnControlAdded(ControlEventArgs e)
+        protected override void OnControlAdded(UIElementEventArgs e)
         {
             base.OnControlAdded(e);
 
-            e.Control.Dock = DockStyle.Fill;
-            e.Control.BackColor = Color.Transparent;
-            e.Control.Visible = Controls.Count == 1;
+            e.Element.Dock = DockStyle.Fill;
+            e.Element.BackColor = Color.Transparent;
+            e.Element.Visible = Controls.Count == 1;
 
             if (Controls.Count == 1)
                 _selectedIndex = 0;
         }
 
-        protected override void OnControlRemoved(ControlEventArgs e)
+        protected override void OnControlRemoved(UIElementEventArgs e)
         {
             base.OnControlRemoved(e);
 

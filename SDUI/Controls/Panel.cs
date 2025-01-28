@@ -1,13 +1,11 @@
-using SDUI.Extensions;
 using SkiaSharp;
-using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Panel : SKControl
+public class Panel : UIElementBase
 {
     private int _radius = 10;
     [Category("Appearance")]
@@ -71,11 +69,10 @@ public class Panel : SKControl
 
     public Panel()
     {
-        SetStyle(ControlStyles.Selectable, true);
         BackColor = Color.Transparent;
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.Transparent);
@@ -102,7 +99,7 @@ public class Panel : SKControl
             if (_radius > 0)
             {
                 using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
                 canvas.DrawPath(path, shadowPaint);
             }
             else
@@ -121,7 +118,7 @@ public class Panel : SKControl
             if (_radius > 0)
             {
                 using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
                 canvas.DrawPath(path, paint);
             }
             else
@@ -144,7 +141,7 @@ public class Panel : SKControl
             if (_radius > 0)
             {
                 using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
 
                 if (_border.All > 0)
                 {
@@ -158,8 +155,8 @@ public class Panel : SKControl
                     {
                         paint.StrokeWidth = _border.Left;
                         var left = new SKPath();
-                        left.MoveTo(rect.Left + _radius * DPI, rect.Top);
-                        left.LineTo(rect.Left + _radius * DPI, rect.Bottom);
+                        left.MoveTo(rect.Left + _radius * ScaleFactor, rect.Top);
+                        left.LineTo(rect.Left + _radius * ScaleFactor, rect.Bottom);
                         canvas.DrawPath(left, paint);
                     }
 
@@ -168,8 +165,8 @@ public class Panel : SKControl
                     {
                         paint.StrokeWidth = _border.Top;
                         var top = new SKPath();
-                        top.MoveTo(rect.Left, rect.Top + _radius * DPI);
-                        top.LineTo(rect.Right, rect.Top + _radius * DPI);
+                        top.MoveTo(rect.Left, rect.Top + _radius * ScaleFactor);
+                        top.LineTo(rect.Right, rect.Top + _radius * ScaleFactor);
                         canvas.DrawPath(top, paint);
                     }
 
@@ -178,8 +175,8 @@ public class Panel : SKControl
                     {
                         paint.StrokeWidth = _border.Right;
                         var right = new SKPath();
-                        right.MoveTo(rect.Right - _radius * DPI, rect.Top);
-                        right.LineTo(rect.Right - _radius * DPI, rect.Bottom);
+                        right.MoveTo(rect.Right - _radius * ScaleFactor, rect.Top);
+                        right.LineTo(rect.Right - _radius * ScaleFactor, rect.Bottom);
                         canvas.DrawPath(right, paint);
                     }
 
@@ -188,8 +185,8 @@ public class Panel : SKControl
                     {
                         paint.StrokeWidth = _border.Bottom;
                         var bottom = new SKPath();
-                        bottom.MoveTo(rect.Left, rect.Bottom - _radius * DPI);
-                        bottom.LineTo(rect.Right, rect.Bottom - _radius * DPI);
+                        bottom.MoveTo(rect.Left, rect.Bottom - _radius * ScaleFactor);
+                        bottom.LineTo(rect.Right, rect.Bottom - _radius * ScaleFactor);
                         canvas.DrawPath(bottom, paint);
                     }
                 }

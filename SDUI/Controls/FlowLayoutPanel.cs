@@ -1,5 +1,4 @@
 using SDUI.Animation;
-using SDUI.Extensions;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class FlowLayoutPanel : SKControl
+public class FlowLayoutPanel : UIElementBase
 {
     #region Enums
 
@@ -35,10 +34,10 @@ public class FlowLayoutPanel : SKControl
     private FlowAlignment _verticalAlignment = FlowAlignment.Near;
     private FlowAlignment _horizontalAlignment = FlowAlignment.Near;
     private Padding _itemPadding = new(3);
-    private readonly Dictionary<Control, Point> _targetLocations = new();
-    private readonly Dictionary<Control, AnimationEngine> _animations = new();
-    private readonly VScrollBar _vScrollBar;
-    private readonly HScrollBar _hScrollBar;
+    private readonly Dictionary<UIElementBase, Point> _targetLocations = new();
+    private readonly Dictionary<UIElementBase, AnimationEngine> _animations = new();
+    private readonly ScrollBar _vScrollBar;
+    private readonly ScrollBar _hScrollBar;
     private bool _isLayouting;
 
     #endregion
@@ -190,22 +189,19 @@ public class FlowLayoutPanel : SKControl
 
     public FlowLayoutPanel()
     {
-        SetStyle(ControlStyles.Selectable | 
-                ControlStyles.AllPaintingInWmPaint | 
-                ControlStyles.UserPaint | 
-                ControlStyles.ResizeRedraw, true);
-
         BackColor = Color.Transparent;
 
-        _vScrollBar = new VScrollBar
+        _vScrollBar = new()
         {
             Dock = DockStyle.Right,
-            Visible = false
+            Visible = false,
+            Orientation = ScrollOrientation.Vertical
         };
-        _hScrollBar = new HScrollBar
+        _hScrollBar = new()
         {
             Dock = DockStyle.Bottom,
-            Visible = false
+            Visible = false,
+            Orientation = ScrollOrientation.Horizontal
         };
 
         _vScrollBar.ValueChanged += ScrollBar_ValueChanged;
@@ -222,48 +218,48 @@ public class FlowLayoutPanel : SKControl
         Invalidate();
     }
 
-    protected override void OnControlAdded(ControlEventArgs e)
+    protected override void OnControlAdded(UIElementEventArgs e)
     {
         base.OnControlAdded(e);
-        if (e.Control == _vScrollBar || e.Control == _hScrollBar) return;
+        if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;
 
         // Yeni kontrol için animasyon motoru oluştur
-        _animations[e.Control] = new AnimationEngine
+        _animations[e.Element] = new AnimationEngine
         {
             Increment = 0.08f,
             AnimationType = AnimationType.EaseInOut
         };
-        _animations[e.Control].OnAnimationProgress += (s) => Invalidate();
+        _animations[e.Element].OnAnimationProgress += (s) => Invalidate();
 
         PerformLayout();
     }
 
-    protected override void OnControlRemoved(ControlEventArgs e)
+    protected override void OnControlRemoved(UIElementEventArgs e)
     {
         base.OnControlRemoved(e);
-        if (e.Control == _vScrollBar || e.Control == _hScrollBar) return;
+        if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;
 
         // Kontrol kaldırıldığında animasyonu temizle
-        if (_animations.ContainsKey(e.Control))
+        if (_animations.ContainsKey(e.Element))
         {
-            _animations.Remove(e.Control);
+            _animations.Remove(e.Element);
         }
-        if (_targetLocations.ContainsKey(e.Control))
+        if (_targetLocations.ContainsKey(e.Element))
         {
-            _targetLocations.Remove(e.Control);
+            _targetLocations.Remove(e.Element);
         }
 
         PerformLayout();
     }
 
-    protected override void OnLayout(LayoutEventArgs e)
+    protected override void OnLayout(UILayoutEventArgs e)
     {
         base.OnLayout(e);
         if (_isLayouting) return;
 
         _isLayouting = true;
 
-        var controls = Controls.Cast<Control>()
+        var controls = Controls
             .Where(c => c != _vScrollBar && c != _hScrollBar && c.Visible)
             .ToList();
 
@@ -284,7 +280,7 @@ public class FlowLayoutPanel : SKControl
         // Yatay düzenleme
         if (_flowDirection == FlowDirection.LeftToRight || _flowDirection == FlowDirection.RightToLeft)
         {
-            var row = new List<Control>();
+            var row = new List<UIElementBase>();
 
             foreach (var control in controls)
             {
@@ -326,7 +322,7 @@ public class FlowLayoutPanel : SKControl
         // Dikey düzenleme
         else
         {
-            var column = new List<Control>();
+            var column = new List<UIElementBase>();
 
             foreach (var control in controls)
             {
@@ -375,7 +371,7 @@ public class FlowLayoutPanel : SKControl
         _isLayouting = false;
     }
 
-    private void StartAnimation(Control control, Point targetPoint)
+    private void StartAnimation(UIElementBase control, Point targetPoint)
     {
         if (!_animations.TryGetValue(control, out var animation)) return;
 
@@ -391,7 +387,7 @@ public class FlowLayoutPanel : SKControl
         animation.StartNewAnimation(AnimationDirection.In);
     }
 
-    private void AlignRow(List<Control> row, int y, int height, Rectangle clientArea)
+    private void AlignRow(List<UIElementBase> row, int y, int height, Rectangle clientArea)
     {
         if (row.Count == 0) return;
 
@@ -426,7 +422,7 @@ public class FlowLayoutPanel : SKControl
         }
     }
 
-    private void AlignColumn(List<Control> column, int x, int width, Rectangle clientArea)
+    private void AlignColumn(List<UIElementBase> column, int x, int width, Rectangle clientArea)
     {
         if (column.Count == 0) return;
 
@@ -504,7 +500,7 @@ public class FlowLayoutPanel : SKControl
         }
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.Transparent);
@@ -531,7 +527,7 @@ public class FlowLayoutPanel : SKControl
             if (_radius > 0)
             {
                 using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
                 canvas.DrawPath(path, shadowPaint);
             }
             else
@@ -550,7 +546,7 @@ public class FlowLayoutPanel : SKControl
             if (_radius > 0)
             {
                 using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
                 canvas.DrawPath(path, paint);
             }
             else
@@ -573,7 +569,7 @@ public class FlowLayoutPanel : SKControl
             if (_radius > 0)
             {
                 using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * DPI, _radius * DPI);
+                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
 
                 if (_border.All > 0)
                 {
@@ -587,8 +583,8 @@ public class FlowLayoutPanel : SKControl
                     {
                         paint.StrokeWidth = _border.Left;
                         var left = new SKPath();
-                        left.MoveTo(rect.Left + _radius * DPI, rect.Top);
-                        left.LineTo(rect.Left + _radius * DPI, rect.Bottom);
+                        left.MoveTo(rect.Left + _radius * ScaleFactor, rect.Top);
+                        left.LineTo(rect.Left + _radius * ScaleFactor, rect.Bottom);
                         canvas.DrawPath(left, paint);
                     }
 
@@ -597,8 +593,8 @@ public class FlowLayoutPanel : SKControl
                     {
                         paint.StrokeWidth = _border.Top;
                         var top = new SKPath();
-                        top.MoveTo(rect.Left, rect.Top + _radius * DPI);
-                        top.LineTo(rect.Right, rect.Top + _radius * DPI);
+                        top.MoveTo(rect.Left, rect.Top + _radius * ScaleFactor);
+                        top.LineTo(rect.Right, rect.Top + _radius * ScaleFactor);
                         canvas.DrawPath(top, paint);
                     }
 
@@ -607,8 +603,8 @@ public class FlowLayoutPanel : SKControl
                     {
                         paint.StrokeWidth = _border.Right;
                         var right = new SKPath();
-                        right.MoveTo(rect.Right - _radius * DPI, rect.Top);
-                        right.LineTo(rect.Right - _radius * DPI, rect.Bottom);
+                        right.MoveTo(rect.Right - _radius * ScaleFactor, rect.Top);
+                        right.LineTo(rect.Right - _radius * ScaleFactor, rect.Bottom);
                         canvas.DrawPath(right, paint);
                     }
 
@@ -617,8 +613,8 @@ public class FlowLayoutPanel : SKControl
                     {
                         paint.StrokeWidth = _border.Bottom;
                         var bottom = new SKPath();
-                        bottom.MoveTo(rect.Left, rect.Bottom - _radius * DPI);
-                        bottom.LineTo(rect.Right, rect.Bottom - _radius * DPI);
+                        bottom.MoveTo(rect.Left, rect.Bottom - _radius * ScaleFactor);
+                        bottom.LineTo(rect.Right, rect.Bottom - _radius * ScaleFactor);
                         canvas.DrawPath(bottom, paint);
                     }
                 }

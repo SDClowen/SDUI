@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ChatBubble : SKControl
+public class ChatBubble : UIElementBase
 {
     private SizeF _textSize;
 
@@ -61,13 +61,12 @@ public class ChatBubble : SKControl
 
     public ChatBubble()
     {
-        SetStyle(ControlStyles.Selectable, true);
         MinimumSize = new Size(32, 32);
         TextAlign = ContentAlignment.MiddleLeft;
         Padding = new Padding(12);
     }
 
-    protected override void OnTextChanged(EventArgs e)
+    internal override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
         using (var paint = new SKPaint())
@@ -81,7 +80,7 @@ public class ChatBubble : SKControl
             Size = GetPreferredSize(Size.Empty);
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();

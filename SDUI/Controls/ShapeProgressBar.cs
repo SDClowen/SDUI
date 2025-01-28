@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ShapeProgressBar : SKControl
+public class ShapeProgressBar : UIElementBase
 {
     private float _weight = 8;
     public float Weight
@@ -160,10 +160,6 @@ public class ShapeProgressBar : SKControl
     {
         Size = new Size(100, 100);
         Font = new Font("Segoe UI", 15);
-        SetStyle(ControlStyles.UserPaint |
-            ControlStyles.AllPaintingInWmPaint | 
-            ControlStyles.OptimizedDoubleBuffer | 
-            ControlStyles.SupportsTransparentBackColor, true);
         BackColor = Color.Transparent;
 
         // Varsayılan gradient renkleri
@@ -173,7 +169,7 @@ public class ShapeProgressBar : SKControl
         UpdateHatchPattern();
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();

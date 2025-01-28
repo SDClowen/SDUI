@@ -10,7 +10,7 @@ using SDUI.Animation;
 
 namespace SDUI.Controls;
 
-public class ComboBox : SKControl
+public class ComboBox : UIElementBase
 {
     private class DropDownMenu : SKControl
     {
@@ -34,13 +34,6 @@ public class ComboBox : SKControl
         {
             _owner = owner;
             BackColor = Color.Transparent;
-            
-            SetStyle(
-                ControlStyles.UserPaint |
-                ControlStyles.AllPaintingInWmPaint |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.ResizeRedraw |
-                ControlStyles.SupportsTransparentBackColor, true);
             
             _animation = new AnimationEngine
             {
@@ -553,11 +546,6 @@ public class ComboBox : SKControl
 
     public ComboBox()
     {
-        SetStyle(
-            ControlStyles.Selectable |
-            ControlStyles.SupportsTransparentBackColor, true
-        );
-
         MinimumSize = new Size(0, 23);
         Height = 23;
         _itemHeight = 36;
@@ -598,7 +586,7 @@ public class ComboBox : SKControl
         SelectionChangeCommitted?.Invoke(this, e);
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear();
@@ -718,19 +706,19 @@ public class ComboBox : SKControl
         }
     }
 
-    protected override void OnMouseEnter(EventArgs e)
+    internal override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
         _animation.StartNewAnimation(AnimationDirection.In);
     }
 
-    protected override void OnMouseLeave(EventArgs e)
+    internal override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
         _animation.StartNewAnimation(AnimationDirection.Out);
     }
 
-    protected override void OnMouseDown(MouseEventArgs e)
+    internal override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
         if (e.Button == MouseButtons.Left)
@@ -751,7 +739,7 @@ public class ComboBox : SKControl
         }
     }
 
-    protected override void OnMouseUp(MouseEventArgs e)
+    internal override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
         if (e.Button == MouseButtons.Left)

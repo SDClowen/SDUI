@@ -1,194 +1,1337 @@
 ﻿using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SkiaSharp;
+using System;
+using System.ComponentModel;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Collections.Generic;
+using SDUI.Extensions;
 
 namespace SDUI.Controls;
 
-public class TextBox : Control
+public class TextBox : UIElementBase
 {
-    public class InternalTextBox : System.Windows.Forms.TextBox
+    private string _text = string.Empty;
+    private string _placeholderText = string.Empty;
+    private bool _isMultiLine;
+    private bool _useSystemPasswordChar;
+    private bool _passFocusShow;
+    private char _passwordChar = '●';
+    private int _maxLength = 32767;
+    private int _selectionStart;
+    private int _selectionLength;
+    private bool _readOnly;
+    private Color _borderColor = Color.FromArgb(171, 173, 179);
+    private Color _focusedBorderColor = Color.FromArgb(0, 120, 212);
+    private float _borderWidth = 1.0f;
+    private float _cornerRadius = 4.0f;
+    private Timer _cursorBlinkTimer;
+    private bool _showCursor;
+    private bool _isDragging;
+    private HorizontalAlignment _textAlignment = HorizontalAlignment.Left;
+    private ContextMenuStrip _contextMenu;
+    private bool _acceptsTab;
+    private bool _acceptsReturn;
+    private bool _hideSelection;
+    private Color _selectionColor = Color.FromArgb(128, 144, 206, 251);
+    private int _caretWidth = 1;
+    private int _radius = 2;
+    private bool _autoHeight;
+    private int _lineSpacing = 1;
+    private bool _wordWrap = true;
+    private bool _showScrollbar;
+    private Color _scrollBarColor = Color.FromArgb(150, 150, 150);
+    private Color _scrollBarHoverColor = Color.FromArgb(120, 120, 120);
+    private bool _isScrollBarHovered;
+    private bool _isDraggingScrollBar;
+    private float _scrollPosition;
+    private float _maxScroll;
+    private bool _showCharCount;
+    private Color _charCountColor = Color.Gray;
+    private bool _isRich;
+    private ScrollBar _verticalScrollBar;
+    private ScrollBar _horizontalScrollBar;
+    private bool _autoScroll = true;
+    private List<TextStyle> _styles = new();
+    private float _scrollSpeed = 1.0f;
+
+    public TextBox()
     {
-        public InternalTextBox()
+        Size = new Size(100, 23);
+        BackColor = Color.White;
+        ForeColor = Color.Black;
+        Cursor = Cursors.IBeam;
+        TabStop = true;
+
+        InitializeContextMenu();
+        InitializeCursorBlink();
+        InitializeScrollBars();
+    }
+
+    private void InitializeContextMenu()
+    {
+        _contextMenu = new ContextMenuStrip();
+        
+        var kesItem = new ToolStripMenuItem("Kes", null, (s, e) => Cut());
+        var kopyalaItem = new ToolStripMenuItem("Kopyala", null, (s, e) => Copy());
+        var yapistirItem = new ToolStripMenuItem("Yapıştır", null, (s, e) => Paste());
+        var silItem = new ToolStripMenuItem("Sil", null, (s, e) => DeleteSelection());
+        var tumunuSecItem = new ToolStripMenuItem("Tümünü Seç", null, (s, e) => SelectAll());
+
+        _contextMenu.Items.AddRange(new ToolStripItem[]
         {
-            SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-            BackColor = Color.Transparent;
+            kesItem, kopyalaItem, yapistirItem,
+            new ToolStripSeparator(),
+            silItem,
+            new ToolStripSeparator(),
+            tumunuSecItem
+        });
+
+        _contextMenu.Opening += (s, e) =>
+        {
+            bool hasSelection = _selectionLength > 0;
+            kesItem.Enabled = hasSelection && !ReadOnly;
+            kopyalaItem.Enabled = hasSelection;
+            silItem.Enabled = hasSelection && !ReadOnly;
+            yapistirItem.Enabled = !ReadOnly && Clipboard.ContainsText();
+        };
+    }
+
+    private void InitializeCursorBlink()
+    {
+        _cursorBlinkTimer = new Timer
+        {
+            Interval = SystemInformation.CaretBlinkTime
+        };
+        _cursorBlinkTimer.Tick += (s, e) =>
+        {
+            if (Focused)
+            {
+                _showCursor = !_showCursor;
+                Invalidate();
+            }
+        };
+    }
+
+    private void InitializeScrollBars()
+    {
+        _verticalScrollBar = new ScrollBar
+        {
+            Orientation = ScrollOrientation.Vertical,
+            Visible = false,
+            Width = 12
+        };
+        _verticalScrollBar.ValueChanged += (s, e) => 
+        {
+            _scrollPosition = _verticalScrollBar.Value;
+            Invalidate();
+        };
+
+        _horizontalScrollBar = new ScrollBar
+        {
+            Orientation = ScrollOrientation.Horizontal,
+            Visible = false,
+            Height = 12
+        };
+        _horizontalScrollBar.ValueChanged += (s, e) => Invalidate();
+
+        Controls.Add(_verticalScrollBar);
+        Controls.Add(_horizontalScrollBar);
+    }
+
+    [Category("Appearance")]
+    [DefaultValue("")]
+    public override string Text
+    {
+        get => _text;
+        set
+        {
+            if (_text == value) return;
+            
+            if (_maxLength > 0 && value != null && value.Length > _maxLength)
+            {
+                value = value.Substring(0, _maxLength);
+            }
+
+            _text = value ?? string.Empty;
+            OnTextChanged(EventArgs.Empty);
+            Invalidate();
         }
     }
 
-    private int _radius = 2;
+    [Category("Appearance")]
+    [DefaultValue("")]
+    public string PlaceholderText
+    {
+        get => _placeholderText;
+        set
+        {
+            if (_placeholderText == value) return;
+            _placeholderText = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool MultiLine
+    {
+        get => _isMultiLine;
+        set
+        {
+            if (_isMultiLine == value) return;
+            _isMultiLine = value;
+            if (!value)
+            {
+                Height = 23;
+            }
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool UseSystemPasswordChar
+    {
+        get => _useSystemPasswordChar;
+        set
+        {
+            if (_useSystemPasswordChar == value) return;
+            _useSystemPasswordChar = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue('●')]
+    public char PasswordChar
+    {
+        get => _passwordChar;
+        set
+        {
+            if (_passwordChar == value) return;
+            _passwordChar = value;
+            if (UseSystemPasswordChar)
+            {
+                Invalidate();
+            }
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(32767)]
+    public int MaxLength
+    {
+        get => _maxLength;
+        set
+        {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value));
+            
+            if (_maxLength == value) return;
+            _maxLength = value;
+            if (_maxLength > 0 && Text.Length > _maxLength)
+            {
+                Text = Text.Substring(0, _maxLength);
+            }
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool ReadOnly
+    {
+        get => _readOnly;
+        set
+        {
+            if (_readOnly == value) return;
+            _readOnly = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    public Color BorderColor
+    {
+        get => _borderColor;
+        set
+        {
+            if (_borderColor == value) return;
+            _borderColor = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    public Color FocusedBorderColor
+    {
+        get => _focusedBorderColor;
+        set
+        {
+            if (_focusedBorderColor == value) return;
+            _focusedBorderColor = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue(1.0f)]
+    public float BorderWidth
+    {
+        get => _borderWidth;
+        set
+        {
+            if (_borderWidth == value) return;
+            _borderWidth = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue(4.0f)]
+    public float CornerRadius
+    {
+        get => _cornerRadius;
+        set
+        {
+            if (_cornerRadius == value) return;
+            _cornerRadius = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool AcceptsTab
+    {
+        get => _acceptsTab;
+        set => _acceptsTab = value;
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool AcceptsReturn
+    {
+        get => _acceptsReturn;
+        set => _acceptsReturn = value;
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool HideSelection
+    {
+        get => _hideSelection;
+        set
+        {
+            if (_hideSelection == value) return;
+            _hideSelection = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue(typeof(HorizontalAlignment), "Left")]
+    public HorizontalAlignment TextAlignment
+    {
+        get => _textAlignment;
+        set
+        {
+            if (_textAlignment == value) return;
+            _textAlignment = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    public Color SelectionColor
+    {
+        get => _selectionColor;
+        set
+        {
+            if (_selectionColor == value) return;
+            _selectionColor = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool PassFocusShow
+    {
+        get => _passFocusShow;
+        set
+        {
+            if (_passFocusShow == value) return;
+            _passFocusShow = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue(2)]
     public int Radius
     {
         get => _radius;
         set
         {
+            if (_radius == value) return;
             _radius = value;
-
             Invalidate();
         }
     }
-    private InternalTextBox _textBox;
 
-    private bool _passmask = false;
-    public bool UseSystemPasswordChar
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool AutoHeight
     {
-        get { return _passmask; }
+        get => _autoHeight;
         set
         {
-            _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
-            _passmask = value;
+            if (_autoHeight == value) return;
+            _autoHeight = value;
+            if (value && MultiLine)
+            {
+                UpdateAutoHeight();
+            }
             Invalidate();
         }
     }
 
-    private bool _passFocusShow = false;
-    public bool PassFocusShow
+    [Category("Appearance")]
+    [DefaultValue(1)]
+    public int LineSpacing
     {
-        get { return _passFocusShow; }
+        get => _lineSpacing;
         set
         {
-            _passFocusShow = value;
+            if (_lineSpacing == value) return;
+            _lineSpacing = value;
+            if (MultiLine)
+            {
+                UpdateAutoHeight();
+            }
             Invalidate();
         }
     }
-    protected override void OnEnter(System.EventArgs e)
-    {
-        if (UseSystemPasswordChar && PassFocusShow) _textBox.UseSystemPasswordChar = false;
-    }
-    protected override void OnLeave(System.EventArgs e)
-    {
-        if (UseSystemPasswordChar && PassFocusShow) _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
-    }
 
-    private int _maxchars = 32767;
-    public int MaxLength
+    [Category("Behavior")]
+    [DefaultValue(true)]
+    public bool WordWrap
     {
-        get { return _maxchars; }
+        get => _wordWrap;
         set
         {
-            _maxchars = value;
-            _textBox.MaxLength = MaxLength;
+            if (_wordWrap == value) return;
+            _wordWrap = value;
+            if (MultiLine)
+            {
+                UpdateAutoHeight();
+            }
             Invalidate();
         }
     }
 
-    private HorizontalAlignment _align;
-    public HorizontalAlignment TextAlignment
+    [Category("Appearance")]
+    [DefaultValue(false)]
+    public bool ShowScrollbar
     {
-        get { return _align; }
+        get => _showScrollbar;
         set
         {
-            _align = value;
+            if (_showScrollbar == value) return;
+            _showScrollbar = value;
             Invalidate();
         }
     }
 
-    private bool _multiline = false;
-    public bool MultiLine
+    [Category("Appearance")]
+    public Color ScrollBarColor
     {
-        get { return _multiline; }
+        get => _scrollBarColor;
         set
         {
-            _multiline = value;
+            if (_scrollBarColor == value) return;
+            _scrollBarColor = value;
             Invalidate();
         }
     }
 
-    public override string Text
+    [Category("Appearance")]
+    public Color ScrollBarHoverColor
     {
-        get => _textBox.Text;
-        set => _textBox.Text = value;
+        get => _scrollBarHoverColor;
+        set
+        {
+            if (_scrollBarHoverColor == value) return;
+            _scrollBarHoverColor = value;
+            Invalidate();
+        }
     }
 
-    protected override void OnBackColorChanged(System.EventArgs e)
+    [Category("Appearance")]
+    [DefaultValue(false)]
+    public bool ShowCharCount
     {
-        base.OnBackColorChanged(e);
-        _textBox.BackColor = Color.FromArgb(BackColor.R, BackColor.G, BackColor.B);
+        get => _showCharCount;
+        set
+        {
+            if (_showCharCount == value) return;
+            _showCharCount = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    public Color CharCountColor
+    {
+        get => _charCountColor;
+        set
+        {
+            if (_charCountColor == value) return;
+            _charCountColor = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool IsRich
+    {
+        get => _isRich;
+        set
+        {
+            if (_isRich == value) return;
+            _isRich = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(true)]
+    public bool AutoScroll
+    {
+        get => _autoScroll;
+        set
+        {
+            if (_autoScroll == value) return;
+            _autoScroll = value;
+            if (value)
+            {
+                ScrollToEnd();
+            }
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(1.0f)]
+    public float ScrollSpeed
+    {
+        get => _scrollSpeed;
+        set => _scrollSpeed = Math.Max(0.1f, Math.Min(10.0f, value));
+    }
+
+    public void Cut()
+    {
+        if (_selectionLength > 0 && !ReadOnly)
+        {
+            Copy();
+            DeleteSelection();
+        }
+    }
+
+    public void Copy()
+    {
+        if (_selectionLength > 0)
+        {
+            Clipboard.SetText(Text.Substring(_selectionStart, _selectionLength));
+        }
+    }
+
+    public void Paste()
+    {
+        if (!ReadOnly && Clipboard.ContainsText())
+        {
+            var clipText = Clipboard.GetText();
+            if (!MultiLine)
+            {
+                clipText = clipText.Replace("\r\n", "").Replace("\n", "");
+            }
+
+            if (_selectionLength > 0)
+            {
+                DeleteSelection();
+            }
+
+            if (MaxLength > 0)
+            {
+                var remainingLength = MaxLength - Text.Length + _selectionLength;
+                if (clipText.Length > remainingLength)
+                {
+                    clipText = clipText.Substring(0, remainingLength);
+                }
+            }
+
+            Text = Text.Insert(_selectionStart, clipText);
+            _selectionStart += clipText.Length;
+            _selectionLength = 0;
+        }
+    }
+
+    public void SelectAll()
+    {
+        _selectionStart = 0;
+        _selectionLength = Text.Length;
         Invalidate();
     }
 
-    protected override void OnForeColorChanged(System.EventArgs e)
+    private void DeleteSelection()
     {
-        base.OnForeColorChanged(e);
-        _textBox.ForeColor = ForeColor;
-        Invalidate();
+        if (_selectionLength > 0 && !ReadOnly)
+        {
+            Text = Text.Remove(_selectionStart, _selectionLength);
+            _selectionLength = 0;
+        }
     }
 
-    protected override void OnFontChanged(System.EventArgs e)
-    {
-        base.OnFontChanged(e);
-        _textBox.Font = Font;
-    }
-
-    protected override void OnGotFocus(System.EventArgs e)
+    internal override void OnGotFocus(EventArgs e)
     {
         base.OnGotFocus(e);
-        _textBox.Focus();
+        if (UseSystemPasswordChar && PassFocusShow)
+        {
+            _useSystemPasswordChar = false;
+            Invalidate();
+        }
+        _cursorBlinkTimer.Start();
+        _showCursor = true;
+        Invalidate();
     }
 
-    public TextBox()
+    internal override void OnLostFocus(EventArgs e)
     {
-        _textBox = new InternalTextBox();
-        _textBox.Multiline = false;
-        _textBox.Text = string.Empty;
-        _textBox.TextAlign = HorizontalAlignment.Center;
-        _textBox.BorderStyle = BorderStyle.None;
-        _textBox.BackColor = Color.Transparent;
-        _textBox.Location = new Point(3, 2);
-        _textBox.Font = Font;
-        _textBox.Size = new Size(Width - 10, Height - 11);
-        _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
-        _textBox.TextChanged += _textbox_TextChanged;
-        _textBox.PreviewKeyDown += _textbox_PreviewKeyDown;
-        Controls.Add(_textBox);
-
-        SetStyle(ControlStyles.UserPaint, true);
-        SetStyle(ControlStyles.SupportsTransparentBackColor, true);
-
-        Size = new Size(135, 35);
-        DoubleBuffered = true;
+        base.OnLostFocus(e);
+        if (UseSystemPasswordChar && PassFocusShow)
+        {
+            _useSystemPasswordChar = true;
+            Invalidate();
+        }
+        _cursorBlinkTimer.Stop();
+        _showCursor = false;
+        Invalidate();
     }
 
-    private void _textbox_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+    internal override void OnMouseUp(MouseEventArgs e)
     {
-        OnPreviewKeyDown(e);
+        base.OnMouseUp(e);
+        _isDragging = false;
+
+        if (e.Button == MouseButtons.Right)
+        {
+            _contextMenu.Show(this.FindForm(), e.Location);
+        }
     }
 
-    private void _textbox_TextChanged(object sender, System.EventArgs e)
+    internal override void OnMouseMove(MouseEventArgs e)
     {
-        Text = _textBox.Text;
-        OnTextChanged(e);
+        base.OnMouseMove(e);
+
+        if (e.Button == MouseButtons.Left && _isDragging)
+        {
+            UpdateSelectionFromMousePosition(e.Location);
+        }
+
+        if (ShowScrollbar && MultiLine)
+        {
+            var scrollBarBounds = new Rectangle(
+                Width - 12,
+                2,
+                8,
+                Height - 4);
+
+            bool wasHovered = _isScrollBarHovered;
+            _isScrollBarHovered = scrollBarBounds.Contains(e.Location);
+
+            if (wasHovered != _isScrollBarHovered)
+            {
+                Invalidate();
+            }
+
+            if (_isDraggingScrollBar)
+            {
+                var totalHeight = Height - 4;
+                var scrollPercent = Math.Max(0, Math.Min(1, (e.Y - 2f) / totalHeight));
+                _scrollPosition = scrollPercent * _maxScroll;
+                Invalidate();
+            }
+        }
     }
 
-    protected override void OnPaint(PaintEventArgs e)
+    internal override void OnMouseDown(MouseEventArgs e)
     {
-        ButtonRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+        base.OnMouseDown(e);
 
-        var color = Color.CornflowerBlue;
+        if (e.Button == MouseButtons.Left)
+        {
+            Focus();
+            _isDragging = true;
+            
+            if (ModifierKeys == Keys.Shift)
+            {
+                // Shift ile tıklama - seçimi genişlet
+                var oldStart = _selectionStart;
+                UpdateSelectionFromMousePosition(e.Location);
+                var newPos = _selectionStart;
+                _selectionStart = Math.Min(oldStart, newPos);
+                _selectionLength = Math.Abs(newPos - oldStart);
+            }
+            else
+            {
+                // Normal tıklama
+                UpdateSelectionFromMousePosition(e.Location);
+                _selectionLength = 0;
+            }
+        }
 
-        var graphics = e.Graphics;
-        graphics.SmoothingMode = SmoothingMode.HighQuality;
+        if (ShowScrollbar && MultiLine && _isScrollBarHovered)
+        {
+            _isDraggingScrollBar = true;
+        }
+    }
 
-        var determinedColor = ColorScheme.BackColor.Determine();
-        var backColor = ColorScheme.BackColor.Brightness(-.1f);
+    internal override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
 
-        Height = _textBox.Height + 5;
-        var textbox = _textBox;
-        textbox.Width = Width - 10;
-        textbox.TextAlign = TextAlignment;
-        textbox.UseSystemPasswordChar = UseSystemPasswordChar;
-        textbox.ForeColor = ColorScheme.ForeColor;
-        textbox.BackColor = backColor;
+        if (e.Control)
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.A:
+                    SelectAll();
+                    e.Handled = true;
+                    break;
+                case Keys.C:
+                    Copy();
+                    e.Handled = true;
+                    break;
+                case Keys.X:
+                    Cut();
+                    e.Handled = true;
+                    break;
+                case Keys.V:
+                    Paste();
+                    e.Handled = true;
+                    break;
+            }
+        }
+        else
+        {
+            switch (e.KeyCode)
+            {
+                case Keys.Left when _selectionStart > 0:
+                    if (e.Shift)
+                    {
+                        _selectionLength++;
+                    }
+                    else
+                    {
+                        _selectionLength = 0;
+                    }
+                    _selectionStart--;
+                    Invalidate();
+                    break;
 
-        using var backBrush = new SolidBrush(backColor);
-        graphics.FillPath(backBrush, new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
+                case Keys.Right when _selectionStart < Text.Length:
+                    if (e.Shift)
+                    {
+                        _selectionLength++;
+                    }
+                    else
+                    {
+                        _selectionLength = 0;
+                    }
+                    _selectionStart++;
+                    Invalidate();
+                    break;
 
-        var colorBegin = determinedColor.Brightness(.1f).Alpha(90);
-        var colorEnd = determinedColor.Brightness(-.1f).Alpha(60);
+                case Keys.Home:
+                    if (e.Shift)
+                    {
+                        _selectionLength = _selectionStart;
+                    }
+                    else
+                    {
+                        _selectionLength = 0;
+                    }
+                    _selectionStart = 0;
+                    Invalidate();
+                    break;
 
-        using var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 2, Height - 2), colorBegin, colorEnd, 90);
-        using var innerBorderPen = new Pen(innerBorderBrush);
+                case Keys.End:
+                    if (e.Shift)
+                    {
+                        _selectionLength = Text.Length - _selectionStart;
+                    }
+                    else
+                    {
+                        _selectionLength = 0;
+                    }
+                    _selectionStart = Text.Length;
+                    Invalidate();
+                    break;
+                case Keys.Delete:
+                    if (!ReadOnly)
+                    {
+                        if (_selectionLength > 0)
+                        {
+                            DeleteSelection();
+                        }
+                        else if (_selectionStart < Text.Length)
+                        {
+                            Text = Text.Remove(_selectionStart, 1);
+                        }
+                    }
+                    e.Handled = true;
+                    break;
 
-        graphics.DrawPath(innerBorderPen, new Rectangle(1, 1, Width - _radius, Height - _radius).Radius(_radius));
-        graphics.DrawLine(ColorScheme.BorderColor, new Point(1, 1), new Point(Width - 3, 1));
+                case Keys.Tab:
+                    if (!AcceptsTab)
+                    {
+                        return;
+                    }
+                    goto case Keys.Space;
+
+                case Keys.Return:
+                case Keys.LineFeed:
+                    if (!AcceptsReturn || !MultiLine)
+                    {
+                        return;
+                    }
+                    goto case Keys.Space;
+
+                case Keys.Space:
+                    if (!ReadOnly)
+                    {
+                        var ch = e.KeyCode == Keys.Space ? ' ' :
+                                e.KeyCode == Keys.Tab ? '\t' : '\n';
+                        
+                        if (_selectionLength > 0)
+                        {
+                            DeleteSelection();
+                        }
+                        
+                        if (MaxLength == 0 || Text.Length < MaxLength)
+                        {
+                            Text = Text.Insert(_selectionStart, ch.ToString());
+                            _selectionStart++;
+                        }
+                    }
+                    e.Handled = true;
+                    break;
+            }
+        }
+    }
+
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    {
+        base.OnPaint(e);
+
+        var canvas = e.Surface.Canvas;
+        var bounds = ClientRectangle;
+
+        // Arka plan çizimi
+        using (var paint = new SKPaint
+        {
+            Color = BackColor.ToSKColor(),
+            IsAntialias = true
+        })
+        {
+            canvas.DrawRoundRect(
+                new SKRect(0, 0, bounds.Width, bounds.Height),
+                Radius, Radius, paint);
+        }
+
+        // Kenarlık çizimi
+        using (var paint = new SKPaint
+        {
+            Color = Focused ? FocusedBorderColor.ToSKColor() : BorderColor.ToSKColor(),
+            IsAntialias = true,
+            IsStroke = true,
+            StrokeWidth = BorderWidth
+        })
+        {
+            canvas.DrawRoundRect(
+                new SKRect(BorderWidth / 2, BorderWidth / 2,
+                    bounds.Width - BorderWidth / 2,
+                    bounds.Height - BorderWidth / 2),
+                Radius, Radius, paint);
+        }
+
+        // Metin çizimi
+        var displayText = UseSystemPasswordChar && !string.IsNullOrEmpty(Text)
+            ? new string(PasswordChar, Text.Length)
+            : Text;
+
+        if (string.IsNullOrEmpty(displayText) && !string.IsNullOrEmpty(PlaceholderText) && !Focused)
+        {
+            using (var paint = new SKPaint
+            {
+                Color = Color.Gray.ToSKColor(),
+                TextSize = Font.Size * 96.0f / 72.0f,
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                IsAntialias = true,
+                TextAlign = GetSkiaTextAlign()
+            })
+            {
+                var textBounds = new SKRect();
+                paint.MeasureText(PlaceholderText, ref textBounds);
+                var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
+                var x = GetTextX(bounds.Width, textBounds.Width);
+                canvas.DrawText(PlaceholderText, x, y, paint);
+            }
+        }
+        else if (!string.IsNullOrEmpty(displayText))
+        {
+            using (var paint = new SKPaint
+            {
+                Color = Enabled ? ForeColor.ToSKColor() : Color.Gray.ToSKColor(),
+                TextSize = Font.Size * 96.0f / 72.0f,
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                IsAntialias = true,
+                TextAlign = GetSkiaTextAlign()
+            })
+            {
+                var textBounds = new SKRect();
+                paint.MeasureText(displayText, ref textBounds);
+                var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
+                var x = GetTextX(bounds.Width, textBounds.Width);
+                canvas.DrawText(displayText, x, y, paint);
+
+                // Seçim çizimi
+                if (Focused && _selectionLength > 0)
+                {
+                    var selectedText = displayText.Substring(_selectionStart, _selectionLength);
+                    var selectedBounds = new SKRect();
+                    paint.MeasureText(selectedText, ref selectedBounds);
+                    
+                    var startX = x;
+                    if (_selectionStart > 0)
+                    {
+                        var preText = displayText.Substring(0, _selectionStart);
+                        var preBounds = new SKRect();
+                        paint.MeasureText(preText, ref preBounds);
+                        startX += preBounds.Width;
+                    }
+
+                    using (var selectionPaint = new SKPaint
+                    {
+                        Color = SKColors.LightBlue.WithAlpha(128),
+                        IsAntialias = true
+                    })
+                    {
+                        canvas.DrawRect(
+                            new SKRect(startX, 2,
+                                startX + selectedBounds.Width,
+                                bounds.Height - 2),
+                            selectionPaint);
+                    }
+                }
+            }
+        }
+
+        // İmleç çizimi
+        if (Focused && _showCursor && _selectionLength == 0)
+        {
+            using var paint = new SKPaint
+            {
+                Color = ForeColor.ToSKColor(),
+                IsAntialias = true,
+                StrokeWidth = _caretWidth
+            };
+
+            displayText = UseSystemPasswordChar ? new string(PasswordChar, Text.Length) : Text;
+            var preText = displayText.Substring(0, _selectionStart);
+            var textBounds = new SKRect();
+            paint.MeasureText(preText, ref textBounds);
+
+            canvas.DrawLine(
+                new SKPoint(textBounds.Width, 2),
+                new SKPoint(textBounds.Width, bounds.Height - 2),
+                paint);
+        }
+
+        // Seçim çizimi
+        if (_selectionLength > 0 && (!HideSelection || Focused))
+        {
+            // ... mevcut seçim çizimi ...
+        }
+
+        // Karakter sayacı çizimi
+        if (ShowCharCount)
+        {
+            var countText = MaxLength > 0 ? $"{Text.Length}/{MaxLength}" : Text.Length.ToString();
+            using (var paint = new SKPaint
+            {
+                Color = CharCountColor.ToSKColor(),
+                TextSize = (Font.Size - 2) * 96.0f / 72.0f,
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                IsAntialias = true
+            })
+            {
+                var textBounds = new SKRect();
+                paint.MeasureText(countText, ref textBounds);
+                canvas.DrawText(countText,
+                    bounds.Width - textBounds.Width - 5,
+                    bounds.Height - 5,
+                    paint);
+            }
+        }
+
+        // Kaydırma çubuğu çizimi
+        if (ShowScrollbar && MultiLine)
+        {
+            var scrollBarBounds = new SKRect(
+                bounds.Width - 12,
+                2,
+                bounds.Width - 4,
+                bounds.Height - 4);
+
+            using (var paint = new SKPaint
+            {
+                Color = (_isScrollBarHovered ? ScrollBarHoverColor : ScrollBarColor).ToSKColor(),
+                IsAntialias = true
+            })
+            {
+                canvas.DrawRoundRect(scrollBarBounds, 4, 4, paint);
+            }
+        }
+
+        // Rich text çizimi
+        if (IsRich && !string.IsNullOrEmpty(Text))
+        {
+            using (var paint = new SKPaint
+            {
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                IsAntialias = true
+            })
+            {
+                var lines = GetTextLines(paint);
+                var y = Padding.Top - _scrollPosition;
+                var lineHeight = paint.TextSize + LineSpacing;
+
+                foreach (var line in lines)
+                {
+                    if (y + lineHeight < 0)
+                    {
+                        y += lineHeight;
+                        continue;
+                    }
+
+                    if (y > bounds.Height)
+                        break;
+
+                    // Stil uygulaması
+                    foreach (var style in _styles)
+                    {
+                        if (line.Contains(style.Pattern))
+                        {
+                            paint.Color = style.Color.ToSKColor();
+                            if (style.IsBold)
+                            {
+                                paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+                            }
+                        }
+                    }
+
+                    canvas.DrawText(line, Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0), y + paint.TextSize, paint);
+                    y += lineHeight;
+
+                    // Stili sıfırla
+                    paint.Color = ForeColor.ToSKColor();
+                    paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
+                }
+            }
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _cursorBlinkTimer?.Dispose();
+            _contextMenu?.Dispose();
+        }
+        base.Dispose(disposing);
+    }
+
+    internal override void OnKeyPress(KeyPressEventArgs e)
+    {
+        if (ReadOnly)
+        {
+            e.Handled = true;
+            return;
+        }
+
+        if (!char.IsControl(e.KeyChar))
+        {
+            if (MaxLength > 0 && Text.Length >= MaxLength)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            var newText = Text.Insert(_selectionStart, e.KeyChar.ToString());
+            Text = newText;
+            _selectionStart++;
+            _selectionLength = 0;
+            e.Handled = true;
+        }
+        else if (e.KeyChar == '\b' && _selectionStart > 0) // Backspace
+        {
+            if (_selectionLength > 0)
+            {
+                Text = Text.Remove(_selectionStart, _selectionLength);
+                _selectionLength = 0;
+            }
+            else
+            {
+                Text = Text.Remove(_selectionStart - 1, 1);
+                _selectionStart--;
+            }
+            e.Handled = true;
+        }
+
+        base.OnKeyPress(e);
+    }
+
+    private void UpdateSelectionFromMousePosition(Point location)
+    {
+        using (var paint = new SKPaint
+        {
+            TextSize = Font.Size * 96.0f / 72.0f,
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+        })
+        {
+            var displayText = UseSystemPasswordChar ? new string(PasswordChar, Text.Length) : Text;
+            var clickX = location.X - Padding.Left;
+
+            for (int i = 0; i <= displayText.Length; i++)
+            {
+                var textPart = displayText.Substring(0, i);
+                var bounds = new SKRect();
+                paint.MeasureText(textPart, ref bounds);
+
+                if (bounds.Width >= clickX || i == displayText.Length)
+                {
+                    _selectionStart = i;
+                    _selectionLength = 0;
+                    Invalidate();
+                    break;
+                }
+            }
+        }
+    }
+
+    private SKTextAlign GetSkiaTextAlign()
+    {
+        return TextAlignment switch
+        {
+            HorizontalAlignment.Left => SKTextAlign.Left,
+            HorizontalAlignment.Center => SKTextAlign.Center,
+            HorizontalAlignment.Right => SKTextAlign.Right,
+            _ => SKTextAlign.Left
+        };
+    }
+
+    private float GetTextX(float boundsWidth, float textWidth)
+    {
+        return TextAlignment switch
+        {
+            HorizontalAlignment.Left => Padding.Left,
+            HorizontalAlignment.Center => (boundsWidth - textWidth) / 2,
+            HorizontalAlignment.Right => boundsWidth - textWidth - Padding.Right,
+            _ => Padding.Left
+        };
+    }
+
+    private void UpdateAutoHeight()
+    {
+        if (!AutoHeight || !MultiLine) return;
+
+        using (var paint = new SKPaint
+        {
+            TextSize = Font.Size * 96.0f / 72.0f,
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+        })
+        {
+            var lines = GetTextLines(paint);
+            var lineHeight = paint.TextSize + LineSpacing;
+            var newHeight = (int)(lines.Count * lineHeight) + Padding.Vertical + 4;
+            
+            if (Height != newHeight)
+            {
+                Height = newHeight;
+            }
+        }
+    }
+
+    private List<string> GetTextLines(SKPaint paint)
+    {
+        var lines = new List<string>();
+        if (string.IsNullOrEmpty(Text))
+        {
+            lines.Add(string.Empty);
+            return lines;
+        }
+
+        var availableWidth = Width - Padding.Horizontal - (ShowScrollbar ? 20 : 0);
+        
+        if (!WordWrap)
+        {
+            lines.AddRange(Text.Split('\n'));
+            return lines;
+        }
+
+        var words = Text.Split(' ');
+        var currentLine = new StringBuilder();
+
+        foreach (var word in words)
+        {
+            var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
+            var bounds = new SKRect();
+            paint.MeasureText(testLine, ref bounds);
+
+            if (bounds.Width > availableWidth && currentLine.Length > 0)
+            {
+                lines.Add(currentLine.ToString());
+                currentLine.Clear();
+                currentLine.Append(word);
+            }
+            else
+            {
+                if (currentLine.Length > 0)
+                    currentLine.Append(' ');
+                currentLine.Append(word);
+            }
+        }
+
+        if (currentLine.Length > 0)
+            lines.Add(currentLine.ToString());
+
+        return lines;
+    }
+
+    internal override void OnMouseWheel(MouseEventArgs e)
+    {
+        base.OnMouseWheel(e);
+
+        if (MultiLine && _verticalScrollBar.Visible)
+        {
+            var delta = (e.Delta / 120f) * _verticalScrollBar.SmallChange * ScrollSpeed;
+            _verticalScrollBar.Value = Math.Max(_verticalScrollBar.Minimum,
+                Math.Min(_verticalScrollBar.Maximum,
+                _verticalScrollBar.Value - (int)delta));
+        }
+    }
+
+    internal override void OnTextChanged(EventArgs e)
+    {
+        base.OnTextChanged(e);
+        UpdateAutoHeight();
+    }
+
+    public void ScrollToEnd()
+    {
+        if (_verticalScrollBar.Visible)
+        {
+            _verticalScrollBar.Value = _verticalScrollBar.Maximum;
+        }
+    }
+
+    public void AddStyle(TextStyle style)
+    {
+        _styles.Add(style);
+        Invalidate();
+    }
+
+    public void ClearStyles()
+    {
+        _styles.Clear();
+        Invalidate();
+    }
+
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
+        UpdateScrollBars();
+    }
+
+    private void UpdateScrollBars()
+    {
+        if (!MultiLine) return;
+
+        var bounds = ClientRectangle;
+        var showVertical = false;
+        var showHorizontal = false;
+
+        using (var paint = new SKPaint
+        {
+            TextSize = Font.Size.PtToPx(this),
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+        })
+        {
+            var lines = GetTextLines(paint);
+            var totalHeight = lines.Count * (paint.TextSize + LineSpacing);
+            var maxWidth = 0f;
+
+            foreach (var line in lines)
+            {
+                var tbounds = new SKRect();
+                paint.MeasureText(line, ref tbounds);
+                maxWidth = Math.Max(maxWidth, bounds.Width);
+            }
+
+            showVertical = totalHeight > Height;
+            showHorizontal = maxWidth > Width;
+
+            if (showVertical)
+            {
+                _verticalScrollBar.Location = new Point(Width - 12, 0);
+                _verticalScrollBar.Height = showHorizontal ? Height - 12 : Height;
+                _verticalScrollBar.Minimum = 0;
+                _verticalScrollBar.Maximum = (int)(totalHeight - Height);
+                _verticalScrollBar.SmallChange = (int)paint.TextSize;
+                _verticalScrollBar.LargeChange = Height;
+            }
+
+            if (showHorizontal)
+            {
+                _horizontalScrollBar.Location = new Point(0, Height - 12);
+                _horizontalScrollBar.Width = showVertical ? Width - 12 : Width;
+                _horizontalScrollBar.Minimum = 0;
+                _horizontalScrollBar.Maximum = (int)(maxWidth - Width);
+                _horizontalScrollBar.SmallChange = 10;
+                _horizontalScrollBar.LargeChange = Width;
+            }
+        }
+
+        _verticalScrollBar.Visible = showVertical;
+        _horizontalScrollBar.Visible = showHorizontal;
+    }
+}
+
+public class TextStyle
+{
+    public string Pattern { get; set; }
+    public Color Color { get; set; }
+    public bool IsBold { get; set; }
+
+    public TextStyle(string pattern, Color color, bool isBold = false)
+    {
+        Pattern = pattern;
+        Color = color;
+        IsBold = isBold;
     }
 }

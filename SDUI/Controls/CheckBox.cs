@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class CheckBox : SKControl
+    public class CheckBox : UIElementBase
     {
         private const int CHECKBOX_SIZE = 16;
         private const int CHECKBOX_SIZE_HALF = CHECKBOX_SIZE / 2;
@@ -104,14 +104,6 @@ namespace SDUI.Controls
 
         public CheckBox()
         {
-            SetStyle(
-                ControlStyles.UserPaint |
-                ControlStyles.SupportsTransparentBackColor |
-                ControlStyles.OptimizedDoubleBuffer |
-                ControlStyles.ResizeRedraw, true);
-
-            SetStyle(ControlStyles.FixedHeight | ControlStyles.Selectable, false);
-
             animationManager = new()
             {
                 AnimationType = AnimationType.EaseInOut,
@@ -151,10 +143,9 @@ namespace SDUI.Controls
             return new Size(width + Padding.Horizontal, height + Padding.Vertical);
         }
 
-        protected override void OnCreateControl()
+        internal override void OnCreateControl()
         {
             base.OnCreateControl();
-            if (DesignMode) return;
 
             MouseEnter += (_, _) => _mouseState = 1;
             MouseLeave += (_, _) =>
@@ -183,7 +174,7 @@ namespace SDUI.Controls
             };
         }
 
-        protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+        public override void OnPaint(SKPaintSurfaceEventArgs e)
         {
             var canvas = e.Surface.Canvas;
             canvas.Clear();

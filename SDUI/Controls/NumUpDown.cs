@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class NumUpDown : SKControl
+    public class NumUpDown : UIElementBase
     {
         private const int LONG_PRESS_TIMER_INTERVAL = 250;
 
@@ -122,11 +122,11 @@ namespace SDUI.Controls
 
         private void UpdateButtonRects()
         {
-            _upButtonRect = new(Width - SIZE * DPI, 0, SIZE * DPI, Height / 2f);
-            _downButtonRect = new(Width - SIZE * DPI, Height / 2f, SIZE * DPI, Height / 2f);
+            _upButtonRect = new(Width - SIZE * ScaleFactor, 0, SIZE * ScaleFactor, Height / 2f);
+            _downButtonRect = new(Width - SIZE * ScaleFactor, Height / 2f, SIZE * ScaleFactor, Height / 2f);
         }
 
-        protected override void OnMouseMove(MouseEventArgs e)
+        internal override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
             _mouseLocation = e.Location;
@@ -149,7 +149,7 @@ namespace SDUI.Controls
             Invalidate();
         }
 
-        protected override void OnMouseLeave(EventArgs e)
+        internal override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
             _inUpButton = _inDownButton = false;
@@ -178,7 +178,7 @@ namespace SDUI.Controls
             Invalidate();
         }
 
-        protected override void OnMouseDown(MouseEventArgs e)
+        internal override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
 
@@ -197,7 +197,7 @@ namespace SDUI.Controls
             _longPressTimer.Start();
         }
 
-        protected override void OnMouseUp(MouseEventArgs e)
+        internal override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
 
@@ -224,7 +224,7 @@ namespace SDUI.Controls
                 _longPressTimer.Interval = 50;
         }
 
-        protected override void OnKeyPress(KeyPressEventArgs e)
+        internal override void OnKeyPress(KeyPressEventArgs e)
         {
             base.OnKeyPress(e);
             try
@@ -237,7 +237,7 @@ namespace SDUI.Controls
             }
         }
 
-        protected override void OnKeyUp(KeyEventArgs e)
+        internal override void OnKeyUp(KeyEventArgs e)
         {
             base.OnKeyUp(e);
             if (e.KeyCode == Keys.Back)
@@ -252,7 +252,7 @@ namespace SDUI.Controls
             Invalidate();
         }
 
-        protected override void OnMouseWheel(MouseEventArgs e)
+        internal override void OnMouseWheel(MouseEventArgs e)
         {
             base.OnMouseWheel(e);
             if (e.Delta > 0)
@@ -279,18 +279,18 @@ namespace SDUI.Controls
             UpdateButtonRects();
         }
 
-        protected override void OnDpiChangedAfterParent(EventArgs e)
+        internal override void OnDpiChanged(EventArgs e)
         {
-            base.OnDpiChangedAfterParent(e);
+            base.OnDpiChanged(e);
             UpdateButtonRects();
         }
 
-        protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+        public override void OnPaint(SKPaintSurfaceEventArgs e)
         {
             e.Surface.Canvas.Clear(SKColors.Transparent);
 
             var canvas = e.Surface.Canvas;
-            var info = e.ImageInfo;
+            var info = e.Info;
 
             if (info.Width <= 0 || info.Height <= 0)
                 return;
@@ -299,7 +299,7 @@ namespace SDUI.Controls
             using (var backColorBrush = new SKPaint { Color = ColorScheme.BackColor.Alpha(20).ToSKColor() })
             using (var path = new SKPath())
             {
-                path.AddRoundRect(new SKRect(0, 0, Width, Height), 6 * DPI, 6 * DPI);
+                path.AddRoundRect(new SKRect(0, 0, Width, Height), 6 * ScaleFactor, 6 * ScaleFactor);
                 canvas.DrawPath(path, backColorBrush);
             }
 
@@ -313,7 +313,7 @@ namespace SDUI.Controls
             })
             using (var path = new SKPath())
             {
-                path.AddRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 6 * DPI, 6 * DPI);
+                path.AddRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 6 * ScaleFactor, 6 * ScaleFactor);
                 canvas.DrawPath(path, borderPaint);
             }
 
@@ -344,7 +344,7 @@ namespace SDUI.Controls
                 using var path = new SKPath();
                 var rect = _upButtonRect.ToSKRect();
                 path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top + 1, rect.Right - 1, rect.Bottom), 
-                    6 * DPI, 0, SKPathDirection.Clockwise);
+                    6 * ScaleFactor, 0, SKPathDirection.Clockwise);
                 canvas.DrawPath(path, buttonPaint);
             }
 
@@ -362,7 +362,7 @@ namespace SDUI.Controls
                 using var path = new SKPath();
                 var rect = _downButtonRect.ToSKRect();
                 path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top, rect.Right - 1, rect.Bottom - 1), 
-                    6 * DPI, 0, SKPathDirection.Clockwise);
+                    6 * ScaleFactor, 0, SKPathDirection.Clockwise);
                 canvas.DrawPath(path, buttonPaint);
             }
 
@@ -426,7 +426,7 @@ namespace SDUI.Controls
                 var textHeight = Math.Abs(metrics.Ascent + metrics.Descent);
 
                 canvas.DrawText(Value.ToString(),
-                    10 * DPI,
+                    10 * ScaleFactor,
                     Height / 2 + textHeight / 3,
                     textPaint);
             }

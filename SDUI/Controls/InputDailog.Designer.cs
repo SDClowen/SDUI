@@ -87,7 +87,7 @@ namespace SDUI.Controls
             txtValue.TabIndex = 0;
             txtValue.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             txtValue.UseSystemPasswordChar = false;
-            txtValue.PreviewKeyDown += txtValue_PreviewKeyDown;
+            txtValue.KeyDown += TxtValue_KeyDown;
             // 
             // btnOK
             // 
