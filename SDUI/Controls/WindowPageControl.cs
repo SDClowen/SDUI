@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class WindowPageControl : UserControl
+    public class WindowPageControl : SKControl
     {
         private EventHandler<int> _onSelectedIndexChanged;
 
