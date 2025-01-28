@@ -6,7 +6,7 @@ using System.Windows.Forms;
 namespace SDUI.Test
 {
     [ToolboxItem(false)]
-    public partial class ListViewPage : System.Windows.Forms.Panel
+    public partial class ListViewPage : SDUI.Controls.Panel
     {
         public ListViewPage()
         {

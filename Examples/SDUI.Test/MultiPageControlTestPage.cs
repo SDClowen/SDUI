@@ -6,7 +6,7 @@ using System.Windows.Forms;
 namespace SDUI.Test
 {
     [ToolboxItem(false)]
-    public partial class MultiPageControlTestPage : System.Windows.Forms.Panel
+    public partial class MultiPageControlTestPage : DoubleBufferedControl
     {
         private Type[] _types = { typeof(GeneralPage), typeof(ListViewPage), typeof(ConfigPage) };
         public MultiPageControlTestPage()

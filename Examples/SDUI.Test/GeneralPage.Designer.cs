@@ -1,6 +1,4 @@
-﻿using SDUI.Controls;
-
-namespace SDUI.Test
+﻿namespace SDUI.Test
 {
     partial class GeneralPage
     {
@@ -74,13 +72,13 @@ namespace SDUI.Test
             separator3 = new SDUI.Controls.Separator();
             comboBox2 = new SDUI.Controls.ComboBox();
             groupBox2 = new SDUI.Controls.GroupBox();
-            listView3 = new SDUI.Controls.ListView();
+            listView3 = new SDUI.SK.ListView();
             columnHeader6 = new System.Windows.Forms.ColumnHeader();
             comboBox4 = new SDUI.Controls.ComboBox();
             groupBox1 = new SDUI.Controls.GroupBox();
             separator4 = new SDUI.Controls.Separator();
             panel1 = new SDUI.Controls.Panel();
-            listView2 = new SDUI.Controls.ListView();
+            listView2 = new SDUI.SK.ListView();
             columnHeader5 = new System.Windows.Forms.ColumnHeader();
             comboBox1 = new SDUI.Controls.ComboBox();
             textBox1 = new SDUI.Controls.TextBox();
@@ -1352,6 +1350,8 @@ namespace SDUI.Test
             // 
             // GeneralPage
             // 
+            AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             Controls.Add(separator1);
             Controls.Add(rsButton1);
             Controls.Add(button6);
@@ -1455,13 +1455,13 @@ namespace SDUI.Test
         private Controls.Separator separator3;
         private Controls.ComboBox comboBox2;
         private Controls.GroupBox groupBox2;
-        private ListView listView3;
+        private SDUI.SK.ListView listView3;
         private System.Windows.Forms.ColumnHeader columnHeader6;
         private Controls.ComboBox comboBox4;
         private Controls.GroupBox groupBox1;
         private Controls.Separator separator4;
         private Controls.Panel panel1;
-        private ListView listView2;
+        private SDUI.SK.ListView listView2;
         private System.Windows.Forms.ColumnHeader columnHeader5;
         private Controls.ComboBox comboBox1;
         private Controls.TextBox textBox1;

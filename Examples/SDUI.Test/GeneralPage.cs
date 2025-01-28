@@ -9,7 +9,7 @@ using System.Windows.Forms;
 namespace SDUI.Test
 {
     [ToolboxItem(false)]
-    public partial class GeneralPage : System.Windows.Forms.Panel
+    public partial class GeneralPage : DoubleBufferedControl
     {
         public GeneralPage()
         {

@@ -451,14 +451,12 @@ public partial class MainWindow
         // 
         separator1.BackColor = System.Drawing.Color.Transparent;
         separator1.Dock = DockStyle.Top;
-        separator1.Image = null;
         separator1.IsVertical = false;
         separator1.Location = new System.Drawing.Point(1, 40);
         separator1.Margin = new Padding(2, 3, 2, 3);
         separator1.Name = "separator1";
         separator1.Size = new System.Drawing.Size(1239, 5);
         separator1.TabIndex = 3;
-        separator1.UseVisualStyleBackColor = false;
         // 
         // MainWindow
         // 
@@ -480,6 +478,7 @@ public partial class MainWindow
         Padding = new Padding(1, 40, 1, 1);
         StartPosition = FormStartPosition.CenterScreen;
         Text = "MainWindow";
+        TitleTabDesingMode = TabDesingMode.Chromed;
         WindowPageControl = windowPageControl;
         Load += MainWindow_Load;
         contextMenuStrip1.ResumeLayout(false);
