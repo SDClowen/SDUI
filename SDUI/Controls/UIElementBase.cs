@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace SDUI.Controls
 {
@@ -744,7 +745,8 @@ namespace SDUI.Controls
         protected bool _needsRedraw = true;
         protected Rectangle _dirtyRegion;
         protected bool _isLayoutSuspended;
-        protected static readonly ObjectPool<SKPaint> _paintPool = new ObjectPool<SKPaint>(() => new SKPaint());
+        private static readonly ConcurrentDictionary<int, SKPaint> _paintPool = new();
+        private static int _paintCounter = 0;
 
         public UIElementBase()
         {
@@ -760,58 +762,57 @@ namespace SDUI.Controls
         {
             var canvas = e.Surface.Canvas;
 
-            if (_needsRedraw || _dirtyRegion != Rectangle.Empty)
+            // Alt elementleri render et
+            foreach (var element in Controls.OrderBy(el => el.ZOrder))
             {
-                using (var tempSurface = SKSurface.Create(e.Info))
+                if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
                 {
-                    if (tempSurface != null)
-                    {
-                        var tempCanvas = tempSurface.Canvas;
-                        
-                        // Sadece dirty region'ı temizle
-                        if (!_dirtyRegion.IsEmpty)
-                        {
-                            tempCanvas.Save();
-                            tempCanvas.ClipRect(SKRect.Create(_dirtyRegion.X, _dirtyRegion.Y, _dirtyRegion.Width, _dirtyRegion.Height));
-                            tempCanvas.Clear(SKColors.Transparent);
-                            tempCanvas.Restore();
-                        }
-                        else
-                        {
-                            tempCanvas.Clear(SKColors.Transparent);
-                        }
+                    System.Diagnostics.Debug.WriteLine($"Element atlandı: {element.GetType().Name}, Visible: {element.Visible}, Size: {element.Size}");
+                    continue;
+                }
 
-                        OnRender(tempCanvas, e.Info);
-                        
-                        _cachedImage?.Dispose();
-                        _cachedImage = tempSurface.Snapshot();
-                        _needsRedraw = false;
-                        _dirtyRegion = Rectangle.Empty;
+                try
+                {
+                    System.Diagnostics.Debug.WriteLine($"Element render ediliyor: {element.GetType().Name}, Location: {element.Location}, Size: {element.Size}");
+
+                    // Her element için yeni bir surface oluştur
+                    using var elementSurface = SKSurface.Create(new SKImageInfo(element.Size.Width, element.Size.Height, e.Info.ColorType, e.Info.AlphaType));
+                    if (elementSurface == null)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Element surface oluşturulamadı: {element.GetType().Name}");
+                        continue;
                     }
+
+                    // Element'in kendi render metodunu çağır
+                    element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, e.Info));
+
+                    // Element'in çizim alanını kaydet
+                    canvas.Save();
+
+                    // Element'in çizim alanını kırp
+                    var clipRect = SKRect.Create(element.Location.X, element.Location.Y, element.Size.Width, element.Size.Height);
+                    canvas.ClipRect(clipRect);
+
+                    // Element'in konumuna taşı
+                    canvas.Translate(element.Location.X, element.Location.Y);
+
+                    // Element'i ana canvas'a çiz
+                    using var snapshot = elementSurface.Snapshot();
+                    canvas.DrawImage(snapshot, 0, 0);
+
+                    // Element'in çizim alanını geri yükle
+                    canvas.Restore();
+
+                    System.Diagnostics.Debug.WriteLine($"Element başarıyla render edildi: {element.GetType().Name}");
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Element render hatası - {element.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
                 }
             }
 
-            if (_cachedImage != null)
-            {
-                canvas.DrawImage(_cachedImage, 0, 0);
-            }
-        }
-
-        protected virtual void PaintBackground(SKCanvas canvas)
-        {
-            if (BackColor.A > 0)  // Sadece arkaplan rengi şeffaf değilse çiz
-            {
-                canvas.Clear(BackColor.ToSKColor());
-            }
-            else
-            {
-                canvas.Clear(SKColors.Transparent);
-            }
-        }
-
-        protected virtual void PaintContent(SKCanvas canvas)
-        {
-            // Türetilen sınıflar bu metodu override ederek kendi çizimlerini yapabilir
+            // Paint olayını tetikle
+            Paint?.Invoke(this, e);
         }
 
         public virtual void Invalidate()
@@ -1223,6 +1224,13 @@ namespace SDUI.Controls
                     _font?.Dispose();
                     _cursor?.Dispose();
                     Surface?.Dispose();
+
+                    // Paint havuzunu temizle
+                    foreach (var paint in _paintPool.Values)
+                    {
+                        paint.Dispose();
+                    }
+                    _paintPool.Clear();
                 }
 
                 // Yönetilmeyen kaynakları temizle
@@ -1429,21 +1437,19 @@ namespace SDUI.Controls
 
         protected SKPaint GetPaintFromPool()
         {
-            var paint = _paintPool.Get();
-            paint.Reset();
-            return paint;
+            var id = Interlocked.Increment(ref _paintCounter);
+            return _paintPool.GetOrAdd(id, _ => new SKPaint());
         }
 
         protected void ReturnPaintToPool(SKPaint paint)
         {
-            if (paint != null)
-                _paintPool.Return(paint);
+            if (paint == null) return;
+            
+            paint.Reset();
+            // Paint havuzunda tutmak yerine dispose ediyoruz
+            paint.Dispose();
         }
 
-        protected virtual void OnRender(SKCanvas canvas, SKImageInfo info)
-        {
-            // Alt sınıflar bu metodu override ederek kendi çizimlerini yapacak
-        }
         #endregion
 
         public void AddControl(UIElementBase element)

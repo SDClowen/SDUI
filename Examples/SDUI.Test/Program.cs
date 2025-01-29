@@ -16,15 +16,8 @@ internal static class Program
         Application.SetHighDpiMode(HighDpiMode.PerMonitor | HighDpiMode.PerMonitorV2);
         Application.SetCompatibleTextRenderingDefault(false);
 
-        //Application.SetDefaultFont(SDUI.Helpers.FontManager.Segoe);
+        //Application.SetDefaultFont(SDUI.Helpers.FontManager.Inter);
 
-        var form = new UIWindowBase();
-
-        var m = new GeneralPage();
-        m.Dock = DockStyle.Fill;
-        form.Controls.Add(m);
-        form.Show();
-        
         Application.Run(new MainWindow());
     }
 }

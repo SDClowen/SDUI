@@ -1060,7 +1060,7 @@ public class UIWindow : UIWindowBase
         var hoverColor = ColorScheme.BorderColor.ToSKColor();
 
         // Arka planı temizle
-        canvas.Clear(ColorScheme.BackColor.ToSKColor());
+        //canvas.Clear(ColorScheme.BackColor.ToSKColor());
 
         if (FullDrawHatch)
         {
