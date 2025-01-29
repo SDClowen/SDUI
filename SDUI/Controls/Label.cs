@@ -155,8 +155,8 @@ public class Label : UIElementBase
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
+        base.OnPaint(e);
         var canvas = e.Surface.Canvas;
-        canvas.Clear();
 
         if (GradientAnimation)
             Angle = Angle % 360 + 1;

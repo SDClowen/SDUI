@@ -51,8 +51,9 @@ public class GroupBox : UIElementBase
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
+        base.OnPaint(e);
+
         var canvas = e.Surface.Canvas;
-        canvas.Clear();
 
         // Debug çerçevesi
         if (ColorScheme.DrawDebugBorders)

@@ -286,6 +286,7 @@ namespace SDUI.Controls
 
         public override void OnPaint(SKPaintSurfaceEventArgs e)
         {
+            base.OnPaint(e);
             e.Surface.Canvas.Clear(SKColors.Transparent);
 
             var canvas = e.Surface.Canvas;

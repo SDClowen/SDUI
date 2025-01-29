@@ -502,8 +502,9 @@ public class FlowLayoutPanel : UIElementBase
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
+        base.OnPaint(e);
         var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
+
 
         var rect = new SKRect(0, 0, Width, Height);
         var color = BackColor == Color.Transparent ? ColorScheme.BackColor2 : BackColor;

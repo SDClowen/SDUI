@@ -61,6 +61,16 @@ public class Button : UIElementBase
     private readonly Animation.AnimationEngine animationManager;
     private readonly Animation.AnimationEngine hoverAnimationManager;
 
+    private SKImage _cachedImage;
+    private bool _needsRedraw = true;
+
+    private void InvalidateCache()
+    {
+        _needsRedraw = true;
+        _cachedImage?.Dispose();
+        _cachedImage = null;
+    }
+
     public Button()
     {
         TabStop = true;
@@ -83,6 +93,7 @@ public class Button : UIElementBase
 
     internal override void OnTextChanged(EventArgs e)
     {
+        InvalidateCache();
         base.OnTextChanged(e);
         using (var paint = new SKPaint())
         {
@@ -160,12 +171,19 @@ public class Button : UIElementBase
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
-        canvas.Clear();
 
-        var rect = new SKRect(0, 0, Width, Height);
-        var inflate = _shadowDepth / 4f;
-        rect.Inflate(-inflate, -inflate);
+        // Arkaplanı temizle
+        canvas.Clear(SKColors.Transparent);
 
+        // Ana buton çizimi
+        DrawButton(canvas);
+
+        // Animasyonları çiz
+        DrawAnimations(canvas);
+    }
+
+    private void DrawButton(SKCanvas canvas)
+    {
         // Ana renk ayarları
         var color = Color.Empty;
         if (Color != Color.Transparent)
@@ -194,51 +212,129 @@ public class Button : UIElementBase
             color = Color.FromArgb(20, ColorScheme.ForeColor);
         }
 
-        var paint = new SKPaint
-        {
-            Color = color.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        };
-
-        // Validasyon durumuna göre kenar rengi
-        if (!IsValid)
-        {
-            paint.Style = SKPaintStyle.Stroke;
-            paint.StrokeWidth = 2;
-            paint.Color = Color.Red.ToSKColor();
-        }
+        var rect = new SKRect(0, 0, Width, Height);
+        var inflate = _shadowDepth / 4f;
+        rect.Inflate(-inflate, -inflate);
 
         // Gölge çizimi
-        using (var shadowPaint = new SKPaint
+        using (var shadowPaint = GetPaintFromPool())
         {
-            Color = SKColors.Black.WithAlpha(60),
-            ImageFilter = SKImageFilter.CreateDropShadow(
+            shadowPaint.Color = SKColors.Black.WithAlpha(60);
+            shadowPaint.ImageFilter = SKImageFilter.CreateDropShadow(
                 _shadowDepth,
                 _shadowDepth,
                 3,
                 3,
                 SKColors.Black.WithAlpha(60)
-            ),
-            IsAntialias = true
-        })
-        {
+            );
+            shadowPaint.IsAntialias = true;
+
             canvas.DrawRoundRect(rect, _radius, _radius, shadowPaint);
+            ReturnPaintToPool(shadowPaint);
         }
 
         // Ana buton çizimi
-        canvas.DrawRoundRect(rect, _radius, _radius, paint);
+        using (var paint = GetPaintFromPool())
+        {
+            paint.Color = color.ToSKColor();
+            paint.IsAntialias = true;
+            paint.Style = SKPaintStyle.Fill;
 
+            // Validasyon durumuna göre kenar rengi
+            if (!IsValid)
+            {
+                paint.Style = SKPaintStyle.Stroke;
+                paint.StrokeWidth = 2;
+                paint.Color = Color.Red.ToSKColor();
+            }
+
+            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+            ReturnPaintToPool(paint);
+        }
+
+        // İkon çizimi
+        if (Image != null)
+        {
+            var imageRect = new Rectangle(8, (Height - 24) / 2, 24, 24);
+            if (string.IsNullOrEmpty(Text))
+                imageRect.X += 2;
+
+            using (var stream = new System.IO.MemoryStream())
+            {
+                Image.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                stream.Position = 0;
+                using var skImage = SKImage.FromEncodedData(SKData.Create(stream));
+                canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y, imageRect.Width, imageRect.Height));
+            }
+        }
+
+        // Text çizimi
+        if (!string.IsNullOrEmpty(Text))
+        {
+            var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
+            if (!Enabled)
+                foreColor = Color.Gray;
+
+            using var textPaint = GetPaintFromPool();
+            textPaint.TextSize = Font.Size * 1.5f;
+            textPaint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
+            textPaint.Color = foreColor.ToSKColor();
+            textPaint.IsAntialias = true;
+            textPaint.TextAlign = TextAlign == ContentAlignment.MiddleCenter ? SKTextAlign.Center : 
+                                 TextAlign == ContentAlignment.MiddleRight ? SKTextAlign.Right : 
+                                 SKTextAlign.Left;
+
+            var x = textPaint.GetTextX(Width, textPaint.MeasureText(Text), TextAlign, Image != null);
+            var y = textPaint.GetTextY(Height, TextAlign);
+
+            if (AutoEllipsis)
+            {
+                var maxWidth = Width - (Image != null ? 40 : 16);
+                canvas.DrawTextWithEllipsis(Text, textPaint, x, y, maxWidth);
+            }
+            else if (UseMnemonic)
+            {
+                canvas.DrawTextWithMnemonic(Text, textPaint, x, y);
+            }
+            else
+            {
+                canvas.DrawText(Text, x, y, textPaint);
+            }
+
+            ReturnPaintToPool(textPaint);
+        }
+
+        // Validasyon mesajı çizimi
+        if (!IsValid && !string.IsNullOrEmpty(ValidationText))
+        {
+            using var validationPaint = GetPaintFromPool();
+            validationPaint.Color = Color.Red.ToSKColor();
+            validationPaint.IsAntialias = true;
+            validationPaint.TextSize = Font.Size;
+            validationPaint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
+
+            canvas.DrawText(
+                ValidationText,
+                5,
+                Height + 15,
+                validationPaint);
+
+            ReturnPaintToPool(validationPaint);
+        }
+    }
+
+    private void DrawAnimations(SKCanvas canvas)
+    {
         // Hover efekti
         var hoverProgress = hoverAnimationManager.GetProgress();
         if (hoverProgress > 0)
         {
             using var hoverPaint = new SKPaint
             {
-                Color = color.ToSKColor().WithAlpha((byte)(hoverProgress * 65)),
+                Color = (Color != Color.Transparent ? Color : SystemColors.Control).ToSKColor().WithAlpha((byte)(hoverProgress * 65)),
                 IsAntialias = true
             };
-            canvas.DrawRoundRect(rect, _radius, _radius, hoverPaint);
+            canvas.DrawRoundRect(new SKRect(0, 0, Width, Height), _radius, _radius, hoverPaint);
         }
 
         // Ripple efekti
@@ -266,66 +362,6 @@ public class Button : UIElementBase
                 canvas.DrawOval(rippleRect, ripplePaint);
             }
         }
-
-        // İkon çizimi
-        if (Image != null)
-        {
-            var imageRect = new Rectangle(8, (Height - 24) / 2, 24, 24);
-            if (string.IsNullOrEmpty(Text))
-                imageRect.X += 2;
-
-            using (var stream = new System.IO.MemoryStream())
-            {
-                Image.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
-                stream.Position = 0;
-                using var skImage = SKImage.FromEncodedData(SKData.Create(stream));
-                canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y, imageRect.Width, imageRect.Height));
-            }
-        }
-
-        // Text çizimi
-        if (!string.IsNullOrEmpty(Text))
-        {
-            var foreColor = Color == Color.Transparent ? ColorScheme.ForeColor : ForeColor;
-            if (!Enabled)
-                foreColor = Color.Gray;
-
-            using var textPaint = canvas.CreateTextPaint(Font, foreColor, this, TextAlign);
-            var x = textPaint.GetTextX(Width, textPaint.MeasureText(Text), TextAlign, Image != null);
-            var y = textPaint.GetTextY(Height, TextAlign);
-
-            if (AutoEllipsis)
-            {
-                var maxWidth = Width - (Image != null ? 40 : 16);
-                canvas.DrawTextWithEllipsis(Text, textPaint, x, y, maxWidth);
-            }
-            else if (UseMnemonic)
-            {
-                canvas.DrawTextWithMnemonic(Text, textPaint, x, y);
-            }
-            else
-            {
-                canvas.DrawText(Text, x, y, textPaint);
-            }
-        }
-
-        // Validasyon mesajı çizimi
-        if (!IsValid && !string.IsNullOrEmpty(ValidationText))
-        {
-            using var validationPaint = new SKPaint
-            {
-                Color = Color.Red.ToSKColor(),
-                IsAntialias = true,
-                TextSize = Font.Size,
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
-            };
-
-            canvas.DrawText(
-                ValidationText,
-                5,
-                Height + 15,
-                validationPaint);
-        }
     }
 
     public override Size GetPreferredSize(Size proposedSize)
@@ -343,5 +379,39 @@ public class Button : UIElementBase
         }
 
         return new Size((int)Math.Ceiling(_textSize.Width) + extra, 32);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _cachedImage?.Dispose();
+            _cachedImage = null;
+        }
+        base.Dispose(disposing);
+    }
+
+    internal override void OnEnabledChanged(EventArgs e)
+    {
+        InvalidateCache();
+        base.OnEnabledChanged(e);
+    }
+
+    internal override void OnBackColorChanged(EventArgs e)
+    {
+        InvalidateCache();
+        base.OnBackColorChanged(e);
+    }
+
+    internal override void OnForeColorChanged(EventArgs e)
+    {
+        InvalidateCache();
+        base.OnForeColorChanged(e);
+    }
+
+    protected override void OnSizeChanged(EventArgs e)
+    {
+        InvalidateCache();
+        base.OnSizeChanged(e);
     }
 }

@@ -588,9 +588,10 @@ public class ComboBox : UIElementBase
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
-        var canvas = e.Surface.Canvas;
-        canvas.Clear();
+        base.OnPaint(e);
 
+        var canvas = e.Surface.Canvas;
+        
         var rect = new SKRect(0, 0, Width, Height);
         var animationProgress = (float)_animation.GetProgress();
 

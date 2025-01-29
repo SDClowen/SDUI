@@ -23,6 +23,7 @@ public class UIWindowBase : Form
     private UIElementBase _lastHoveredElement;
     private bool _mouseInClient;
     private Cursor _currentCursor;
+    private bool _isLayoutSuspended;
 
     // Z-order için yeni özellikler
     private int _maxZOrder = 0;
@@ -291,79 +292,20 @@ public class UIWindowBase : Form
         Controls.Remove(element);
     }
 
-    protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    private SKImageInfo CreateBitmap()
     {
-        // Arkaplanı temizle
-        e.Surface.Canvas.Clear(ColorScheme.BackColor.ToSKColor());
+        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
 
-        // Kendi çizimini yap
-        PaintSurface?.Invoke(this, e);
-
-        System.Diagnostics.Debug.WriteLine($"Rendering {Controls.Count} elements");
-
-        // Elementleri Z-order'a göre sırala ve render et
-        foreach (var element in Controls.OrderBy(el => el.ZOrder))
+        if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
         {
-            if (element.Visible)
+            FreeBitmap();
+            if (info.Width != 0 && info.Height != 0)
             {
-                try
-                {
-                    System.Diagnostics.Debug.WriteLine($"Rendering element: {element.GetType().Name}, Size: {element.Size}, Location: {element.Location}, ZOrder: {element.ZOrder}");
-
-                    if (element.Size.Width <= 0 || element.Size.Height <= 0)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Skipping element due to invalid size: {element.GetType().Name}");
-                        continue;
-                    }
-
-                    // Element için yeni bir surface oluştur
-                    var elementInfo = new SKImageInfo(element.Size.Width, element.Size.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
-                    
-                    // CPU belleğinde bir surface oluştur
-                    using var elementSurface = SKSurface.Create(elementInfo);
-                    if (elementSurface != null)
-                    {
-                        // Arkaplanı temizle
-                        elementSurface.Canvas.Clear(SKColors.Transparent);
-
-                        // Element'in kendi render metodunu çağır
-                        var args = new SKPaintSurfaceEventArgs(elementSurface, elementInfo);
-                        element.OnPaint(args);
-
-                        // Element'in surface'ini ana surface'e kopyala
-                        using var elementImage = elementSurface.Snapshot();
-                        if (elementImage != null)
-                        {
-                            using var paint = new SKPaint
-                            {
-                                IsAntialias = true,
-                                FilterQuality = SKFilterQuality.High
-                            };
-
-                            if (!element.Enabled)
-                            {
-                                paint.ColorFilter = SKColorFilter.CreateLumaColor();
-                            }
-
-                            e.Surface.Canvas.DrawImage(elementImage, element.Location.X, element.Location.Y, paint);
-                            System.Diagnostics.Debug.WriteLine($"Successfully rendered element: {element.GetType().Name}");
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Failed to create snapshot for element: {element.GetType().Name}");
-                        }
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Failed to create surface for element: {element.GetType().Name}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Element render error for {element.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
-                }
+                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppPArgb);
             }
         }
+
+        return info;
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -375,16 +317,105 @@ public class UIWindowBase : Form
         if (info.Width == 0 || info.Height == 0)
             return;
 
-        var data = bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
-
-        using (var surface = SKSurface.Create(info, data.Scan0, data.Stride))
+        try
         {
-            this.OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
-            surface.Canvas.Flush();
+            var data = bitmap.LockBits(
+                new Rectangle(0, 0, Width, Height),
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format32bppPArgb
+            );
+
+            try
+            {
+                using var surface = SKSurface.Create(info, data.Scan0, data.Stride);
+                if (surface != null)
+                {
+                    surface.Canvas.Clear(SKColors.Transparent);
+                    this.OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
+                    surface.Canvas.Flush();
+                }
+            }
+            finally
+            {
+                bitmap.UnlockBits(data);
+            }
+
+            e.Graphics.DrawImage(bitmap, 0, 0);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Render error: {ex.Message}");
+        }
+    }
+
+    protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e)
+    {
+        var canvas = e.Surface.Canvas;
+
+        System.Diagnostics.Debug.WriteLine($"OnPaintSurface başladı. Canvas boyutu: {Width}x{Height}");
+
+        // Arkaplanı temizle
+        using (var paint = GetPaintFromPool())
+        {
+            paint.Color = ColorScheme.BackColor.ToSKColor();
+            canvas.DrawRect(0, 0, Width, Height, paint);
+            ReturnPaintToPool(paint);
         }
 
-        bitmap.UnlockBits(data);
-        e.Graphics.DrawImage(bitmap, 0, 0);
+        // Kendi çizimini yap
+        PaintSurface?.Invoke(this, e);
+
+        // Elementleri Z-order'a göre sırala ve render et
+        var elements = Controls.OrderBy(el => el.ZOrder).ToList();
+        System.Diagnostics.Debug.WriteLine($"Toplam {elements.Count} element render edilecek");
+
+        foreach (var element in elements)
+        {
+            if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"Element atlandı: {element.GetType().Name}, Visible: {element.Visible}, Size: {element.Size}");
+                continue;
+            }
+
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"Element render ediliyor: {element.GetType().Name}, Location: {element.Location}, Size: {element.Size}");
+
+                // Her element için yeni bir surface oluştur
+                using var elementSurface = SKSurface.Create(new SKImageInfo(element.Size.Width, element.Size.Height, e.Info.ColorType, e.Info.AlphaType));
+                if (elementSurface == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Element surface oluşturulamadı: {element.GetType().Name}");
+                    continue;
+                }
+
+                // Element'in kendi render metodunu çağır
+                element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, e.Info));
+
+                // Element'in çizim alanını kaydet
+                canvas.Save();
+
+                // Element'in çizim alanını kırp
+                var clipRect = SKRect.Create(element.Location.X, element.Location.Y, element.Size.Width, element.Size.Height);
+                canvas.ClipRect(clipRect);
+
+                // Element'in konumuna taşı
+                canvas.Translate(element.Location.X, element.Location.Y);
+
+                // Element'i ana canvas'a çiz
+                using var snapshot = elementSurface.Snapshot();
+                canvas.DrawImage(snapshot, 0, 0);
+
+                // Element'in çizim alanını geri yükle
+                canvas.Restore();
+
+                System.Diagnostics.Debug.WriteLine($"Element başarıyla render edildi: {element.GetType().Name}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Element render error for {element.GetType().Name}: {ex.Message}");
+            }
+        }
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -536,20 +567,6 @@ public class UIWindowBase : Form
         base.OnMouseLeave(e);
         _lastHoveredElement?.OnMouseLeave(e);
         _lastHoveredElement = null;
-    }
-
-    private SKImageInfo CreateBitmap()
-    {
-        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Opaque);
-
-        if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
-        {
-            FreeBitmap();
-            if (info.Width != 0 && info.Height != 0)
-                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppRgb);
-        }
-
-        return info;
     }
 
     private void FreeBitmap()
@@ -1065,5 +1082,29 @@ public class UIWindowBase : Form
 
         // Yeniden çizim
         Invalidate();
+    }
+
+    protected SKPaint GetPaintFromPool()
+    {
+        var paint = new SKPaint();
+        paint.IsAntialias = true;
+        return paint;
+    }
+
+    protected void ReturnPaintToPool(SKPaint paint)
+    {
+        paint?.Dispose();
+    }
+
+    public void ResumeLayout()
+    {
+        ResumeLayout(true);
+    }
+
+    public void ResumeLayout(bool performLayout)
+    {
+        _isLayoutSuspended = false;
+        if (performLayout)
+            PerformLayout();
     }
 }

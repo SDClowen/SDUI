@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SDUI.Controls;
+using System;
 using System.Windows.Forms;
 
 namespace SDUI.Test;
@@ -16,6 +17,14 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
 
         //Application.SetDefaultFont(SDUI.Helpers.FontManager.Segoe);
+
+        var form = new UIWindowBase();
+
+        var m = new GeneralPage();
+        m.Dock = DockStyle.Fill;
+        form.Controls.Add(m);
+        form.Show();
+        
         Application.Run(new MainWindow());
     }
 }
