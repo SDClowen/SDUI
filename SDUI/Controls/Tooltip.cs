@@ -1,10 +1,10 @@
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
-using System.Drawing;
-using System.ComponentModel;
-using System.Windows.Forms;
 using System.Collections.Generic;
-using SDUI.Helpers;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
@@ -249,7 +249,7 @@ namespace SDUI.Controls
                     var shadowRect = IsBalloon ?
                         new SKRoundRect(new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur), _cornerRadius) :
                         new SKRoundRect(new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur), 0);
-                    
+
                     canvas.DrawRoundRect(shadowRect, paint);
                 }
             }
@@ -264,7 +264,7 @@ namespace SDUI.Controls
                 var rect = IsBalloon ?
                     new SKRoundRect(new SKRect(0, 0, Width, Height), _cornerRadius) :
                     new SKRoundRect(new SKRect(0, 0, Width, Height), 0);
-                
+
                 canvas.DrawRoundRect(rect, paint);
             }
 
@@ -280,7 +280,7 @@ namespace SDUI.Controls
                 var rect = IsBalloon ?
                     new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), _cornerRadius) :
                     new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 0);
-                
+
                 canvas.DrawRoundRect(rect, paint);
             }
 
@@ -316,4 +316,4 @@ namespace SDUI.Controls
             base.Dispose(disposing);
         }
     }
-} 
+}

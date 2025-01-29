@@ -1598,8 +1598,8 @@ public class UIWindow : UIWindowBase
         {
             using var borderPaint = new SKPaint
             {
-                Color = titleColor != Color.Empty ? 
-                    titleColor.Determine().ToSKColor().WithAlpha(30) : 
+                Color = titleColor != Color.Empty ?
+                    titleColor.Determine().ToSKColor().WithAlpha(30) :
                     ColorScheme.BorderColor.ToSKColor(),
                 StrokeWidth = 1,
                 IsAntialias = true

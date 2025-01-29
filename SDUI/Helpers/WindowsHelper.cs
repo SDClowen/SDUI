@@ -22,9 +22,9 @@ public static class WindowsHelper
     /// </summary>
     static WindowsHelper()
     {
-        var version = new OSVERSIONINFOEX 
-        { 
-            OSVersionInfoSize = Marshal.SizeOf(typeof(OSVERSIONINFOEX)) 
+        var version = new OSVERSIONINFOEX
+        {
+            OSVersionInfoSize = Marshal.SizeOf(typeof(OSVERSIONINFOEX))
         };
 
         if (RtlGetVersion(ref version) != NTSTATUS.STATUS_SUCCESS)

@@ -421,4 +421,4 @@ public static class MenuStripExtensions
         parent.AddDropDownItem(separator);
         return separator;
     }
-} 
+}

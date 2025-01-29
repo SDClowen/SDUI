@@ -1,13 +1,11 @@
-﻿using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Windows.Forms;
+﻿using SDUI.Extensions;
 using SkiaSharp;
 using System;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using System.Text;
 using System.Collections.Generic;
-using SDUI.Extensions;
+using System.ComponentModel;
+using System.Drawing;
+using System.Text;
+using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
@@ -73,7 +71,7 @@ public class TextBox : UIElementBase
     private void InitializeContextMenu()
     {
         _contextMenu = new();
-        
+
         var kesItem = new MenuItem("Kes", null);
         kesItem.Click += (s, e) => Cut();
 
@@ -132,7 +130,7 @@ public class TextBox : UIElementBase
             Visible = false,
             Width = 12
         };
-        _verticalScrollBar.ValueChanged += (s, e) => 
+        _verticalScrollBar.ValueChanged += (s, e) =>
         {
             _scrollPosition = _verticalScrollBar.Value;
             Invalidate();
@@ -158,7 +156,7 @@ public class TextBox : UIElementBase
         set
         {
             if (_text == value) return;
-            
+
             if (_maxLength > 0 && value != null && value.Length > _maxLength)
             {
                 value = value.Substring(0, _maxLength);
@@ -238,7 +236,7 @@ public class TextBox : UIElementBase
         {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value));
-            
+
             if (_maxLength == value) return;
             _maxLength = value;
             if (_maxLength > 0 && Text.Length > _maxLength)
@@ -513,7 +511,7 @@ public class TextBox : UIElementBase
         {
             if (_isRich == value) return;
             _isRich = value;
-        Invalidate();
+            Invalidate();
         }
     }
 
@@ -684,7 +682,7 @@ public class TextBox : UIElementBase
         {
             Focus();
             _isDragging = true;
-            
+
             if (ModifierKeys == Keys.Shift)
             {
                 // Shift ile tıklama - seçimi genişlet
@@ -824,12 +822,12 @@ public class TextBox : UIElementBase
                     {
                         var ch = e.KeyCode == Keys.Space ? ' ' :
                                 e.KeyCode == Keys.Tab ? '\t' : '\n';
-                        
+
                         if (_selectionLength > 0)
                         {
                             DeleteSelection();
                         }
-                        
+
                         if (MaxLength == 0 || Text.Length < MaxLength)
                         {
                             Text = Text.Insert(_selectionStart, ch.ToString());
@@ -923,7 +921,7 @@ public class TextBox : UIElementBase
                     var selectedText = displayText.Substring(_selectionStart, _selectionLength);
                     var selectedBounds = new SKRect();
                     paint.MeasureText(selectedText, ref selectedBounds);
-                    
+
                     var startX = x;
                     if (_selectionStart > 0)
                     {
@@ -1178,7 +1176,7 @@ public class TextBox : UIElementBase
             var lines = GetTextLines(paint);
             var lineHeight = paint.TextSize + LineSpacing;
             var newHeight = (int)(lines.Count * lineHeight) + Padding.Vertical + 4;
-            
+
             if (Height != newHeight)
             {
                 Height = newHeight;
@@ -1196,7 +1194,7 @@ public class TextBox : UIElementBase
         }
 
         var availableWidth = Width - Padding.Horizontal - (ShowScrollbar ? 20 : 0);
-        
+
         if (!WordWrap)
         {
             lines.AddRange(Text.Split('\n'));

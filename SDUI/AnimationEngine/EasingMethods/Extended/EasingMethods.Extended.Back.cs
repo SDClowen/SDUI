@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace SDUI.Animation2
 {
@@ -24,7 +21,7 @@ namespace SDUI.Animation2
             {
                 return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(progress, 2) * ((back + 1) * progress - back);
             }
-            
+
             /// <summary>
             ///     <para>An easing method that goes up to a value progress of 1.1 and then goes back to 1.0.</para>
             ///     <para>The velocity starts at 4.70158 and goes down to 0.</para>

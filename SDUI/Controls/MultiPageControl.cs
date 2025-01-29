@@ -153,9 +153,9 @@ namespace SDUI.Controls
             {
                 if (_headerHeight == value) return;
                 _headerHeight = value;
-            Invalidate();
+                Invalidate();
+            }
         }
-    }
 
         [Category("Behavior")]
         public bool ShowCloseButton
@@ -170,29 +170,29 @@ namespace SDUI.Controls
         }
 
         [Category("Appearance")]
-    public Size HeaderControlSize
-    {
-        get => _headerControlSize;
-        set
+        public Size HeaderControlSize
         {
+            get => _headerControlSize;
+            set
+            {
                 if (_headerControlSize == value) return;
-            _headerControlSize = value;
-            Invalidate();
+                _headerControlSize = value;
+                Invalidate();
+            }
         }
-    }
 
         [Category("Behavior")]
         [DefaultValue(true)]
-    public bool RenderNewPageButton
-    {
-        get => _renderNewPageButton;
-        set
+        public bool RenderNewPageButton
         {
+            get => _renderNewPageButton;
+            set
+            {
                 if (_renderNewPageButton == value) return;
-            _renderNewPageButton = value;
-            Invalidate();
+                _renderNewPageButton = value;
+                Invalidate();
+            }
         }
-    }
 
         [Category("Behavior")]
         [DefaultValue(true)]
@@ -209,34 +209,34 @@ namespace SDUI.Controls
 
         [Category("Behavior")]
         [DefaultValue(true)]
-    public bool RenderPageIcon
-    {
-        get => _renderPageIcon;
-        set
+        public bool RenderPageIcon
         {
+            get => _renderPageIcon;
+            set
+            {
                 if (_renderPageIcon == value) return;
-            _renderPageIcon = value;
-            Invalidate();
+                _renderPageIcon = value;
+                Invalidate();
+            }
         }
-    }
 
         public void AddPage(Page page)
         {
             if (page == null) throw new ArgumentNullException(nameof(page));
-            
+
             _pages.Add(page);
             page.Parent = this;
-            
+
             if (_selectedIndex == -1)
                 SelectedIndex = 0;
-                
+
             Invalidate();
         }
 
         public void RemovePage(Page page)
         {
             if (page == null) throw new ArgumentNullException(nameof(page));
-            
+
             var index = _pages.IndexOf(page);
             if (index >= 0)
             {
@@ -247,7 +247,7 @@ namespace SDUI.Controls
                     SelectedIndex = _pages.Count - 1;
                 else if (_pages.Count == 0)
                     SelectedIndex = -1;
-                    
+
                 Invalidate();
             }
         }
@@ -315,8 +315,8 @@ namespace SDUI.Controls
                     // Tab arka planı
                     using (var bgPaint = new SKPaint
                     {
-                        Color = isSelected ? SelectedTabColor.ToSKColor() : 
-                               isHovered ? Color.FromArgb(250, 250, 250).ToSKColor() : 
+                        Color = isSelected ? SelectedTabColor.ToSKColor() :
+                               isHovered ? Color.FromArgb(250, 250, 250).ToSKColor() :
                                HeaderBackColor.ToSKColor(),
                         IsAntialias = true
                     })
@@ -326,7 +326,7 @@ namespace SDUI.Controls
                     }
 
                     float textX = tabX + 10;
-                    
+
                     // Sayfa ikonu
                     if (RenderPageIcon)
                     {
@@ -422,7 +422,7 @@ namespace SDUI.Controls
                 SelectedPage.OnPaint(new SKPaintSurfaceEventArgs(surface, new SKImageInfo(
                     (int)pageRect.Width,
                     (int)pageRect.Height)));
-                
+
                 var pageImage = surface.Snapshot();
                 canvas.DrawImage(pageImage, pageRect.Left, pageRect.Top);
             }
@@ -463,8 +463,8 @@ namespace SDUI.Controls
                 _hoveredTabIndex = GetTabIndexAtPoint(e.Location);
                 _hoveredCloseButtonIndex = GetCloseButtonIndexAtPoint(e.Location);
 
-                if (oldHoverTab != _hoveredTabIndex || 
-                    oldHoverClose != _hoveredCloseButtonIndex || 
+                if (oldHoverTab != _hoveredTabIndex ||
+                    oldHoverClose != _hoveredCloseButtonIndex ||
                     oldNewPageButtonHovered != _isNewPageButtonHovered)
                 {
                     Invalidate();
@@ -503,7 +503,7 @@ namespace SDUI.Controls
                 {
                     NewPageButtonClicked?.Invoke(this, EventArgs.Empty);
                 }
-                
+
                 _isDragging = false;
                 _draggedTabIndex = -1;
             }
@@ -512,12 +512,12 @@ namespace SDUI.Controls
         internal override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
-            
+
             _hoveredTabIndex = -1;
             _hoveredCloseButtonIndex = -1;
             _isNewPageButtonHovered = false;
-        Invalidate();
-    }
+            Invalidate();
+        }
 
         private int GetTabIndexAtPoint(Point point)
         {

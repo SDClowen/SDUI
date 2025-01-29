@@ -23,4 +23,4 @@ public static class ColorExtensions
         byte a = (byte)(start.Alpha + (end.Alpha - start.Alpha) * progress);
         return new SKColor(r, g, b, a);
     }
-} 
+}

@@ -156,7 +156,7 @@ public class ChatBubble : UIElementBase
     {
         var width = (int)Math.Ceiling(_textSize.Width) + Padding.Horizontal + (int)(_tailSize * 2);
         var height = (int)Math.Ceiling(_textSize.Height) + Padding.Vertical;
-        
+
         // Minimum boyut kontrolü
         width = Math.Max(width, MinimumSize.Width);
         height = Math.Max(height, MinimumSize.Height);

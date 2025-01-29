@@ -407,7 +407,7 @@ namespace SDUI.Controls
             _thumbHoverAnimation.OnAnimationProgress += (s) => Invalidate();
             _thumbPressAnimation.OnAnimationProgress += (s) => Invalidate();
             _trackHoverAnimation.OnAnimationProgress += (s) => Invalidate();
-            _valueAnimation.OnAnimationProgress += (s) => 
+            _valueAnimation.OnAnimationProgress += (s) =>
             {
                 int pVal = (int)s;
                 _animatedValue = (int)(_value * pVal + _animatedValue * (1 - pVal));
@@ -497,11 +497,11 @@ namespace SDUI.Controls
             if (_jumpToMouse || _isDragging)
             {
                 var trackRect = GetTrackRect();
-                var position = _orientation == Orientation.Horizontal ? 
-                    e.X - trackRect.X : 
+                var position = _orientation == Orientation.Horizontal ?
+                    e.X - trackRect.X :
                     e.Y - trackRect.Y;
-                var length = _orientation == Orientation.Horizontal ? 
-                    trackRect.Width : 
+                var length = _orientation == Orientation.Horizontal ?
+                    trackRect.Width :
                     trackRect.Height;
                 var percentage = Math.Clamp(position / length, 0, 1);
                 Value = (int)(_minimum + (_maximum - _minimum) * percentage);
@@ -525,11 +525,11 @@ namespace SDUI.Controls
             if (_isDragging)
             {
                 var trackRect = GetTrackRect();
-                var position = _orientation == Orientation.Horizontal ? 
-                    e.X - trackRect.X : 
+                var position = _orientation == Orientation.Horizontal ?
+                    e.X - trackRect.X :
                     e.Y - trackRect.Y;
-                var length = _orientation == Orientation.Horizontal ? 
-                    trackRect.Width : 
+                var length = _orientation == Orientation.Horizontal ?
+                    trackRect.Width :
                     trackRect.Height;
                 var percentage = Math.Clamp(position / length, 0, 1);
                 Value = (int)(_minimum + (_maximum - _minimum) * percentage);
@@ -727,9 +727,9 @@ namespace SDUI.Controls
                 case TrackStyle.Groove:
                     var oldMaskFilter = paint.MaskFilter;
                     paint.MaskFilter = null;
-                    
-                        paint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 1f * ScaleFactor);
-                        canvas.DrawRoundRect(trackRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor, paint);
+
+                    paint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 1f * ScaleFactor);
+                    canvas.DrawRoundRect(trackRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor, paint);
                     paint.MaskFilter = oldMaskFilter;
                     oldMaskFilter?.Dispose();
 
@@ -739,7 +739,7 @@ namespace SDUI.Controls
                     using (var path = new SKPath())
                     {
                         path.AddRoundRect(trackRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor);
-                        
+
                         // Ana track
                         canvas.DrawPath(path, paint);
 
@@ -771,8 +771,8 @@ namespace SDUI.Controls
                 paint.Shader = SKShader.CreateLinearGradient(
                     new SKPoint(rect.Left, rect.Top),
                     new SKPoint(rect.Right, rect.Bottom),
-                    new[] 
-                    { 
+                    new[]
+                    {
                         startColor.ToSKColor().WithAlpha(alpha),
                         endColor.ToSKColor().WithAlpha(alpha)
                     },

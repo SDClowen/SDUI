@@ -77,7 +77,7 @@ public class ToggleButton : UIElementBase
             Cursor = ClientRectangle.Contains(_mouseLocation) ? Cursors.Hand : Cursors.Default;
         };
 
-        CheckedChanged += (_, _) => 
+        CheckedChanged += (_, _) =>
         {
             animationManager.StartNewAnimation(Checked ? AnimationDirection.In : AnimationDirection.Out);
         };
@@ -164,7 +164,7 @@ public class ToggleButton : UIElementBase
             // Çerçeve
             paint.Style = SKPaintStyle.Stroke;
             paint.StrokeWidth = 1;
-            
+
             if (Checked)
             {
                 // Checked durumunda accent color'a animasyonlu geçiş
@@ -190,12 +190,12 @@ public class ToggleButton : UIElementBase
         {
             float padding = 2f;
             float circleRadius = (toggleSize - padding * 2) / 2f;
-            
+
             // Başlangıç ve bitiş konumlarını düzelt
             float startX = padding + circleRadius;
             float endX = toggleWidth - padding - circleRadius;
             float x = startX + (endX - startX) * progress;
-            
+
             canvas.DrawCircle(x, Height / 2f, circleRadius, paint);
         }
 
@@ -205,5 +205,5 @@ public class ToggleButton : UIElementBase
         }
     }
 
-    
+
 }

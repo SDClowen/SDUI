@@ -37,7 +37,7 @@ public class TabControl : System.Windows.Forms.TabControl
     {
         base.CreateHandle();
 
-        if(SizeMode != TabSizeMode.Fixed)
+        if (SizeMode != TabSizeMode.Fixed)
             ItemSize = new Size(80, 24);
 
         Alignment = TabAlignment.Top;

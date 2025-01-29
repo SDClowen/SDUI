@@ -217,7 +217,7 @@ public class Label : UIElementBase
         {
             using var shader = SKShader.CreateLinearGradient(
                 new SKPoint(0, 0),
-                new SKPoint((float)(Width * Math.Cos(Angle * Math.PI / 180)), 
+                new SKPoint((float)(Width * Math.Cos(Angle * Math.PI / 180)),
                           (float)(Height * Math.Sin(Angle * Math.PI / 180))),
                 _gradient,
                 null,

@@ -98,7 +98,7 @@ namespace SDUI.Test
                 return;
 
             var parent = form as UIWindow;
-            if(parent != null)
+            if (parent != null)
             {
                 ColorScheme.BackColor = Color.FromArgb(r, g, b);
                 parent.BackColor = ColorScheme.BackColor;

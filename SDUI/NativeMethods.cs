@@ -141,7 +141,7 @@ public class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetDCEx(IntPtr hwnd, IntPtr hrgnclip, uint fdwOptions);
-    
+
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetRect(Rect rect, int w, int h, int x, int y);
@@ -452,12 +452,12 @@ public class NativeMethods
             window.Handle,
             ref data);
     }
-    
+
     /// <summary>
-     /// Fills an area for glass rendering
-     /// </summary>
-     /// <param name="g"></param>
-     /// <param name="r"></param>
+    /// Fills an area for glass rendering
+    /// </summary>
+    /// <param name="g"></param>
+    /// <param name="r"></param>
     public static void FillForGlass(Graphics g, Rectangle r)
     {
         var rc = new Rect

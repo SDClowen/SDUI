@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SDUI.Animation
 {
@@ -10,7 +7,7 @@ namespace SDUI.Animation
     {
         private static List<AnimationEngine> animationEngines = new();
         private static System.Windows.Forms.Timer timer;
-        static AnimationEngineProvider() 
+        static AnimationEngineProvider()
         {
             timer = new System.Windows.Forms.Timer
             {
@@ -29,7 +26,7 @@ namespace SDUI.Animation
         private static void onTimerTick(object sender, EventArgs e)
         {
             foreach (var animationEngine in animationEngines)
-                if(animationEngine.Running)
+                if (animationEngine.Running)
                     animationEngine.AnimationTimerOnTick(sender, e);
         }
     }

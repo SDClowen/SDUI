@@ -218,7 +218,7 @@ public class FlowLayoutPanel : UIElementBase
         Invalidate();
     }
 
-    protected override void OnControlAdded(UIElementEventArgs e)
+    internal override void OnControlAdded(UIElementEventArgs e)
     {
         base.OnControlAdded(e);
         if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;
@@ -234,7 +234,7 @@ public class FlowLayoutPanel : UIElementBase
         PerformLayout();
     }
 
-    protected override void OnControlRemoved(UIElementEventArgs e)
+    internal override void OnControlRemoved(UIElementEventArgs e)
     {
         base.OnControlRemoved(e);
         if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;

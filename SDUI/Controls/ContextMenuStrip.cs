@@ -1,8 +1,6 @@
-﻿using SDUI.Extensions;
-using SkiaSharp;
-using System;
-using System.Drawing;
+﻿using System;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
@@ -89,7 +87,7 @@ public class ContextMenuStrip : MenuStrip
         {
             _dropDownWindow.Deactivate += (s, e) => Hide();
         }
-        
+
         _dropDownWindow.FormClosed += (s, e) =>
         {
             _isOpen = false;

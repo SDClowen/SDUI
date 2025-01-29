@@ -1,18 +1,12 @@
-using SkiaSharp;
-
-using System;
-
-using System.Drawing;
-
-using System.ComponentModel;
-
-using System.Windows.Forms;
-
-using System.Collections.Generic;
-using System.Linq;
-
-using System.Runtime.InteropServices;
 using SDUI.Helpers;
+using SkiaSharp;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Drawing;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
@@ -656,7 +650,7 @@ namespace SDUI.Controls
 
         public event EventHandler MouseHover;
 
-        public event EventHandler Paint;
+        public event EventHandler<SKPaintSurfaceEventArgs> Paint;
 
         public event EventHandler LocationChanged;
 
@@ -723,10 +717,12 @@ namespace SDUI.Controls
 
         protected bool IsDesignMode { get; }
 
-        protected UIElementBase()
+        private readonly UIElementCollection _controls;
+
+        public UIElementBase()
         {
             IsDesignMode = LicenseManager.UsageMode == LicenseUsageMode.Designtime;
-
+            _controls = new UIElementCollection(this);
             _font = new Font("Segoe UI", 9f);
             _cursor = Cursors.Default;
         }
@@ -737,16 +733,48 @@ namespace SDUI.Controls
         {
             CheckDisposed();
             Surface = e.Surface;
-            Paint?.Invoke(this, EventArgs.Empty);
+
+            // Arkaplanı temizle
+            if (BackColor.A > 0)  // Sadece arkaplan rengi şeffaf değilse çiz
+            {
+                e.Surface.Canvas.Clear(BackColor.ToSKColor());
+            }
+            else
+            {
+                e.Surface.Canvas.Clear(SKColors.Transparent);
+            }
+
+            // Kendi çizimini yap
+            Paint?.Invoke(this, e);
 
             // Alt kontrolleri çiz
             foreach (var control in _controls.Where(c => c.Visible).OrderBy(c => c.ZOrder))
             {
-                using (var elementSurface = SKSurface.Create(e.Info))
+                try
                 {
-                    control.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, new SKImageInfo(control.Size.Width, control.Size.Height)));
-                    var elementImage = elementSurface.Snapshot();
-                    e.Surface.Canvas.DrawImage(elementImage, control.Location.X, control.Location.Y);
+                    var elementInfo = new SKImageInfo(control.Size.Width, control.Size.Height, e.Info.ColorType, e.Info.AlphaType);
+                    using var elementSurface = SKSurface.Create(elementInfo);
+
+                    if (elementSurface != null)
+                    {
+                        var args = new SKPaintSurfaceEventArgs(elementSurface, elementInfo);
+                        control.OnPaint(args);
+
+                        using var elementImage = elementSurface.Snapshot();
+                        if (elementImage != null)
+                        {
+                            var paint = new SKPaint();
+                            if (!control.Enabled)
+                            {
+                                paint.ColorFilter = SKColorFilter.CreateLumaColor();
+                            }
+                            e.Surface.Canvas.DrawImage(elementImage, control.Location.X, control.Location.Y, paint);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Alt kontrol render hatası: {ex.Message}");
                 }
             }
         }
@@ -1186,9 +1214,8 @@ namespace SDUI.Controls
         }
         #endregion
 
-        private readonly List<UIElementBase> _controls = new(32);
         [Browsable(false)]
-        public List<UIElementBase> Controls => _controls;
+        public UIElementCollection Controls => _controls;
 
         #region Layout Methods
         public virtual void PerformLayout()
@@ -1307,27 +1334,24 @@ namespace SDUI.Controls
             Invalidate();
         }
 
-        protected virtual void OnControlAdded(UIElementEventArgs e)
+        internal virtual void OnControlAdded(UIElementEventArgs e)
         {
             if (e.Element != null)
             {
                 if (Parent is UIWindowBase parentWindow)
                 {
                     e.Element.Parent = parentWindow;
-                    _controls.Add(e.Element);
                     ControlAdded?.Invoke(this, e);
                     PerformLayout(e.Element);
                 }
                 else
                 {
-                    // Parent window olmadığında sadece koleksiyona ekle
-                    _controls.Add(e.Element);
                     ControlAdded?.Invoke(this, e);
                 }
             }
         }
 
-        protected virtual void OnControlRemoved(UIElementEventArgs e)
+        internal virtual void OnControlRemoved(UIElementEventArgs e)
         {
             if (e.Element != null)
             {
@@ -1335,7 +1359,6 @@ namespace SDUI.Controls
                 {
                     e.Element.Parent = null;
                 }
-                _controls.Remove(e.Element);
                 ControlRemoved?.Invoke(this, e);
                 PerformLayout();
             }
@@ -1366,10 +1389,7 @@ namespace SDUI.Controls
             if (element == null)
                 throw new ArgumentNullException(nameof(element));
 
-            if (!_controls.Contains(element))
-            {
-                OnControlAdded(new UIElementEventArgs(element));
-            }
+            Controls.Add(element);
         }
 
         public void RemoveControl(UIElementBase element)
@@ -1377,10 +1397,7 @@ namespace SDUI.Controls
             if (element == null)
                 throw new ArgumentNullException(nameof(element));
 
-            if (_controls.Contains(element))
-            {
-                OnControlRemoved(new UIElementEventArgs(element));
-            }
+            Controls.Remove(element);
         }
     }
 
@@ -1467,5 +1484,101 @@ namespace SDUI.Controls
             errorMessage = result.errorMessage;
             return result.isValid;
         }
+    }
+
+    public class UIElementCollection : IList<UIElementBase>
+    {
+        private readonly List<UIElementBase> _items = new(32);
+        private readonly UIElementBase _owner;
+
+        public UIElementCollection(UIElementBase owner)
+        {
+            _owner = owner;
+        }
+
+        public UIElementBase this[int index]
+        {
+            get => _items[index];
+            set
+            {
+                var oldItem = _items[index];
+                if (oldItem != value)
+                {
+                    if (oldItem != null)
+                    {
+                        _owner.OnControlRemoved(new UIElementEventArgs(oldItem));
+                    }
+                    _items[index] = value;
+                    if (value != null)
+                    {
+                        _owner.OnControlAdded(new UIElementEventArgs(value));
+                    }
+                }
+            }
+        }
+
+        public int Count => _items.Count;
+        public bool IsReadOnly => false;
+
+        public void Add(UIElementBase item)
+        {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
+            _items.Add(item);
+            _owner.OnControlAdded(new UIElementEventArgs(item));
+        }
+
+        public void AddRange(UIElementBase[] items)
+        {
+            foreach (var item in items)
+                this.Add(item);
+        }
+
+        public void Clear()
+        {
+            var itemsToRemove = _items.ToList();
+            _items.Clear();
+            foreach (var item in itemsToRemove)
+            {
+                _owner.OnControlRemoved(new UIElementEventArgs(item));
+            }
+        }
+
+        public bool Contains(UIElementBase item) => _items.Contains(item);
+        public void CopyTo(UIElementBase[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
+        public IEnumerator<UIElementBase> GetEnumerator() => _items.GetEnumerator();
+        public int IndexOf(UIElementBase item) => _items.IndexOf(item);
+
+        public void Insert(int index, UIElementBase item)
+        {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
+            _items.Insert(index, item);
+            _owner.OnControlAdded(new UIElementEventArgs(item));
+        }
+
+        public bool Remove(UIElementBase item)
+        {
+            if (item == null)
+                return false;
+
+            var result = _items.Remove(item);
+            if (result)
+            {
+                _owner.OnControlRemoved(new UIElementEventArgs(item));
+            }
+            return result;
+        }
+
+        public void RemoveAt(int index)
+        {
+            var item = _items[index];
+            _items.RemoveAt(index);
+            _owner.OnControlRemoved(new UIElementEventArgs(item));
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

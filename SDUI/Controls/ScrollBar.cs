@@ -1,7 +1,7 @@
 using SkiaSharp;
 using System;
-using System.Drawing;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Controls
@@ -174,10 +174,10 @@ namespace SDUI.Controls
             // Thumb çizimi
             using (var paint = new SKPaint
             {
-                Color = _isThumbPressed ? 
-                    new SKColor(100, 100, 100) : 
-                    _isThumbHovered ? 
-                        new SKColor(90, 90, 90) : 
+                Color = _isThumbPressed ?
+                    new SKColor(100, 100, 100) :
+                    _isThumbHovered ?
+                        new SKColor(90, 90, 90) :
                         new SKColor(80, 80, 80),
                 IsAntialias = true
             })
@@ -248,7 +248,7 @@ namespace SDUI.Controls
                 int trackLength = IsVertical ? Height - _thumbRect.Height : Width - _thumbRect.Width;
                 float valuePerPixel = (float)(Maximum - Minimum) / trackLength;
                 int newValue = _dragStartValue + (int)(delta * valuePerPixel);
-                
+
                 Value = Math.Max(Minimum, Math.Min(Maximum, newValue));
                 OnScroll(EventArgs.Empty);
             }
@@ -291,4 +291,4 @@ namespace SDUI.Controls
             return IsVertical ? new Size(12, 100) : new Size(100, 12);
         }
     }
-} 
+}

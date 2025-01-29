@@ -7,7 +7,7 @@ public partial class MainWindow : UIWindow
 {
     public MainWindow()
     {
-        InitializeComponent(); 
+        InitializeComponent();
     }
 
     protected override void OnBackColorChanged(EventArgs e)
@@ -19,11 +19,11 @@ public partial class MainWindow : UIWindow
 
     private void MainWindow_Load(object sender, EventArgs e)
     {
-        windowPageControl.Controls.AddRange(new UIElementBase[] {
+        windowPageControl.Controls.AddRange([
             new GeneralPage(),
             new ListViewPage(),
             new ConfigPage(),
             new MultiPageControlTestPage()
-        });
+        ]);
     }
 }

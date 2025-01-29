@@ -1,6 +1,5 @@
 using SDUI.Controls;
 using SkiaSharp;
-using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -109,9 +108,9 @@ public static class SKCanvasExtensions
 
         return alignment switch
         {
-            ContentAlignment.TopLeft or ContentAlignment.TopCenter or ContentAlignment.TopRight 
+            ContentAlignment.TopLeft or ContentAlignment.TopCenter or ContentAlignment.TopRight
                 => -metrics.Ascent + 4,
-            ContentAlignment.BottomLeft or ContentAlignment.BottomCenter or ContentAlignment.BottomRight 
+            ContentAlignment.BottomLeft or ContentAlignment.BottomCenter or ContentAlignment.BottomRight
                 => height - metrics.Descent - 4,
             _ => (height - textHeight) / 2 - metrics.Ascent
         };
@@ -121,9 +120,9 @@ public static class SKCanvasExtensions
     {
         return alignment switch
         {
-            ContentAlignment.TopLeft or ContentAlignment.MiddleLeft or ContentAlignment.BottomLeft 
+            ContentAlignment.TopLeft or ContentAlignment.MiddleLeft or ContentAlignment.BottomLeft
                 => hasImage ? 40 : 8,
-            ContentAlignment.TopRight or ContentAlignment.MiddleRight or ContentAlignment.BottomRight 
+            ContentAlignment.TopRight or ContentAlignment.MiddleRight or ContentAlignment.BottomRight
                 => width - 8,
             _ => width / 2
         };
@@ -135,4 +134,4 @@ public static class SKCanvasExtensions
         var width = paint.MeasureText(text);
         return new SizeF(width, metrics.Descent - metrics.Ascent);
     }
-} 
+}

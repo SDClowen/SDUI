@@ -1,13 +1,13 @@
 ﻿using SDUI.Helpers;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Collections.Generic;
-using System.Linq;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
@@ -63,13 +63,150 @@ public class UIWindowBase : Form
     [Category("Appearance")]
     public event EventHandler<SKPaintSurfaceEventArgs> PaintSurface;
 
+    public class UIWindowElementCollection : IList<UIElementBase>
+    {
+        private readonly List<UIElementBase> _items = new(32);
+        private readonly UIWindowBase _owner;
+        private int _maxZOrder = 0;
+
+        public UIWindowElementCollection(UIWindowBase owner)
+        {
+            _owner = owner;
+        }
+
+        public UIElementBase this[int index]
+        {
+            get => _items[index];
+            set
+            {
+                var oldItem = _items[index];
+                if (oldItem != value)
+                {
+                    if (oldItem != null)
+                    {
+                        oldItem.Parent = null;
+                        if (_owner._focusedElement == oldItem)
+                        {
+                            _owner.FocusedElement = null;
+                        }
+                    }
+                    _items[index] = value;
+                    if (value != null)
+                    {
+                        value.Parent = _owner;
+                        _maxZOrder++;
+                        value.ZOrder = _maxZOrder;
+                        if (_owner._focusedElement == null && value.TabStop)
+                        {
+                            _owner.FocusedElement = value;
+                        }
+                    }
+                    _owner.PerformLayout();
+                }
+            }
+        }
+
+        public int Count => _items.Count;
+        public bool IsReadOnly => false;
+
+        public void Add(UIElementBase item)
+        {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
+            item.Parent = _owner;
+            _maxZOrder++;
+            item.ZOrder = _maxZOrder;
+            _items.Add(item);
+
+            if (_owner._focusedElement == null && item.TabStop)
+            {
+                _owner.FocusedElement = item;
+            }
+
+            _owner.PerformLayout();
+        }
+
+        public void Clear()
+        {
+            var itemsToRemove = _items.ToList();
+            _items.Clear();
+            foreach (var item in itemsToRemove)
+            {
+                item.Parent = null;
+                if (_owner._focusedElement == item)
+                {
+                    _owner.FocusedElement = null;
+                }
+            }
+            _owner.PerformLayout();
+        }
+
+        public bool Contains(UIElementBase item) => _items.Contains(item);
+        public void CopyTo(UIElementBase[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
+        public IEnumerator<UIElementBase> GetEnumerator() => _items.GetEnumerator();
+        public int IndexOf(UIElementBase item) => _items.IndexOf(item);
+
+        public void Insert(int index, UIElementBase item)
+        {
+            if (item == null)
+                throw new ArgumentNullException(nameof(item));
+
+            item.Parent = _owner;
+            _maxZOrder++;
+            item.ZOrder = _maxZOrder;
+            _items.Insert(index, item);
+
+            if (_owner._focusedElement == null && item.TabStop)
+            {
+                _owner.FocusedElement = item;
+            }
+
+            _owner.PerformLayout();
+        }
+
+        public bool Remove(UIElementBase item)
+        {
+            if (item == null)
+                return false;
+
+            var result = _items.Remove(item);
+            if (result)
+            {
+                item.Parent = null;
+                if (_owner._focusedElement == item)
+                {
+                    _owner.FocusedElement = null;
+                }
+                _owner.PerformLayout();
+            }
+            return result;
+        }
+
+        public void RemoveAt(int index)
+        {
+            var item = _items[index];
+            _items.RemoveAt(index);
+            item.Parent = null;
+            if (_owner._focusedElement == item)
+            {
+                _owner.FocusedElement = null;
+            }
+            _owner.PerformLayout();
+        }
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    public new UIWindowElementCollection Controls { get; }
+
     public UIElementBase FocusedElement
     {
         get => _focusedElement;
         private set
         {
             if (_focusedElement == value) return;
-            
+
             var oldFocus = _focusedElement;
             _focusedElement = value;
 
@@ -132,61 +269,98 @@ public class UIWindowBase : Form
         );
 
         designMode = DesignMode || LicenseManager.UsageMode == LicenseUsageMode.Designtime;
+        Controls = new UIWindowElementCollection(this);
         UpdateStyles();
     }
 
-    public new List<UIElementBase> Controls => _elements;
     public new SDUI.Controls.ContextMenuStrip ContextMenuStrip { get; set; }
 
     public void AddElement(UIElementBase element)
     {
-        if (!_elements.Contains(element))
-        {
-            element.Parent = this;
-            _maxZOrder++;
-            element.ZOrder = _maxZOrder;
-            _elements.Add(element);
-            
-            if (_focusedElement == null && element.TabStop)
-            {
-                FocusedElement = element;
-            }
-            
-            PerformLayout();
-        }
+        if (element == null)
+            throw new ArgumentNullException(nameof(element));
+
+        Controls.Add(element);
     }
 
     public void RemoveElement(UIElementBase element)
     {
-        if (_elements.Remove(element))
-        {
-            element.Parent = null;
-            if (_focusedElement == element)
-            {
-                FocusedElement = null;
-            }
-            PerformLayout();
-        }
+        if (element == null)
+            throw new ArgumentNullException(nameof(element));
+
+        Controls.Remove(element);
     }
 
     protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
+        // Arkaplanı temizle
         e.Surface.Canvas.Clear(ColorScheme.BackColor.ToSKColor());
 
+        // Kendi çizimini yap
         PaintSurface?.Invoke(this, e);
 
+        System.Diagnostics.Debug.WriteLine($"Rendering {Controls.Count} elements");
+
         // Elementleri Z-order'a göre sırala ve render et
-        foreach (var element in _elements.OrderBy(el => el.ZOrder))
+        foreach (var element in Controls.OrderBy(el => el.ZOrder))
         {
             if (element.Visible)
             {
-                using (var elementSurface = SKSurface.Create(e.Info))
+                try
                 {
-                    element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, new SKImageInfo(element.Size.Width, element.Size.Height)));
+                    System.Diagnostics.Debug.WriteLine($"Rendering element: {element.GetType().Name}, Size: {element.Size}, Location: {element.Location}, ZOrder: {element.ZOrder}");
+
+                    if (element.Size.Width <= 0 || element.Size.Height <= 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Skipping element due to invalid size: {element.GetType().Name}");
+                        continue;
+                    }
+
+                    // Element için yeni bir surface oluştur
+                    var elementInfo = new SKImageInfo(element.Size.Width, element.Size.Height, SKColorType.Bgra8888, SKAlphaType.Premul);
                     
-                    // Element'in surface'ini ana surface'e kopyala
-                    var elementImage = elementSurface.Snapshot();
-                    e.Surface.Canvas.DrawImage(elementImage, element.Location.X, element.Location.Y);
+                    // CPU belleğinde bir surface oluştur
+                    using var elementSurface = SKSurface.Create(elementInfo);
+                    if (elementSurface != null)
+                    {
+                        // Arkaplanı temizle
+                        elementSurface.Canvas.Clear(SKColors.Transparent);
+
+                        // Element'in kendi render metodunu çağır
+                        var args = new SKPaintSurfaceEventArgs(elementSurface, elementInfo);
+                        element.OnPaint(args);
+
+                        // Element'in surface'ini ana surface'e kopyala
+                        using var elementImage = elementSurface.Snapshot();
+                        if (elementImage != null)
+                        {
+                            using var paint = new SKPaint
+                            {
+                                IsAntialias = true,
+                                FilterQuality = SKFilterQuality.High
+                            };
+
+                            if (!element.Enabled)
+                            {
+                                paint.ColorFilter = SKColorFilter.CreateLumaColor();
+                            }
+
+                            e.Surface.Canvas.DrawImage(elementImage, element.Location.X, element.Location.Y, paint);
+                            System.Diagnostics.Debug.WriteLine($"Successfully rendered element: {element.GetType().Name}");
+                        }
+                        else
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Failed to create snapshot for element: {element.GetType().Name}");
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to create surface for element: {element.GetType().Name}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Element render error for {element.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
                 }
             }
         }
@@ -194,10 +368,8 @@ public class UIWindowBase : Form
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        //if (designMode)
-          //  return;
-
-        base.OnPaint(e);
+        if (designMode)
+            return;
 
         var info = CreateBitmap();
         if (info.Width == 0 || info.Height == 0)
@@ -280,7 +452,7 @@ public class UIWindowBase : Form
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        
+
         UIElementBase hoveredElement = null;
 
         // Z-order'a göre tersten kontrol et
@@ -368,13 +540,13 @@ public class UIWindowBase : Form
 
     private SKImageInfo CreateBitmap()
     {
-        var info = new SKImageInfo(Width, Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
+        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Opaque);
 
         if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
         {
             FreeBitmap();
             if (info.Width != 0 && info.Height != 0)
-                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppPArgb);
+                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppRgb);
         }
 
         return info;
@@ -454,6 +626,21 @@ public class UIWindowBase : Form
 
         if (BackColor != ColorScheme.BackColor)
             BackColor = ColorScheme.BackColor;
+
+        // İlk render için
+        Invalidate();
+    }
+
+    protected override void OnShown(EventArgs e)
+    {
+        base.OnShown(e);
+
+        if (!DesignMode)
+        {
+            // İlk render için tekrar dene
+            Invalidate();
+            Update();
+        }
     }
 
     private const int htLeft = 10;

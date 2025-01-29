@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -416,7 +416,8 @@ public static class ShadowUtils
     {
         if (ctrl.Parent != null)
         {
-            ctrl.Parent.Paint += (s, e) => {
+            ctrl.Parent.Paint += (s, e) =>
+            {
                 if (ctrl.Parent != null && ctrl.Visible && (!(ctrl is IShadowController) || ((IShadowController)ctrl).ShouldShowShadow()))
                     DrawShadow(e.Graphics, Color.Black, ctrl.Bounds, 7, ctrl.Dock);
             };

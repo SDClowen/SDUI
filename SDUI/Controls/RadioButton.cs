@@ -269,7 +269,7 @@ public class Radio : UIElementBase
     private void DrawText(SKCanvas canvas)
     {
         using var textPaint = canvas.CreateTextPaint(Font, Enabled ? ColorScheme.ForeColor : Color.Gray, this, ContentAlignment.MiddleLeft);
-        
+
         float textY = Height / 2f + (textPaint.FontMetrics.XHeight / 2f);
         float textX = boxOffset + RADIOBUTTON_SIZE + TEXT_PADDING;
 

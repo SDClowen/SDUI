@@ -47,4 +47,4 @@ namespace SDUI.Helpers
             return value * GetScaleFactor();
         }
     }
-} 
+}

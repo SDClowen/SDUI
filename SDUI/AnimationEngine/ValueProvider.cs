@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace SDUI.Animation2
 {
@@ -75,7 +72,7 @@ namespace SDUI.Animation2
         /// <value>
         /// The target value.
         /// </value>
-        public bool Completed => CurrentProgress >= 1; 
+        public bool Completed => CurrentProgress >= 1;
 
         /// <summary>
         /// Gets or sets the start time.
@@ -122,7 +119,7 @@ namespace SDUI.Animation2
                 var currentDuration = DateTime.Now - this.StartTime;
                 if (currentDuration >= this.Duration)
                     return 1;
-                return currentDuration.TotalMilliseconds/ this.Duration.TotalMilliseconds;
+                return currentDuration.TotalMilliseconds / this.Duration.TotalMilliseconds;
             }
         }
 

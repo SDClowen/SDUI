@@ -1,12 +1,12 @@
-﻿using SDUI.Extensions;
+﻿using SDUI.Animation;
+using SDUI.Extensions;
 using SkiaSharp;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Collections.Generic;
-using SDUI.Animation;
 
 namespace SDUI.Controls;
 
@@ -34,18 +34,18 @@ public class ComboBox : UIElementBase
         {
             _owner = owner;
             BackColor = Color.Transparent;
-            
+
             _animation = new AnimationEngine
             {
                 Increment = 0.15,
                 AnimationType = AnimationType.EaseInOut
             };
-            _animation.OnAnimationProgress += (s) => 
+            _animation.OnAnimationProgress += (s) =>
             {
                 var progress = (float)_animation.GetProgress();
                 _currentHeight = _currentHeight + (_targetHeight - _currentHeight) * progress;
                 Height = (int)_currentHeight;
-                
+
                 if (Height <= 0 && _animation.GetDirection() == AnimationDirection.Out)
                 {
                     Visible = false;
@@ -56,7 +56,7 @@ public class ComboBox : UIElementBase
                         parentControls.Remove(this);
                     }
                 }
-                
+
                 Invalidate();
             };
 
@@ -65,7 +65,7 @@ public class ComboBox : UIElementBase
                 Increment = 0.25,
                 AnimationType = AnimationType.EaseInOut
             };
-            _hoverAnimation.OnAnimationProgress += (s) => 
+            _hoverAnimation.OnAnimationProgress += (s) =>
             {
                 var progress = (float)_hoverAnimation.GetProgress();
                 _hoverY = _hoverY + (_targetHoverY - _hoverY) * progress;
@@ -76,7 +76,7 @@ public class ComboBox : UIElementBase
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            
+
             var newHoverIndex = GetItemIndexAtPoint(e.Location);
             if (newHoverIndex >= 0 && newHoverIndex < _owner.Items.Count)
             {
@@ -87,7 +87,7 @@ public class ComboBox : UIElementBase
                     _hoverAnimation.StartNewAnimation(AnimationDirection.In);
                 }
             }
-            else 
+            else
             {
                 _hoverIndex = -1;
                 _hoverAnimation.StartNewAnimation(AnimationDirection.Out);
@@ -191,8 +191,8 @@ public class ComboBox : UIElementBase
                 var text = _owner.GetItemText(_owner.Items[i]);
 
                 // Metin rengi ayarla
-                textPaint.Color = (i == _owner.SelectedIndex) 
-                    ? ColorScheme.AccentColor.ToSKColor() 
+                textPaint.Color = (i == _owner.SelectedIndex)
+                    ? ColorScheme.AccentColor.ToSKColor()
                     : ColorScheme.ForeColor.ToSKColor();
 
                 // Metni dikey olarak ortala
@@ -213,11 +213,11 @@ public class ComboBox : UIElementBase
             _hoverIndex = -1;
             _hoverY = 0;
             _targetHoverY = 0;
-            
+
             Visible = true;
             _animation.StartNewAnimation(AnimationDirection.In);
             BringToFront();
-            
+
             // Hover animasyonunu sıfırla
             //_hoverAnimation.Reset();
         }
@@ -227,7 +227,7 @@ public class ComboBox : UIElementBase
             _animation.StartNewAnimation(AnimationDirection.Out);
             _owner.DroppedDown = false;
             _owner.OnDropDownClosed(EventArgs.Empty);
-            
+
             if (Parent != null)
             {
                 Parent.Controls.Remove(this);
@@ -239,7 +239,7 @@ public class ComboBox : UIElementBase
         {
             if (point.Y < VERTICAL_PADDING || point.Y > Height - VERTICAL_PADDING)
                 return -1;
-            
+
             return (int)Math.Floor((point.Y - VERTICAL_PADDING) / (float)ITEM_HEIGHT);
         }
     }
@@ -661,9 +661,9 @@ public class ComboBox : UIElementBase
 
             // Basılı durumda metin hafif aşağı kayar
             var yOffset = animationProgress * 1f;
-            canvas.DrawText(displayText, 
+            canvas.DrawText(displayText,
                 8 * (DeviceDpi / 96), // 5px sağa kaydırıldı
-                (Height + textBounds.Height) / 2 + yOffset, 
+                (Height + textBounds.Height) / 2 + yOffset,
                 textPaint);
         }
 
@@ -724,7 +724,7 @@ public class ComboBox : UIElementBase
         if (e.Button == MouseButtons.Left)
         {
             _animation.StartNewAnimation(AnimationDirection.InOutIn);
-            
+
             if (_dropDownMenu != null)
             {
                 if (_dropDownMenu.Visible)
@@ -759,19 +759,19 @@ public class ComboBox : UIElementBase
 
         var form = FindForm();
         if (form == null) return;
-        
+
         // Eğer dropdown zaten bir form'a ekliyse, önce kaldır
         if (_dropDownMenu.Parent != null)
         {
             _dropDownMenu.Parent.Controls.Remove(_dropDownMenu);
         }
-        
+
         // Form'a ekle ve pozisyonu ayarla
         form.Controls.Add(_dropDownMenu);
-        
+
         var screenPoint = PointToScreen(new Point(0, Height));
         var formPoint = form.PointToClient(screenPoint);
-        
+
         _dropDownMenu.Location = formPoint;
         _dropDownMenu.Width = DropDownWidth;
         DroppedDown = true;

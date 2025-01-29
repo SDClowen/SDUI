@@ -1,6 +1,5 @@
 ﻿using SDUI.Extensions;
 using SkiaSharp;
-using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -101,7 +100,7 @@ public class GroupBox : UIElementBase
         // Başlık alanı çizimi
         canvas.Save();
         canvas.ClipRect(titleRect);
-        
+
         // Başlık çizgisi
         using (var paint = new SKPaint
         {

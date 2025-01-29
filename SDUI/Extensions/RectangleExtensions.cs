@@ -180,7 +180,7 @@ public static class RectangleExtensions
         path.CloseFigure();
         return path;
     }
-    
+
     public static Rectangle ToRectangle(this RectangleF rect)
     {
         return Rectangle.Round(rect);

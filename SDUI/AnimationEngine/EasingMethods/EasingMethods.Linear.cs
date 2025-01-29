@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace SDUI.Animation2
+﻿namespace SDUI.Animation2
 {
     public static partial class EasingMethods
     {

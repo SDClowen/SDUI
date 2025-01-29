@@ -16,10 +16,10 @@ namespace SDUI.Controls
         }
 
         private int _selectedIndex = -1;
-        public int SelectedIndex 
-        { 
-            get => _selectedIndex; 
-            set 
+        public int SelectedIndex
+        {
+            get => _selectedIndex;
+            set
             {
                 var sys = Stopwatch.StartNew();
 
@@ -45,17 +45,17 @@ namespace SDUI.Controls
                     Controls[i].Visible = i == _selectedIndex;
 
                 Debug.WriteLine($"Index: {_selectedIndex} Finished: {sys.ElapsedMilliseconds} ms");
-            } 
+            }
         }
 
         public int Count => Controls.Count;
 
-        public WindowPageControl() 
+        public WindowPageControl()
         {
             BackColor = Color.Transparent;
         }
 
-        protected override void OnControlAdded(UIElementEventArgs e)
+        internal override void OnControlAdded(UIElementEventArgs e)
         {
             base.OnControlAdded(e);
 
@@ -67,7 +67,7 @@ namespace SDUI.Controls
                 _selectedIndex = 0;
         }
 
-        protected override void OnControlRemoved(UIElementEventArgs e)
+        internal override void OnControlRemoved(UIElementEventArgs e)
         {
             base.OnControlRemoved(e);
 

@@ -3,7 +3,6 @@ using SkiaSharp;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
@@ -165,7 +164,7 @@ public class ShapeProgressBar : UIElementBase
         // Varsayılan gradient renkleri
         _gradient[0] = ColorScheme.AccentColor.ToSKColor();
         _gradient[1] = ColorScheme.AccentColor.ToSKColor().WithAlpha(200);
-        
+
         UpdateHatchPattern();
     }
 
@@ -178,7 +177,7 @@ public class ShapeProgressBar : UIElementBase
         canvas.SetMatrix(SKMatrix.CreateScale(1.0f, 1.0f));
 
         var calc = (float)((360.0 / _maximum) * _value);
-        
+
         // Merkez noktası ve boyutlar
         float centerX = Width / 2f;
         float centerY = Height / 2f;

@@ -1,5 +1,4 @@
-﻿using SDUI;
-using SDUI.Animation;
+﻿using SDUI.Animation;
 using SDUI.Extensions;
 using SkiaSharp;
 using System;
@@ -304,8 +303,8 @@ namespace SDUI.Controls
             }
 
             // Kenarlık çizimi
-            using (var borderPaint = new SKPaint 
-            { 
+            using (var borderPaint = new SKPaint
+            {
                 Color = ColorScheme.BorderColor.Alpha(80).ToSKColor(),
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = 1f,
@@ -318,8 +317,8 @@ namespace SDUI.Controls
             }
 
             // Buton ayraç çizgileri
-            using (var linePaint = new SKPaint 
-            { 
+            using (var linePaint = new SKPaint
+            {
                 Color = ColorScheme.BorderColor.Alpha(80).ToSKColor(),
                 StrokeWidth = 1f,
                 IsAntialias = true
@@ -334,8 +333,8 @@ namespace SDUI.Controls
             var upPressProgress = upButtonPressAnimation.GetProgress();
             if (upHoverProgress > 0 || upPressProgress > 0)
             {
-                using var buttonPaint = new SKPaint 
-                { 
+                using var buttonPaint = new SKPaint
+                {
                     Color = ColorScheme.ForeColor.ToSKColor()
                         .WithAlpha((byte)(Math.Max(upHoverProgress * 30, upPressProgress * 80))),
                     IsAntialias = true
@@ -343,7 +342,7 @@ namespace SDUI.Controls
 
                 using var path = new SKPath();
                 var rect = _upButtonRect.ToSKRect();
-                path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top + 1, rect.Right - 1, rect.Bottom), 
+                path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top + 1, rect.Right - 1, rect.Bottom),
                     6 * ScaleFactor, 0, SKPathDirection.Clockwise);
                 canvas.DrawPath(path, buttonPaint);
             }
@@ -352,8 +351,8 @@ namespace SDUI.Controls
             var downPressProgress = downButtonPressAnimation.GetProgress();
             if (downHoverProgress > 0 || downPressProgress > 0)
             {
-                using var buttonPaint = new SKPaint 
-                { 
+                using var buttonPaint = new SKPaint
+                {
                     Color = ColorScheme.ForeColor.ToSKColor()
                         .WithAlpha((byte)(Math.Max(downHoverProgress * 30, downPressProgress * 80))),
                     IsAntialias = true
@@ -361,7 +360,7 @@ namespace SDUI.Controls
 
                 using var path = new SKPath();
                 var rect = _downButtonRect.ToSKRect();
-                path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top, rect.Right - 1, rect.Bottom - 1), 
+                path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top, rect.Right - 1, rect.Bottom - 1),
                     6 * ScaleFactor, 0, SKPathDirection.Clockwise);
                 canvas.DrawPath(path, buttonPaint);
             }
@@ -390,7 +389,7 @@ namespace SDUI.Controls
                     upColor = upColor.Alpha(180);
 
                 textPaint.Color = upColor.ToSKColor();
-                canvas.DrawText("▲", 
+                canvas.DrawText("▲",
                     _upButtonRect.X + _upButtonRect.Width / 2,
                     _upButtonRect.Height / 2 + textHeight / 3,
                     textPaint);

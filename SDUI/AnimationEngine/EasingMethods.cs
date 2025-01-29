@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace SDUI.Animation2
+﻿namespace SDUI.Animation2
 {
     /// <summary>
     ///     <para>Provides methods and algorithms for creating smooth transitions.</para>
@@ -36,7 +31,7 @@ namespace SDUI.Animation2
         public static EasingMethod Invert(this EasingMethod method)
         {
             return (double progress) => 1 - method(1 - progress);
-            
+
         }
 
         /// <summary>
