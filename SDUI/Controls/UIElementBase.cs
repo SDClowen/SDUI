@@ -9,52 +9,11 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using System.Collections.Concurrent;
 using System.Threading;
+using SDUI.Collections;
+using SDUI.Validations;
 
 namespace SDUI.Controls
 {
-    public class UIElementEventArgs : EventArgs
-    {
-        public UIElementBase Element { get; }
-
-        public UIElementEventArgs(UIElementBase element)
-        {
-            Element = element;
-        }
-    }
-
-    public class UILayoutEventArgs : EventArgs
-    {
-        public UIElementBase AffectedElement { get; }
-
-        public UILayoutEventArgs(UIElementBase affectedElement)
-        {
-            AffectedElement = affectedElement;
-        }
-    }
-
-    public delegate void UIElementEventHandler(object sender, UIElementEventArgs e);
-    public delegate void UILayoutEventHandler(object sender, UILayoutEventArgs e);
-
-    public class ObjectPool<T>
-    {
-        private readonly ConcurrentBag<T> _objects;
-        private readonly Func<T> _objectGenerator;
-
-        public ObjectPool(Func<T> objectGenerator)
-        {
-            _objects = new ConcurrentBag<T>();
-            _objectGenerator = objectGenerator ?? throw new ArgumentNullException(nameof(objectGenerator));
-        }
-
-        public T Get() => _objects.TryTake(out T item) ? item : _objectGenerator();
-
-        public void Return(T item)
-        {
-            if (item != null)
-                _objects.Add(item);
-        }
-    }
-
     public abstract class UIElementBase : IDisposable
     {
         public Bitmap Image { get; set; }
@@ -987,7 +946,7 @@ namespace SDUI.Controls
         internal virtual void OnCursorChanged(EventArgs e)
         {
             CursorChanged?.Invoke(this, e);
-            if (Parent is UIWindowBase parentWindow)
+            if (Parent is UIWindow parentWindow)
             {
                 parentWindow.UpdateCursor(this);
             }
@@ -1059,7 +1018,7 @@ namespace SDUI.Controls
 
         public void BringToFront()
         {
-            if (Parent is UIWindowBase window)
+            if (Parent is UIWindow window)
             {
                 window.BringToFront(this);
             }
@@ -1067,7 +1026,7 @@ namespace SDUI.Controls
 
         public void SendToBack()
         {
-            if (Parent is UIWindowBase window)
+            if (Parent is UIWindow window)
             {
                 window.SendToBack(this);
             }
@@ -1467,186 +1426,5 @@ namespace SDUI.Controls
 
             Controls.Remove(element);
         }
-    }
-
-    public abstract class ValidationRule
-    {
-        public string ErrorMessage { get; set; }
-        public abstract bool Validate(UIElementBase element, out string errorMessage);
-    }
-
-    public class RequiredFieldValidationRule : ValidationRule
-    {
-        public override bool Validate(UIElementBase element, out string errorMessage)
-        {
-            if (string.IsNullOrWhiteSpace(element.Text))
-            {
-                errorMessage = ErrorMessage ?? "Bu alan boş bırakılamaz.";
-                return false;
-            }
-            errorMessage = string.Empty;
-            return true;
-        }
-    }
-
-    public class MinLengthValidationRule : ValidationRule
-    {
-        public int MinLength { get; set; }
-
-        public override bool Validate(UIElementBase element, out string errorMessage)
-        {
-            if (element.Text.Length < MinLength)
-            {
-                errorMessage = ErrorMessage ?? $"Bu alan en az {MinLength} karakter olmalıdır.";
-                return false;
-            }
-            errorMessage = string.Empty;
-            return true;
-        }
-    }
-
-    public class MaxLengthValidationRule : ValidationRule
-    {
-        public int MaxLength { get; set; }
-
-        public override bool Validate(UIElementBase element, out string errorMessage)
-        {
-            if (element.Text.Length > MaxLength)
-            {
-                errorMessage = ErrorMessage ?? $"Bu alan en fazla {MaxLength} karakter olmalıdır.";
-                return false;
-            }
-            errorMessage = string.Empty;
-            return true;
-        }
-    }
-
-    public class RegexValidationRule : ValidationRule
-    {
-        public string Pattern { get; set; }
-
-        public override bool Validate(UIElementBase element, out string errorMessage)
-        {
-            if (!System.Text.RegularExpressions.Regex.IsMatch(element.Text, Pattern))
-            {
-                errorMessage = ErrorMessage ?? "Geçersiz format.";
-                return false;
-            }
-            errorMessage = string.Empty;
-            return true;
-        }
-    }
-
-    public class CustomValidationRule : ValidationRule
-    {
-        private readonly Func<UIElementBase, (bool isValid, string errorMessage)> _validationFunc;
-
-        public CustomValidationRule(Func<UIElementBase, (bool isValid, string errorMessage)> validationFunc)
-        {
-            _validationFunc = validationFunc;
-        }
-
-        public override bool Validate(UIElementBase element, out string errorMessage)
-        {
-            var result = _validationFunc(element);
-            errorMessage = result.errorMessage;
-            return result.isValid;
-        }
-    }
-
-    public class UIElementCollection : IList<UIElementBase>
-    {
-        private readonly List<UIElementBase> _items = new(32);
-        private readonly UIElementBase _owner;
-
-        public UIElementCollection(UIElementBase owner)
-        {
-            _owner = owner;
-        }
-
-        public UIElementBase this[int index]
-        {
-            get => _items[index];
-            set
-            {
-                var oldItem = _items[index];
-                if (oldItem != value)
-                {
-                    if (oldItem != null)
-                    {
-                        _owner.OnControlRemoved(new UIElementEventArgs(oldItem));
-                    }
-                    _items[index] = value;
-                    if (value != null)
-                    {
-                        _owner.OnControlAdded(new UIElementEventArgs(value));
-                    }
-                }
-            }
-        }
-
-        public int Count => _items.Count;
-        public bool IsReadOnly => false;
-
-        public void Add(UIElementBase item)
-        {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-
-            _items.Add(item);
-            _owner.OnControlAdded(new UIElementEventArgs(item));
-        }
-
-        public void AddRange(UIElementBase[] items)
-        {
-            foreach (var item in items)
-                this.Add(item);
-        }
-
-        public void Clear()
-        {
-            var itemsToRemove = _items.ToList();
-            _items.Clear();
-            foreach (var item in itemsToRemove)
-            {
-                _owner.OnControlRemoved(new UIElementEventArgs(item));
-            }
-        }
-
-        public bool Contains(UIElementBase item) => _items.Contains(item);
-        public void CopyTo(UIElementBase[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
-        public IEnumerator<UIElementBase> GetEnumerator() => _items.GetEnumerator();
-        public int IndexOf(UIElementBase item) => _items.IndexOf(item);
-
-        public void Insert(int index, UIElementBase item)
-        {
-            if (item == null)
-                throw new ArgumentNullException(nameof(item));
-
-            _items.Insert(index, item);
-            _owner.OnControlAdded(new UIElementEventArgs(item));
-        }
-
-        public bool Remove(UIElementBase item)
-        {
-            if (item == null)
-                return false;
-
-            var result = _items.Remove(item);
-            if (result)
-            {
-                _owner.OnControlRemoved(new UIElementEventArgs(item));
-            }
-            return result;
-        }
-
-        public void RemoveAt(int index)
-        {
-            var item = _items[index];
-            _items.RemoveAt(index);
-            _owner.OnControlRemoved(new UIElementEventArgs(item));
-        }
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

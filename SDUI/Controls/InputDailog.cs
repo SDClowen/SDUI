@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public partial class InputDialog : UIWindowBase
+public partial class InputDialog : UIWindow
 {
     public enum InputType
     {
@@ -52,6 +52,7 @@ public partial class InputDialog : UIWindowBase
         InitializeComponent();
         BackColor = ColorScheme.BackColor;
         ForeColor = ColorScheme.ForeColor;
+        ShowTitle = false;
 
         Text = formTitle;
         lblTitle.Text = title;

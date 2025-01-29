@@ -1,4 +1,5 @@
 ﻿using SDUI.Animation;
+using SDUI.Collections;
 using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
@@ -7,7 +8,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.Linq;
 using System.Windows.Forms;
+using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
@@ -289,6 +293,26 @@ public class UIWindow : UIWindowBase
     {
         base.OnDpiChanged(e);
 
+        foreach (var element in _elements)
+        {
+            element.OnDpiChanged(EventArgs.Empty);
+        }
+
+        // Pencere boyutunu ve konumunu güncelle
+        var oldDpi = e.DeviceDpiOld;
+        var newDpi = e.DeviceDpiNew;
+        var scaleFactor = (float)newDpi / oldDpi;
+
+        Size = new Size(
+            (int)(Width * scaleFactor),
+            (int)(Height * scaleFactor)
+        );
+
+        Location = new Point(
+            (int)(Location.X * scaleFactor),
+            (int)(Location.Y * scaleFactor)
+        );
+
         Invalidate();
     }
 
@@ -540,6 +564,11 @@ public class UIWindow : UIWindowBase
 
     private const float HOVER_ANIMATION_SPEED = 0.15f;
     private const float HOVER_ANIMATION_OPACITY = 0.4f;
+    private int _maxZOrder = 0;
+    private Cursor _currentCursor;
+    private bool _isLayoutSuspended;
+
+    public new SDUI.Controls.ContextMenuStrip ContextMenuStrip { get; set; }
 
     /// <summary>
     /// The contructor
@@ -555,7 +584,7 @@ public class UIWindow : UIWindowBase
             ControlStyles.SupportsTransparentBackColor, true);
 
         UpdateStyles();
-
+        Controls = new UIWindowElementCollection(this);
         enableFullDraggable = false;
 
         pageAreaAnimationManager = new()
@@ -631,6 +660,14 @@ public class UIWindow : UIWindowBase
         {
             e.Control.Top = Padding.Top;
         }
+
+        PerformLayout();
+    }
+
+    protected override void OnControlRemoved(ControlEventArgs e)
+    {
+        base.OnControlRemoved(e);
+        PerformLayout();
     }
 
     private void CalcSystemBoxPos()
@@ -684,6 +721,68 @@ public class UIWindow : UIWindowBase
 
         Padding = new Padding(Padding.Left, (int)(showTitle ? _titleHeightDPI : 0), Padding.Right, Padding.Bottom);
     }
+    private void HandleTabKey(bool isShift)
+    {
+        var tabbableElements = _elements
+            .Where(e => e.Visible && e.Enabled && e.TabStop)
+            .OrderBy(e => e.TabIndex)
+            .ToList();
+
+        if (tabbableElements.Count == 0) return;
+
+        int currentIndex = _focusedElement != null ? tabbableElements.IndexOf(_focusedElement) : -1;
+
+        if (isShift)
+        {
+            currentIndex--;
+            if (currentIndex < 0) currentIndex = tabbableElements.Count - 1;
+        }
+        else
+        {
+            currentIndex++;
+            if (currentIndex >= tabbableElements.Count) currentIndex = 0;
+        }
+
+        FocusedElement = tabbableElements[currentIndex];
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+
+        if (e.KeyCode == Keys.Tab && !e.Control && !e.Alt)
+        {
+            HandleTabKey(e.Shift);
+            e.Handled = true;
+            return;
+        }
+
+        if (_focusedElement != null)
+        {
+            _focusedElement.OnKeyDown(e);
+        }
+    }
+
+    protected override void OnKeyUp(KeyEventArgs e)
+    {
+        base.OnKeyUp(e);
+
+        if (_focusedElement != null)
+        {
+            _focusedElement.OnKeyUp(e);
+        }
+    }
+
+    protected override void OnKeyPress(KeyPressEventArgs e)
+    {
+        base.OnKeyPress(e);
+
+        if (_focusedElement != null)
+        {
+            _focusedElement.OnKeyPress(e);
+        }
+    }
+
 
     protected override void OnMouseClick(MouseEventArgs e)
     {
@@ -789,6 +888,40 @@ public class UIWindow : UIWindowBase
             _location = Location;
             _mouseOffset = MousePosition;
         }
+
+        bool elementClicked = false;
+        // Z-order'a göre tersten kontrol et (üstteki elementten başla)
+        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                elementClicked = true;
+                FocusedElement = element;
+                element.OnMouseDown(e);
+                // Tıklanan elementi en üste getir
+                BringToFront(element);
+                break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
+            }
+        }
+
+        if (!elementClicked)
+        {
+            FocusedElement = null;
+        }
+
+        if (enableFullDraggable && e.Button == MouseButtons.Left)
+        {
+            //right = e.Button == MouseButtons.Right;
+            //location = e.Location;
+            DragForm(Handle);
+        }
+
+        if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
+        {
+            var point = PointToScreen(e.Location);
+            //ContextMenuStrip.Show(this, point);
+        }
     }
 
     protected override void OnMouseDoubleClick(MouseEventArgs e)
@@ -847,6 +980,18 @@ public class UIWindow : UIWindowBase
         _formMoveMouseDown = false;
 
         animationSource = e.Location;
+
+        // Z-order'a göre tersten kontrol et
+        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                element.OnMouseUp(e);
+                element.OnMouseClick(e);
+                break;
+            }
+        }
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
@@ -968,6 +1113,27 @@ public class UIWindow : UIWindowBase
                 Invalidate();
         }
 
+        UIElementBase hoveredElement = null;
+
+        // Z-order'a göre tersten kontrol et
+        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                hoveredElement = element;
+                element.OnMouseMove(e);
+                break; // İlk hover edilen elementten sonra diğerlerini kontrol etmeye gerek yok
+            }
+        }
+
+        if (hoveredElement != _lastHoveredElement)
+        {
+            _lastHoveredElement?.OnMouseLeave(EventArgs.Empty);
+            hoveredElement?.OnMouseEnter(EventArgs.Empty);
+            _lastHoveredElement = hoveredElement;
+        }
+
         base.OnMouseMove(e);
     }
 
@@ -982,6 +1148,9 @@ public class UIWindow : UIWindowBase
         tabCloseHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         newTabHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
         formMenuHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
+
+        _lastHoveredElement?.OnMouseLeave(e);
+        _lastHoveredElement = null;
 
         Invalidate();
     }
@@ -1040,13 +1209,114 @@ public class UIWindow : UIWindowBase
         Invalidate();
     }
 
-    protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
+
+    private readonly List<UIElementBase> _elements = new();
+    private UIElementBase _focusedElement;
+    private UIElementBase _lastHoveredElement;
+    private Bitmap bitmap;
+    public SKSize CanvasSize => bitmap == null ? SKSize.Empty : new SKSize(bitmap.Width, bitmap.Height);
+
+    public new UIWindowElementCollection Controls { get; }
+
+    public UIElementBase FocusedElement
     {
-        base.OnPaintSurface(e);
+        get => _focusedElement;
+        internal set
+        {
+            if (_focusedElement == value) return;
 
-        var canvas = e.Surface.Canvas;
-        var info = e.Info;
+            var oldFocus = _focusedElement;
+            _focusedElement = value;
 
+            if (oldFocus != null)
+            {
+                oldFocus.OnLostFocus(EventArgs.Empty);
+                oldFocus.OnLeave(EventArgs.Empty);
+            }
+
+            if (_focusedElement != null)
+            {
+                _focusedElement.OnGotFocus(EventArgs.Empty);
+                _focusedElement.OnEnter(EventArgs.Empty);
+            }
+        }
+    }
+
+    public UIElementBase LastHoveredElement
+    {
+        get => _lastHoveredElement;
+        internal set
+        {
+            if (_lastHoveredElement != value)
+            {
+                _lastHoveredElement = value;
+                UpdateCursor(value);
+            }
+        }
+    }
+    private SKImageInfo CreateBitmap()
+    {
+        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+
+        if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
+        {
+            FreeBitmap();
+            if (info.Width != 0 && info.Height != 0)
+            {
+                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppPArgb);
+            }
+        }
+
+        return info;
+    }
+
+    protected override void OnPaint(PaintEventArgs e)
+    {
+        var info = CreateBitmap();
+        if (info.Width == 0 || info.Height == 0)
+            return;
+
+        try
+        {
+            var data = bitmap.LockBits(
+                new Rectangle(0, 0, Width, Height),
+                ImageLockMode.WriteOnly,
+                PixelFormat.Format32bppPArgb
+            );
+
+            try
+            {
+                using var surface = SKSurface.Create(info, data.Scan0, data.Stride);
+                if (surface != null)
+                {
+                    surface.Canvas.Clear(SKColors.Transparent);
+                    this.PaintSurface(surface.Canvas, info);
+                    surface.Canvas.Flush();
+                }
+            }
+            finally
+            {
+                bitmap.UnlockBits(data);
+            }
+
+            e.Graphics.DrawImage(bitmap, 0, 0);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Render error: {ex.Message}");
+        }
+    }
+
+    private void FreeBitmap()
+    {
+        if (bitmap != null)
+        {
+            bitmap.Dispose();
+            bitmap = null;
+        }
+    }
+    private void PaintSurface(SKCanvas canvas, SKImageInfo info)
+    {
         if (info.Width <= 0 || info.Height <= 0)
             return;
 
@@ -1607,6 +1877,60 @@ public class UIWindow : UIWindowBase
 
             canvas.DrawLine(Width, _titleHeightDPI - 1, 0, _titleHeightDPI - 1, borderPaint);
         }
+
+        // Draw others
+
+        // Elementleri Z-order'a göre sırala ve render et
+        var elements = Controls.OrderBy(el => el.ZOrder).ToList();
+        System.Diagnostics.Debug.WriteLine($"Toplam {elements.Count} element render edilecek");
+
+        foreach (var element in elements)
+        {
+            if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
+            {
+                System.Diagnostics.Debug.WriteLine($"Element atlandı: {element.GetType().Name}, Visible: {element.Visible}, Size: {element.Size}");
+                continue;
+            }
+
+            try
+            {
+                System.Diagnostics.Debug.WriteLine($"Element render ediliyor: {element.GetType().Name}, Location: {element.Location}, Size: {element.Size}");
+
+                // Her element için yeni bir surface oluştur
+                using var elementSurface = SKSurface.Create(new SKImageInfo(element.Size.Width, element.Size.Height, info.ColorType, info.AlphaType));
+                if (elementSurface == null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Element surface oluşturulamadı: {element.GetType().Name}");
+                    continue;
+                }
+
+                // Element'in kendi render metodunu çağır
+                element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, info));
+
+                // Element'in çizim alanını kaydet
+                canvas.Save();
+
+                // Element'in çizim alanını kırp
+                var clipRect = SKRect.Create(element.Location.X, element.Location.Y, element.Size.Width, element.Size.Height);
+                canvas.ClipRect(clipRect);
+
+                // Element'in konumuna taşı
+                canvas.Translate(element.Location.X, element.Location.Y);
+
+                // Element'i ana canvas'a çiz
+                using var snapshot = elementSurface.Snapshot();
+                canvas.DrawImage(snapshot, 0, 0);
+
+                // Element'in çizim alanını geri yükle
+                canvas.Restore();
+
+                System.Diagnostics.Debug.WriteLine($"Element başarıyla render edildi: {element.GetType().Name}");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Element render error for {element.GetType().Name}: {ex.Message}");
+            }
+        }
     }
 
     protected override void OnTextChanged(EventArgs e)
@@ -1619,6 +1943,7 @@ public class UIWindow : UIWindowBase
     {
         base.OnSizeChanged(e);
         CalcSystemBoxPos();
+        PerformLayout();
     }
 
     protected override void OnShown(EventArgs e)
@@ -1721,5 +2046,195 @@ public class UIWindow : UIWindowBase
         pageRect.Add(new(44 * DPI, 0, tabAreaWidth, _titleHeightDPI));
         for (int i = 1; i < _windowPageControl.Count; i++)
             pageRect.Add(new(pageRect[i - 1].Right, 0, tabAreaWidth, _titleHeightDPI));
+    }
+
+    internal void UpdateCursor(UIElementBase element)
+    {
+        if (element == null || !element.Enabled || !element.Visible)
+        {
+            _currentCursor = Cursors.Default;
+            return;
+        }
+
+        var newCursor = element.Cursor ?? Cursors.Default;
+        if (_currentCursor != newCursor)
+        {
+            _currentCursor = newCursor;
+            if (Handle != IntPtr.Zero)
+            {
+                SetCursor(_currentCursor.Handle);
+            }
+        }
+    }
+
+    public new void PerformLayout()
+    {
+        // Önce Dock'lu elementleri yerleştir
+        LayoutDockElements();
+
+        // Sonra Anchor'lu elementleri yerleştir
+        LayoutAnchoredElements();
+
+        Invalidate();
+    }
+
+    private void LayoutDockElements()
+    {
+        var clientArea = ClientRectangle;
+        var remainingArea = clientArea;
+
+        // Dock.Top elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Top))
+        {
+            element.Size = new Size(remainingArea.Width, element.Size.Height);
+            element.Location = new Point(remainingArea.Left, remainingArea.Top);
+            remainingArea = new Rectangle(
+                remainingArea.Left,
+                remainingArea.Top + element.Size.Height,
+                remainingArea.Width,
+                remainingArea.Height - element.Size.Height
+            );
+        }
+
+        // Dock.Bottom elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Bottom))
+        {
+            element.Size = new Size(remainingArea.Width, element.Size.Height);
+            element.Location = new Point(remainingArea.Left, remainingArea.Bottom - element.Size.Height);
+            remainingArea = new Rectangle(
+                remainingArea.Left,
+                remainingArea.Top,
+                remainingArea.Width,
+                remainingArea.Height - element.Size.Height
+            );
+        }
+
+        // Dock.Left elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Left))
+        {
+            element.Size = new Size(element.Size.Width, remainingArea.Height);
+            element.Location = new Point(remainingArea.Left, remainingArea.Top);
+            remainingArea = new Rectangle(
+                remainingArea.Left + element.Size.Width,
+                remainingArea.Top,
+                remainingArea.Width - element.Size.Width,
+                remainingArea.Height
+            );
+        }
+
+        // Dock.Right elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Right))
+        {
+            element.Size = new Size(element.Size.Width, remainingArea.Height);
+            element.Location = new Point(remainingArea.Right - element.Size.Width, remainingArea.Top);
+            remainingArea = new Rectangle(
+                remainingArea.Left,
+                remainingArea.Top,
+                remainingArea.Width - element.Size.Width,
+                remainingArea.Height
+            );
+        }
+
+        // Dock.Fill elementleri
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Fill))
+        {
+            element.Location = new Point(remainingArea.Left, remainingArea.Top);
+            element.Size = new Size(remainingArea.Width, remainingArea.Height);
+        }
+    }
+
+    private void LayoutAnchoredElements()
+    {
+        var clientArea = ClientRectangle;
+
+        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.None))
+        {
+            var anchor = element.Anchor;
+            var location = element.Location;
+            var size = element.Size;
+
+            // Yatay konumlandırma
+            if ((anchor & AnchorStyles.Left) != 0 && (anchor & AnchorStyles.Right) != 0)
+            {
+                // Her iki tarafa da bağlı, genişliği ayarla
+                size.Width = clientArea.Width - (location.X + (clientArea.Width - (location.X + size.Width)));
+            }
+            else if ((anchor & AnchorStyles.Right) != 0)
+            {
+                // Sadece sağa bağlı, X konumunu ayarla
+                location.X = clientArea.Width - (clientArea.Width - location.X);
+            }
+
+            // Dikey konumlandırma
+            if ((anchor & AnchorStyles.Top) != 0 && (anchor & AnchorStyles.Bottom) != 0)
+            {
+                // Her iki tarafa da bağlı, yüksekliği ayarla
+                size.Height = clientArea.Height - (location.Y + (clientArea.Height - (location.Y + size.Height)));
+            }
+            else if ((anchor & AnchorStyles.Bottom) != 0)
+            {
+                // Sadece alta bağlı, Y konumunu ayarla
+                location.Y = clientArea.Height - (clientArea.Height - location.Y);
+            }
+
+            element.Location = location;
+            element.Size = size;
+        }
+    }
+
+    public void BringToFront(UIElementBase element)
+    {
+        if (!_elements.Contains(element)) return;
+
+        _maxZOrder++;
+        element.ZOrder = _maxZOrder;
+        InvalidateElement(element);
+    }
+
+    public void SendToBack(UIElementBase element)
+    {
+        if (!_elements.Contains(element)) return;
+
+        var minZOrder = _elements.Min(e => e.ZOrder);
+        element.ZOrder = minZOrder - 1;
+        InvalidateElement(element);
+    }
+
+    private void InvalidateElement(UIElementBase element)
+    {
+        var bounds = new Rectangle(element.Location, element.Size);
+        Invalidate(bounds);
+    }
+
+    protected SKPaint GetPaintFromPool()
+    {
+        var paint = new SKPaint();
+        paint.IsAntialias = true;
+        return paint;
+    }
+
+    protected void ReturnPaintToPool(SKPaint paint)
+    {
+        paint?.Dispose();
+    }
+
+    public new void ResumeLayout()
+    {
+        ResumeLayout(true);
+    }
+
+    public new void ResumeLayout(bool performLayout)
+    {
+        _isLayoutSuspended = false;
+        if (performLayout)
+            PerformLayout();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            FreeBitmap();
+
+        base.Dispose(disposing);
     }
 }

@@ -9,7 +9,7 @@ public class ContextMenuStrip : MenuStrip
 {
     private UIElementBase _sourceElement;
     private bool _isOpen;
-    private UIWindowBase _dropDownWindow;
+    private UIWindow _dropDownWindow;
     private bool _autoClose = true;
 
     public event EventHandler Opening;
@@ -68,8 +68,9 @@ public class ContextMenuStrip : MenuStrip
 
     private void CreateDropDownWindow()
     {
-        _dropDownWindow = new UIWindowBase
+        _dropDownWindow = new UIWindow
         {
+            ShowTitle = false,
             FormBorderStyle = FormBorderStyle.None,
             ShowInTaskbar = false,
             StartPosition = FormStartPosition.Manual,
