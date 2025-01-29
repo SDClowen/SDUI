@@ -72,22 +72,31 @@ public class TextBox : UIElementBase
 
     private void InitializeContextMenu()
     {
-        _contextMenu = new ContextMenuStrip();
+        _contextMenu = new();
         
-        var kesItem = new ToolStripMenuItem("Kes", null, (s, e) => Cut());
-        var kopyalaItem = new ToolStripMenuItem("Kopyala", null, (s, e) => Copy());
-        var yapistirItem = new ToolStripMenuItem("Yapıştır", null, (s, e) => Paste());
-        var silItem = new ToolStripMenuItem("Sil", null, (s, e) => DeleteSelection());
-        var tumunuSecItem = new ToolStripMenuItem("Tümünü Seç", null, (s, e) => SelectAll());
+        var kesItem = new MenuItem("Kes", null);
+        kesItem.Click += (s, e) => Cut();
 
-        _contextMenu.Items.AddRange(new ToolStripItem[]
-        {
+        var kopyalaItem = new MenuItem("Kopyala", null);
+        kopyalaItem.Click += (s, e) => Copy();
+
+        var yapistirItem = new MenuItem("Yapıştır", null);
+        yapistirItem.Click += (s, e) => Paste();
+
+        var silItem = new MenuItem("Sil", null);
+        silItem.Click += (s, e) => DeleteSelection();
+
+        var tumunuSecItem = new MenuItem("Tümünü Seç", null);
+        tumunuSecItem.Click += (s, e) => Cut();
+
+        _contextMenu.Items.AddRange(
+        [
             kesItem, kopyalaItem, yapistirItem,
-            new ToolStripSeparator(),
+            new MenuItemSeparator(),
             silItem,
-            new ToolStripSeparator(),
+            new MenuItemSeparator(),
             tumunuSecItem
-        });
+        ]);
 
         _contextMenu.Opening += (s, e) =>
         {
@@ -504,7 +513,7 @@ public class TextBox : UIElementBase
         {
             if (_isRich == value) return;
             _isRich = value;
-            Invalidate();
+        Invalidate();
         }
     }
 
@@ -628,7 +637,7 @@ public class TextBox : UIElementBase
 
         if (e.Button == MouseButtons.Right)
         {
-            _contextMenu.Show(this.FindForm(), e.Location);
+            _contextMenu.Show(this, e.Location);
         }
     }
 

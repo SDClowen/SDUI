@@ -7,7 +7,7 @@ using System.Windows.Forms;
 namespace SDUI.Test
 {
     [ToolboxItem(false)]
-    public partial class ConfigPage : DoubleBufferedControl
+    public partial class ConfigPage : SDUI.Controls.Panel
     {
         public ConfigPage()
         {

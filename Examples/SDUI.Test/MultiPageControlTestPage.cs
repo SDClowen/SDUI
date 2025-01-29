@@ -6,7 +6,7 @@ using System.Windows.Forms;
 namespace SDUI.Test
 {
     [ToolboxItem(false)]
-    public partial class MultiPageControlTestPage : DoubleBufferedControl
+    public partial class MultiPageControlTestPage : SDUI.Controls.Panel
     {
         private Type[] _types = { typeof(GeneralPage), typeof(ListViewPage), typeof(ConfigPage) };
         public MultiPageControlTestPage()
@@ -17,14 +17,15 @@ namespace SDUI.Test
 
         private void multiPageControl_NewPageButtonClicked(object sender, EventArgs e)
         {
-            var item = multiPageControl.Add();
+            var item = new Page();
 
             var type = _types[new Random().Next(0, _types.Length)];
-            var control = Activator.CreateInstance(type) as Control;
+            var control = Activator.CreateInstance(type) as UIElementBase;
             control.Dock = DockStyle.Fill;
             control.BackColor = ColorScheme.BackColor;
             item.Text = control.Text;
             item.Controls.Add(control);
+            multiPageControl.AddPage(item);
         }
     }
 }

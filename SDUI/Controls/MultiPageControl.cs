@@ -27,6 +27,13 @@ namespace SDUI.Controls
         private bool _isDragging;
         private Point _dragStartPoint;
         private int _draggedTabIndex = -1;
+        private Size _headerControlSize = new Size(24, 24);
+        private bool _renderNewPageButton = true;
+        private bool _renderPageClose = true;
+        private bool _renderPageIcon = true;
+        private bool _isNewPageButtonHovered;
+
+        public event EventHandler NewPageButtonClicked;
 
         public MultiPageControl()
         {
@@ -146,9 +153,9 @@ namespace SDUI.Controls
             {
                 if (_headerHeight == value) return;
                 _headerHeight = value;
-                Invalidate();
-            }
+            Invalidate();
         }
+    }
 
         [Category("Behavior")]
         public bool ShowCloseButton
@@ -161,6 +168,57 @@ namespace SDUI.Controls
                 Invalidate();
             }
         }
+
+        [Category("Appearance")]
+    public Size HeaderControlSize
+    {
+        get => _headerControlSize;
+        set
+        {
+                if (_headerControlSize == value) return;
+            _headerControlSize = value;
+            Invalidate();
+        }
+    }
+
+        [Category("Behavior")]
+        [DefaultValue(true)]
+    public bool RenderNewPageButton
+    {
+        get => _renderNewPageButton;
+        set
+        {
+                if (_renderNewPageButton == value) return;
+            _renderNewPageButton = value;
+            Invalidate();
+        }
+    }
+
+        [Category("Behavior")]
+        [DefaultValue(true)]
+        public bool RenderPageClose
+        {
+            get => _renderPageClose;
+            set
+            {
+                if (_renderPageClose == value) return;
+                _renderPageClose = value;
+                Invalidate();
+            }
+        }
+
+        [Category("Behavior")]
+        [DefaultValue(true)]
+    public bool RenderPageIcon
+    {
+        get => _renderPageIcon;
+        set
+        {
+                if (_renderPageIcon == value) return;
+            _renderPageIcon = value;
+            Invalidate();
+        }
+    }
 
         public void AddPage(Page page)
         {
@@ -251,7 +309,8 @@ namespace SDUI.Controls
                 {
                     // Tab genişliğini hesapla
                     var tabWidth = paint.MeasureText(page.Title) + 20;
-                    if (ShowCloseButton) tabWidth += 20;
+                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
+                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
 
                     // Tab arka planı
                     using (var bgPaint = new SKPaint
@@ -266,16 +325,26 @@ namespace SDUI.Controls
                         canvas.DrawRoundRect(tabRect, CornerRadius, CornerRadius, bgPaint);
                     }
 
+                    float textX = tabX + 10;
+                    
+                    // Sayfa ikonu
+                    if (RenderPageIcon)
+                    {
+                        var iconY = (HeaderHeight - HeaderControlSize.Height) / 2;
+                        // Burada sayfa ikonu çizimi yapılabilir
+                        textX += HeaderControlSize.Width;
+                    }
+
                     // Tab başlığı
                     paint.Color = isSelected ? SelectedTabForeColor.ToSKColor() : HeaderForeColor.ToSKColor();
                     var textY = (HeaderHeight + paint.TextSize) / 2;
-                    canvas.DrawText(page.Title, tabX + 10, textY, paint);
+                    canvas.DrawText(page.Title, textX, textY, paint);
 
                     // Kapatma düğmesi
-                    if (ShowCloseButton)
+                    if (RenderPageClose)
                     {
-                        var closeButtonX = tabX + tabWidth - 20;
-                        var closeButtonY = (HeaderHeight - 12) / 2;
+                        var closeButtonX = tabX + tabWidth - HeaderControlSize.Width;
+                        var closeButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
                         var isCloseHovered = i == _hoveredCloseButtonIndex;
 
                         using (var closePaint = new SKPaint
@@ -286,17 +355,44 @@ namespace SDUI.Controls
                         })
                         {
                             canvas.DrawLine(
-                                closeButtonX + 4, closeButtonY + 4,
-                                closeButtonX + 12, closeButtonY + 12,
+                                closeButtonX + 8, closeButtonY + 8,
+                                closeButtonX + HeaderControlSize.Width - 8, closeButtonY + HeaderControlSize.Height - 8,
                                 closePaint);
                             canvas.DrawLine(
-                                closeButtonX + 12, closeButtonY + 4,
-                                closeButtonX + 4, closeButtonY + 12,
+                                closeButtonX + HeaderControlSize.Width - 8, closeButtonY + 8,
+                                closeButtonX + 8, closeButtonY + HeaderControlSize.Height - 8,
                                 closePaint);
                         }
                     }
 
                     tabX += tabWidth;
+                }
+            }
+
+            // Yeni sayfa düğmesi
+            if (RenderNewPageButton)
+            {
+                var newPageButtonX = tabX + 5;
+                var newPageButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
+
+                using (var paint = new SKPaint
+                {
+                    Color = _isNewPageButtonHovered ? SelectedTabForeColor.ToSKColor() : HeaderForeColor.ToSKColor(),
+                    IsAntialias = true,
+                    StrokeWidth = 2
+                })
+                {
+                    // + işareti çiz
+                    var centerX = newPageButtonX + HeaderControlSize.Width / 2;
+                    var centerY = newPageButtonY + HeaderControlSize.Height / 2;
+                    canvas.DrawLine(
+                        centerX - 6, centerY,
+                        centerX + 6, centerY,
+                        paint);
+                    canvas.DrawLine(
+                        centerX, centerY - 6,
+                        centerX, centerY + 6,
+                        paint);
                 }
             }
 
@@ -336,6 +432,9 @@ namespace SDUI.Controls
         {
             base.OnMouseMove(e);
 
+            var oldNewPageButtonHovered = _isNewPageButtonHovered;
+            _isNewPageButtonHovered = IsPointInNewPageButton(e.Location);
+
             if (_isDragging && _draggedTabIndex >= 0)
             {
                 // Sürükleme işlemi
@@ -364,8 +463,12 @@ namespace SDUI.Controls
                 _hoveredTabIndex = GetTabIndexAtPoint(e.Location);
                 _hoveredCloseButtonIndex = GetCloseButtonIndexAtPoint(e.Location);
 
-                if (oldHoverTab != _hoveredTabIndex || oldHoverClose != _hoveredCloseButtonIndex)
+                if (oldHoverTab != _hoveredTabIndex || 
+                    oldHoverClose != _hoveredCloseButtonIndex || 
+                    oldNewPageButtonHovered != _isNewPageButtonHovered)
+                {
                     Invalidate();
+                }
             }
         }
 
@@ -392,9 +495,13 @@ namespace SDUI.Controls
 
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                if (_hoveredCloseButtonIndex >= 0 && ShowCloseButton)
+                if (_hoveredCloseButtonIndex >= 0 && RenderPageClose)
                 {
                     RemovePageAt(_hoveredCloseButtonIndex);
+                }
+                else if (_isNewPageButtonHovered && RenderNewPageButton)
+                {
+                    NewPageButtonClicked?.Invoke(this, EventArgs.Empty);
                 }
                 
                 _isDragging = false;
@@ -408,8 +515,9 @@ namespace SDUI.Controls
             
             _hoveredTabIndex = -1;
             _hoveredCloseButtonIndex = -1;
-            Invalidate();
-        }
+            _isNewPageButtonHovered = false;
+        Invalidate();
+    }
 
         private int GetTabIndexAtPoint(Point point)
         {
@@ -425,7 +533,8 @@ namespace SDUI.Controls
                 })
                 {
                     var tabWidth = paint.MeasureText(_pages[i].Title) + 20;
-                    if (ShowCloseButton) tabWidth += 20;
+                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
+                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
 
                     if (point.X >= x && point.X < x + tabWidth)
                         return i;
@@ -439,7 +548,7 @@ namespace SDUI.Controls
 
         private int GetCloseButtonIndexAtPoint(Point point)
         {
-            if (!ShowCloseButton || point.Y > HeaderHeight) return -1;
+            if (!RenderPageClose || point.Y > HeaderHeight) return -1;
 
             var x = BorderWidth;
             for (int i = 0; i < _pages.Count; i++)
@@ -451,13 +560,14 @@ namespace SDUI.Controls
                 })
                 {
                     var tabWidth = paint.MeasureText(_pages[i].Title) + 20;
-                    if (ShowCloseButton) tabWidth += 20;
+                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
+                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
 
-                    var closeButtonX = x + tabWidth - 20;
-                    var closeButtonY = (HeaderHeight - 12) / 2;
+                    var closeButtonX = x + tabWidth - HeaderControlSize.Width;
+                    var closeButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
 
-                    if (point.X >= closeButtonX && point.X <= closeButtonX + 16 &&
-                        point.Y >= closeButtonY && point.Y <= closeButtonY + 16)
+                    if (point.X >= closeButtonX && point.X <= closeButtonX + HeaderControlSize.Width &&
+                        point.Y >= closeButtonY && point.Y <= closeButtonY + HeaderControlSize.Height)
                         return i;
 
                     x += tabWidth;
@@ -465,6 +575,37 @@ namespace SDUI.Controls
             }
 
             return -1;
+        }
+
+        private bool IsPointInNewPageButton(Point point)
+        {
+            if (!RenderNewPageButton || point.Y > HeaderHeight) return false;
+
+            var x = BorderWidth;
+            foreach (var page in _pages)
+            {
+                using (var paint = new SKPaint
+                {
+                    TextSize = Font.Size.PtToPx(this),
+                    Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+                })
+                {
+                    var tabWidth = paint.MeasureText(page.Title) + 20;
+                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
+                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
+                    x += tabWidth;
+                }
+            }
+
+            var newPageButtonX = x + 5;
+            var newPageButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
+            var buttonRect = new Rectangle(
+                (int)newPageButtonX,
+                (int)newPageButtonY,
+                HeaderControlSize.Width,
+                HeaderControlSize.Height);
+
+            return buttonRect.Contains(point);
         }
 
         protected virtual void OnSelectedIndexChanged(int oldIndex, int newIndex)

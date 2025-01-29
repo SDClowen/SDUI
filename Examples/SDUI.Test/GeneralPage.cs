@@ -9,15 +9,13 @@ using System.Windows.Forms;
 namespace SDUI.Test
 {
     [ToolboxItem(false)]
-    public partial class GeneralPage : DoubleBufferedControl
+    public partial class GeneralPage : SDUI.Controls.Panel
     {
         public GeneralPage()
         {
             InitializeComponent();
             this.Text = "General";
             comboBox6.Items.AddRange(Enum.GetNames<HatchStyle>());
-
-            toolTip1.SetToolTip(progressBar8, "Test tooltip");
         }
 
         private void trackBar1_Scroll(object sender, EventArgs e)

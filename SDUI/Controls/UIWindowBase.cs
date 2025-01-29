@@ -136,6 +136,7 @@ public class UIWindowBase : Form
     }
 
     public new List<UIElementBase> Controls => _elements;
+    public new SDUI.Controls.ContextMenuStrip ContextMenuStrip { get; set; }
 
     public void AddElement(UIElementBase element)
     {
@@ -170,6 +171,8 @@ public class UIWindowBase : Form
 
     protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
+        e.Surface.Canvas.Clear(ColorScheme.BackColor.ToSKColor());
+
         PaintSurface?.Invoke(this, e);
 
         // Elementleri Z-order'a göre sırala ve render et
@@ -191,8 +194,8 @@ public class UIWindowBase : Form
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        if (designMode)
-            return;
+        //if (designMode)
+          //  return;
 
         base.OnPaint(e);
 
@@ -204,7 +207,7 @@ public class UIWindowBase : Form
 
         using (var surface = SKSurface.Create(info, data.Scan0, data.Stride))
         {
-            OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
+            this.OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
             surface.Canvas.Flush();
         }
 
@@ -330,6 +333,12 @@ public class UIWindowBase : Form
             right = e.Button == MouseButtons.Right;
             location = e.Location;
             DragForm(Handle);
+        }
+
+        if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
+        {
+            var point = PointToScreen(e.Location);
+            //ContextMenuStrip.Show(this, point);
         }
     }
 

@@ -34,15 +34,15 @@
             button6 = new SDUI.Controls.Button();
             groupBox4 = new SDUI.Controls.GroupBox();
             comboBox6 = new SDUI.Controls.ComboBox();
-            trackBar2 = new System.Windows.Forms.TrackBar();
+            trackBar2 = new();
             comboBox5 = new SDUI.Controls.ComboBox();
-            trackBar1 = new System.Windows.Forms.TrackBar();
+            trackBar1 = new();
             buttonOpenInputDialog = new SDUI.Controls.Button();
             buttonRandomColor = new SDUI.Controls.Button();
             label4 = new SDUI.Controls.Label();
             button5 = new SDUI.Controls.Button();
             groupBox3 = new SDUI.Controls.GroupBox();
-            richTextBox1 = new System.Windows.Forms.RichTextBox();
+            richTextBox1 = new();
             radio2 = new SDUI.Controls.Radio();
             radio1 = new SDUI.Controls.Radio();
             checkBox6 = new SDUI.Controls.CheckBox();
@@ -66,19 +66,19 @@
             label2 = new SDUI.Controls.Label();
             label1 = new SDUI.Controls.Label();
             panel2 = new SDUI.Controls.Panel();
-            panel3 = new System.Windows.Forms.Panel();
+            panel3 = new();
             separator5 = new SDUI.Controls.Separator();
             comboBox3 = new SDUI.Controls.ComboBox();
             separator3 = new SDUI.Controls.Separator();
             comboBox2 = new SDUI.Controls.ComboBox();
             groupBox2 = new SDUI.Controls.GroupBox();
-            listView3 = new SDUI.SK.ListView();
+            listView3 = new SDUI.Controls.ListView();
             columnHeader6 = new System.Windows.Forms.ColumnHeader();
             comboBox4 = new SDUI.Controls.ComboBox();
             groupBox1 = new SDUI.Controls.GroupBox();
             separator4 = new SDUI.Controls.Separator();
             panel1 = new SDUI.Controls.Panel();
-            listView2 = new SDUI.SK.ListView();
+            listView2 = new SDUI.Controls.ListView();
             columnHeader5 = new System.Windows.Forms.ColumnHeader();
             comboBox1 = new SDUI.Controls.ComboBox();
             textBox1 = new SDUI.Controls.TextBox();
@@ -95,9 +95,6 @@
             progressBar1 = new SDUI.Controls.ProgressBar();
             separator2 = new SDUI.Controls.Separator();
             separator1 = new SDUI.Controls.Separator();
-            toolTip1 = new System.Windows.Forms.ToolTip(components);
-            ((System.ComponentModel.ISupportInitialize)trackBar2).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)trackBar1).BeginInit();
             groupBox3.SuspendLayout();
             panel8.SuspendLayout();
             panel2.SuspendLayout();
@@ -199,7 +196,7 @@
             trackBar2.Size = new System.Drawing.Size(266, 56);
             trackBar2.TabIndex = 71;
             trackBar2.Value = 4;
-            trackBar2.Scroll += trackBar2_Scroll;
+            trackBar2.ValueChanged += trackBar2_Scroll;
             // 
             // comboBox5
             // 
@@ -242,7 +239,7 @@
             trackBar1.Name = "trackBar1";
             trackBar1.Size = new System.Drawing.Size(266, 56);
             trackBar1.TabIndex = 70;
-            trackBar1.Scroll += trackBar1_Scroll;
+            trackBar1.ValueChanged += trackBar1_Scroll;
             // 
             // buttonOpenInputDialog
             // 
@@ -341,8 +338,7 @@
             groupBox3.UseVisualStyleBackColor = false;
             // 
             // richTextBox1
-            // 
-            richTextBox1.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            //
             richTextBox1.Dock = System.Windows.Forms.DockStyle.Fill;
             richTextBox1.Location = new System.Drawing.Point(0, 0);
             richTextBox1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
@@ -1349,9 +1345,7 @@
             separator1.UseVisualStyleBackColor = false;
             // 
             // GeneralPage
-            // 
-            AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            //
             Controls.Add(separator1);
             Controls.Add(rsButton1);
             Controls.Add(button6);
@@ -1397,8 +1391,6 @@
             Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             Name = "GeneralPage";
             Size = new System.Drawing.Size(1442, 783);
-            ((System.ComponentModel.ISupportInitialize)trackBar2).EndInit();
-            ((System.ComponentModel.ISupportInitialize)trackBar1).EndInit();
             groupBox3.ResumeLayout(false);
             panel8.ResumeLayout(false);
             panel8.PerformLayout();
@@ -1417,15 +1409,15 @@
         private Controls.Button button6;
         private Controls.GroupBox groupBox4;
         private Controls.ComboBox comboBox6;
-        private System.Windows.Forms.TrackBar trackBar2;
+        private Controls.TrackBar trackBar2;
         private Controls.ComboBox comboBox5;
-        private System.Windows.Forms.TrackBar trackBar1;
+        private Controls.TrackBar trackBar1;
         private Controls.Button buttonOpenInputDialog;
         private Controls.Button buttonRandomColor;
         private Controls.Label label4;
         private Controls.Button button5;
         private Controls.GroupBox groupBox3;
-        private System.Windows.Forms.RichTextBox richTextBox1;
+        private Controls.TextBox richTextBox1;
         private Controls.Radio radio2;
         private Controls.Radio radio1;
         private Controls.CheckBox checkBox6;
@@ -1449,19 +1441,19 @@
         private Controls.Label label2;
         private Controls.Label label1;
         private Controls.Panel panel2;
-        private System.Windows.Forms.Panel panel3;
+        private Controls.Panel panel3;
         private Controls.Separator separator5;
         private Controls.ComboBox comboBox3;
         private Controls.Separator separator3;
         private Controls.ComboBox comboBox2;
         private Controls.GroupBox groupBox2;
-        private SDUI.SK.ListView listView3;
+        private SDUI.Controls.ListView listView3;
         private System.Windows.Forms.ColumnHeader columnHeader6;
         private Controls.ComboBox comboBox4;
         private Controls.GroupBox groupBox1;
         private Controls.Separator separator4;
         private Controls.Panel panel1;
-        private SDUI.SK.ListView listView2;
+        private SDUI.Controls.ListView listView2;
         private System.Windows.Forms.ColumnHeader columnHeader5;
         private Controls.ComboBox comboBox1;
         private Controls.TextBox textBox1;
@@ -1478,6 +1470,5 @@
         private Controls.ProgressBar progressBar1;
         private Controls.Separator separator2;
         private Controls.Separator separator1;
-        private System.Windows.Forms.ToolTip toolTip1;
     }
 }

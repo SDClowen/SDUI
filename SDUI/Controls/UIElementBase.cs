@@ -41,6 +41,7 @@ namespace SDUI.Controls
 
     public abstract class UIElementBase : IDisposable
     {
+        public Bitmap Image { get; set; }
         protected SKSurface Surface { get; private set; }
 
         protected SKCanvas Canvas => Surface?.Canvas;
@@ -128,7 +129,7 @@ namespace SDUI.Controls
                 if (_size == newSize) return;
                 _size = newSize;
                 OnSizeChanged(EventArgs.Empty);
-                
+
                 // Parent'a bildir
                 if (Parent is UIWindowBase parentWindow)
                 {
@@ -571,6 +572,20 @@ namespace SDUI.Controls
         private bool _isDisposed;
         protected bool IsDisposed => _isDisposed;
 
+        private ContextMenuStrip _contextMenuStrip;
+
+        [Category("Behavior")]
+        [DefaultValue(null)]
+        public ContextMenuStrip ContextMenuStrip
+        {
+            get => _contextMenuStrip;
+            set
+            {
+                if (_contextMenuStrip == value) return;
+                _contextMenuStrip = value;
+            }
+        }
+
         #endregion
 
         #region Validation Properties
@@ -809,7 +824,16 @@ namespace SDUI.Controls
 
         internal virtual void OnMouseMove(MouseEventArgs e) => MouseMove?.Invoke(this, e);
 
-        internal virtual void OnMouseDown(MouseEventArgs e) => MouseDown?.Invoke(this, e);
+        internal virtual void OnMouseDown(MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
+            {
+                var point = PointToScreen(e.Location);
+                ContextMenuStrip.Show(this, point);
+            }
+
+            MouseDown?.Invoke(this, e);
+        }
 
         internal virtual void OnMouseUp(MouseEventArgs e) => MouseUp?.Invoke(this, e);
 
@@ -1043,7 +1067,7 @@ namespace SDUI.Controls
                 return form;
             else if (Parent is UIElementBase parentElement)
                 return parentElement.FindForm();
-            
+
             return null;
         }
 

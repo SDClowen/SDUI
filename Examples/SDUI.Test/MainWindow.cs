@@ -19,7 +19,7 @@ public partial class MainWindow : UIWindow
 
     private void MainWindow_Load(object sender, EventArgs e)
     {
-        windowPageControl.Controls.AddRange(new System.Windows.Forms.Control[] {
+        windowPageControl.Controls.AddRange(new UIElementBase[] {
             new GeneralPage(),
             new ListViewPage(),
             new ConfigPage(),

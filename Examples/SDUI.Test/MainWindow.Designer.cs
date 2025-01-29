@@ -35,52 +35,52 @@ public partial class MainWindow
         components = new System.ComponentModel.Container();
         System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
         contextMenuStrip1 = new SDUI.Controls.ContextMenuStrip();
-        toolStripMenuItem1 = new ToolStripMenuItem();
-        toolStripMenuItem2 = new ToolStripMenuItem();
-        toolStripMenuItem3 = new ToolStripMenuItem();
-        toolStripMenuItem8 = new ToolStripMenuItem();
-        toolStripMenuItem9 = new ToolStripMenuItem();
-        toolStripSeparator7 = new ToolStripSeparator();
-        toolStripMenuItem10 = new ToolStripMenuItem();
-        toolStripMenuItem11 = new ToolStripMenuItem();
-        toolStripMenuItem12 = new ToolStripMenuItem();
-        toolStripMenuItem13 = new ToolStripMenuItem();
-        toolStripMenuItem14 = new ToolStripMenuItem();
-        toolStripMenuItem4 = new ToolStripMenuItem();
-        toolStripMenuItem5 = new ToolStripMenuItem();
-        toolStripMenuItem6 = new ToolStripMenuItem();
-        toolStripMenuItem7 = new ToolStripMenuItem();
-        toolStripSeparator6 = new ToolStripSeparator();
+        toolStripMenuItem1 = new ();
+        toolStripMenuItem2 = new ();
+        toolStripMenuItem3 = new ();
+        toolStripMenuItem8 = new ();
+        toolStripMenuItem9 = new ();
+        toolStripSeparator7 = new ();
+        toolStripMenuItem10 = new ();
+        toolStripMenuItem11 = new ();
+        toolStripMenuItem12 = new ();
+        toolStripMenuItem13 = new ();
+        toolStripMenuItem14 = new ();
+        toolStripMenuItem4 = new ();
+        toolStripMenuItem5 = new ();
+        toolStripMenuItem6 = new ();
+        toolStripMenuItem7 = new ();
+        toolStripSeparator6 = new ();
         menuStrip1 = new SDUI.Controls.MenuStrip();
-        fileToolStripMenuItem = new ToolStripMenuItem();
-        newToolStripMenuItem = new ToolStripMenuItem();
-        openToolStripMenuItem = new ToolStripMenuItem();
-        toolStripSeparator = new ToolStripSeparator();
-        saveToolStripMenuItem = new ToolStripMenuItem();
-        saveAsToolStripMenuItem = new ToolStripMenuItem();
-        toolStripSeparator1 = new ToolStripSeparator();
-        printToolStripMenuItem = new ToolStripMenuItem();
-        printPreviewToolStripMenuItem = new ToolStripMenuItem();
-        toolStripSeparator2 = new ToolStripSeparator();
-        exitToolStripMenuItem = new ToolStripMenuItem();
-        editToolStripMenuItem = new ToolStripMenuItem();
-        undoToolStripMenuItem = new ToolStripMenuItem();
-        redoToolStripMenuItem = new ToolStripMenuItem();
-        toolStripSeparator3 = new ToolStripSeparator();
-        cutToolStripMenuItem = new ToolStripMenuItem();
-        copyToolStripMenuItem = new ToolStripMenuItem();
-        pasteToolStripMenuItem = new ToolStripMenuItem();
-        toolStripSeparator4 = new ToolStripSeparator();
-        selectAllToolStripMenuItem = new ToolStripMenuItem();
-        toolsToolStripMenuItem = new ToolStripMenuItem();
-        customizeToolStripMenuItem = new ToolStripMenuItem();
-        optionsToolStripMenuItem = new ToolStripMenuItem();
-        helpToolStripMenuItem = new ToolStripMenuItem();
-        contentsToolStripMenuItem = new ToolStripMenuItem();
-        indexToolStripMenuItem = new ToolStripMenuItem();
-        searchToolStripMenuItem = new ToolStripMenuItem();
-        toolStripSeparator5 = new ToolStripSeparator();
-        aboutToolStripMenuItem = new ToolStripMenuItem();
+        fileToolStripMenuItem = new ();
+        newToolStripMenuItem = new ();
+        openToolStripMenuItem = new ();
+        toolStripSeparator = new ();
+        saveToolStripMenuItem = new ();
+        saveAsToolStripMenuItem = new ();
+        toolStripSeparator1 = new ();
+        printToolStripMenuItem = new ();
+        printPreviewToolStripMenuItem = new ();
+        toolStripSeparator2 = new ();
+        exitToolStripMenuItem = new ();
+        editToolStripMenuItem = new ();
+        undoToolStripMenuItem = new ();
+        redoToolStripMenuItem = new ();
+        toolStripSeparator3 = new ();
+        cutToolStripMenuItem = new ();
+        copyToolStripMenuItem = new ();
+        pasteToolStripMenuItem = new ();
+        toolStripSeparator4 = new ();
+        selectAllToolStripMenuItem = new ();
+        toolsToolStripMenuItem = new ();
+        customizeToolStripMenuItem = new ();
+        optionsToolStripMenuItem = new ();
+        helpToolStripMenuItem = new ();
+        contentsToolStripMenuItem = new ();
+        indexToolStripMenuItem = new ();
+        searchToolStripMenuItem = new ();
+        toolStripSeparator5 = new ();
+        aboutToolStripMenuItem = new ();
         toolTip1 = new ToolTip(components);
         windowPageControl = new WindowPageControl();
         separator1 = new Separator();
@@ -91,7 +91,7 @@ public partial class MainWindow
         // contextMenuStrip1
         // 
         contextMenuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
-        contextMenuStrip1.Items.AddRange(new ToolStripItem[] { toolStripMenuItem1, toolStripMenuItem2, toolStripMenuItem3, toolStripMenuItem4, toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem7, toolStripSeparator6 });
+        contextMenuStrip1.Items.AddRange(new MenuItem[] { toolStripMenuItem1, toolStripMenuItem2, toolStripMenuItem3, toolStripMenuItem4, toolStripMenuItem5, toolStripMenuItem6, toolStripMenuItem7, toolStripSeparator6 });
         contextMenuStrip1.Name = "contextMenuStrip1";
         contextMenuStrip1.Size = new System.Drawing.Size(212, 178);
         // 
@@ -111,7 +111,7 @@ public partial class MainWindow
         // 
         // toolStripMenuItem3
         // 
-        toolStripMenuItem3.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem8, toolStripMenuItem9, toolStripSeparator7, toolStripMenuItem10 });
+        toolStripMenuItem3.DropDownItems.AddRange(new MenuItem[] { toolStripMenuItem8, toolStripMenuItem9, toolStripSeparator7, toolStripMenuItem10 });
         toolStripMenuItem3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         toolStripMenuItem3.Name = "toolStripMenuItem3";
         toolStripMenuItem3.Size = new System.Drawing.Size(211, 24);
@@ -138,7 +138,7 @@ public partial class MainWindow
         // 
         // toolStripMenuItem10
         // 
-        toolStripMenuItem10.DropDownItems.AddRange(new ToolStripItem[] { toolStripMenuItem11, toolStripMenuItem12, toolStripMenuItem13, toolStripMenuItem14 });
+        toolStripMenuItem10.DropDownItems.AddRange(new MenuItem[] { toolStripMenuItem11, toolStripMenuItem12, toolStripMenuItem13, toolStripMenuItem14 });
         toolStripMenuItem10.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         toolStripMenuItem10.Name = "toolStripMenuItem10";
         toolStripMenuItem10.Size = new System.Drawing.Size(233, 26);
@@ -206,7 +206,7 @@ public partial class MainWindow
         menuStrip1.BackColor = System.Drawing.Color.Transparent;
         menuStrip1.Dock = DockStyle.Bottom;
         menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
-        menuStrip1.Items.AddRange(new ToolStripItem[] { fileToolStripMenuItem, editToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
+        menuStrip1.Items.AddRange(new MenuItem[] { fileToolStripMenuItem, editToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
         menuStrip1.Location = new System.Drawing.Point(1, 737);
         menuStrip1.Name = "menuStrip1";
         menuStrip1.Padding = new Padding(6, 3, 0, 3);
@@ -217,7 +217,7 @@ public partial class MainWindow
         // 
         // fileToolStripMenuItem
         // 
-        fileToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { newToolStripMenuItem, openToolStripMenuItem, toolStripSeparator, saveToolStripMenuItem, saveAsToolStripMenuItem, toolStripSeparator1, printToolStripMenuItem, printPreviewToolStripMenuItem, toolStripSeparator2, exitToolStripMenuItem });
+        fileToolStripMenuItem.DropDownItems.AddRange(new MenuItem[] { newToolStripMenuItem, openToolStripMenuItem, toolStripSeparator, saveToolStripMenuItem, saveAsToolStripMenuItem, toolStripSeparator1, printToolStripMenuItem, printPreviewToolStripMenuItem, toolStripSeparator2, exitToolStripMenuItem });
         fileToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         fileToolStripMenuItem.Name = "fileToolStripMenuItem";
         fileToolStripMenuItem.Size = new System.Drawing.Size(46, 24);
@@ -296,7 +296,7 @@ public partial class MainWindow
         // 
         // editToolStripMenuItem
         // 
-        editToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { undoToolStripMenuItem, redoToolStripMenuItem, toolStripSeparator3, cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator4, selectAllToolStripMenuItem });
+        editToolStripMenuItem.DropDownItems.AddRange(new MenuItem[] { undoToolStripMenuItem, redoToolStripMenuItem, toolStripSeparator3, cutToolStripMenuItem, copyToolStripMenuItem, pasteToolStripMenuItem, toolStripSeparator4, selectAllToolStripMenuItem });
         editToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         editToolStripMenuItem.Name = "editToolStripMenuItem";
         editToolStripMenuItem.Size = new System.Drawing.Size(49, 24);
@@ -367,7 +367,7 @@ public partial class MainWindow
         // 
         // toolsToolStripMenuItem
         // 
-        toolsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem });
+        toolsToolStripMenuItem.DropDownItems.AddRange(new MenuItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem });
         toolsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
         toolsToolStripMenuItem.Size = new System.Drawing.Size(58, 24);
@@ -389,7 +389,7 @@ public partial class MainWindow
         // 
         // helpToolStripMenuItem
         // 
-        helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { contentsToolStripMenuItem, indexToolStripMenuItem, searchToolStripMenuItem, toolStripSeparator5, aboutToolStripMenuItem });
+        helpToolStripMenuItem.DropDownItems.AddRange(new MenuItem[] { contentsToolStripMenuItem, indexToolStripMenuItem, searchToolStripMenuItem, toolStripSeparator5, aboutToolStripMenuItem });
         helpToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         helpToolStripMenuItem.Name = "helpToolStripMenuItem";
         helpToolStripMenuItem.Size = new System.Drawing.Size(55, 24);
@@ -478,7 +478,7 @@ public partial class MainWindow
         Padding = new Padding(1, 40, 1, 1);
         StartPosition = FormStartPosition.CenterScreen;
         Text = "MainWindow";
-        TitleTabDesingMode = TabDesingMode.Chromed;
+        TitleTabDesingMode = TabDesingMode.Rectangle;
         WindowPageControl = windowPageControl;
         Load += MainWindow_Load;
         contextMenuStrip1.ResumeLayout(false);
@@ -490,52 +490,52 @@ public partial class MainWindow
 
     #endregion
     private Controls.MenuStrip menuStrip1;
-    private ToolStripMenuItem fileToolStripMenuItem;
-    private ToolStripMenuItem newToolStripMenuItem;
-    private ToolStripMenuItem openToolStripMenuItem;
-    private ToolStripSeparator toolStripSeparator;
-    private ToolStripMenuItem saveToolStripMenuItem;
-    private ToolStripMenuItem saveAsToolStripMenuItem;
-    private ToolStripSeparator toolStripSeparator1;
-    private ToolStripMenuItem printToolStripMenuItem;
-    private ToolStripMenuItem printPreviewToolStripMenuItem;
-    private ToolStripSeparator toolStripSeparator2;
-    private ToolStripMenuItem exitToolStripMenuItem;
-    private ToolStripMenuItem editToolStripMenuItem;
-    private ToolStripMenuItem undoToolStripMenuItem;
-    private ToolStripMenuItem redoToolStripMenuItem;
-    private ToolStripSeparator toolStripSeparator3;
-    private ToolStripMenuItem cutToolStripMenuItem;
-    private ToolStripMenuItem copyToolStripMenuItem;
-    private ToolStripMenuItem pasteToolStripMenuItem;
-    private ToolStripSeparator toolStripSeparator4;
-    private ToolStripMenuItem selectAllToolStripMenuItem;
-    private ToolStripMenuItem toolsToolStripMenuItem;
-    private ToolStripMenuItem customizeToolStripMenuItem;
-    private ToolStripMenuItem optionsToolStripMenuItem;
-    private ToolStripMenuItem helpToolStripMenuItem;
-    private ToolStripMenuItem contentsToolStripMenuItem;
-    private ToolStripMenuItem indexToolStripMenuItem;
-    private ToolStripMenuItem searchToolStripMenuItem;
-    private ToolStripSeparator toolStripSeparator5;
-    private ToolStripMenuItem aboutToolStripMenuItem;
+    private MenuItem fileToolStripMenuItem;
+    private MenuItem newToolStripMenuItem;
+    private MenuItem openToolStripMenuItem;
+    private MenuItemSeparator toolStripSeparator;
+    private MenuItem saveToolStripMenuItem;
+    private MenuItem saveAsToolStripMenuItem;
+    private MenuItemSeparator toolStripSeparator1;
+    private MenuItem printToolStripMenuItem;
+    private MenuItem printPreviewToolStripMenuItem;
+    private MenuItemSeparator toolStripSeparator2;
+    private MenuItem exitToolStripMenuItem;
+    private MenuItem editToolStripMenuItem;
+    private MenuItem undoToolStripMenuItem;
+    private MenuItem redoToolStripMenuItem;
+    private MenuItemSeparator toolStripSeparator3;
+    private MenuItem cutToolStripMenuItem;
+    private MenuItem copyToolStripMenuItem;
+    private MenuItem pasteToolStripMenuItem;
+    private MenuItemSeparator toolStripSeparator4;
+    private MenuItem selectAllToolStripMenuItem;
+    private MenuItem toolsToolStripMenuItem;
+    private MenuItem customizeToolStripMenuItem;
+    private MenuItem optionsToolStripMenuItem;
+    private MenuItem helpToolStripMenuItem;
+    private MenuItem contentsToolStripMenuItem;
+    private MenuItem indexToolStripMenuItem;
+    private MenuItem searchToolStripMenuItem;
+    private MenuItemSeparator toolStripSeparator5;
+    private MenuItem aboutToolStripMenuItem;
     private Controls.ContextMenuStrip contextMenuStrip1;
-    private ToolStripMenuItem toolStripMenuItem1;
-    private ToolStripMenuItem toolStripMenuItem2;
-    private ToolStripMenuItem toolStripMenuItem3;
-    private ToolStripMenuItem toolStripMenuItem8;
-    private ToolStripMenuItem toolStripMenuItem9;
-    private ToolStripMenuItem toolStripMenuItem10;
-    private ToolStripMenuItem toolStripMenuItem11;
-    private ToolStripMenuItem toolStripMenuItem12;
-    private ToolStripMenuItem toolStripMenuItem13;
-    private ToolStripMenuItem toolStripMenuItem14;
-    private ToolStripMenuItem toolStripMenuItem4;
-    private ToolStripMenuItem toolStripMenuItem5;
-    private ToolStripMenuItem toolStripMenuItem6;
-    private ToolStripMenuItem toolStripMenuItem7;
-    private ToolStripSeparator toolStripSeparator7;
-    private ToolStripSeparator toolStripSeparator6;
+    private MenuItem toolStripMenuItem1;
+    private MenuItem toolStripMenuItem2;
+    private MenuItem toolStripMenuItem3;
+    private MenuItem toolStripMenuItem8;
+    private MenuItem toolStripMenuItem9;
+    private MenuItem toolStripMenuItem10;
+    private MenuItem toolStripMenuItem11;
+    private MenuItem toolStripMenuItem12;
+    private MenuItem toolStripMenuItem13;
+    private MenuItem toolStripMenuItem14;
+    private MenuItem toolStripMenuItem4;
+    private MenuItem toolStripMenuItem5;
+    private MenuItem toolStripMenuItem6;
+    private MenuItem toolStripMenuItem7;
+    private MenuItemSeparator toolStripSeparator7;
+    private MenuItemSeparator toolStripSeparator6;
     private ToolTip toolTip1;
     private WindowPageControl windowPageControl;
     private Separator separator1;

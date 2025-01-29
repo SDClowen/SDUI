@@ -715,7 +715,7 @@ public class UIWindow : UIWindowBase
             _inExtendBox = false;
             if (ExtendMenu != null)
             {
-                ExtendMenu.Show(this, Convert.ToInt32(_extendBoxRect.Left), Convert.ToInt32(_titleHeightDPI - 1));
+                //ExtendMenu.Show(this, new Point(Convert.ToInt32(_extendBoxRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
             }
             else
             {
@@ -728,7 +728,7 @@ public class UIWindow : UIWindowBase
             _inFormMenuBox = false;
             if (FormMenu != null)
             {
-                FormMenu.Show(this, Convert.ToInt32(_formMenuRect.Left), Convert.ToInt32(_titleHeightDPI - 1));
+                //FormMenu.Show(this, new Point(Convert.ToInt32(_formMenuRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
             }
             else
             {
@@ -1042,6 +1042,8 @@ public class UIWindow : UIWindowBase
 
     protected override void OnPaintSurface(SKPaintSurfaceEventArgs e)
     {
+        base.OnPaintSurface(e);
+
         var canvas = e.Surface.Canvas;
         var info = e.Info;
 
