@@ -291,13 +291,7 @@ public class UIWindow : UIWindowBase
 
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
-        base.OnDpiChanged(e);
-
-        foreach (var element in _elements)
-        {
-            element.OnDpiChanged(EventArgs.Empty);
-        }
-
+        base.OnDpiChanged(e); 
         // Pencere boyutunu ve konumunu güncelle
         var oldDpi = e.DeviceDpiOld;
         var newDpi = e.DeviceDpiNew;
@@ -312,6 +306,9 @@ public class UIWindow : UIWindowBase
             (int)(Location.X * scaleFactor),
             (int)(Location.Y * scaleFactor)
         );
+
+        foreach (var element in Controls) 
+            element.OnDpiChanged(EventArgs.Empty);
 
         Invalidate();
     }
@@ -570,6 +567,81 @@ public class UIWindow : UIWindowBase
 
     public new SDUI.Controls.ContextMenuStrip ContextMenuStrip { get; set; }
 
+    private UIElementBase _focusedElement;
+    private UIElementBase _lastHoveredElement;
+    private Bitmap bitmap;
+    public SKSize CanvasSize => bitmap == null ? SKSize.Empty : new SKSize(bitmap.Width, bitmap.Height);
+
+    public new UIWindowElementCollection Controls { get; }
+
+    public UIElementBase FocusedElement
+    {
+        get => _focusedElement;
+        internal set
+        {
+            if (_focusedElement == value) return;
+
+            var oldFocus = _focusedElement;
+            _focusedElement = value;
+
+            if (oldFocus != null)
+            {
+                oldFocus.OnLostFocus(EventArgs.Empty);
+                oldFocus.OnLeave(EventArgs.Empty);
+            }
+
+            if (_focusedElement != null)
+            {
+                _focusedElement.OnGotFocus(EventArgs.Empty);
+                _focusedElement.OnEnter(EventArgs.Empty);
+            }
+        }
+    }
+
+    public UIElementBase LastHoveredElement
+    {
+        get => _lastHoveredElement;
+        internal set
+        {
+            if (_lastHoveredElement != value)
+            {
+                _lastHoveredElement = value;
+                UpdateCursor(value);
+            }
+        }
+    }
+
+
+    private WindowPageControl _windowPageControl;
+
+    public WindowPageControl WindowPageControl
+    {
+        get => _windowPageControl;
+        set
+        {
+            _windowPageControl = value;
+            if (_windowPageControl == null)
+                return;
+
+            previousSelectedPageIndex = _windowPageControl.SelectedIndex;
+
+            _windowPageControl.SelectedIndexChanged += (sender, previousIndex) =>
+            {
+                previousSelectedPageIndex = previousIndex;
+                pageAreaAnimationManager.SetProgress(0);
+                pageAreaAnimationManager.StartNewAnimation(AnimationDirection.In);
+            };
+            _windowPageControl.ControlAdded += delegate
+            {
+                Invalidate();
+            };
+            _windowPageControl.ControlRemoved += delegate
+            {
+                Invalidate();
+            };
+        }
+    }
+
     /// <summary>
     /// The contructor
     /// </summary>
@@ -723,7 +795,7 @@ public class UIWindow : UIWindowBase
     }
     private void HandleTabKey(bool isShift)
     {
-        var tabbableElements = _elements
+        var tabbableElements = Controls
             .Where(e => e.Visible && e.Enabled && e.TabStop)
             .OrderBy(e => e.TabIndex)
             .ToList();
@@ -867,6 +939,19 @@ public class UIWindow : UIWindowBase
                 break;
             }
         }
+
+        foreach(var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                element.OnMouseClick(e);
+                if(_focusedElement != element)
+                    _focusedElement = element;
+
+                break;
+            }
+        }
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
@@ -891,13 +976,16 @@ public class UIWindow : UIWindowBase
 
         bool elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
-        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             var elementBounds = new Rectangle(element.Location, element.Size);
             if (elementBounds.Contains(e.Location))
             {
                 elementClicked = true;
-                FocusedElement = element;
+
+                if (_focusedElement != element)
+                    _focusedElement = element;
+
                 element.OnMouseDown(e);
                 // Tıklanan elementi en üste getir
                 BringToFront(element);
@@ -948,6 +1036,30 @@ public class UIWindow : UIWindowBase
 
         ShowMaximize();
 
+        bool elementClicked = false;
+        // Z-order'a göre tersten kontrol et (üstteki elementten başla)
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var elementBounds = new Rectangle(element.Location, element.Size);
+            if (elementBounds.Contains(e.Location))
+            {
+                elementClicked = true;
+
+                if (_focusedElement != element)
+                    _focusedElement = element;
+
+                element.OnMouseDown(e);
+                // Tıklanan elementi en üste getir
+                BringToFront(element);
+                break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
+            }
+        }
+
+        if (!elementClicked)
+        {
+            FocusedElement = null;
+        }
+
         base.OnMouseDoubleClick(e);
     }
 
@@ -982,13 +1094,12 @@ public class UIWindow : UIWindowBase
         animationSource = e.Location;
 
         // Z-order'a göre tersten kontrol et
-        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             var elementBounds = new Rectangle(element.Location, element.Size);
             if (elementBounds.Contains(e.Location))
             {
                 element.OnMouseUp(e);
-                element.OnMouseClick(e);
                 break;
             }
         }
@@ -1116,7 +1227,7 @@ public class UIWindow : UIWindowBase
         UIElementBase hoveredElement = null;
 
         // Z-order'a göre tersten kontrol et
-        foreach (var element in _elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             var elementBounds = new Rectangle(element.Location, element.Size);
             if (elementBounds.Contains(e.Location))
@@ -1209,51 +1320,6 @@ public class UIWindow : UIWindowBase
         Invalidate();
     }
 
-
-    private readonly List<UIElementBase> _elements = new();
-    private UIElementBase _focusedElement;
-    private UIElementBase _lastHoveredElement;
-    private Bitmap bitmap;
-    public SKSize CanvasSize => bitmap == null ? SKSize.Empty : new SKSize(bitmap.Width, bitmap.Height);
-
-    public new UIWindowElementCollection Controls { get; }
-
-    public UIElementBase FocusedElement
-    {
-        get => _focusedElement;
-        internal set
-        {
-            if (_focusedElement == value) return;
-
-            var oldFocus = _focusedElement;
-            _focusedElement = value;
-
-            if (oldFocus != null)
-            {
-                oldFocus.OnLostFocus(EventArgs.Empty);
-                oldFocus.OnLeave(EventArgs.Empty);
-            }
-
-            if (_focusedElement != null)
-            {
-                _focusedElement.OnGotFocus(EventArgs.Empty);
-                _focusedElement.OnEnter(EventArgs.Empty);
-            }
-        }
-    }
-
-    public UIElementBase LastHoveredElement
-    {
-        get => _lastHoveredElement;
-        internal set
-        {
-            if (_lastHoveredElement != value)
-            {
-                _lastHoveredElement = value;
-                UpdateCursor(value);
-            }
-        }
-    }
     private SKImageInfo CreateBitmap()
     {
         var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
@@ -1291,6 +1357,31 @@ public class UIWindow : UIWindowBase
                 {
                     surface.Canvas.Clear(SKColors.Transparent);
                     this.PaintSurface(surface.Canvas, info);
+
+                    var elements = Controls.OrderBy(el => el.ZOrder).ToList();
+
+                    foreach (var element in elements)
+                    {
+                        if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
+                            continue;
+
+                        try
+                        {
+                            surface.Canvas.Save();
+
+                            var clipRect = SKRect.Create(element.Location.X, element.Location.Y, element.Size.Width, element.Size.Height);
+                            surface.Canvas.ClipRect(clipRect);
+                            
+                            surface.Canvas.Translate(element.Location.X, element.Location.Y);
+                            element.OnPaint(new SKPaintSurfaceEventArgs(surface, info));
+                            surface.Canvas.Restore();
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"Element render error for {element.GetType().Name}: {ex.Message}");
+                        }
+                    }
+
                     surface.Canvas.Flush();
                 }
             }
@@ -1605,7 +1696,7 @@ public class UIWindow : UIWindowBase
             using var textPaint = new SKPaint
             {
                 Color = foreColor,
-                TextSize = Font.Size * DPI,
+                TextSize = Font.Size.PtToPx(this),
                 Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
                 IsAntialias = true,
                 SubpixelText = true,
@@ -1734,7 +1825,7 @@ public class UIWindow : UIWindowBase
                     using var textPaint = new SKPaint
                     {
                         Color = foreColor,
-                        TextSize = 12f * DPI,
+                        TextSize = 12f.PtToPx(this),
                         Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
                         IsAntialias = true,
                         SubpixelText = true,
@@ -1762,7 +1853,7 @@ public class UIWindow : UIWindowBase
                     using var textPaint = new SKPaint
                     {
                         Color = foreColor,
-                        TextSize = 12f * DPI,
+                        TextSize = 9f.PtToPx(this),
                         Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
                         IsAntialias = true,
                         SubpixelText = true,
@@ -1877,60 +1968,6 @@ public class UIWindow : UIWindowBase
 
             canvas.DrawLine(Width, _titleHeightDPI - 1, 0, _titleHeightDPI - 1, borderPaint);
         }
-
-        // Draw others
-
-        // Elementleri Z-order'a göre sırala ve render et
-        var elements = Controls.OrderBy(el => el.ZOrder).ToList();
-        System.Diagnostics.Debug.WriteLine($"Toplam {elements.Count} element render edilecek");
-
-        foreach (var element in elements)
-        {
-            if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
-            {
-                System.Diagnostics.Debug.WriteLine($"Element atlandı: {element.GetType().Name}, Visible: {element.Visible}, Size: {element.Size}");
-                continue;
-            }
-
-            try
-            {
-                System.Diagnostics.Debug.WriteLine($"Element render ediliyor: {element.GetType().Name}, Location: {element.Location}, Size: {element.Size}");
-
-                // Her element için yeni bir surface oluştur
-                using var elementSurface = SKSurface.Create(new SKImageInfo(element.Size.Width, element.Size.Height, info.ColorType, info.AlphaType));
-                if (elementSurface == null)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Element surface oluşturulamadı: {element.GetType().Name}");
-                    continue;
-                }
-
-                // Element'in kendi render metodunu çağır
-                element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, info));
-
-                // Element'in çizim alanını kaydet
-                canvas.Save();
-
-                // Element'in çizim alanını kırp
-                var clipRect = SKRect.Create(element.Location.X, element.Location.Y, element.Size.Width, element.Size.Height);
-                canvas.ClipRect(clipRect);
-
-                // Element'in konumuna taşı
-                canvas.Translate(element.Location.X, element.Location.Y);
-
-                // Element'i ana canvas'a çiz
-                using var snapshot = elementSurface.Snapshot();
-                canvas.DrawImage(snapshot, 0, 0);
-
-                // Element'in çizim alanını geri yükle
-                canvas.Restore();
-
-                System.Diagnostics.Debug.WriteLine($"Element başarıyla render edildi: {element.GetType().Name}");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Element render error for {element.GetType().Name}: {ex.Message}");
-            }
-        }
     }
 
     protected override void OnTextChanged(EventArgs e)
@@ -1950,70 +1987,6 @@ public class UIWindow : UIWindowBase
     {
         base.OnShown(e);
         CalcSystemBoxPos();
-    }
-
-    protected void AddMousePressMove(params Control[] cs)
-    {
-        foreach (Control ctrl in cs)
-        {
-            if (ctrl != null && !ctrl.IsDisposed)
-            {
-                ctrl.MouseDown += CtrlMouseDown;
-            }
-        }
-    }
-
-    /// <summary>
-    /// Handles the MouseDown event of the c control.
-    /// </summary>
-    /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="MouseEventArgs" /> instance containing the event data.</param>
-    private void CtrlMouseDown(object sender, MouseEventArgs e)
-    {
-        if (WindowState == FormWindowState.Maximized)
-            return;
-
-        if (sender == this)
-        {
-            if (e.Y <= _titleHeightDPI && e.X < _controlBoxLeft)
-            {
-                DragForm(Handle);
-            }
-        }
-        else
-        {
-            DragForm(Handle);
-        }
-    }
-
-    private WindowPageControl _windowPageControl;
-
-    public WindowPageControl WindowPageControl
-    {
-        get => _windowPageControl;
-        set
-        {
-            _windowPageControl = value;
-            if (_windowPageControl == null)
-                return;
-
-            previousSelectedPageIndex = _windowPageControl.SelectedIndex;
-
-            _windowPageControl.SelectedIndexChanged += (sender, previousIndex) =>
-            {
-                previousSelectedPageIndex = previousIndex;
-                pageAreaAnimationManager.SetProgress(0);
-                pageAreaAnimationManager.StartNewAnimation(AnimationDirection.In);
-            };
-            _windowPageControl.ControlAdded += delegate
-            {
-                Invalidate();
-            };
-            _windowPageControl.ControlRemoved += delegate
-            {
-                Invalidate();
-            };
-        }
     }
 
     private void UpdateTabRects()
@@ -2069,122 +2042,15 @@ public class UIWindow : UIWindowBase
 
     public new void PerformLayout()
     {
-        // Önce Dock'lu elementleri yerleştir
-        LayoutDockElements();
-
-        // Sonra Anchor'lu elementleri yerleştir
-        LayoutAnchoredElements();
+        foreach (var element in Controls)
+            element.PerformLayout();
 
         Invalidate();
     }
 
-    private void LayoutDockElements()
-    {
-        var clientArea = ClientRectangle;
-        var remainingArea = clientArea;
-
-        // Dock.Top elementleri
-        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Top))
-        {
-            element.Size = new Size(remainingArea.Width, element.Size.Height);
-            element.Location = new Point(remainingArea.Left, remainingArea.Top);
-            remainingArea = new Rectangle(
-                remainingArea.Left,
-                remainingArea.Top + element.Size.Height,
-                remainingArea.Width,
-                remainingArea.Height - element.Size.Height
-            );
-        }
-
-        // Dock.Bottom elementleri
-        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Bottom))
-        {
-            element.Size = new Size(remainingArea.Width, element.Size.Height);
-            element.Location = new Point(remainingArea.Left, remainingArea.Bottom - element.Size.Height);
-            remainingArea = new Rectangle(
-                remainingArea.Left,
-                remainingArea.Top,
-                remainingArea.Width,
-                remainingArea.Height - element.Size.Height
-            );
-        }
-
-        // Dock.Left elementleri
-        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Left))
-        {
-            element.Size = new Size(element.Size.Width, remainingArea.Height);
-            element.Location = new Point(remainingArea.Left, remainingArea.Top);
-            remainingArea = new Rectangle(
-                remainingArea.Left + element.Size.Width,
-                remainingArea.Top,
-                remainingArea.Width - element.Size.Width,
-                remainingArea.Height
-            );
-        }
-
-        // Dock.Right elementleri
-        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Right))
-        {
-            element.Size = new Size(element.Size.Width, remainingArea.Height);
-            element.Location = new Point(remainingArea.Right - element.Size.Width, remainingArea.Top);
-            remainingArea = new Rectangle(
-                remainingArea.Left,
-                remainingArea.Top,
-                remainingArea.Width - element.Size.Width,
-                remainingArea.Height
-            );
-        }
-
-        // Dock.Fill elementleri
-        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.Fill))
-        {
-            element.Location = new Point(remainingArea.Left, remainingArea.Top);
-            element.Size = new Size(remainingArea.Width, remainingArea.Height);
-        }
-    }
-
-    private void LayoutAnchoredElements()
-    {
-        var clientArea = ClientRectangle;
-
-        foreach (var element in _elements.Where(e => e.Visible && e.Dock == DockStyle.None))
-        {
-            var anchor = element.Anchor;
-            var location = element.Location;
-            var size = element.Size;
-
-            // Yatay konumlandırma
-            if ((anchor & AnchorStyles.Left) != 0 && (anchor & AnchorStyles.Right) != 0)
-            {
-                // Her iki tarafa da bağlı, genişliği ayarla
-                size.Width = clientArea.Width - (location.X + (clientArea.Width - (location.X + size.Width)));
-            }
-            else if ((anchor & AnchorStyles.Right) != 0)
-            {
-                // Sadece sağa bağlı, X konumunu ayarla
-                location.X = clientArea.Width - (clientArea.Width - location.X);
-            }
-
-            // Dikey konumlandırma
-            if ((anchor & AnchorStyles.Top) != 0 && (anchor & AnchorStyles.Bottom) != 0)
-            {
-                // Her iki tarafa da bağlı, yüksekliği ayarla
-                size.Height = clientArea.Height - (location.Y + (clientArea.Height - (location.Y + size.Height)));
-            }
-            else if ((anchor & AnchorStyles.Bottom) != 0)
-            {
-                // Sadece alta bağlı, Y konumunu ayarla
-                location.Y = clientArea.Height - (clientArea.Height - location.Y);
-            }
-
-            element.Location = location;
-            element.Size = size;
-        }
-    }
-
     public void BringToFront(UIElementBase element)
     {
-        if (!_elements.Contains(element)) return;
+        if (!Controls.Contains(element)) return;
 
         _maxZOrder++;
         element.ZOrder = _maxZOrder;
@@ -2193,9 +2059,9 @@ public class UIWindow : UIWindowBase
 
     public void SendToBack(UIElementBase element)
     {
-        if (!_elements.Contains(element)) return;
+        if (!Controls.Contains(element)) return;
 
-        var minZOrder = _elements.Min(e => e.ZOrder);
+        var minZOrder = Controls.Min(e => e.ZOrder);
         element.ZOrder = minZOrder - 1;
         InvalidateElement(element);
     }

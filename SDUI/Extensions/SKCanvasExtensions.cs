@@ -7,8 +7,8 @@ namespace SDUI.Extensions;
 
 public static class SKCanvasExtensions
 {
-    public static float PtToPx(this float pt, Control control) => (pt * 1.333f);
-    public static float PtToPx(this float pt, Controls.UIElementBase control) => (pt * 1.333f);
+    public static float PtToPx(this float pt, Control control) => (pt * 1.333f) * control.DeviceDpi / 96f;
+    public static float PtToPx(this float pt, Controls.UIElementBase control) => (pt * 1.333f) * control.ScaleFactor;
 
     public static SKPaint CreateTextPaint(this SKCanvas canvas, Font font, Color color, Control control, ContentAlignment alignment = ContentAlignment.MiddleCenter)
     {

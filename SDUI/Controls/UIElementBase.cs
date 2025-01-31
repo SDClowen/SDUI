@@ -725,22 +725,14 @@ namespace SDUI.Controls
             foreach (var element in Controls.OrderBy(el => el.ZOrder))
             {
                 if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Element atlandı: {element.GetType().Name}, Visible: {element.Visible}, Size: {element.Size}");
                     continue;
-                }
 
                 try
                 {
-                    System.Diagnostics.Debug.WriteLine($"Element render ediliyor: {element.GetType().Name}, Location: {element.Location}, Size: {element.Size}");
-
                     // Her element için yeni bir surface oluştur
                     using var elementSurface = SKSurface.Create(new SKImageInfo(element.Size.Width, element.Size.Height, e.Info.ColorType, e.Info.AlphaType));
                     if (elementSurface == null)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Element surface oluşturulamadı: {element.GetType().Name}");
                         continue;
-                    }
 
                     // Element'in kendi render metodunu çağır
                     element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, e.Info));
@@ -761,8 +753,6 @@ namespace SDUI.Controls
 
                     // Element'in çizim alanını geri yükle
                     canvas.Restore();
-
-                    System.Diagnostics.Debug.WriteLine($"Element başarıyla render edildi: {element.GetType().Name}");
                 }
                 catch (Exception ex)
                 {

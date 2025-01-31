@@ -32,9 +32,9 @@ public class ColorScheme
     /// <summary>
     /// Gets theme accent color
     /// </summary>
-    public static Color AccentColor => Color.FromArgb(0, 92, 252);
+    public static Color AccentColor => Color.DodgerBlue;
 
-    public static Color PrimaryColor => Color.FromArgb(0, 92, 252);
+    public static Color PrimaryColor => Color.Navy;
 
     /// <summary>
     /// Gets or sets the debug borders
