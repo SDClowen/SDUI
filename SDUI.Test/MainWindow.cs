@@ -1,7 +1,7 @@
 using SDUI.Controls;
 using System;
 
-namespace SDUI.Test;
+namespace SDUI.Demo;
 
 public partial class MainWindow : UIWindow
 {

@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace SDUI.Test.Properties {
+namespace SDUI.Demo.Properties {
     using System;
     
     

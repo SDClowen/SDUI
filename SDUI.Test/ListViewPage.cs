@@ -2,7 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SDUI.Test
+namespace SDUI.Demo
 {
     [ToolboxItem(false)]
     public partial class ListViewPage : SDUI.Controls.Panel

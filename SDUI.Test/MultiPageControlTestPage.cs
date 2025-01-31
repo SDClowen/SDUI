@@ -3,7 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Windows.Forms;
 
-namespace SDUI.Test
+namespace SDUI.Demo
 {
     [ToolboxItem(false)]
     public partial class MultiPageControlTestPage : SDUI.Controls.Panel

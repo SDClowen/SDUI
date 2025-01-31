@@ -5,9 +5,7 @@ VisualStudioVersion = 17.1.32319.34
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI", "SDUI\SDUI.csproj", "{38B06E05-D80D-4E99-9F62-8B3AF0B7AC53}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Test", "Examples\SDUI.Test\SDUI.Test.csproj", "{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{A440C19E-A7E1-40AE-9D2E-6B44AC55312A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SDUI.Demo", "SDUI.Test\SDUI.Demo.csproj", "{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,9 +24,6 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{EDA32308-A09D-4FF8-B5F9-22ECCB9FD622} = {A440C19E-A7E1-40AE-9D2E-6B44AC55312A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9C264AFA-7C24-4F28-B801-E99CDC68D995}

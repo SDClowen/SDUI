@@ -1,4 +1,4 @@
-﻿namespace SDUI.Test
+﻿namespace SDUI.Demo
 {
     partial class GeneralPage
     {

@@ -6,7 +6,7 @@ using System.Drawing.Drawing2D;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace SDUI.Test
+namespace SDUI.Demo
 {
     [ToolboxItem(false)]
     public partial class GeneralPage : SDUI.Controls.Panel

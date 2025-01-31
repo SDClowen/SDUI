@@ -2,7 +2,7 @@
 using SDUI;
 using SDUI.Controls;
 
-namespace SDUI.Test;
+namespace SDUI.Demo;
 
 public partial class MainWindow
 {

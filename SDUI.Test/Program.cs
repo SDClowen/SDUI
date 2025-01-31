@@ -2,7 +2,7 @@
 using System;
 using System.Windows.Forms;
 
-namespace SDUI.Test;
+namespace SDUI.Demo;
 
 internal static class Program
 {
@@ -17,6 +17,16 @@ internal static class Program
         Application.SetCompatibleTextRenderingDefault(false);
 
         //Application.SetDefaultFont(SDUI.Helpers.FontManager.Inter);
+
+        var newForm = new UIWindow();
+        newForm.Text = "SDUI Demo";
+        var panel = new Controls.Panel() { Padding = new(0, 40, 0, 0), Width = 500, Height = 500, ShadowDepth = 32, Border = new(2), Dock = DockStyle.Fill, Name = "panel1" };
+        var button = new Controls.Button() { Text = "Hello World", Dock = DockStyle.Fill, Name = "button1", Width = 120, Height = 23 };
+        panel.Controls.Add(button);
+
+        newForm.Controls.Add(panel);
+
+        //Application.Run(newForm);
 
         Application.Run(new MainWindow());
     }
