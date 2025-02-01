@@ -83,11 +83,6 @@ public class ToggleButton : UIElementBase
         };
     }
 
-    protected override void OnClick(EventArgs e)
-    {
-        // OnClick'i kaldırıyoruz çünkü MouseDown'da işlemi yapıyoruz
-    }
-
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         base.OnPaint(e);

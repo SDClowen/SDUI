@@ -361,7 +361,7 @@ namespace SDUI.Controls
             boxRectangle = new RectangleF(boxOffset, boxOffset, CHECKBOX_SIZE - 1, CHECKBOX_SIZE - 1);
         }
 
-        protected override void OnClick(EventArgs e)
+        public override void OnClick(EventArgs e)
         {
             if (ThreeState)
             {

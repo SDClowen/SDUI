@@ -54,7 +54,7 @@ namespace SDUI
 
                 case DockStyle.Right:
                     control.Size = new Size(control.Size.Width, remainingArea.Height);
-                    control.Location = new Point(remainingArea.Left - control.Size.Width, remainingArea.Top);
+                    control.Location = new Point(remainingArea.Right - control.Size.Width, remainingArea.Top);
                     remainingArea = new Rectangle(
                         remainingArea.Left,
                         remainingArea.Top,

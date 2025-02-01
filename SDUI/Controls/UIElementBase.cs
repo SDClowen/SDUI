@@ -124,7 +124,7 @@ namespace SDUI.Controls
             }
         }
 
-        public Rectangle ClientRectangle => new Rectangle(Point.Empty, Size);
+        public Rectangle ClientRectangle => new(Location, Size);
 
         public Size ClientSize
         {
@@ -819,7 +819,7 @@ namespace SDUI.Controls
 
         #region Protected Event Methods
 
-        protected virtual void OnClick(EventArgs e)
+        public virtual void OnClick(EventArgs e)
         {
             if (!Enabled || !Visible)
                 return;
@@ -1256,7 +1256,7 @@ namespace SDUI.Controls
             foreach (var control in _controls)
             {
                 LayoutEngine.Perform(control, clientArea, clientPadding);
-                control.PerformLayout();
+                //control.PerformLayout();
             }
 
             Invalidate();

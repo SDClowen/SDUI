@@ -106,7 +106,7 @@ public class Button : UIElementBase
             Size = GetPreferredSize(Size.Empty);
     }
 
-    protected override void OnClick(EventArgs e)
+    public override void OnClick(EventArgs e)
     {
         if (DialogResult != DialogResult.None && FindForm() is Form form)
         {
@@ -209,7 +209,7 @@ public class Button : UIElementBase
         }
         else
         {
-            color = Color.FromArgb(20, ColorScheme.ForeColor);
+            color = Color.FromArgb(20, ColorScheme.ForeColor.Determine());
         }
 
         var rect = new SKRect(0, 0, Width, Height);
@@ -276,7 +276,7 @@ public class Button : UIElementBase
                 foreColor = Color.Gray;
 
             using var textPaint = GetPaintFromPool();
-            textPaint.TextSize = Font.Size * 1.5f;
+            textPaint.TextSize = Font.Size.PtToPx(this);
             textPaint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
             textPaint.Color = foreColor.ToSKColor();
             textPaint.IsAntialias = true;

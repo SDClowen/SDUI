@@ -296,7 +296,7 @@ public class Radio : UIElementBase
         radioButtonBounds = new Rectangle(boxOffset, boxOffset, RADIOBUTTON_SIZE, RADIOBUTTON_SIZE);
     }
 
-    protected override void OnClick(EventArgs e)
+    public override void OnClick(EventArgs e)
     {
         Checked = !Checked;
         base.OnClick(e);

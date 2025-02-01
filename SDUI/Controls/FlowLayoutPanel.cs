@@ -378,9 +378,10 @@ public class FlowLayoutPanel : UIElementBase
         var currentLoc = control.Location;
         animation.OnAnimationProgress += (progress) =>
         {
+            var engine = progress as AnimationEngine;
             control.Location = new Point(
-                (int)(currentLoc.X + (targetPoint.X - currentLoc.X) * (float)progress),
-                (int)(currentLoc.Y + (targetPoint.Y - currentLoc.Y) * (float)progress)
+                (int)(currentLoc.X + (targetPoint.X - currentLoc.X) * (float)engine.GetProgress()),
+                (int)(currentLoc.Y + (targetPoint.Y - currentLoc.Y) * (float)engine.GetProgress())
             );
             Invalidate();
         };
