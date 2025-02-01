@@ -559,7 +559,7 @@ public class UIWindow : UIWindowBase
         set => _stickyBorderTime = value * 10000;
     }
 
-    private const float HOVER_ANIMATION_SPEED = 0.15f;
+    private const float HOVER_ANIMATION_SPEED = 0.1f;
     private const float HOVER_ANIMATION_OPACITY = 0.4f;
     private int _maxZOrder = 0;
     private Cursor _currentCursor;
@@ -860,6 +860,18 @@ public class UIWindow : UIWindowBase
     {
         base.OnMouseClick(e);
 
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            if (element.ClientRectangle.Contains(e.Location))
+            {
+                element.OnMouseClick(e);
+                if (_focusedElement != element)
+                    _focusedElement = element;
+
+                break;
+            }
+        }
+
         if (!ShowTitle)
             return;
 
@@ -939,47 +951,17 @@ public class UIWindow : UIWindowBase
                 break;
             }
         }
-
-        foreach(var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
-        {
-            var elementBounds = new Rectangle(element.Location, element.Size);
-            if (elementBounds.Contains(e.Location))
-            {
-                element.OnMouseClick(e);
-                if(_focusedElement != element)
-                    _focusedElement = element;
-
-                break;
-            }
-        }
     }
 
     protected override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
 
-        if (_inCloseBox || _inMaxBox || _inMinBox || _inExtendBox || _inTabCloseBox || _inNewTabBox || _inFormMenuBox)
-            return;
-
-        if (!ShowTitle)
-            return;
-
-        if (e.Y > Padding.Top)
-            return;
-
-        if (e.Button == MouseButtons.Left && Movable)
-        {
-            _formMoveMouseDown = true;
-            _location = Location;
-            _mouseOffset = MousePosition;
-        }
-
         bool elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
         foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            var elementBounds = new Rectangle(element.Location, element.Size);
-            if (elementBounds.Contains(e.Location))
+            if (element.ClientRectangle.Contains(e.Location))
             {
                 elementClicked = true;
 
@@ -1010,10 +992,51 @@ public class UIWindow : UIWindowBase
             var point = PointToScreen(e.Location);
             //ContextMenuStrip.Show(this, point);
         }
+
+        if (_inCloseBox || _inMaxBox || _inMinBox || _inExtendBox || _inTabCloseBox || _inNewTabBox || _inFormMenuBox)
+            return;
+
+        if (!ShowTitle)
+            return;
+
+        if (e.Y > Padding.Top)
+            return;
+
+        if (e.Button == MouseButtons.Left && Movable)
+        {
+            _formMoveMouseDown = true;
+            _location = Location;
+            _mouseOffset = MousePosition;
+        }
     }
 
     protected override void OnMouseDoubleClick(MouseEventArgs e)
     {
+        base.OnMouseDoubleClick(e);
+
+        bool elementClicked = false;
+        // Z-order'a göre tersten kontrol et (üstteki elementten başla)
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            if (element.ClientRectangle.Contains(e.Location))
+            {
+                elementClicked = true;
+
+                if (_focusedElement != element)
+                    _focusedElement = element;
+
+                element.OnMouseDown(e);
+                // Tıklanan elementi en üste getir
+                BringToFront(element);
+                break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
+            }
+        }
+
+        if (!elementClicked)
+        {
+            FocusedElement = null;
+        }
+
         if (!MaximizeBox)
             return;
 
@@ -1035,32 +1058,6 @@ public class UIWindow : UIWindowBase
             return;
 
         ShowMaximize();
-
-        bool elementClicked = false;
-        // Z-order'a göre tersten kontrol et (üstteki elementten başla)
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
-        {
-            var elementBounds = new Rectangle(element.Location, element.Size);
-            if (elementBounds.Contains(e.Location))
-            {
-                elementClicked = true;
-
-                if (_focusedElement != element)
-                    _focusedElement = element;
-
-                element.OnMouseDown(e);
-                // Tıklanan elementi en üste getir
-                BringToFront(element);
-                break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
-            }
-        }
-
-        if (!elementClicked)
-        {
-            FocusedElement = null;
-        }
-
-        base.OnMouseDoubleClick(e);
     }
 
     protected override void OnMouseUp(MouseEventArgs e)
@@ -1096,10 +1093,9 @@ public class UIWindow : UIWindowBase
         // Z-order'a göre tersten kontrol et
         foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            var elementBounds = new Rectangle(element.Location, element.Size);
-            if (elementBounds.Contains(e.Location))
+            if (element.ClientRectangle.Contains(e.Location))
             {
-                element.OnMouseUp(e);
+                element.OnMouseUp(e); 
                 break;
             }
         }
@@ -1229,8 +1225,7 @@ public class UIWindow : UIWindowBase
         // Z-order'a göre tersten kontrol et
         foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            var elementBounds = new Rectangle(element.Location, element.Size);
-            if (elementBounds.Contains(e.Location))
+            if (element.ClientRectangle.Contains(e.Location))
             {
                 hoveredElement = element;
                 element.OnMouseMove(e);
@@ -1264,6 +1259,51 @@ public class UIWindow : UIWindowBase
         _lastHoveredElement = null;
 
         Invalidate();
+    }
+
+    protected override void OnClick(EventArgs e)
+    {
+        base.OnClick(e);
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var mousePos = PointToClient(MousePosition);
+            if (element.ClientRectangle.Contains(mousePos))
+            {
+                element.OnClick(e);
+                break;
+            }
+        }
+    }
+
+    protected override void OnMouseEnter(EventArgs e)
+    {
+        base.OnMouseEnter(e);
+
+        // Z-order'a göre tersten kontrol et
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            var mousePos = PointToClient(MousePosition);
+            if (element.ClientRectangle.Contains(mousePos))
+            {
+                element.OnMouseEnter(e);
+                break;
+            }
+        }
+    }
+
+    protected override void OnMouseWheel(MouseEventArgs e)
+    {
+        base.OnMouseWheel(e);
+        
+        // Z-order'a göre tersten kontrol et
+        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        {
+            if (element.ClientRectangle.Contains(e.Location))
+            {
+                element.OnMouseWheel(e);
+                break; // İlk hover edilen elementten sonra diğerlerini kontrol etmeye gerek yok
+            }
+        }
     }
 
     private void ShowMaximize(bool IsOnMoving = false)
@@ -1335,6 +1375,8 @@ public class UIWindow : UIWindowBase
 
         return info;
     }
+
+    BitmapData cachedBitmapData = null;
 
     protected override void OnPaint(PaintEventArgs e)
     {
