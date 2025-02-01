@@ -86,7 +86,7 @@ public class Panel : UIElementBase
         // Gölge çizimi
         if (_shadowDepth > 0)
         {
-            var shadowPaint = GetPaintFromPool();
+            using var shadowPaint = new SKPaint();
             try
             {
                 shadowPaint.Color = SKColors.Black.WithAlpha(30);
@@ -109,14 +109,11 @@ public class Panel : UIElementBase
                     canvas.DrawRect(rect, shadowPaint);
                 }
             }
-            finally
-            {
-                ReturnPaintToPool(shadowPaint);
-            }
+            catch { }
         }
 
         // Panel arka planı
-        var paint = GetPaintFromPool();
+        using var paint = new SKPaint();
         try
         {
             paint.Color = color.ToSKColor();
@@ -133,15 +130,11 @@ public class Panel : UIElementBase
                 canvas.DrawRect(rect, paint);
             }
         }
-        finally
-        {
-            ReturnPaintToPool(paint);
-        }
+        catch { }
 
         // Kenarlık çizimi
         if (_border.All > 0 || _border.Left > 0 || _border.Top > 0 || _border.Right > 0 || _border.Bottom > 0)
         {
-            paint = GetPaintFromPool();
             try
             {
                 paint.Color = borderColor.ToSKColor();
@@ -241,16 +234,12 @@ public class Panel : UIElementBase
                     }
                 }
             }
-            finally
-            {
-                ReturnPaintToPool(paint);
-            }
+            catch { }
         }
 
         // Debug çerçevesi
         if (ColorScheme.DrawDebugBorders)
         {
-            paint = GetPaintFromPool();
             try
             {
                 paint.Color = SKColors.Red;
@@ -259,10 +248,7 @@ public class Panel : UIElementBase
                 paint.IsAntialias = true;
                 canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
             }
-            finally
-            {
-                ReturnPaintToPool(paint);
-            }
+            catch { }
         }
 
         // Alt elementleri render et

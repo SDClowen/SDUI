@@ -11,15 +11,13 @@ using System.Collections.Concurrent;
 using System.Threading;
 using SDUI.Collections;
 using SDUI.Validations;
+using System.Xml.Linq;
 
 namespace SDUI.Controls
 {
     public abstract class UIElementBase : IDisposable
     {
         public Bitmap Image { get; set; }
-        protected SKSurface Surface { get; private set; }
-
-        protected SKCanvas Canvas => Surface?.Canvas;
 
         #region Properties
 
@@ -546,6 +544,46 @@ namespace SDUI.Controls
 
         private bool _isDisposed;
         protected bool IsDisposed => _isDisposed;
+        private UIElementBase _focusedElement;
+        private UIElementBase _lastHoveredElement;
+
+
+        public UIElementBase FocusedElement
+        {
+            get => _focusedElement;
+            internal set
+            {
+                if (_focusedElement == value) return;
+
+                var oldFocus = _focusedElement;
+                _focusedElement = value;
+
+                if (oldFocus != null)
+                {
+                    oldFocus.OnLostFocus(EventArgs.Empty);
+                    oldFocus.OnLeave(EventArgs.Empty);
+                }
+
+                if (_focusedElement != null)
+                {
+                    _focusedElement.OnGotFocus(EventArgs.Empty);
+                    _focusedElement.OnEnter(EventArgs.Empty);
+                }
+            }
+        }
+
+        public UIElementBase LastHoveredElement
+        {
+            get => _lastHoveredElement;
+            internal set
+            {
+                if (_lastHoveredElement != value)
+                {
+                    _lastHoveredElement = value;
+                    //UpdateCursor(value);
+                }
+            }
+        }
 
         private ContextMenuStrip _contextMenuStrip;
 
@@ -603,6 +641,8 @@ namespace SDUI.Controls
                 Invalidate();
             }
         }
+
+        public bool NeedsRedraw { get; set; } = true;
 
         private List<ValidationRule> _validationRules = new();
         [Browsable(false)]
@@ -700,12 +740,7 @@ namespace SDUI.Controls
 
         private readonly UIElementCollection _controls;
 
-        protected SKImage _cachedImage;
-        protected bool _needsRedraw = true;
-        protected Rectangle _dirtyRegion;
         protected bool _isLayoutSuspended;
-        private static readonly ConcurrentDictionary<int, SKPaint> _paintPool = new();
-        private static int _paintCounter = 0;
 
         public UIElementBase()
         {
@@ -767,10 +802,11 @@ namespace SDUI.Controls
         public virtual void Invalidate()
         {
             CheckDisposed();
+
             if (Parent is UIWindowBase window)
-            {
                 window.Invalidate();
-            }
+
+            NeedsRedraw = true;
         }
 
         public virtual void Focus()
@@ -835,7 +871,29 @@ namespace SDUI.Controls
 
         internal virtual void OnDoubleClick(EventArgs e) => DoubleClick?.Invoke(this, e);
 
-        internal virtual void OnMouseMove(MouseEventArgs e) => MouseMove?.Invoke(this, e);
+        internal virtual void OnMouseMove(MouseEventArgs e)
+        {
+            MouseMove?.Invoke(this, e);
+
+            UIElementBase hoveredElement = null;
+            // Propagate event to child controls
+            foreach (var control in Controls)
+            {
+                if (control.Bounds.Contains(e.Location))
+                {
+                    hoveredElement = control;
+                    var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+                    control.OnMouseMove(childEventArgs);
+                }
+            }
+
+            if (hoveredElement != _lastHoveredElement)
+            {
+                _lastHoveredElement?.OnMouseLeave(EventArgs.Empty);
+                hoveredElement?.OnMouseEnter(EventArgs.Empty);
+                _lastHoveredElement = hoveredElement;
+            }
+        }
 
         internal virtual void OnMouseDown(MouseEventArgs e)
         {
@@ -846,21 +904,113 @@ namespace SDUI.Controls
             }
 
             MouseDown?.Invoke(this, e);
+
+            bool elementClicked = false;
+            // Propagate event to child controls
+            foreach (var control in Controls)
+            {
+                if (control.Bounds.Contains(e.Location))
+                {
+                    elementClicked = true;
+                    var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+                    control.OnMouseDown(childEventArgs);
+                    if (_focusedElement != control)
+                        _focusedElement = control;
+                }
+            }
+
+            if (!elementClicked)
+                _focusedElement = null;
         }
 
-        internal virtual void OnMouseUp(MouseEventArgs e) => MouseUp?.Invoke(this, e);
+        internal virtual void OnMouseUp(MouseEventArgs e)
+        {
+            MouseUp?.Invoke(this, e);
 
-        internal virtual void OnMouseClick(MouseEventArgs e) => MouseClick?.Invoke(this, e);
+            // Propagate event to child controls
+            foreach (var control in Controls)
+            {
+                if (control.Bounds.Contains(e.Location))
+                {
+                    var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+                    control.OnMouseUp(childEventArgs);
+                }
+            }
+        }
 
-        internal virtual void OnMouseDoubleClick(MouseEventArgs e) =>
+        internal virtual void OnMouseClick(MouseEventArgs e)
+        {
+            MouseClick?.Invoke(this, e);
+
+            // Propagate event to child controls
+            foreach (var control in Controls)
+            {
+                if (control.Bounds.Contains(e.Location))
+                {
+                    var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+                    control.OnMouseClick(childEventArgs);
+
+                    if (_focusedElement != control)
+                        _focusedElement = control;
+                }
+            }
+        }
+
+        internal virtual void OnMouseDoubleClick(MouseEventArgs e)
+        {
             MouseDoubleClick?.Invoke(this, e);
 
-        internal virtual void OnMouseEnter(EventArgs e) => MouseEnter?.Invoke(this, e);
+            // Propagate event to child controls
+            foreach (var control in Controls)
+            {
+                if (control.Bounds.Contains(e.Location))
+                {
+                    var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+                    control.OnMouseDoubleClick(childEventArgs);
+                }
+            }
+        }
 
-        internal virtual void OnMouseLeave(EventArgs e) => MouseLeave?.Invoke(this, e);
+        internal virtual void OnMouseLeave(EventArgs e)
+        {
+            MouseLeave?.Invoke(this, e);
+            //foreach (var control in Controls)
+            //{
+            //    if (control.Bounds.Contains(e.Location))
+            //    {
+            //        var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+            //        control.OnMouseLeave(childEventArgs);
+            //    }
+            //}
 
-        internal virtual void OnMouseHover(EventArgs e) => MouseHover?.Invoke(this, e);
+            _lastHoveredElement?.OnMouseLeave(e);
+            _lastHoveredElement = null;
+        }
 
+        internal virtual void OnMouseHover(EventArgs e)
+        {
+            MouseHover?.Invoke(this, e);
+            //foreach (var control in Controls)
+            //{
+            //    if (control.Bounds.Contains(e.Location))
+            //    {
+            //        var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+            //        control.OnMouseLeave(childEventArgs);
+            //    }
+            //}
+        }
+        internal virtual void OnMouseEnter(EventArgs e)
+        {
+            MouseEnter?.Invoke(this, e);
+            //foreach (var control in Controls)
+            //{
+            //    if (control.Bounds.Contains(e.Location))
+            //    {
+            //        var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
+            //        control.OnMouseLeave(childEventArgs);
+            //    }
+            //}
+        }
         internal virtual void OnLocationChanged(EventArgs e)
         {
             LocationChanged?.Invoke(this, e);
@@ -908,12 +1058,67 @@ namespace SDUI.Controls
 
         internal virtual void OnAutoSizeModeChanged(EventArgs e) =>
             AutoSizeModeChanged?.Invoke(this, e);
+        private void HandleTabKey(bool isShift)
+        {
+            var tabbableElements = Controls
+                .Where(e => e.Visible && e.Enabled && e.TabStop)
+                .OrderBy(e => e.TabIndex)
+                .ToList();
 
-        internal virtual void OnKeyDown(KeyEventArgs e) => KeyDown?.Invoke(this, e);
+            if (tabbableElements.Count == 0) return;
 
-        internal virtual void OnKeyUp(KeyEventArgs e) => KeyUp?.Invoke(this, e);
+            int currentIndex = _focusedElement != null ? tabbableElements.IndexOf(_focusedElement) : -1;
 
-        internal virtual void OnKeyPress(KeyPressEventArgs e) => KeyPress?.Invoke(this, e);
+            if (isShift)
+            {
+                currentIndex--;
+                if (currentIndex < 0) currentIndex = tabbableElements.Count - 1;
+            }
+            else
+            {
+                currentIndex++;
+                if (currentIndex >= tabbableElements.Count) currentIndex = 0;
+            }
+
+            _focusedElement = tabbableElements[currentIndex];
+        }
+
+
+        internal virtual void OnKeyDown(KeyEventArgs e)
+        {
+            KeyDown?.Invoke(this, e);
+            if (e.KeyCode == Keys.Tab && !e.Control && !e.Alt)
+            {
+                HandleTabKey(e.Shift);
+                e.Handled = true;
+                return;
+            }
+
+            if (_focusedElement != null)
+            {
+                _focusedElement.OnKeyDown(e);
+            }
+        }
+
+        internal virtual void OnKeyUp(KeyEventArgs e)
+        {
+            KeyUp?.Invoke(this, e);
+
+            if (_focusedElement != null)
+            {
+                _focusedElement.OnKeyUp(e);
+            }
+        }
+
+        internal virtual void OnKeyPress(KeyPressEventArgs e)
+        {
+            KeyPress?.Invoke(this, e);
+
+            if (_focusedElement != null)
+            {
+                _focusedElement.OnKeyPress(e);
+            }
+        }
 
         internal virtual void OnGotFocus(EventArgs e) => GotFocus?.Invoke(this, e);
 
@@ -1172,18 +1377,7 @@ namespace SDUI.Controls
                     // Yönetilen kaynakları temizle
                     _font?.Dispose();
                     _cursor?.Dispose();
-                    Surface?.Dispose();
-
-                    // Paint havuzunu temizle
-                    foreach (var paint in _paintPool.Values)
-                    {
-                        paint.Dispose();
-                    }
-                    _paintPool.Clear();
                 }
-
-                // Yönetilmeyen kaynakları temizle
-                Surface = null;
                 _isDisposed = true;
             }
         }
@@ -1231,7 +1425,7 @@ namespace SDUI.Controls
             Layout?.Invoke(this, e);
             Rectangle clientArea = ClientRectangle;
             Padding clientPadding = Padding;
-            
+
             if (Parent is UIWindow window)
             {
                 clientArea = window.ClientRectangle;
@@ -1301,38 +1495,6 @@ namespace SDUI.Controls
         {
             _isLayoutSuspended = false;
             PerformLayout();
-        }
-
-        protected void InvalidateCache()
-        {
-            _needsRedraw = true;
-            _cachedImage?.Dispose();
-            _cachedImage = null;
-        }
-
-        protected void InvalidateRegion(Rectangle region)
-        {
-            if (_dirtyRegion.IsEmpty)
-                _dirtyRegion = region;
-            else
-                _dirtyRegion = Rectangle.Union(_dirtyRegion, region);
-
-            _needsRedraw = true;
-        }
-
-        protected SKPaint GetPaintFromPool()
-        {
-            var id = Interlocked.Increment(ref _paintCounter);
-            return _paintPool.GetOrAdd(id, _ => new SKPaint());
-        }
-
-        protected void ReturnPaintToPool(SKPaint paint)
-        {
-            if (paint == null) return;
-
-            paint.Reset();
-            // Paint havuzunda tutmak yerine dispose ediyoruz
-            paint.Dispose();
         }
 
         #endregion

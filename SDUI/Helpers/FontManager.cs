@@ -10,8 +10,8 @@ namespace SDUI.Helpers
     public class FontManager
     {
         private static readonly PrivateFontCollection privateFontCollection = new();
-        public static Font Inter = GetFont(Resources.InterFont, 15f, FontStyle.Regular);
-        public static Font Segoe = new("Segoe UI", 13.3333f, FontStyle.Regular, GraphicsUnit.Pixel);
+        public static Font Inter = GetFont(Resources.InterFont, 9f, FontStyle.Regular);
+        public static Font Segoe = new("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
 
         private static Font GetFont(byte[] fontResource, float size, FontStyle style)
         {
@@ -25,7 +25,7 @@ namespace SDUI.Helpers
 
             var family = privateFontCollection.Families.FirstOrDefault(p => p.IsStyleAvailable(style));
 
-            return new(family, size, style, GraphicsUnit.Pixel);
+            return new(family, size, style, GraphicsUnit.Point);
         }
     }
 }

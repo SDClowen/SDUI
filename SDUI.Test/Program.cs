@@ -31,8 +31,8 @@ internal static class Program
         newForm.Controls.Add(new Controls.Button() { Padding = new(15), Text = "Hello World Right", ShadowDepth = 4, Dock = DockStyle.Right, Name = "button4", Width = 120, Height = 32 });
         newForm.Controls.Add(new Controls.Button() { Padding = new(15), Text = "Hello World Left", ShadowDepth = 4, Dock = DockStyle.Left, Name = "button3", Width = 120, Height = 32 });
 
-        Application.Run(newForm);
-        return;
+        //Application.Run(newForm);
+        //return;
         Application.Run(new MainWindow());
     }
 }

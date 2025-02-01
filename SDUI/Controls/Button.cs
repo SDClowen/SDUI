@@ -190,34 +190,15 @@ public class Button : UIElementBase
         {
             color = Enabled ? Color : Color.FromArgb(200, Color);
         }
-        else if (UseVisualStyleBackColor)
-        {
-            // Visual style renkleri kullan
-            if (Enabled)
-            {
-                color = _mouseState switch
-                {
-                    2 => SystemColors.ControlDark,  // Pressed
-                    1 => SystemColors.ControlLight, // Hover
-                    _ => SystemColors.Control       // Normal
-                };
-            }
-            else
-            {
-                color = SystemColors.Control;
-            }
-        }
         else
-        {
             color = Color.FromArgb(20, ColorScheme.ForeColor.Determine());
-        }
 
         var rect = new SKRect(0, 0, Width, Height);
         var inflate = _shadowDepth / 4f;
         rect.Inflate(-inflate, -inflate);
 
         // Gölge çizimi
-        using (var shadowPaint = GetPaintFromPool())
+        using (var shadowPaint = new SKPaint())
         {
             shadowPaint.Color = SKColors.Black.WithAlpha(60);
             shadowPaint.ImageFilter = SKImageFilter.CreateDropShadow(
@@ -230,11 +211,10 @@ public class Button : UIElementBase
             shadowPaint.IsAntialias = true;
 
             canvas.DrawRoundRect(rect, _radius, _radius, shadowPaint);
-            ReturnPaintToPool(shadowPaint);
         }
 
         // Ana buton çizimi
-        using (var paint = GetPaintFromPool())
+        using (var paint = new SKPaint())
         {
             paint.Color = color.ToSKColor();
             paint.IsAntialias = true;
@@ -249,7 +229,6 @@ public class Button : UIElementBase
             }
 
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
-            ReturnPaintToPool(paint);
         }
 
         // İkon çizimi
@@ -275,7 +254,7 @@ public class Button : UIElementBase
             if (!Enabled)
                 foreColor = Color.Gray;
 
-            using var textPaint = GetPaintFromPool();
+            using var textPaint = new SKPaint();
             textPaint.TextSize = Font.Size.PtToPx(this);
             textPaint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
             textPaint.Color = foreColor.ToSKColor();
@@ -300,14 +279,12 @@ public class Button : UIElementBase
             {
                 canvas.DrawText(Text, x, y, textPaint);
             }
-
-            ReturnPaintToPool(textPaint);
         }
 
         // Validasyon mesajı çizimi
         if (!IsValid && !string.IsNullOrEmpty(ValidationText))
         {
-            using var validationPaint = GetPaintFromPool();
+            using var validationPaint = new SKPaint();
             validationPaint.Color = Color.Red.ToSKColor();
             validationPaint.IsAntialias = true;
             validationPaint.TextSize = Font.Size;
@@ -318,8 +295,6 @@ public class Button : UIElementBase
                 5,
                 Height + 15,
                 validationPaint);
-
-            ReturnPaintToPool(validationPaint);
         }
     }
 

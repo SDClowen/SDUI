@@ -563,7 +563,6 @@ public class UIWindow : UIWindowBase
     private const float HOVER_ANIMATION_OPACITY = 0.4f;
     private int _maxZOrder = 0;
     private Cursor _currentCursor;
-    private bool _isLayoutSuspended;
 
     public new SDUI.Controls.ContextMenuStrip ContextMenuStrip { get; set; }
 
@@ -642,6 +641,13 @@ public class UIWindow : UIWindowBase
         }
     }
 
+    private bool _layoutSuspended;
+    private readonly HashSet<UIElementBase> _dirtyElements = new();
+    private readonly Dictionary<string, SKPaint> _paintCache = new();
+    private SKBitmap _cacheBitmap;
+    private SKSurface _cacheSurface;
+    private bool _needsFullRedraw = true;
+
     /// <summary>
     /// The contructor
     /// </summary>
@@ -662,47 +668,65 @@ public class UIWindow : UIWindowBase
         pageAreaAnimationManager = new()
         {
             AnimationType = AnimationType.EaseOut,
-            Increment = 0.07
+            Increment = 0.07,
+            Singular = true,
+            InterruptAnimation = true
         };
 
         minBoxHoverAnimationManager = new()
         {
             Increment = HOVER_ANIMATION_SPEED,
-            AnimationType = AnimationType.EaseInOut
+            AnimationType = AnimationType.EaseInOut,
+            Singular = true,
+            InterruptAnimation = true
         };
+
         maxBoxHoverAnimationManager = new()
         {
             Increment = HOVER_ANIMATION_SPEED,
-            AnimationType = AnimationType.EaseInOut
+            AnimationType = AnimationType.EaseInOut,
+            Singular = true,
+            InterruptAnimation = true
         };
+
         closeBoxHoverAnimationManager = new()
         {
             Increment = HOVER_ANIMATION_SPEED,
-            AnimationType = AnimationType.EaseInOut
+            AnimationType = AnimationType.EaseInOut,
+            Singular = true,
+            InterruptAnimation = true
         };
 
         extendBoxHoverAnimationManager = new()
         {
             Increment = HOVER_ANIMATION_SPEED,
-            AnimationType = AnimationType.EaseInOut
+            AnimationType = AnimationType.EaseInOut,
+            Singular = true,
+            InterruptAnimation = true
         };
 
         tabCloseHoverAnimationManager = new()
         {
             Increment = HOVER_ANIMATION_SPEED,
-            AnimationType = AnimationType.EaseInOut
+            AnimationType = AnimationType.EaseInOut,
+            Singular = true,
+            InterruptAnimation = true
         };
 
         newTabHoverAnimationManager = new()
         {
             Increment = HOVER_ANIMATION_SPEED,
-            AnimationType = AnimationType.EaseInOut
+            AnimationType = AnimationType.EaseInOut,
+            Singular = true,
+            InterruptAnimation = true
         };
 
         formMenuHoverAnimationManager = new()
         {
             Increment = HOVER_ANIMATION_SPEED,
-            AnimationType = AnimationType.EaseInOut
+            AnimationType = AnimationType.EaseInOut,
+            Singular = true,
+            InterruptAnimation = true
         };
 
         minBoxHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
@@ -718,6 +742,18 @@ public class UIWindow : UIWindowBase
     }
 
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox, _inTabCloseBox, _inNewTabBox, _inFormMenuBox;
+    private void CreateOrUpdateCache(SKImageInfo info)
+    {
+        if (_cacheBitmap == null || _cacheBitmap.Width != info.Width || _cacheBitmap.Height != info.Height)
+        {
+            _cacheBitmap?.Dispose();
+            _cacheSurface?.Dispose();
+
+            _cacheBitmap = new SKBitmap(info);
+            _cacheSurface = SKSurface.Create(info, _cacheBitmap.GetPixels(), _cacheBitmap.RowBytes);
+            _needsFullRedraw = true;
+        }
+    }
 
     protected override void OnBackColorChanged(EventArgs e)
     {
@@ -815,7 +851,7 @@ public class UIWindow : UIWindowBase
             if (currentIndex >= tabbableElements.Count) currentIndex = 0;
         }
 
-        FocusedElement = tabbableElements[currentIndex];
+        _focusedElement = tabbableElements[currentIndex];
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -976,9 +1012,7 @@ public class UIWindow : UIWindowBase
         }
 
         if (!elementClicked)
-        {
-            FocusedElement = null;
-        }
+            _focusedElement = null;
 
         if (enableFullDraggable && e.Button == MouseButtons.Left)
         {
@@ -1033,9 +1067,7 @@ public class UIWindow : UIWindowBase
         }
 
         if (!elementClicked)
-        {
-            FocusedElement = null;
-        }
+            _focusedElement = null;
 
         if (!MaximizeBox)
             return;
@@ -1360,94 +1392,50 @@ public class UIWindow : UIWindowBase
         Invalidate();
     }
 
-    private SKImageInfo CreateBitmap()
+    protected override void NotifyInvalidate(Rectangle invalidatedArea)
     {
-        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
-
-        if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
-        {
-            FreeBitmap();
-            if (info.Width != 0 && info.Height != 0)
-            {
-                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppPArgb);
-            }
-        }
-
-        return info;
+        base.NotifyInvalidate(invalidatedArea);
+        _needsFullRedraw = true;
     }
-
-    BitmapData cachedBitmapData = null;
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        var info = CreateBitmap();
-        if (info.Width == 0 || info.Height == 0)
-            return;
+        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
+        CreateOrUpdateCache(info);
 
-        try
+       // if (_needsFullRedraw)
         {
-            var data = bitmap.LockBits(
-                new Rectangle(0, 0, Width, Height),
-                ImageLockMode.WriteOnly,
-                PixelFormat.Format32bppPArgb
-            );
+            _cacheSurface.Canvas.Clear(SKColors.Transparent);
+            PaintSurface(_cacheSurface.Canvas, info);
+            _needsFullRedraw = false;
+        }
+        
 
-            try
+        {
+            // Sadece değişen alanları güncelle
+            foreach (var element in Controls.OrderBy(el => el.ZOrder))
             {
-                using var surface = SKSurface.Create(info, data.Scan0, data.Stride);
-                if (surface != null)
-                {
-                    surface.Canvas.Clear(SKColors.Transparent);
-                    this.PaintSurface(surface.Canvas, info);
+                if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
+                    continue;
 
-                    var elements = Controls.OrderBy(el => el.ZOrder).ToList();
+                //if (element.NeedsRedraw) continue;
 
-                    foreach (var element in elements)
-                    {
-                        if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
-                            continue;
-
-                        try
-                        {
-                            surface.Canvas.Save();
-
-                            var clipRect = SKRect.Create(element.Location.X, element.Location.Y, element.Size.Width, element.Size.Height);
-                            surface.Canvas.ClipRect(clipRect);
-                            
-                            surface.Canvas.Translate(element.Location.X, element.Location.Y);
-                            element.OnPaint(new SKPaintSurfaceEventArgs(surface, info));
-                            surface.Canvas.Restore();
-                        }
-                        catch (Exception ex)
-                        {
-                            System.Diagnostics.Debug.WriteLine($"Element render error for {element.GetType().Name}: {ex.Message}");
-                        }
-                    }
-
-                    surface.Canvas.Flush();
-                }
+                var bounds = element.Bounds;
+                _cacheSurface.Canvas.Save();
+                _cacheSurface.Canvas.ClipRect(SKRect.Create(bounds.X, bounds.Y, bounds.Width, bounds.Height));
+                _cacheSurface.Canvas.Clear(SKColors.Transparent);
+                element.OnPaint(new SKPaintSurfaceEventArgs(_cacheSurface, info));
+                _cacheSurface.Canvas.Restore();
+                element.NeedsRedraw = false;
             }
-            finally
-            {
-                bitmap.UnlockBits(data);
-            }
+        }
 
+        using (var bitmap = _cacheBitmap.ToBitmap())
+        {
             e.Graphics.DrawImage(bitmap, 0, 0);
         }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Render error: {ex.Message}");
-        }
     }
 
-    private void FreeBitmap()
-    {
-        if (bitmap != null)
-        {
-            bitmap.Dispose();
-            bitmap = null;
-        }
-    }
     private void PaintSurface(SKCanvas canvas, SKImageInfo info)
     {
         if (info.Width <= 0 || info.Height <= 0)
@@ -2110,8 +2098,13 @@ public class UIWindow : UIWindowBase
 
     private void InvalidateElement(UIElementBase element)
     {
-        var bounds = new Rectangle(element.Location, element.Size);
-        Invalidate(bounds);
+        if (_layoutSuspended) return;
+
+        _dirtyElements.Add(element);
+        element.NeedsRedraw = true;
+
+        if (!_needsFullRedraw)
+            Invalidate(element.Bounds);
     }
 
     protected SKPaint GetPaintFromPool()
@@ -2130,19 +2123,33 @@ public class UIWindow : UIWindowBase
     {
         ResumeLayout(true);
     }
+    public new void SuspendLayout()
+    {
+        _layoutSuspended = true;
+    }
 
     public new void ResumeLayout(bool performLayout)
     {
-        _isLayoutSuspended = false;
+        _layoutSuspended = false;
         if (performLayout)
+        {
+            _needsFullRedraw = true;
             PerformLayout();
+            Invalidate();
+        }
     }
 
     protected override void Dispose(bool disposing)
     {
         if (disposing)
-            FreeBitmap();
+        {
+            foreach (var paint in _paintCache.Values)
+                paint.Dispose();
+            _paintCache.Clear();
 
+            _cacheBitmap?.Dispose();
+            _cacheSurface?.Dispose();
+        }
         base.Dispose(disposing);
     }
 }
