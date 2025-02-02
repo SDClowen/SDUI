@@ -49,7 +49,7 @@ namespace SDUI.Controls
         private readonly AnimationEngine _thumbPressAnimation;
         private readonly AnimationEngine _trackHoverAnimation;
         private readonly AnimationEngine _valueAnimation;
-        private readonly Tooltip _tooltip;
+        private readonly ToolTip _tooltip;
 
         private int _minimum = 0;
         private int _maximum = 100;

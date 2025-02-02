@@ -806,6 +806,8 @@ public class ComboBox : UIElementBase
         Height = 23;
     }
 
+    public void BeginUpdate() { /* Not implemented */ }
+    public void EndUpdate() { /* Not implemented */ }
     protected override void Dispose(bool disposing)
     {
         if (disposing)

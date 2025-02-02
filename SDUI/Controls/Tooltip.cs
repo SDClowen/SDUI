@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
-    public class Tooltip : UIElementBase
+    public class ToolTip : UIElementBase
     {
         private string _text = string.Empty;
         private int _showDelay = 500;
@@ -48,7 +48,7 @@ namespace SDUI.Controls
         }
 
         [DefaultValue(5000)]
-        public int AutoPopDelay
+        public int AutomaticDelay
         {
             get => _autoPopDelay;
             set => _autoPopDelay = Math.Max(0, value);
@@ -66,7 +66,7 @@ namespace SDUI.Controls
             }
         }
 
-        public Tooltip()
+        public ToolTip()
         {
             BackColor = Color.FromArgb(50, 50, 50);
             ForeColor = Color.White;
@@ -75,8 +75,12 @@ namespace SDUI.Controls
             _showTimer = new Timer { Interval = ShowDelay };
             _showTimer.Tick += ShowTimer_Tick;
 
-            _hideTimer = new Timer { Interval = AutoPopDelay };
+            _hideTimer = new Timer { Interval = AutomaticDelay };
             _hideTimer.Tick += HideTimer_Tick;
+        }
+
+        public ToolTip(IContainer container) : this()
+        {
         }
 
         public void SetToolTip(UIElementBase control, string text)

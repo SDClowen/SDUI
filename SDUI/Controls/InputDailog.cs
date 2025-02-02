@@ -141,10 +141,10 @@ public partial class InputDialog : UIWindow
     }
 
     /// <summary>
-    /// Handles the PreviewKeyDown event of the txtValue control.
+    /// Handles the KeyDown event of the txtValue control.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="PreviewKeyDownEventArgs"/> instance containing the event data.</param>
+    /// <param name="e">The <see cref="KeyEventArgs"/> instance containing the event data.</param>
     private void TxtValue_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter)

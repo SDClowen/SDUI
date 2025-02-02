@@ -10,6 +10,7 @@ namespace SDUI.Controls;
 
 public class MenuItem
 {
+    public object Tag { get; set; }
     private readonly List<MenuItem> _dropDownItems = new();
     private string _text = string.Empty;
     private string _name = string.Empty;
@@ -28,6 +29,9 @@ public class MenuItem
     private Padding _padding = new(3);
     private bool _autoSize = true;
     private bool _showSubmenuArrow = true;
+
+    private bool _checked;
+    public bool Checked { get => _checked; set { _checked = value; Parent.Invalidate(); } }
 
     public string Text
     {

@@ -259,7 +259,7 @@ public class FlowLayoutPanel : UIElementBase
 
         _isLayouting = true;
 
-        var controls = Controls
+        var controls = Controls.OfType<UIElementBase>()
             .Where(c => c != _vScrollBar && c != _hScrollBar && c.Visible)
             .ToList();
 

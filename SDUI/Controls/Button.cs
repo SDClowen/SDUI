@@ -8,7 +8,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class Button : UIElementBase
+public class Button : UIElementBase, IButtonControl
 {
     [Category("Appearance")]
     public Image Image { get; set; }
@@ -388,5 +388,15 @@ public class Button : UIElementBase
     {
         InvalidateCache();
         base.OnSizeChanged(e);
+    }
+
+    public void NotifyDefault(bool value)
+    {
+        //throw new NotImplementedException();
+    }
+
+    void IButtonControl.PerformClick()
+    {
+        PerformClick();
     }
 }

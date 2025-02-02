@@ -15,7 +15,7 @@ using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
-public class UIWindow : UIWindowBase
+public class UIWindow : UIWindowBase, IUIElement
 {
     public enum TabDesingMode
     {
@@ -307,7 +307,7 @@ public class UIWindow : UIWindowBase
             (int)(Location.Y * scaleFactor)
         );
 
-        foreach (var element in Controls) 
+        foreach (UIElementBase element in Controls) 
             element.OnDpiChanged(EventArgs.Empty);
 
         Invalidate();
@@ -571,12 +571,12 @@ public class UIWindow : UIWindowBase
     private Bitmap bitmap;
     public SKSize CanvasSize => bitmap == null ? SKSize.Empty : new SKSize(bitmap.Width, bitmap.Height);
 
-    public new UIWindowElementCollection Controls { get; }
+    public new ElementCollection Controls { get; }
 
     public UIElementBase FocusedElement
     {
         get => _focusedElement;
-        internal set
+        set
         {
             if (_focusedElement == value) return;
 
@@ -641,6 +641,8 @@ public class UIWindow : UIWindowBase
         }
     }
 
+    public new IUIElement Parent { get; set; }
+
     private bool _layoutSuspended;
     private readonly HashSet<UIElementBase> _dirtyElements = new();
     private readonly Dictionary<string, SKPaint> _paintCache = new();
@@ -662,7 +664,7 @@ public class UIWindow : UIWindowBase
             ControlStyles.SupportsTransparentBackColor, true);
 
         UpdateStyles();
-        Controls = new UIWindowElementCollection(this);
+        Controls = new(this);
         enableFullDraggable = false;
 
         pageAreaAnimationManager = new()
@@ -768,14 +770,11 @@ public class UIWindow : UIWindowBase
         {
             e.Control.Top = Padding.Top;
         }
-
-        PerformLayout();
     }
 
     protected override void OnControlRemoved(ControlEventArgs e)
     {
         base.OnControlRemoved(e);
-        PerformLayout();
     }
 
     private void CalcSystemBoxPos()
@@ -831,7 +830,7 @@ public class UIWindow : UIWindowBase
     }
     private void HandleTabKey(bool isShift)
     {
-        var tabbableElements = Controls
+        var tabbableElements = Controls.OfType<UIElementBase>()
             .Where(e => e.Visible && e.Enabled && e.TabStop)
             .OrderBy(e => e.TabIndex)
             .ToList();
@@ -896,7 +895,7 @@ public class UIWindow : UIWindowBase
     {
         base.OnMouseClick(e);
 
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
@@ -995,7 +994,7 @@ public class UIWindow : UIWindowBase
 
         bool elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
@@ -1050,7 +1049,7 @@ public class UIWindow : UIWindowBase
 
         bool elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
@@ -1123,7 +1122,7 @@ public class UIWindow : UIWindowBase
         animationSource = e.Location;
 
         // Z-order'a göre tersten kontrol et
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
@@ -1255,7 +1254,7 @@ public class UIWindow : UIWindowBase
         UIElementBase hoveredElement = null;
 
         // Z-order'a göre tersten kontrol et
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
@@ -1293,26 +1292,12 @@ public class UIWindow : UIWindowBase
         Invalidate();
     }
 
-    protected override void OnClick(EventArgs e)
-    {
-        base.OnClick(e);
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
-        {
-            var mousePos = PointToClient(MousePosition);
-            if (element.ClientRectangle.Contains(mousePos))
-            {
-                element.OnClick(e);
-                break;
-            }
-        }
-    }
-
     protected override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
 
         // Z-order'a göre tersten kontrol et
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             var mousePos = PointToClient(MousePosition);
             if (element.ClientRectangle.Contains(mousePos))
@@ -1328,7 +1313,7 @@ public class UIWindow : UIWindowBase
         base.OnMouseWheel(e);
         
         // Z-order'a göre tersten kontrol et
-        foreach (var element in Controls.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
@@ -1413,7 +1398,7 @@ public class UIWindow : UIWindowBase
 
         {
             // Sadece değişen alanları güncelle
-            foreach (var element in Controls.OrderBy(el => el.ZOrder))
+            foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder))
             {
                 if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
                     continue;
@@ -1844,7 +1829,7 @@ public class UIWindow : UIWindowBase
             }
 
             // Draw tab headers
-            foreach (var page in _windowPageControl.Controls)
+            foreach (UIElementBase page in _windowPageControl.Controls)
             {
                 var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
                 var rect = pageRect[currentTabIndex];
@@ -2072,7 +2057,7 @@ public class UIWindow : UIWindowBase
 
     public new void PerformLayout()
     {
-        foreach (var element in Controls)
+        foreach (UIElementBase element in Controls)
             element.PerformLayout();
 
         Invalidate();
@@ -2091,7 +2076,7 @@ public class UIWindow : UIWindowBase
     {
         if (!Controls.Contains(element)) return;
 
-        var minZOrder = Controls.Min(e => e.ZOrder);
+        var minZOrder = Controls.OfType<UIElementBase>().Min(e => e.ZOrder);
         element.ZOrder = minZOrder - 1;
         InvalidateElement(element);
     }
@@ -2105,24 +2090,13 @@ public class UIWindow : UIWindowBase
 
         if (!_needsFullRedraw)
             Invalidate(element.Bounds);
-    }
-
-    protected SKPaint GetPaintFromPool()
-    {
-        var paint = new SKPaint();
-        paint.IsAntialias = true;
-        return paint;
-    }
-
-    protected void ReturnPaintToPool(SKPaint paint)
-    {
-        paint?.Dispose();
-    }
+    } 
 
     public new void ResumeLayout()
     {
         ResumeLayout(true);
     }
+
     public new void SuspendLayout()
     {
         _layoutSuspended = true;
@@ -2152,4 +2126,6 @@ public class UIWindow : UIWindowBase
         }
         base.Dispose(disposing);
     }
+
+    public void UpdateZOrder() { }
 }

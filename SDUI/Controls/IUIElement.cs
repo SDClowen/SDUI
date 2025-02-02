@@ -1,3 +1,4 @@
+using SDUI.Collections;
 using System;
 using System.Drawing;
 
@@ -5,6 +6,9 @@ namespace SDUI.Controls
 {
     public interface IUIElement
     {
+        string Name { get; set; }
+        string Text { get; set; }  
+
         Point Location { get; set; }
         Size Size { get; set; }
         bool Visible { get; set; }
@@ -14,16 +18,16 @@ namespace SDUI.Controls
         Color ForeColor { get; set; }
         Font Font { get; set; }
 
+        UIElementBase FocusedElement { get; set; }
+        
+        ElementCollection Controls { get; }
+
         void Invalidate();
-        void Update();
         void Refresh();
-
-        event EventHandler Click;
-        event EventHandler MouseMove;
-        event EventHandler MouseDown;
-        event EventHandler MouseUp;
-        event EventHandler Paint;
-
-        void OnPaint(SKPaintSurfaceEventArgs e);
+        void PerformLayout();
+        void SuspendLayout();
+        void ResumeLayout();
+        void ResumeLayout(bool performLayout);
+        void UpdateZOrder();
     }
 }

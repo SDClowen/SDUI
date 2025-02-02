@@ -1,4 +1,6 @@
+using SDUI.Collections;
 using SDUI.Helpers;
+using SDUI.Validations;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -7,17 +9,30 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Collections.Concurrent;
-using System.Threading;
-using SDUI.Collections;
-using SDUI.Validations;
-using System.Xml.Linq;
 
 namespace SDUI.Controls
 {
-    public abstract class UIElementBase : IDisposable
+    public abstract class UIElementBase : IUIElement, IDisposable
     {
-        public Bitmap Image { get; set; }
+        public System.Drawing.ContentAlignment ImageAlign { get; set; }
+        public RightToLeft RightToLeft { get; set; } = RightToLeft.No;
+        public SizeF AutoScaleDimensions { get; set; }
+        public AutoScaleMode AutoScaleMode { get; set; }
+
+        public bool Disposing { get; set; }
+        public virtual bool DoubleBuffered { get; set; }
+        public bool CheckForIllegalCrossThreadCalls { get; set; }
+        public void SetStyle(ControlStyles flag, bool value) { }
+        public void SetTopLevel(bool value) { }
+        public void Invoke(Delegate method) { method.DynamicInvoke(); }
+        public void Invoke(Delegate method, params object[] args) { method.DynamicInvoke(args); }
+        public void Show() { Visible = true; }
+        public void Hide() { Visible = false; }
+        public object Tag;
+        public bool AutoScroll {  get; set; }
+        public Size AutoScrollMargin { get; set; }
+
+        public Image Image { get; set; }
 
         #region Properties
 
@@ -543,7 +558,7 @@ namespace SDUI.Controls
         private static extern short GetKeyState(int nVirtKey);
 
         private bool _isDisposed;
-        protected bool IsDisposed => _isDisposed;
+        public bool IsDisposed => _isDisposed;
         private UIElementBase _focusedElement;
         private UIElementBase _lastHoveredElement;
 
@@ -551,7 +566,7 @@ namespace SDUI.Controls
         public UIElementBase FocusedElement
         {
             get => _focusedElement;
-            internal set
+            set
             {
                 if (_focusedElement == value) return;
 
@@ -738,14 +753,14 @@ namespace SDUI.Controls
 
         protected bool IsDesignMode { get; }
 
-        private readonly UIElementCollection _controls;
+        private readonly ElementCollection _controls;
 
         protected bool _isLayoutSuspended;
 
         public UIElementBase()
         {
             IsDesignMode = LicenseManager.UsageMode == LicenseUsageMode.Designtime;
-            _controls = new UIElementCollection(this);
+            _controls = new(this);
             _font = new Font("Segoe UI", 9f);
             _cursor = Cursors.Default;
         }
@@ -757,7 +772,7 @@ namespace SDUI.Controls
             var canvas = e.Surface.Canvas;
 
             // Alt elementleri render et
-            foreach (var element in Controls.OrderBy(el => el.ZOrder))
+            foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder))
             {
                 if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
                     continue;
@@ -775,9 +790,7 @@ namespace SDUI.Controls
                     // Element'in çizim alanını kaydet
                     canvas.Save();
 
-                    // Element'in çizim alanını kırp
-                    var clipRect = SKRect.Create(element.Location.X, element.Location.Y, element.Size.Width, element.Size.Height);
-                    canvas.ClipRect(clipRect);
+                    canvas.ClipRect(element.Bounds.ToSKRect());
 
                     // Element'in konumuna taşı
                     canvas.Translate(element.Location.X, element.Location.Y);
@@ -863,6 +876,14 @@ namespace SDUI.Controls
             Click?.Invoke(this, e);
         }
 
+        public virtual void Refresh()
+        {
+            if (!Enabled || !Visible)
+                return;
+
+            Invalidate();
+        }
+
         protected virtual void OnSizeChanged(EventArgs e)
         {
             SizeChanged?.Invoke(this, e);
@@ -877,7 +898,7 @@ namespace SDUI.Controls
 
             UIElementBase hoveredElement = null;
             // Propagate event to child controls
-            foreach (var control in Controls)
+            foreach (UIElementBase control in Controls)
             {
                 if (control.Bounds.Contains(e.Location))
                 {
@@ -907,7 +928,7 @@ namespace SDUI.Controls
 
             bool elementClicked = false;
             // Propagate event to child controls
-            foreach (var control in Controls)
+            foreach (UIElementBase control in Controls)
             {
                 if (control.Bounds.Contains(e.Location))
                 {
@@ -928,7 +949,7 @@ namespace SDUI.Controls
             MouseUp?.Invoke(this, e);
 
             // Propagate event to child controls
-            foreach (var control in Controls)
+            foreach (UIElementBase control in Controls)
             {
                 if (control.Bounds.Contains(e.Location))
                 {
@@ -943,7 +964,7 @@ namespace SDUI.Controls
             MouseClick?.Invoke(this, e);
 
             // Propagate event to child controls
-            foreach (var control in Controls)
+            foreach (UIElementBase control in Controls)
             {
                 if (control.Bounds.Contains(e.Location))
                 {
@@ -961,7 +982,7 @@ namespace SDUI.Controls
             MouseDoubleClick?.Invoke(this, e);
 
             // Propagate event to child controls
-            foreach (var control in Controls)
+            foreach (UIElementBase control in Controls)
             {
                 if (control.Bounds.Contains(e.Location))
                 {
@@ -1060,7 +1081,7 @@ namespace SDUI.Controls
             AutoSizeModeChanged?.Invoke(this, e);
         private void HandleTabKey(bool isShift)
         {
-            var tabbableElements = Controls
+            var tabbableElements = Controls.OfType<UIElementBase>()
                 .Where(e => e.Visible && e.Enabled && e.TabStop)
                 .OrderBy(e => e.TabIndex)
                 .ToList();
@@ -1167,7 +1188,7 @@ namespace SDUI.Controls
             DpiChanged?.Invoke(this, e);
 
             // Alt kontrollere DPI değişikliğini bildir
-            foreach (var control in _controls)
+            foreach (UIElementBase control in _controls)
             {
                 control.OnDpiChanged(e);
             }
@@ -1193,7 +1214,7 @@ namespace SDUI.Controls
 
         #endregion
 
-        public object Parent { get; internal set; }
+        public IUIElement Parent { get; set; }
 
         public UIWindowBase ParentWindow => Parent as UIWindowBase;
 
@@ -1401,7 +1422,7 @@ namespace SDUI.Controls
         #endregion
 
         [Browsable(false)]
-        public UIElementCollection Controls => _controls;
+        public ElementCollection Controls => _controls;
 
         #region Layout Methods
         public virtual void PerformLayout()
@@ -1447,7 +1468,7 @@ namespace SDUI.Controls
             LayoutEngine.Perform(this, clientArea, clientPadding);
 
             // Dock işlemleri
-            foreach (var control in _controls)
+            foreach (UIElementBase control in _controls)
             {
                 LayoutEngine.Perform(control, clientArea, clientPadding);
                 //control.PerformLayout();
@@ -1458,7 +1479,8 @@ namespace SDUI.Controls
 
         internal virtual void OnControlAdded(UIElementEventArgs e)
         {
-            if (e.Element != null)
+            ControlAdded?.Invoke(this, e);
+            /*if (e.Element != null)
             {
                 if (Parent is UIWindowBase parentWindow)
                 {
@@ -1470,20 +1492,21 @@ namespace SDUI.Controls
                 {
                     ControlAdded?.Invoke(this, e);
                 }
-            }
+            }*/
         }
 
         internal virtual void OnControlRemoved(UIElementEventArgs e)
         {
-            if (e.Element != null)
-            {
-                if (e.Element.Parent == Parent)
-                {
-                    e.Element.Parent = null;
-                }
-                ControlRemoved?.Invoke(this, e);
-                PerformLayout();
-            }
+            ControlRemoved?.Invoke(this, e);
+            //if (e.Element != null)
+            //{
+            //    if (e.Element.Parent == Parent)
+            //    {
+            //        e.Element.Parent = null;
+            //    }
+            //    ControlRemoved?.Invoke(this, e);
+            //    PerformLayout();
+            //}
         }
 
         public void SuspendLayout()
@@ -1491,12 +1514,20 @@ namespace SDUI.Controls
             _isLayoutSuspended = true;
         }
 
-        public void ResumeLayout(bool unused = false)
+        public void ResumeLayout()
+        {
+            ResumeLayout(true);
+        }
+
+        public void ResumeLayout(bool performLayout)
         {
             _isLayoutSuspended = false;
+
+            if(performLayout)
             PerformLayout();
         }
 
+        public void UpdateZOrder() { }
         #endregion
     }
 }

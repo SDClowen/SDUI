@@ -1,25 +1,29 @@
-﻿using SkiaSharp;
+﻿using SDUI.Collections;
+using SkiaSharp;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Timers;
-using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
 public class ListView : UIElementBase
 {
-    public View View { get; set; } = View.Details;
-    public BorderStyle BorderStyle { get; set; } = BorderStyle.None;
+    public System.Windows.Forms.ColumnHeaderStyle HeaderStyle { get; set; } = System.Windows.Forms.ColumnHeaderStyle.Clickable; // Not implemented
+
+    public System.Windows.Forms.View View { get; set; } = System.Windows.Forms.View.Details;
+    public System.Windows.Forms.BorderStyle BorderStyle { get; set; } = System.Windows.Forms.BorderStyle.None;
     public bool FullRowSelect { get; set; } = false;
     public bool CheckBoxes { get; set; } = false;
     public bool ShowItemToolTips { get; set; } = false;
     public bool UseCompatibleStateImageBehavior { get; set; } = false;
 
-    public List<ColumnHeader> Columns { get; } = new List<ColumnHeader>();
-    public List<ListViewItem> Items { get; } = new List<ListViewItem>();
-    public List<ListViewGroup> Groups { get; } = new List<ListViewGroup>();
+    public IndexedList<System.Windows.Forms.ColumnHeader> Columns { get; } = [];
+    public ListViewItemCollection Items { get; }
+    public IndexedList<System.Windows.Forms.ListViewItem> CheckedItems { get; } = []; // Not implemented
+    public IndexedList<int> SelectedIndices { get; } = []; // Not implemented
+    public IndexedList<ListViewItem> SelectedItems { get; } = []; // Not implemented
+    public ListViewGroupCollection Groups { get; }
 
     private float _horizontalScrollOffset = 0;
     private float _verticalScrollOffset = 0;
@@ -37,12 +41,22 @@ public class ListView : UIElementBase
     private const float ElasticDecay = 0.85f;
     private const int ElasticInterval = 15;
 
-    public event EventHandler<int> RowClicked;
+    private int _selectedIndex = -1;
+    public ListViewItem SelectedItem { get => _selectedIndex == -1 ? null : Items[_selectedIndex]; set { var index = Items.IndexOf(value); if(index != -1) _selectedIndex = index;  } }
+    public int SelectedIndex { get => _selectedIndex; set { _selectedIndex = value;  SelectedIndexChanged?.Invoke(this, EventArgs.Empty);  } }
+
+    public ImageList SmallImageList { get; set; }
+
+    public event EventHandler SelectedIndexChanged;
+    public event ItemCheckedEventHandler ItemChecked; // Not implemented
 
     public ListView()
     {
         _elasticTimer = new(ElasticInterval);
         _elasticTimer.Elapsed += ElasticTimer_Tick;
+
+        Items = new(this);
+        Groups = new(this);
     }
 
     private void ElasticTimer_Tick(object sender, ElapsedEventArgs e)
@@ -158,7 +172,7 @@ public class ListView : UIElementBase
             TextSize = 16f,
         };
 
-        foreach (var group in Groups)
+        foreach (ListViewGroup group in Groups)
         {
             var rect = new SKRect();
             rect.Location = new SKPoint(5, y + 8);
@@ -240,10 +254,12 @@ public class ListView : UIElementBase
         }
 
         // Vertical ScrollBar
-        if (Items.Sum(r => rowBoundsHeight) > Height - 30)
+
+        var casted = Items.Cast<ListViewItem>();
+        if (casted.Sum(r => rowBoundsHeight) > Height - 30)
         {
-            float scrollbarHeight = (Height - 30) * ((Height - 30) / (float)Items.Sum(r => rowBoundsHeight));
-            float scrollbarY = _verticalScrollOffset * (Height - 30 - scrollbarHeight) / (Items.Sum(r => rowBoundsHeight) - (Height - 30));
+            float scrollbarHeight = (Height - 30) * ((Height - 30) / (float)casted.Sum(r => rowBoundsHeight));
+            float scrollbarY = _verticalScrollOffset * (Height - 30 - scrollbarHeight) / (casted.Sum(r => rowBoundsHeight) - (Height - 30));
             var rect = new SKRect(Width - 5, 35 + scrollbarY, Width - 15, 15 + scrollbarY + scrollbarHeight);
             canvas.DrawRoundRect(rect, 8, 8, paint);
         }
@@ -305,7 +321,7 @@ public class ListView : UIElementBase
         }
 
         var y = 30 - _verticalScrollOffset;
-        foreach (var group in Groups)
+        foreach (ListViewGroup group in Groups)
         {
             var groupRect = new SKRect(0, y, Width, y + rowBoundsHeight);
             if (groupRect.Contains(e.X, e.Y))
@@ -325,9 +341,14 @@ public class ListView : UIElementBase
                     var itemRect = new SKRect(0, y, Width, y + rowBoundsHeight);
                     if (itemRect.Contains(e.X, e.Y))
                     {
-                        Items.ForEach(r => r.Selected = false);
+                        foreach (ListViewItem r in Items)
+                        {
+                            r.Selected = false;
+                        }
+
                         item.Selected = true;
-                        RowClicked?.Invoke(this, Items.IndexOf(item));
+
+                        SelectedIndex = Items.IndexOf(item);
 
                         Invalidate();
                         return;
@@ -382,7 +403,7 @@ public class ListView : UIElementBase
             int delta = _isVerticalScrollbar ? e.Y - _scrollbarDragStart.Y : e.X - _scrollbarDragStart.X;
             if (_isVerticalScrollbar)
             {
-                _verticalScrollOffset = Math.Max(-Height / 4, Math.Min(_verticalScrollOffset + delta * 3, Items.Sum(r => rowBoundsHeight) - Height + 30 + Height / 4));
+                _verticalScrollOffset = Math.Max(-Height / 4, Math.Min(_verticalScrollOffset + delta * 3, Items.Cast<ListViewItem>().Sum(r => rowBoundsHeight) - Height + 30 + Height / 4));
             }
             else
             {
@@ -406,7 +427,7 @@ public class ListView : UIElementBase
                 int maxWidth = 30; // Minimum column width
                 using (var paint = new SKPaint { TextSize = 14, IsAntialias = true })
                 {
-                    foreach (var row in Items)
+                    foreach (ListViewItem row in Items)
                     {
                         if (i < row.SubItems.Count)
                         {
@@ -421,5 +442,15 @@ public class ListView : UIElementBase
             }
             x += Columns[i].Width;
         }
+    }
+
+    public void BeginUpdate()
+    {
+        _elasticTimer.Stop();
+    }
+
+    public void EndUpdate()
+    {
+        _elasticTimer.Start();
     }
 }

@@ -9,8 +9,19 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
+public class RichTextBox : TextBox
+{
+    public RichTextBox()
+    {
+        IsRich = true;
+        AutoScroll = true;
+    }
+}
+
 public class TextBox : UIElementBase
 {
+    public BorderStyle BorderStyle = BorderStyle.Fixed3D; // Not Implemented
+
     private string _text = string.Empty;
     private string _placeholderText = string.Empty;
     private bool _isMultiLine;
@@ -54,6 +65,12 @@ public class TextBox : UIElementBase
     private bool _autoScroll = true;
     private List<TextStyle> _styles = new();
     private float _scrollSpeed = 1.0f;
+
+    public int SelectionStart { get => _selectionStart; set { _selectionStart = value; Invalidate(); } }
+    public int SelectionLength { get => _selectionLength; set { _selectionLength = value; Invalidate(); } }
+    public int TextLength => Text.Length;
+    public int LineCount => Text.Split('\n').Length;
+    public Font SelectionFont { get; set; } = new Font("Segoe UI", 9.75f);
 
     public TextBox()
     {
@@ -526,7 +543,7 @@ public class TextBox : UIElementBase
             _autoScroll = value;
             if (value)
             {
-                ScrollToEnd();
+                ScrollToCaret();
             }
         }
     }
@@ -1249,7 +1266,7 @@ public class TextBox : UIElementBase
         UpdateAutoHeight();
     }
 
-    public void ScrollToEnd()
+    public void ScrollToCaret()
     {
         if (_verticalScrollBar.Visible)
         {
@@ -1266,6 +1283,12 @@ public class TextBox : UIElementBase
     public void ClearStyles()
     {
         _styles.Clear();
+        Invalidate();
+    }
+
+    public void Clear()
+    {
+        Text = string.Empty;
         Invalidate();
     }
 
