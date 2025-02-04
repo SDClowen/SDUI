@@ -5,16 +5,13 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using static SDUI.NativeMethods;
+using SDUI.Controls;
 
 namespace SDUI.Collections;
 
 public partial class ListViewItemCollection : IList
 {
-    internal class ListViewNativeItemCollection : ListViewItemCollection.IInnerList
+    internal class ListViewNativeItemCollection : IInnerList
     {
         private readonly ListView _owner;
 
@@ -64,14 +61,14 @@ public partial class ListViewItemCollection : IList
 
             if (_owner.VirtualMode)
             {
-                // If we are showing virtual items, we need to get the item from the user.
-                RetrieveVirtualItemEventArgs rVI = new(index);
-                if (rVI.Item is null)
-                {
-                    return !throwInVirtualMode ? null : throw new InvalidOperationException(SR.ListViewVirtualItemRequired);
-                }
+                //// If we are showing virtual items, we need to get the item from the user.
+                //RetrieveVirtualItemEventArgs rVI = new(index);
+                //if (rVI.Item is null)
+                //{
+                //    return !throwInVirtualMode ? null : throw new InvalidOperationException();
+                //}
 
-                return rVI.Item;
+                //return rVI.Item;
             }
             else
             {

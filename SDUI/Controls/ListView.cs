@@ -1,9 +1,11 @@
 ﻿using SDUI.Collections;
 using SkiaSharp;
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Timers;
+using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
@@ -17,12 +19,13 @@ public class ListView : UIElementBase
     public bool CheckBoxes { get; set; } = false;
     public bool ShowItemToolTips { get; set; } = false;
     public bool UseCompatibleStateImageBehavior { get; set; } = false;
-
+    private List<ListViewItem>? _listViewItems = [];
+    private readonly Dictionary<int, ListViewItem> _listItemsTable = [];
     public IndexedList<System.Windows.Forms.ColumnHeader> Columns { get; } = [];
     public ListViewItemCollection Items { get; }
     public IndexedList<System.Windows.Forms.ListViewItem> CheckedItems { get; } = []; // Not implemented
     public IndexedList<int> SelectedIndices { get; } = []; // Not implemented
-    public IndexedList<ListViewItem> SelectedItems { get; } = []; // Not implemented
+    public IndexedList<System.Windows.Forms.ListViewItem> SelectedItems { get; } = []; // Not implemented
     public ListViewGroupCollection Groups { get; }
 
     private float _horizontalScrollOffset = 0;
@@ -42,13 +45,18 @@ public class ListView : UIElementBase
     private const int ElasticInterval = 15;
 
     private int _selectedIndex = -1;
+    internal bool IsHandleCreated = true;
+    internal int VirtualListSize;
+
     public ListViewItem SelectedItem { get => _selectedIndex == -1 ? null : Items[_selectedIndex]; set { var index = Items.IndexOf(value); if(index != -1) _selectedIndex = index;  } }
     public int SelectedIndex { get => _selectedIndex; set { _selectedIndex = value;  SelectedIndexChanged?.Invoke(this, EventArgs.Empty);  } }
 
-    public ImageList SmallImageList { get; set; }
+    public System.Windows.Forms.ImageList SmallImageList { get; set; }
+    public System.Windows.Forms.ImageList? GroupImageList { get; internal set; }
+    public bool VirtualMode { get; internal set; }
 
     public event EventHandler SelectedIndexChanged;
-    public event ItemCheckedEventHandler ItemChecked; // Not implemented
+    public event System.Windows.Forms.ItemCheckedEventHandler ItemChecked; // Not implemented
 
     public ListView()
     {
@@ -452,5 +460,11 @@ public class ListView : UIElementBase
     public void EndUpdate()
     {
         _elasticTimer.Start();
+    }
+
+    internal Rectangle GetSubItemRect(int index, int subItemIndex)
+    {
+        var item = Items.Cast<ListViewItem>().ElementAt(index).SubItems[subItemIndex];
+        return item.Bounds;
     }
 }

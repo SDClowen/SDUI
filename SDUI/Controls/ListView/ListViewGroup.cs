@@ -1,13 +1,9 @@
-﻿using System;
+﻿using SDUI.Collections;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using static System.Windows.Forms.ListView;
 
 namespace SDUI.Controls;
 
@@ -24,7 +20,7 @@ internal class Indexer
     private int _index = DefaultIndex;
     private bool _useIntegerIndex = true;
 
-    public virtual ImageList? ImageList { get; set; }
+    public virtual System.Windows.Forms.ImageList? ImageList { get; set; }
 
     [AllowNull]
     public virtual string Key
@@ -85,7 +81,7 @@ internal class ListViewGroupImageIndexer : Indexer
     ///  Gets the <see cref="ListView.GroupImageList"/> of the <see cref="ListView"/>
     ///  associated with the group.
     /// </summary>
-    public override ImageList? ImageList
+    public override System.Windows.Forms.ImageList? ImageList
     {
         get => _owner.ListView?.GroupImageList;
         set => Debug.Fail("We should never set the image list");
@@ -96,21 +92,21 @@ internal class ListViewGroupImageIndexer : Indexer
 public sealed partial class ListViewGroup : ISerializable
 {
     private string? _header;
-    private HorizontalAlignment _headerAlignment = HorizontalAlignment.Left;
+    private System.Windows.Forms.HorizontalAlignment _headerAlignment = System.Windows.Forms.HorizontalAlignment.Left;
     private string? _footer;
-    private HorizontalAlignment _footerAlignment = HorizontalAlignment.Left;
-    private ListViewGroupCollapsedState _collapsedState = ListViewGroupCollapsedState.Default;
+    private System.Windows.Forms.HorizontalAlignment _footerAlignment = System.Windows.Forms.HorizontalAlignment.Left;
+    private System.Windows.Forms.ListViewGroupCollapsedState _collapsedState = System.Windows.Forms.ListViewGroupCollapsedState.Default;
     private string? _subtitle;
     private string? _taskLink;
 
-    private System.Windows.Forms.ListView.ListViewItemCollection? _items;
+    private ListViewItemCollection? _items;
 
     private static int s_nextID;
 
     private static int s_nextHeader = 1;
 
     private ListViewGroupImageIndexer? _imageIndexer;
-    private AccessibleObject? _accessibilityObject;
+    private System.Windows.Forms.AccessibleObject? _accessibilityObject;
 
     /// <summary>
     ///  Creates a ListViewGroup.
@@ -148,7 +144,7 @@ public sealed partial class ListViewGroup : ISerializable
     /// <summary>
     ///  Creates a ListViewGroup.
     /// </summary>
-    public ListViewGroup(string? header, HorizontalAlignment headerAlignment) : this(header)
+    public ListViewGroup(string? header, System.Windows.Forms.HorizontalAlignment headerAlignment) : this(header)
     {
         _headerAlignment = headerAlignment;
     } 
@@ -174,7 +170,7 @@ public sealed partial class ListViewGroup : ISerializable
     /// <summary>
     ///  The alignment of the group header.
     /// </summary>
-    public HorizontalAlignment HeaderAlignment
+    public System.Windows.Forms.HorizontalAlignment HeaderAlignment
     {
         get => _headerAlignment;
         set
@@ -216,7 +212,7 @@ public sealed partial class ListViewGroup : ISerializable
     /// <exception cref="InvalidEnumArgumentException">
     ///  The specified value when setting this property is not a valid <see cref="HorizontalAlignment"/> value.
     /// </exception>
-    public HorizontalAlignment FooterAlignment
+    public System.Windows.Forms.HorizontalAlignment FooterAlignment
     {
         get => _footerAlignment;
         set
@@ -243,7 +239,7 @@ public sealed partial class ListViewGroup : ISerializable
     /// <exception cref="InvalidEnumArgumentException">
     ///  The specified value when setting this property is not a valid <see cref="ListViewGroupCollapsedState"/> value.
     /// </exception>
-    public ListViewGroupCollapsedState CollapsedState
+    public System.Windows.Forms.ListViewGroupCollapsedState CollapsedState
     {
         get => _collapsedState;
         set
@@ -307,7 +303,7 @@ public sealed partial class ListViewGroup : ISerializable
     {
         get
         {
-            ImageList? imageList = ImageIndexer.ImageList;
+            System.Windows.Forms.ImageList? imageList = ImageIndexer.ImageList;
             return imageList is null || ImageIndexer.Index < imageList.Images.Count
                 ? ImageIndexer.Index
                 : imageList.Images.Count - 1;
@@ -377,7 +373,7 @@ public sealed partial class ListViewGroup : ISerializable
             }
             else if (entry.Name == "HeaderAlignment")
             {
-                HeaderAlignment = (HorizontalAlignment)entry.Value!;
+                HeaderAlignment = (System.Windows.Forms.HorizontalAlignment)entry.Value!;
             }
             else if (entry.Name == "Footer")
             {
@@ -385,7 +381,7 @@ public sealed partial class ListViewGroup : ISerializable
             }
             else if (entry.Name == "FooterAlignment")
             {
-                FooterAlignment = (HorizontalAlignment)entry.Value!;
+                FooterAlignment = (System.Windows.Forms.HorizontalAlignment)entry.Value!;
             }
             else if (entry.Name == "Tag")
             {
@@ -421,7 +417,7 @@ public sealed partial class ListViewGroup : ISerializable
 
     // Should be used for the cases when sending the message `PInvoke.LVM_SETGROUPINFO` isn't required
     // (for example, collapsing/expanding groups with keyboard is performed inside the native control already, so this message isn't needed)
-    internal void SetCollapsedStateInternal(ListViewGroupCollapsedState state)
+    internal void SetCollapsedStateInternal(System.Windows.Forms.ListViewGroupCollapsedState state)
     {
         if (_collapsedState == state)
         {
