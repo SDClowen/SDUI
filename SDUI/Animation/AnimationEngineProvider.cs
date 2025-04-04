@@ -8,29 +8,57 @@ namespace SDUI.Animation
 {
     public static class AnimationEngineProvider
     {
-        private static List<AnimationEngine> animationEngines = new();
-        private static System.Windows.Forms.Timer timer;
+        private static readonly List<WeakReference<AnimationEngine>> _weakAnimationEngines = new();
+        private static readonly System.Windows.Forms.Timer timer;
+        private static readonly object _lock = new object();
+        private const int TARGET_FPS = 60;
+
         static AnimationEngineProvider() 
         {
             timer = new System.Windows.Forms.Timer
             {
-                Interval = 1000 / 60
+                Interval = 1000 / TARGET_FPS
             };
 
-            timer.Tick += onTimerTick;
+            timer.Tick += OnTimerTick;
             timer.Start();
         }
 
         public static void Handle(AnimationEngine animationEngine)
         {
-            animationEngines.Add(animationEngine);
+            lock (_lock)
+            {
+                _weakAnimationEngines.Add(new WeakReference<AnimationEngine>(animationEngine));
+                CleanupDeadReferences();
+            }
         }
 
-        private static void onTimerTick(object sender, EventArgs e)
+        private static void OnTimerTick(object sender, EventArgs e)
         {
-            foreach (var animationEngine in animationEngines)
-                if(animationEngine.Running)
-                    animationEngine.AnimationTimerOnTick(sender, e);
+            lock (_lock)
+            {
+                for (int i = _weakAnimationEngines.Count - 1; i >= 0; i--)
+                {
+                    if (_weakAnimationEngines[i].TryGetTarget(out var engine))
+                    {
+                        if (engine.Running)
+                            engine.AnimationTimerOnTick(sender, e);
+                    }
+                    else
+                    {
+                        _weakAnimationEngines.RemoveAt(i);
+                    }
+                }
+            }
+        }
+
+        private static void CleanupDeadReferences()
+        {
+            for (int i = _weakAnimationEngines.Count - 1; i >= 0; i--)
+            {
+                if (!_weakAnimationEngines[i].TryGetTarget(out _))
+                    _weakAnimationEngines.RemoveAt(i);
+            }
         }
     }
 }

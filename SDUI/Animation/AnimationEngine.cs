@@ -12,7 +12,7 @@ public class AnimationEngine
     private readonly List<Point> animationSources;
     private readonly List<AnimationDirection> animationDirections;
     private readonly List<object[]> animationDatas;
-
+    private const int INITIAL_CAPACITY = 4;
     private const double MIN_VALUE = 0.00;
     private const double MAX_VALUE = 1.00;
 
@@ -32,11 +32,10 @@ public class AnimationEngine
     /// <param name="singular">If true, only one animation is supported. The current animation will be replaced with the new one. If false, a new animation is added to the list.</param>
     public AnimationEngine(bool singular = true)
     {
-        const int initialCapacity = 4;
-        animationProgresses = new List<double>(initialCapacity);
-        animationSources = new List<Point>(initialCapacity);
-        animationDirections = new List<AnimationDirection>(initialCapacity);
-        animationDatas = new List<object[]>(initialCapacity);
+        animationProgresses = new List<double>(INITIAL_CAPACITY);
+        animationSources = new List<Point>(INITIAL_CAPACITY);
+        animationDirections = new List<AnimationDirection>(INITIAL_CAPACITY);
+        animationDatas = new List<object[]>(INITIAL_CAPACITY);
 
         Increment = 0.03;
         SecondaryIncrement = 0.03;
@@ -126,6 +125,9 @@ public class AnimationEngine
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void RemoveAnimation(int index)
     {
+        if (index < 0 || index >= animationProgresses.Count)
+            return;
+
         animationProgresses.RemoveAt(index);
         animationSources.RemoveAt(index);
         animationDirections.RemoveAt(index);
@@ -138,6 +140,7 @@ public class AnimationEngine
         StartNewAnimation(animationDirection, default, data);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartNewAnimation(AnimationDirection animationDirection, Point animationSource, object[] data = null)
     {
         if (!IsAnimating() || InterruptAnimation)
@@ -172,24 +175,19 @@ public class AnimationEngine
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void UpdateProgress(int index)
+    private void UpdateProgress(int index)
     {
-        switch (animationDirections[index])
+        var direction = animationDirections[index];
+        switch (direction)
         {
             case AnimationDirection.InOutRepeatingIn:
             case AnimationDirection.InOutIn:
             case AnimationDirection.In:
                 IncrementProgress(index);
                 break;
-
-            case AnimationDirection.InOutRepeatingOut:
-            case AnimationDirection.InOutOut:
-            case AnimationDirection.Out:
+            default:
                 DecrementProgress(index);
                 break;
-
-            default:
-                throw new ArgumentException("No AnimationDirection has been set");
         }
     }
 
@@ -218,6 +216,7 @@ public class AnimationEngine
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void CheckAnimationCompletion()
     {
         for (int i = 0; i < GetAnimationCount(); i++)
@@ -236,142 +235,44 @@ public class AnimationEngine
                 return;
         }
 
-        Running = false;
         OnAnimationFinished?.Invoke(this);
     }
 
-    public bool IsAnimating()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool IsAnimating() => Running;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public double GetProgress(int index = 0)
     {
-        return Running;
-    }
+        if (index >= animationProgresses.Count)
+            return 0;
 
-    public double GetProgress()
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationProgresses.Count == 0)
-            throw new Exception("Invalid animation");
-
-        return GetProgress(0);
-    }
-
-    public double GetProgress(int index)
-    {
-        if (!(index < GetAnimationCount()))
-            throw new IndexOutOfRangeException("Invalid animation index");
-
-        switch (AnimationType)
+        var progress = animationProgresses[index];
+        return AnimationType switch
         {
-            case AnimationType.Linear:
-                return AnimationLinear.CalculateProgress(animationProgresses[index]);
-
-            case AnimationType.EaseInOut:
-                return AnimationEaseInOut.CalculateProgress(animationProgresses[index]);
-
-            case AnimationType.EaseOut:
-                return AnimationEaseOut.CalculateProgress(animationProgresses[index]);
-
-            case AnimationType.CustomQuadratic:
-                return AnimationCustomQuadratic.CalculateProgress(animationProgresses[index]);
-
-            default:
-                throw new NotImplementedException("The given AnimationType is not implemented");
-        }
+            AnimationType.Linear => AnimationLinear.CalculateProgress(progress),
+            AnimationType.EaseInOut => AnimationEaseInOut.CalculateProgress(progress),
+            AnimationType.EaseOut => AnimationEaseOut.CalculateProgress(progress),
+            AnimationType.CustomQuadratic => AnimationCustomQuadratic.CalculateProgress(progress),
+            _ => progress
+        };
     }
 
-    public Point GetSource(int index)
-    {
-        if (!(index < GetAnimationCount()))
-            throw new IndexOutOfRangeException("Invalid animation index");
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Point GetSource(int index = 0) => index < animationSources.Count ? animationSources[index] : default;
 
-        return animationSources[index];
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public AnimationDirection GetDirection(int index = 0) => index < animationDirections.Count ? animationDirections[index] : default;
 
-    public Point GetSource()
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public object[] GetData(int index = 0) => index < animationDatas.Count ? animationDatas[index] : null;
 
-        if (animationSources.Count == 0)
-            throw new Exception("Invalid animation");
-
-        return animationSources[0];
-    }
-
-    public AnimationDirection GetDirection()
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationDirections.Count == 0)
-            throw new Exception("Invalid animation");
-
-        return animationDirections[0];
-    }
-
-    public AnimationDirection GetDirection(int index)
-    {
-        if (!(index < animationDirections.Count))
-            throw new IndexOutOfRangeException("Invalid animation index");
-
-        return animationDirections[index];
-    }
-
-    public object[] GetData()
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationDatas.Count == 0)
-            throw new Exception("Invalid animation");
-
-        return animationDatas[0];
-    }
-
-    public object[] GetData(int index)
-    {
-        if (!(index < animationDatas.Count))
-            throw new IndexOutOfRangeException("Invalid animation index");
-
-        return animationDatas[index];
-    }
-
-    public int GetAnimationCount()
-    {
-        return animationProgresses.Count;
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetAnimationCount() => animationProgresses.Count;
 
     public void SetProgress(double progress)
     {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationProgresses.Count == 0)
-            throw new Exception("Invalid animation");
-
-        animationProgresses[0] = progress;
-    }
-
-    public void SetDirection(AnimationDirection direction)
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationProgresses.Count == 0)
-            throw new Exception("Invalid animation");
-
-        animationDirections[0] = direction;
-    }
-
-    public void SetData(object[] data)
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationDatas.Count == 0)
-            throw new Exception("Invalid animation");
-
-        animationDatas[0] = data;
+        if (Singular && animationProgresses.Count > 0)
+            animationProgresses[0] = progress;
     }
 }
