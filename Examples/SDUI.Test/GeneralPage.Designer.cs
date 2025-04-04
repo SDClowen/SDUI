@@ -113,8 +113,6 @@
             rsButton1.Color = System.Drawing.Color.Transparent;
             rsButton1.DialogResult = System.Windows.Forms.DialogResult.None;
             rsButton1.Image = null;
-            rsButton1.IsCancel = false;
-            rsButton1.IsDefault = false;
             rsButton1.Location = new System.Drawing.Point(471, 493);
             rsButton1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             rsButton1.Name = "rsButton1";
@@ -131,8 +129,6 @@
             button6.Color = System.Drawing.Color.Transparent;
             button6.DialogResult = System.Windows.Forms.DialogResult.None;
             button6.Image = null;
-            button6.IsCancel = false;
-            button6.IsDefault = false;
             button6.Location = new System.Drawing.Point(753, 527);
             button6.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             button6.Name = "button6";
@@ -147,7 +143,6 @@
             // groupBox4
             // 
             groupBox4.BackColor = System.Drawing.Color.Transparent;
-            groupBox4.Image = null;
             groupBox4.Location = new System.Drawing.Point(489, 573);
             groupBox4.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             groupBox4.Name = "groupBox4";
@@ -158,7 +153,6 @@
             groupBox4.TabIndex = 72;
             groupBox4.TabStop = false;
             groupBox4.Text = "groupBox4";
-            groupBox4.UseVisualStyleBackColor = false;
             // 
             // comboBox6
             // 
@@ -171,7 +165,6 @@
             comboBox6.DropDownWidth = 222;
             comboBox6.DroppedDown = false;
             comboBox6.FormattingEnabled = true;
-            comboBox6.Image = null;
             comboBox6.IntegralHeight = false;
             comboBox6.ItemHeight = 17;
             comboBox6.Location = new System.Drawing.Point(23, 723);
@@ -185,7 +178,6 @@
             comboBox6.ShadowDepth = 4F;
             comboBox6.Size = new System.Drawing.Size(222, 32);
             comboBox6.TabIndex = 51;
-            comboBox6.UseVisualStyleBackColor = false;
             comboBox6.ValueMember = null;
             comboBox6.SelectedIndexChanged += comboBox6_SelectedIndexChanged;
             // 
@@ -212,7 +204,6 @@
             comboBox5.DropDownWidth = 167;
             comboBox5.DroppedDown = false;
             comboBox5.FormattingEnabled = true;
-            comboBox5.Image = null;
             comboBox5.IntegralHeight = false;
             comboBox5.ItemHeight = 17;
             comboBox5.Items.Add("asdfasdfasdfasdf");
@@ -231,7 +222,6 @@
             comboBox5.ShadowDepth = 4F;
             comboBox5.Size = new System.Drawing.Size(167, 32);
             comboBox5.TabIndex = 50;
-            comboBox5.UseVisualStyleBackColor = false;
             comboBox5.ValueMember = null;
             // 
             // trackBar1
@@ -250,8 +240,6 @@
             buttonOpenInputDialog.Color = System.Drawing.Color.Transparent;
             buttonOpenInputDialog.DialogResult = System.Windows.Forms.DialogResult.None;
             buttonOpenInputDialog.Image = null;
-            buttonOpenInputDialog.IsCancel = false;
-            buttonOpenInputDialog.IsDefault = false;
             buttonOpenInputDialog.Location = new System.Drawing.Point(18, 19);
             buttonOpenInputDialog.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             buttonOpenInputDialog.Name = "buttonOpenInputDialog";
@@ -269,8 +257,6 @@
             buttonRandomColor.Color = System.Drawing.Color.Transparent;
             buttonRandomColor.DialogResult = System.Windows.Forms.DialogResult.None;
             buttonRandomColor.Image = null;
-            buttonRandomColor.IsCancel = false;
-            buttonRandomColor.IsDefault = false;
             buttonRandomColor.Location = new System.Drawing.Point(144, 19);
             buttonRandomColor.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             buttonRandomColor.Name = "buttonRandomColor";
@@ -302,7 +288,6 @@
             label4.TabIndex = 67;
             label4.Text = "label4";
             label4.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            label4.UseVisualStyleBackColor = false;
             // 
             // button5
             // 
@@ -311,8 +296,6 @@
             button5.DialogResult = System.Windows.Forms.DialogResult.None;
             button5.Enabled = false;
             button5.Image = null;
-            button5.IsCancel = false;
-            button5.IsDefault = false;
             button5.Location = new System.Drawing.Point(1072, 19);
             button5.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             button5.Name = "button5";
@@ -327,7 +310,6 @@
             // 
             groupBox3.BackColor = System.Drawing.Color.Transparent;
             groupBox3.Controls.Add(richTextBox1);
-            groupBox3.Image = null;
             groupBox3.Location = new System.Drawing.Point(791, 573);
             groupBox3.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             groupBox3.Name = "groupBox3";
@@ -338,7 +320,6 @@
             groupBox3.TabIndex = 66;
             groupBox3.TabStop = false;
             groupBox3.Text = "groupBox3";
-            groupBox3.UseVisualStyleBackColor = false;
             // 
             // richTextBox1
             // 
@@ -509,7 +490,6 @@
     System.Drawing.Color.FromArgb(255, 0, 0)
     };
             shapeProgressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
-            shapeProgressBar2.Image = null;
             shapeProgressBar2.Location = new System.Drawing.Point(134, 604);
             shapeProgressBar2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             shapeProgressBar2.Maximum = 100L;
@@ -517,7 +497,6 @@
             shapeProgressBar2.Size = new System.Drawing.Size(73, 85);
             shapeProgressBar2.TabIndex = 30;
             shapeProgressBar2.Text = "shapeProgressBar1";
-            shapeProgressBar2.UseVisualStyleBackColor = false;
             shapeProgressBar2.Value = 52L;
             shapeProgressBar2.Weight = 12F;
             // 
@@ -533,7 +512,6 @@
     System.Drawing.Color.FromArgb(255, 0, 0)
     };
             shapeProgressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.ZigZag;
-            shapeProgressBar1.Image = null;
             shapeProgressBar1.Location = new System.Drawing.Point(18, 604);
             shapeProgressBar1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             shapeProgressBar1.Maximum = 100L;
@@ -541,49 +519,34 @@
             shapeProgressBar1.Size = new System.Drawing.Size(55, 64);
             shapeProgressBar1.TabIndex = 30;
             shapeProgressBar1.Text = "shapeProgressBar1";
-            shapeProgressBar1.UseVisualStyleBackColor = false;
             shapeProgressBar1.Value = 52L;
             shapeProgressBar1.Weight = 8F;
             // 
             // chatBubble2
             // 
             chatBubble2.BackColor = System.Drawing.Color.Transparent;
-            chatBubble2.Color = System.Drawing.Color.FromArgb(0, 92, 252);
             chatBubble2.ForeColor = System.Drawing.Color.FromArgb(52, 52, 52);
-            chatBubble2.Image = null;
-            chatBubble2.IsIncoming = true;
             chatBubble2.Location = new System.Drawing.Point(18, 435);
             chatBubble2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             chatBubble2.MinimumSize = new System.Drawing.Size(37, 43);
             chatBubble2.Name = "chatBubble2";
             chatBubble2.Padding = new System.Windows.Forms.Padding(14, 16, 14, 16);
-            chatBubble2.Radius = 12F;
             chatBubble2.Size = new System.Drawing.Size(200, 51);
             chatBubble2.TabIndex = 28;
-            chatBubble2.TailSize = 8F;
             chatBubble2.Text = "Hello Bob i am fine, Thanks";
-            chatBubble2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            chatBubble2.UseVisualStyleBackColor = false;
             // 
             // chatBubble1
             // 
             chatBubble1.BackColor = System.Drawing.Color.Transparent;
-            chatBubble1.Color = System.Drawing.Color.FromArgb(0, 92, 252);
             chatBubble1.ForeColor = System.Drawing.Color.FromArgb(52, 52, 52);
-            chatBubble1.Image = null;
-            chatBubble1.IsIncoming = false;
             chatBubble1.Location = new System.Drawing.Point(49, 372);
             chatBubble1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             chatBubble1.MinimumSize = new System.Drawing.Size(37, 43);
             chatBubble1.Name = "chatBubble1";
             chatBubble1.Padding = new System.Windows.Forms.Padding(14, 16, 14, 16);
-            chatBubble1.Radius = 12F;
             chatBubble1.Size = new System.Drawing.Size(200, 51);
             chatBubble1.TabIndex = 28;
-            chatBubble1.TailSize = 8F;
             chatBubble1.Text = "Hello Jean How are you?";
-            chatBubble1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            chatBubble1.UseVisualStyleBackColor = false;
             // 
             // numUpDown1
             // 
@@ -657,7 +620,6 @@
             label3.TabIndex = 11;
             label3.Text = "Lorem Ipsum is simply dummy text \r\nof the printing and typesetting industry. ";
             label3.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            label3.UseVisualStyleBackColor = false;
             // 
             // progressBar5
             // 
@@ -669,7 +631,6 @@
     System.Drawing.Color.Red
     };
             progressBar5.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar5.Image = null;
             progressBar5.Location = new System.Drawing.Point(18, 556);
             progressBar5.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar5.Maximum = 100L;
@@ -682,7 +643,6 @@
             progressBar5.Size = new System.Drawing.Size(205, 21);
             progressBar5.TabIndex = 3;
             progressBar5.Text = "70.00%";
-            progressBar5.UseVisualStyleBackColor = false;
             progressBar5.Value = 70L;
             // 
             // panel7
@@ -731,7 +691,6 @@
             label2.TabIndex = 55;
             label2.Text = resources.GetString("label2.Text");
             label2.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            label2.UseVisualStyleBackColor = false;
             // 
             // label1
             // 
@@ -751,7 +710,6 @@
             label1.Size = new System.Drawing.Size(0, 20);
             label1.TabIndex = 54;
             label1.TextAlign = System.Drawing.ContentAlignment.TopLeft;
-            label1.UseVisualStyleBackColor = false;
             // 
             // panel2
             // 
@@ -782,14 +740,12 @@
             // separator5
             // 
             separator5.BackColor = System.Drawing.Color.Transparent;
-            separator5.Image = null;
             separator5.IsVertical = false;
             separator5.Location = new System.Drawing.Point(18, 20);
             separator5.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             separator5.Name = "separator5";
             separator5.Size = new System.Drawing.Size(137, 13);
             separator5.TabIndex = 0;
-            separator5.UseVisualStyleBackColor = false;
             // 
             // comboBox3
             // 
@@ -802,7 +758,6 @@
             comboBox3.DropDownWidth = 222;
             comboBox3.DroppedDown = false;
             comboBox3.FormattingEnabled = true;
-            comboBox3.Image = null;
             comboBox3.IntegralHeight = false;
             comboBox3.ItemHeight = 17;
             comboBox3.Items.Add("asdfasdfasdfasdf");
@@ -821,20 +776,17 @@
             comboBox3.ShadowDepth = 4F;
             comboBox3.Size = new System.Drawing.Size(222, 32);
             comboBox3.TabIndex = 8;
-            comboBox3.UseVisualStyleBackColor = false;
             comboBox3.ValueMember = null;
             // 
             // separator3
             // 
             separator3.BackColor = System.Drawing.Color.Transparent;
-            separator3.Image = null;
             separator3.IsVertical = false;
             separator3.Location = new System.Drawing.Point(19, 15);
             separator3.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             separator3.Name = "separator3";
             separator3.Size = new System.Drawing.Size(137, 13);
             separator3.TabIndex = 0;
-            separator3.UseVisualStyleBackColor = false;
             // 
             // comboBox2
             // 
@@ -847,7 +799,6 @@
             comboBox2.DropDownWidth = 155;
             comboBox2.DroppedDown = false;
             comboBox2.FormattingEnabled = true;
-            comboBox2.Image = null;
             comboBox2.IntegralHeight = false;
             comboBox2.ItemHeight = 17;
             comboBox2.Location = new System.Drawing.Point(23, 135);
@@ -861,7 +812,6 @@
             comboBox2.ShadowDepth = 2F;
             comboBox2.Size = new System.Drawing.Size(155, 32);
             comboBox2.TabIndex = 52;
-            comboBox2.UseVisualStyleBackColor = false;
             comboBox2.ValueMember = null;
             // 
             // groupBox2
@@ -869,7 +819,6 @@
             groupBox2.BackColor = System.Drawing.Color.Transparent;
             groupBox2.Controls.Add(listView3);
             groupBox2.Controls.Add(comboBox4);
-            groupBox2.Image = null;
             groupBox2.Location = new System.Drawing.Point(750, 8);
             groupBox2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             groupBox2.Name = "groupBox2";
@@ -880,7 +829,6 @@
             groupBox2.TabIndex = 49;
             groupBox2.TabStop = false;
             groupBox2.Text = "groupBox1";
-            groupBox2.UseVisualStyleBackColor = false;
             // 
             // listView3
             // 
@@ -890,7 +838,6 @@
             listView3.Dock = System.Windows.Forms.DockStyle.Bottom;
             listView3.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
             listView3.FullRowSelect = true;
-            listView3.Image = null;
             listView3.Location = new System.Drawing.Point(0, 81);
             listView3.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             listView3.Name = "listView3";
@@ -898,7 +845,6 @@
             listView3.Size = new System.Drawing.Size(314, 172);
             listView3.TabIndex = 0;
             listView3.UseCompatibleStateImageBehavior = false;
-            listView3.UseVisualStyleBackColor = false;
             listView3.View = System.Windows.Forms.View.Details;
             // 
             // columnHeader6
@@ -917,7 +863,6 @@
             comboBox4.DropDownWidth = 314;
             comboBox4.DroppedDown = false;
             comboBox4.FormattingEnabled = true;
-            comboBox4.Image = null;
             comboBox4.IntegralHeight = false;
             comboBox4.ItemHeight = 17;
             comboBox4.Items.Add("asdfasdfasdfasdf");
@@ -936,7 +881,6 @@
             comboBox4.ShadowDepth = 0F;
             comboBox4.Size = new System.Drawing.Size(314, 32);
             comboBox4.TabIndex = 6;
-            comboBox4.UseVisualStyleBackColor = false;
             comboBox4.ValueMember = null;
             // 
             // groupBox1
@@ -945,7 +889,6 @@
             groupBox1.Controls.Add(separator4);
             groupBox1.Controls.Add(panel1);
             groupBox1.Controls.Add(comboBox1);
-            groupBox1.Image = null;
             groupBox1.Location = new System.Drawing.Point(410, 8);
             groupBox1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             groupBox1.Name = "groupBox1";
@@ -956,19 +899,16 @@
             groupBox1.TabIndex = 48;
             groupBox1.TabStop = false;
             groupBox1.Text = "groupBox1";
-            groupBox1.UseVisualStyleBackColor = false;
             // 
             // separator4
             // 
             separator4.BackColor = System.Drawing.Color.Transparent;
-            separator4.Image = null;
             separator4.IsVertical = false;
             separator4.Location = new System.Drawing.Point(19, 68);
             separator4.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             separator4.Name = "separator4";
             separator4.Size = new System.Drawing.Size(137, 13);
             separator4.TabIndex = 0;
-            separator4.UseVisualStyleBackColor = false;
             // 
             // panel1
             // 
@@ -992,7 +932,6 @@
             listView2.CheckBoxes = false;
             listView2.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
             listView2.FullRowSelect = true;
-            listView2.Image = null;
             listView2.Location = new System.Drawing.Point(11, 12);
             listView2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             listView2.Name = "listView2";
@@ -1000,7 +939,6 @@
             listView2.Size = new System.Drawing.Size(274, 129);
             listView2.TabIndex = 0;
             listView2.UseCompatibleStateImageBehavior = false;
-            listView2.UseVisualStyleBackColor = false;
             listView2.View = System.Windows.Forms.View.Details;
             // 
             // columnHeader5
@@ -1019,7 +957,6 @@
             comboBox1.DropDownWidth = 314;
             comboBox1.DroppedDown = false;
             comboBox1.FormattingEnabled = true;
-            comboBox1.Image = null;
             comboBox1.IntegralHeight = false;
             comboBox1.ItemHeight = 17;
             comboBox1.Items.Add("asdfasdfasdfasdf");
@@ -1038,7 +975,6 @@
             comboBox1.ShadowDepth = 0F;
             comboBox1.Size = new System.Drawing.Size(314, 32);
             comboBox1.TabIndex = 6;
-            comboBox1.UseVisualStyleBackColor = false;
             comboBox1.ValueMember = null;
             // 
             // textBox1
@@ -1064,8 +1000,6 @@
             button3.DialogResult = System.Windows.Forms.DialogResult.None;
             button3.ForeColor = System.Drawing.Color.White;
             button3.Image = (System.Drawing.Image)resources.GetObject("button3.Image");
-            button3.IsCancel = false;
-            button3.IsDefault = false;
             button3.Location = new System.Drawing.Point(249, 59);
             button3.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             button3.Name = "button3";
@@ -1084,8 +1018,6 @@
             buttonDark.DialogResult = System.Windows.Forms.DialogResult.None;
             buttonDark.ForeColor = System.Drawing.Color.White;
             buttonDark.Image = null;
-            buttonDark.IsCancel = false;
-            buttonDark.IsDefault = false;
             buttonDark.Location = new System.Drawing.Point(22, 59);
             buttonDark.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             buttonDark.Name = "buttonDark";
@@ -1103,8 +1035,6 @@
             buttonLight.Color = System.Drawing.Color.Transparent;
             buttonLight.DialogResult = System.Windows.Forms.DialogResult.None;
             buttonLight.Image = null;
-            buttonLight.IsCancel = false;
-            buttonLight.IsDefault = false;
             buttonLight.Location = new System.Drawing.Point(135, 59);
             buttonLight.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             buttonLight.Name = "buttonLight";
@@ -1126,7 +1056,6 @@
     System.Drawing.Color.Yellow
     };
             progressBar9.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar9.Image = null;
             progressBar9.Location = new System.Drawing.Point(293, 587);
             progressBar9.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar9.Maximum = 1000L;
@@ -1139,7 +1068,6 @@
             progressBar9.Size = new System.Drawing.Size(189, 33);
             progressBar9.TabIndex = 41;
             progressBar9.Text = "0 / 1000";
-            progressBar9.UseVisualStyleBackColor = false;
             progressBar9.Value = 0L;
             // 
             // progressBar8
@@ -1152,7 +1080,6 @@
     System.Drawing.Color.Yellow
     };
             progressBar8.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar8.Image = null;
             progressBar8.Location = new System.Drawing.Point(249, 513);
             progressBar8.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar8.Maximum = 1000L;
@@ -1165,7 +1092,6 @@
             progressBar8.Size = new System.Drawing.Size(205, 21);
             progressBar8.TabIndex = 40;
             progressBar8.Text = "777 / 1000";
-            progressBar8.UseVisualStyleBackColor = false;
             progressBar8.Value = 777L;
             // 
             // progressBar4
@@ -1178,7 +1104,6 @@
     System.Drawing.Color.Yellow
     };
             progressBar4.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar4.Image = null;
             progressBar4.Location = new System.Drawing.Point(18, 544);
             progressBar4.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar4.Maximum = 1000L;
@@ -1191,7 +1116,6 @@
             progressBar4.Size = new System.Drawing.Size(205, 21);
             progressBar4.TabIndex = 39;
             progressBar4.Text = "777 / 1000";
-            progressBar4.UseVisualStyleBackColor = false;
             progressBar4.Value = 777L;
             // 
             // progressBar7
@@ -1204,7 +1128,6 @@
     System.Drawing.Color.Lime
     };
             progressBar7.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar7.Image = null;
             progressBar7.Location = new System.Drawing.Point(249, 484);
             progressBar7.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar7.Maximum = 1000L;
@@ -1217,7 +1140,6 @@
             progressBar7.Size = new System.Drawing.Size(205, 21);
             progressBar7.TabIndex = 38;
             progressBar7.Text = "99.99%";
-            progressBar7.UseVisualStyleBackColor = false;
             progressBar7.Value = 1000L;
             // 
             // progressBar3
@@ -1230,7 +1152,6 @@
     System.Drawing.Color.Lime
     };
             progressBar3.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar3.Image = null;
             progressBar3.Location = new System.Drawing.Point(18, 515);
             progressBar3.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar3.Maximum = 1000L;
@@ -1243,7 +1164,6 @@
             progressBar3.Size = new System.Drawing.Size(205, 21);
             progressBar3.TabIndex = 37;
             progressBar3.Text = "62.30%";
-            progressBar3.UseVisualStyleBackColor = false;
             progressBar3.Value = 623L;
             // 
             // progressBar6
@@ -1256,7 +1176,6 @@
     System.Drawing.Color.RoyalBlue
     };
             progressBar6.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar6.Image = null;
             progressBar6.Location = new System.Drawing.Point(249, 455);
             progressBar6.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar6.Maximum = 100L;
@@ -1269,7 +1188,6 @@
             progressBar6.Size = new System.Drawing.Size(205, 21);
             progressBar6.TabIndex = 36;
             progressBar6.Text = "33 / 100";
-            progressBar6.UseVisualStyleBackColor = false;
             progressBar6.Value = 33L;
             // 
             // progressBar2
@@ -1282,7 +1200,6 @@
     System.Drawing.Color.RoyalBlue
     };
             progressBar2.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar2.Image = null;
             progressBar2.Location = new System.Drawing.Point(18, 485);
             progressBar2.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar2.Maximum = 100L;
@@ -1295,7 +1212,6 @@
             progressBar2.Size = new System.Drawing.Size(205, 21);
             progressBar2.TabIndex = 35;
             progressBar2.Text = "33.00%";
-            progressBar2.UseVisualStyleBackColor = false;
             progressBar2.Value = 33L;
             // 
             // progressBar1
@@ -1308,7 +1224,6 @@
     System.Drawing.Color.Red
     };
             progressBar1.HatchType = System.Drawing.Drawing2D.HatchStyle.Percent10;
-            progressBar1.Image = null;
             progressBar1.Location = new System.Drawing.Point(18, 456);
             progressBar1.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             progressBar1.Maximum = 100L;
@@ -1321,32 +1236,27 @@
             progressBar1.Size = new System.Drawing.Size(205, 21);
             progressBar1.TabIndex = 42;
             progressBar1.Text = "70.00%";
-            progressBar1.UseVisualStyleBackColor = false;
             progressBar1.Value = 70L;
             // 
             // separator2
             // 
             separator2.BackColor = System.Drawing.Color.Transparent;
-            separator2.Image = null;
             separator2.IsVertical = false;
             separator2.Location = new System.Drawing.Point(5, 8);
             separator2.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             separator2.Name = "separator2";
             separator2.Size = new System.Drawing.Size(351, 3);
             separator2.TabIndex = 34;
-            separator2.UseVisualStyleBackColor = false;
             // 
             // separator1
             // 
             separator1.BackColor = System.Drawing.Color.Transparent;
-            separator1.Image = null;
             separator1.IsVertical = true;
             separator1.Location = new System.Drawing.Point(5, 19);
             separator1.Margin = new System.Windows.Forms.Padding(5, 4, 5, 4);
             separator1.Name = "separator1";
             separator1.Size = new System.Drawing.Size(2, 296);
             separator1.TabIndex = 75;
-            separator1.UseVisualStyleBackColor = false;
             // 
             // GeneralPage
             // 
