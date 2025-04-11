@@ -92,12 +92,9 @@ public partial class ListViewItemCollection : IList
         {
             if (_owner.VirtualMode)
             {
-                throw new InvalidOperationException(SR.ListViewCantAddItemsToAVirtualListView);
             }
             else
             {
-                Debug.Assert(!_owner.FlipViewToLargeIconAndSmallIcon || Count == 0, "the FlipView... bit is turned off after adding 1 item.");
-
                 // PERF.
                 // Get the Checked bit before adding it to the back end.
                 // This saves a call into NativeListView to retrieve the real index.
@@ -108,11 +105,6 @@ public partial class ListViewItemCollection : IList
                 if (_owner.IsHandleCreated && !_owner.CheckBoxes && valueChecked)
                 {
                     _owner.UpdateSavedCheckedItems(value, true /*addItem*/);
-                }
-
-                if (_owner.ExpectingMouseUp)
-                {
-                    _owner.ItemCollectionChangedInMouseDown = true;
                 }
 
                 return value;
@@ -127,11 +119,6 @@ public partial class ListViewItemCollection : IList
             {
                 throw new InvalidOperationException(SR.ListViewCantAddItemsToAVirtualListView);
             }
-
-            IComparer? comparer = _owner._listItemSorter;
-            _owner._listItemSorter = null;
-
-            Debug.Assert(!_owner.FlipViewToLargeIconAndSmallIcon || Count == 0, "the FlipView... bit is turned off after adding 1 item.");
 
             bool[]? checkedValues = null;
 
@@ -165,20 +152,9 @@ public partial class ListViewItemCollection : IList
             }
             finally
             {
-                _owner._listItemSorter = comparer;
                 _owner.EndUpdate();
             }
 
-            if (_owner.ExpectingMouseUp)
-            {
-                _owner.ItemCollectionChangedInMouseDown = true;
-            }
-
-            if (comparer is not null ||
-                ((_owner.Sorting != SortOrder.None) && !_owner.VirtualMode))
-            {
-                _owner.Sort();
-            }
         }
 
         private int DisplayIndexToID(int displayIndex)
@@ -208,110 +184,8 @@ public partial class ListViewItemCollection : IList
             {
                 return;
             }
-
-           
-
-            if (_owner.IsHandleCreated && !_owner.ListViewHandleDestroyed)
-            {
-                // Walk the items to see which ones are selected.
-                // We use the LVM_GETNEXTITEM message to see what the next selected item is
-                // so we can avoid checking selection for each one.
-                int count = _owner.Items.Count;
-                int nextSelected = (int)PInvokeCore.SendMessage(
-                    _owner,
-                    PInvoke.LVM_GETNEXTITEM,
-                    (WPARAM)(-1),
-                    (LPARAM)PInvoke.LVNI_SELECTED);
-
-                for (int i = 0; i < count; i++)
-                {
-                    ListViewItem item = _owner.Items[i];
-                    Debug.Assert(item is not null, $"Failed to get item at index {i}");
-                    if (item is null)
-                    {
-                        continue;
-                    }
-
-                    // If it's the one we're looking for, ask for the next one.
-                    if (i == nextSelected)
-                    {
-                        item.StateSelected = true;
-                        nextSelected = (int)PInvokeCore.SendMessage(
-                            _owner,
-                            PInvoke.LVM_GETNEXTITEM,
-                            (WPARAM)nextSelected, (LPARAM)PInvoke.LVNI_SELECTED);
-                    }
-                    else
-                    {
-                        // Otherwise it's false.
-                        item.StateSelected = false;
-                    }
-
-                    item.UnHost(i, false);
-                }
-
-                Debug.Assert(_owner._listViewItems is null, "listItemsArray not null, even though handle created");
-
-                PInvokeCore.SendMessage(_owner, PInvoke.LVM_DELETEALLITEMS);
-
-                // There's a problem in the list view that if it's in small icon, it won't pick up the small icon
-                // sizes until it changes from large icon, so we flip it twice here...
-                if (_owner.View == View.SmallIcon)
-                {
-                    if (Application.ComCtlSupportsVisualStyles)
-                    {
-                        _owner.FlipViewToLargeIconAndSmallIcon = true;
-                    }
-                    else
-                    {
-                        Debug.Assert(!_owner.FlipViewToLargeIconAndSmallIcon, "we only set this when comctl 6.0 is loaded");
-                        _owner.View = View.LargeIcon;
-                        _owner.View = View.SmallIcon;
-                    }
-                }
-            }
-            else
-            {
-                int count = _owner.Items.Count;
-
-                for (int i = 0; i < count; i++)
-                {
-                    ListViewItem item = _owner.Items[i];
-                    item?.UnHost(i, true);
-                }
-
-                Debug.Assert(_owner._listViewItems is not null, "listItemsArray is null, but the handle isn't created");
-                _owner._listViewItems.Clear();
-            }
-
-            _owner._listItemsTable.Clear();
-            if (_owner.IsHandleCreated && !_owner.CheckBoxes)
-            {
-                _owner._savedCheckedItems = null;
-            }
-
-            _owner.Items.Count = 0;
-
-            if (_owner.ExpectingMouseUp)
-            {
-                _owner.ItemCollectionChangedInMouseDown = true;
-            }
         }
-
-        public bool Contains(ListViewItem item)
-        {
            
-            if (_owner.IsHandleCreated && !_owner.ListViewHandleDestroyed)
-            {
-                return _owner._listItemsTable.TryGetValue(item._id, out ListViewItem? itemOut)
-                    && itemOut == item;
-            }
-            else
-            {
-                Debug.Assert(_owner._listViewItems is not null, "listItemsArray is null, but the handle isn't created");
-                return _owner._listViewItems.Contains(item);
-            }
-        }
 
         public ListViewItem Insert(int index, ListViewItem item)
         {
@@ -328,12 +202,6 @@ public partial class ListViewItemCollection : IList
             ArgumentOutOfRangeException.ThrowIfNegative(index);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(index, count);
 
-            if (_owner.VirtualMode)
-            {
-                throw new InvalidOperationException(SR.ListViewCantAddItemsToAVirtualListView);
-            }
-
-            Debug.Assert(!_owner.FlipViewToLargeIconAndSmallIcon || Count == 0, "the FlipView... bit is turned off after adding 1 item.");
 
             if (index < count)
             {
@@ -345,11 +213,6 @@ public partial class ListViewItemCollection : IList
             if (_owner.IsHandleCreated && !_owner.CheckBoxes && item.Checked)
             {
                 _owner.UpdateSavedCheckedItems(item, true /*addItem*/);
-            }
-
-            if (_owner.ExpectingMouseUp)
-            {
-                _owner.ItemCollectionChangedInMouseDown = true;
             }
 
             return item;
@@ -373,12 +236,6 @@ public partial class ListViewItemCollection : IList
         {
             int index = _owner.VirtualMode ? Count - 1 : IndexOf(item);
 
-            Debug.Assert(!_owner.FlipViewToLargeIconAndSmallIcon || Count == 0, "the FlipView... bit is turned off after adding 1 item.");
-
-            if (_owner.VirtualMode)
-            {
-                throw new InvalidOperationException(SR.ListViewCantRemoveItemsFromAVirtualListView);
-            }
 
             if (index != -1)
             {
@@ -388,48 +245,23 @@ public partial class ListViewItemCollection : IList
 
         public void RemoveAt(int index)
         {
-            if (_owner.VirtualMode)
-            {
-                throw new InvalidOperationException(SR.ListViewCantRemoveItemsFromAVirtualListView);
-            }
-
             ArgumentOutOfRangeException.ThrowIfNegative(index);
             ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _owner.Items.Count);
 
-            Debug.Assert(!_owner.FlipViewToLargeIconAndSmallIcon || Count == 0, "the FlipView... bit is turned off after adding 1 item.");
-
-            if (_owner.IsHandleCreated && !_owner.CheckBoxes && this[index].Checked)
-            {
-                _owner.UpdateSavedCheckedItems(this[index], addItem: false);
-            }
 
            
             int itemID = DisplayIndexToID(index);
 
             this[index].Focused = false;
-            this[index].UnHost(true);
 
             if (_owner.IsHandleCreated)
             {
-                Debug.Assert(_owner._listViewItems is null, "listItemsArray not null, even though handle created");
-                if (PInvokeCore.SendMessage(_owner, PInvoke.LVM_DELETEITEM, (WPARAM)index) == 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(index), index, string.Format(SR.InvalidArgument, nameof(index), index));
-                }
             }
             else
             {
-                Debug.Assert(_owner._listViewItems is not null, "listItemsArray is null, but the handle isn't created");
-                _owner._listViewItems.RemoveAt(index);
+                _owner.Items.RemoveAt(index);
             }
 
-            _owner.Items.Count--;
-            _owner.Items.Remove(itemID);
-
-            if (_owner.ExpectingMouseUp)
-            {
-                _owner.ItemCollectionChangedInMouseDown = true;
-            }
         }
 
         public void CopyTo(Array dest, int index)

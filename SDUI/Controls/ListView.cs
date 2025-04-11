@@ -26,7 +26,7 @@ public class ListView : UIElementBase
     public IndexedList<System.Windows.Forms.ListViewItem> CheckedItems { get; } = []; // Not implemented
     public IndexedList<int> SelectedIndices { get; } = []; // Not implemented
     public IndexedList<System.Windows.Forms.ListViewItem> SelectedItems { get; } = []; // Not implemented
-    public ListViewGroupCollection Groups { get; }
+    public SDUI.Collections.ListViewGroupCollection Groups { get; }
 
     private float _horizontalScrollOffset = 0;
     private float _verticalScrollOffset = 0;
@@ -46,12 +46,14 @@ public class ListView : UIElementBase
 
     private int _selectedIndex = -1;
     internal bool IsHandleCreated = true;
+    public bool LabelEdit;
     internal int VirtualListSize;
 
     public ListViewItem SelectedItem { get => _selectedIndex == -1 ? null : Items[_selectedIndex]; set { var index = Items.IndexOf(value); if(index != -1) _selectedIndex = index;  } }
     public int SelectedIndex { get => _selectedIndex; set { _selectedIndex = value;  SelectedIndexChanged?.Invoke(this, EventArgs.Empty);  } }
 
     public System.Windows.Forms.ImageList SmallImageList { get; set; }
+    public System.Windows.Forms.ImageList LargeImageList { get; set; }
     public System.Windows.Forms.ImageList? GroupImageList { get; internal set; }
     public bool VirtualMode { get; internal set; }
 
@@ -65,6 +67,36 @@ public class ListView : UIElementBase
 
         Items = new(this);
         Groups = new(this);
+    }
+
+    public void SetItemImage(int index, int imageIndex)
+    {
+        if (index < 0 || index >= Items.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        var item = Items[index];
+        item.ImageIndex = imageIndex;
+        Invalidate();
+    }
+
+    public void SetItemText(int index, string text)
+    {
+        if (index < 0 || index >= Items.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        var item = Items[index];
+        item.Text = text;
+        Invalidate();
+    }
+
+    public void SetItemText(int index, int subItemIndex, string text)
+    {
+        if (index < 0 || index >= Items.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        var item = Items[index];
+        if (subItemIndex < 0 || subItemIndex >= item.SubItems.Count)
+            throw new ArgumentOutOfRangeException(nameof(subItemIndex));
+        var subItem = item.SubItems[subItemIndex];
+        subItem.Text = text;
+        Invalidate();
     }
 
     private void ElasticTimer_Tick(object sender, ElapsedEventArgs e)
@@ -462,9 +494,146 @@ public class ListView : UIElementBase
         _elasticTimer.Start();
     }
 
+    internal Rectangle GetItemRect(int index, ItemBoundsPortion portion = ItemBoundsPortion.Entire)
+    {
+        var item = Items.Cast<ListViewItem>().ElementAt(index);
+        var baseRect = new Rectangle(0, 30 + (index * rowBoundsHeight) - (int)_verticalScrollOffset, Width, rowBoundsHeight);
+
+        switch (portion)
+        {
+            case ItemBoundsPortion.Entire:
+                return baseRect;
+
+            case ItemBoundsPortion.Icon:
+                return new Rectangle(baseRect.X + 5, baseRect.Y + 5, rowBoundsHeight - 10, rowBoundsHeight - 10);
+
+            case ItemBoundsPortion.Label:
+                return new Rectangle(baseRect.X + rowBoundsHeight, baseRect.Y, baseRect.Width - rowBoundsHeight, baseRect.Height);
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(portion), portion, "Invalid ItemBoundsPortion value.");
+        }
+    }
+
     internal Rectangle GetSubItemRect(int index, int subItemIndex)
     {
         var item = Items.Cast<ListViewItem>().ElementAt(index).SubItems[subItemIndex];
         return item.Bounds;
+    }
+
+    internal void UpdateSavedCheckedItems(ListViewItem listViewItem, bool value)
+    {
+        //throw new NotImplementedException();
+    }
+
+    public void InsertGroupInListView(int index, ListViewGroup group)
+    {
+        if (group is null)
+            throw new ArgumentNullException(nameof(group));
+        if (Groups.Contains(group))
+            return;
+        group.ListView = this;
+        Groups.Insert(index, group);
+    }
+
+    public void RemoveGroupFromListView(ListViewGroup group)
+    {
+        if (group is null)
+            throw new ArgumentNullException(nameof(group));
+        if (!Groups.Contains(group))
+            return;
+        group.ListView = null;
+        Groups.Remove(group);
+    }
+
+    internal void SetItemIndentCount(int index, int indentCount)
+    { }
+
+    public void InsertItems(int index, ListViewItem[] items)
+    {
+        if (items is null)
+            throw new ArgumentNullException(nameof(items));
+        if (index < 0 || index > Items.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        foreach (var item in items)
+        {
+            Items.Insert(index, item);
+            index++;
+        }
+    }
+
+    internal ListViewItem GetItemAt(int x, int y)
+    {
+        var item = Items.Cast<ListViewItem>().FirstOrDefault(i => i.Bounds.Contains(x, y));
+        return item;
+    }
+
+    internal void GetSubItemAt(int x, int y, out int itemIndex, out int subItemIndex)
+    {
+        itemIndex = -1;
+        subItemIndex = -1;
+
+        for (int i = 0; i < Items.Count; i++)
+        {
+            var itemBounds = GetItemRect(i);
+            if (itemBounds.Contains(x, y))
+            {
+                itemIndex = i;
+
+                var subItemX = itemBounds.X;
+                for (int j = 0; j < Columns.Count; j++)
+                {
+                    var subItemWidth = Columns[j].Width;
+                    if (x >= subItemX && x < subItemX + subItemWidth)
+                    {
+                        subItemIndex = j;
+                        return;
+                    }
+                    subItemX += subItemWidth;
+                }
+            }
+        }
+    }
+
+    internal void EnsureVisible(int index)
+    {
+        if (index < 0 || index >= Items.Count)
+            throw new ArgumentOutOfRangeException(nameof(index));
+        var itemRect = GetItemRect(index);
+        var visibleArea = new Rectangle(0, 30, Width, Height - 30);
+        if (!visibleArea.Contains(itemRect))
+        {
+            _verticalScrollOffset = Math.Max(0, itemRect.Y - visibleArea.Height / 2);
+            Invalidate();
+        }
+    }
+
+    public ListViewItem FindNearestItem(SearchDirectionHint directionHint, int x, int y)
+    {
+        var item = Items.Cast<ListViewItem>().FirstOrDefault(i => i.Bounds.Contains(x, y));
+        if (item != null)
+        {
+            return item;
+        }
+        // If no item found, return null
+        return null;
+    }
+        
+
+    internal ListViewItem GetItemAt(Point point)
+    {
+        var item = Items.Cast<ListViewItem>().FirstOrDefault(i => i.Bounds.Contains(point.X, point.Y));
+        return item;
+    }
+
+    internal ListViewItem GetSubItemAt(Point point)
+    {
+        var item = Items.Cast<ListViewItem>().FirstOrDefault(i => i.SubItems.OfType<ListViewItem>().Any(s => s.Bounds.Contains(point.X, point.Y)));
+        return item;
+    }
+
+    public int GetDisplayIndex(ListViewItem listViewItem, int displayIndex)
+    {
+        return Items.IndexOf(listViewItem);
     }
 }

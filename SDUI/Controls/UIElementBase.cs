@@ -757,6 +757,8 @@ namespace SDUI.Controls
 
         protected bool _isLayoutSuspended;
 
+        public bool IsHandleCreated;
+
         public UIElementBase()
         {
             IsDesignMode = LicenseManager.UsageMode == LicenseUsageMode.Designtime;

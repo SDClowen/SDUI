@@ -177,7 +177,7 @@ namespace SDUI.Collections
             {
                 for (int i = 0; i < Count; i++)
                 {
-                    _listView.Items.Remove(this[i]);
+                    _listView.Groups.Remove(this[i]);
                 }
             }
 
@@ -191,7 +191,7 @@ namespace SDUI.Collections
 
             // we have to tell the listView that there are no more groups
             // so the list view knows to remove items from the default group
-            _listView.UpdateGroupView();
+            _listView.Invalidate();//.UpdateGroupView();
         }
 
         public bool Contains(ListViewGroup value) => List.Contains(value);
@@ -225,7 +225,6 @@ namespace SDUI.Collections
         public void Insert(int index, ListViewGroup group)
         {
             ArgumentNullException.ThrowIfNull(group);
-            ThrowInvalidOperationExceptionIfVirtualMode();
 
             if (Contains(group))
             {
@@ -252,13 +251,11 @@ namespace SDUI.Collections
 
         private void MoveGroupItems(ListViewGroup group)
         {
-            Debug.Assert(_listView.IsHandleCreated, "MoveGroupItems pre-condition: listView handle must be created");
-
             foreach (ListViewItem item in group.Items)
             {
                 if (item.ListView == _listView)
                 {
-                    item.UpdateStateToListView(item.Index);
+                    //item.UpdateStateToListView(item.Index);
                 }
             }
         }
