@@ -69,21 +69,22 @@ public partial class ListViewItemCollection : IList
                 //}
 
                 //return rVI.Item;
+                return null;
             }
             else
             {
                 ArgumentOutOfRangeException.ThrowIfNegative(index);
                 ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _owner.Items.Count);
 
-                if (_owner.IsHandleCreated && !_owner.ListViewHandleDestroyed)
+                if (_owner.IsHandleCreated)
                 {
-                    _owner._listItemsTable.TryGetValue(DisplayIndexToID(index), out ListViewItem? item);
+                    var item = _owner.Items[index];
+                    //.TryGetValue(DisplayIndexToID(index), out ListViewItem? item);
                     return item!;
                 }
                 else
                 {
-                    Debug.Assert(_owner._listViewItems is not null, "listItemsArray is null, but the handle isn't created");
-                    return _owner._listViewItems[index];
+                    return _owner.Items[index];
                 }
             }
         }
@@ -92,6 +93,7 @@ public partial class ListViewItemCollection : IList
         {
             if (_owner.VirtualMode)
             {
+                return value;
             }
             else
             {
@@ -100,7 +102,7 @@ public partial class ListViewItemCollection : IList
                 // This saves a call into NativeListView to retrieve the real index.
                 bool valueChecked = value.Checked;
 
-                _owner.InsertItems(_owner.Items.Count, [value], true);
+                _owner.InsertItems(_owner.Items.Count, [value]);
 
                 if (_owner.IsHandleCreated && !_owner.CheckBoxes && valueChecked)
                 {
@@ -117,7 +119,7 @@ public partial class ListViewItemCollection : IList
 
             if (_owner.VirtualMode)
             {
-                throw new InvalidOperationException(SR.ListViewCantAddItemsToAVirtualListView);
+                
             }
 
             bool[]? checkedValues = null;
@@ -137,7 +139,7 @@ public partial class ListViewItemCollection : IList
             try
             {
                 _owner.BeginUpdate();
-                _owner.InsertItems(_owner.Items.Count, values, true);
+                _owner.InsertItems(_owner.Items.Count, values);
 
                 if (_owner.IsHandleCreated && !_owner.CheckBoxes)
                 {
@@ -159,6 +161,7 @@ public partial class ListViewItemCollection : IList
 
         private int DisplayIndexToID(int displayIndex)
         {
+            return displayIndex;
             Debug.Assert(!_owner.VirtualMode, "in virtual mode, this method does not make any sense");
             //if (_owner.IsHandleCreated && !_owner.ListViewHandleDestroyed)
             //{
@@ -209,7 +212,7 @@ public partial class ListViewItemCollection : IList
                
             }
 
-            _owner.InsertItems(index, [item], true);
+            _owner.InsertItems(index, [item]);
             if (_owner.IsHandleCreated && !_owner.CheckBoxes && item.Checked)
             {
                 _owner.UpdateSavedCheckedItems(item, true /*addItem*/);
@@ -281,6 +284,11 @@ public partial class ListViewItemCollection : IList
             CopyTo(items, 0);
 
             return items.GetEnumerator();
+        }
+
+        public bool Contains(ListViewItem item)
+        {
+            throw new NotImplementedException();
         }
     }
     internal interface IInnerList

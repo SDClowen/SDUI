@@ -81,7 +81,7 @@ public partial class MainWindow
         searchToolStripMenuItem = new ();
         toolStripSeparator5 = new ();
         aboutToolStripMenuItem = new ();
-        toolTip1 = new ToolTip(components);
+        toolTip1 = new();
         windowPageControl = new WindowPageControl();
         separator1 = new Separator();
         contextMenuStrip1.SuspendLayout();
@@ -432,9 +432,6 @@ public partial class MainWindow
         // 
         toolTip1.BackColor = System.Drawing.Color.Black;
         toolTip1.ForeColor = System.Drawing.Color.White;
-        toolTip1.ShowAlways = true;
-        toolTip1.ToolTipIcon = ToolTipIcon.Info;
-        toolTip1.ToolTipTitle = "Heuuuu";
         // 
         // windowPageControl
         // 
@@ -536,7 +533,7 @@ public partial class MainWindow
     private MenuItem toolStripMenuItem7;
     private MenuItemSeparator toolStripSeparator7;
     private MenuItemSeparator toolStripSeparator6;
-    private ToolTip toolTip1;
+    private SDUI.Controls.ToolTip toolTip1;
     private WindowPageControl windowPageControl;
     private Separator separator1;
 }

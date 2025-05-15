@@ -92,6 +92,8 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
                 // would make us short-circuit the rest of the reparenting logic.
                 // you could end up with a control half reparented.
                 value.Parent = Owner;
+                if (index < 0)
+                    index = 0;
 
                 var oldItem = InnerList[index];
                 if (oldItem != value)
