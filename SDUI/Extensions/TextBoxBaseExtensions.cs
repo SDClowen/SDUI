@@ -20,7 +20,7 @@ public static class TextBoxBaseExtensions
     {
         var stringBuilder = new StringBuilder();
         if (time)
-            stringBuilder.Append(DateTime.Now.ToString("[hh:mm:ss]\t"));
+            stringBuilder.Append(DateTime.Now.ToString("[HH:mm:ss]\t"));
 
         stringBuilder.Append(str);
         stringBuilder.Append(Environment.NewLine);
