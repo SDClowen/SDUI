@@ -2,33 +2,29 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Runtime.CompilerServices;
 
 namespace SDUI.Animation;
 
 public class AnimationEngine
 {
+    private readonly List<double> animationProgresses;
+    private readonly List<Point> animationSources;
+    private readonly List<AnimationDirection> animationDirections;
+    private readonly List<object[]> animationDatas;
+    private const int INITIAL_CAPACITY = 4;
+    private const double MIN_VALUE = 0.00;
+    private const double MAX_VALUE = 1.00;
+
     public bool InterruptAnimation { get; set; }
     public double Increment { get; set; }
     public double SecondaryIncrement { get; set; }
     public AnimationType AnimationType { get; set; }
     public bool Singular { get; set; }
-    public bool Running { get; set; }
+    public bool Running { get; private set; }
 
-    public delegate void AnimationFinished(object sender);
-
-    public event AnimationFinished OnAnimationFinished;
-
-    public delegate void AnimationProgress(object sender);
-
-    public event AnimationProgress OnAnimationProgress;
-
-    private readonly List<double> animationProgresses;
-    private readonly List<Point> animationSources;
-    private readonly List<AnimationDirection> animationDirections;
-    private readonly List<object[]> animationDatas;
-
-    private const double MIN_VALUE = 0.00;
-    private const double MAX_VALUE = 1.00;
+    public event Action<object> OnAnimationFinished;
+    public event Action<object> OnAnimationProgress;
 
     /// <summary>
     /// Constructor
@@ -36,10 +32,10 @@ public class AnimationEngine
     /// <param name="singular">If true, only one animation is supported. The current animation will be replaced with the new one. If false, a new animation is added to the list.</param>
     public AnimationEngine(bool singular = true)
     {
-        animationProgresses = new List<double>();
-        animationSources = new List<Point>();
-        animationDirections = new List<AnimationDirection>();
-        animationDatas = new List<object[]>();
+        animationProgresses = new List<double>(INITIAL_CAPACITY);
+        animationSources = new List<Point>(INITIAL_CAPACITY);
+        animationDirections = new List<AnimationDirection>(INITIAL_CAPACITY);
+        animationDatas = new List<object[]>(INITIAL_CAPACITY);
 
         Increment = 0.03;
         SecondaryIncrement = 0.03;
@@ -50,77 +46,101 @@ public class AnimationEngine
         if (Singular)
         {
             animationProgresses.Add(0);
-            animationSources.Add(new Point(0, 0));
+            animationSources.Add(default);
             animationDirections.Add(AnimationDirection.In);
         }
 
         AnimationEngineProvider.Handle(this);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void AnimationTimerOnTick(object sender, EventArgs eventArgs)
     {
-        for (int i = 0; i < animationProgresses.Count; i++)
+        if (animationProgresses.Count == 0)
         {
+            Running = false;
+            return;
+        }
+
+        var count = animationProgresses.Count;
+        for (int i = count - 1; i >= 0; i--)
+        {
+            var direction = animationDirections[i];
+            var progress = animationProgresses[i];
+
             UpdateProgress(i);
 
             if (!Singular)
             {
-                if ((animationDirections[i] == AnimationDirection.InOutIn && animationProgresses[i] == MAX_VALUE))
-                {
-                    animationDirections[i] = AnimationDirection.InOutOut;
-                }
-                else if ((animationDirections[i] == AnimationDirection.InOutRepeatingIn && animationProgresses[i] == MIN_VALUE))
-                {
-                    animationDirections[i] = AnimationDirection.InOutRepeatingOut;
-                }
-                else if ((animationDirections[i] == AnimationDirection.InOutRepeatingOut && animationProgresses[i] == MIN_VALUE))
-                {
-                    animationDirections[i] = AnimationDirection.InOutRepeatingIn;
-                }
-                else if (
-                    (animationDirections[i] == AnimationDirection.In && animationProgresses[i] == MAX_VALUE) ||
-                    (animationDirections[i] == AnimationDirection.Out && animationProgresses[i] == MIN_VALUE) ||
-                    (animationDirections[i] == AnimationDirection.InOutOut && animationProgresses[i] == MIN_VALUE))
-                {
-                    animationProgresses.RemoveAt(i);
-                    animationSources.RemoveAt(i);
-                    animationDirections.RemoveAt(i);
-                    animationDatas.RemoveAt(i);
-                }
+                HandleNonSingularAnimation(i, direction, progress);
             }
             else
             {
-                if ((animationDirections[i] == AnimationDirection.InOutIn && animationProgresses[i] == MAX_VALUE))
-                {
-                    animationDirections[i] = AnimationDirection.InOutOut;
-                }
-                else if ((animationDirections[i] == AnimationDirection.InOutRepeatingIn && animationProgresses[i] == MAX_VALUE))
-                {
-                    animationDirections[i] = AnimationDirection.InOutRepeatingOut;
-                }
-                else if ((animationDirections[i] == AnimationDirection.InOutRepeatingOut && animationProgresses[i] == MIN_VALUE))
-                {
-                    animationDirections[i] = AnimationDirection.InOutRepeatingIn;
-                }
+                HandleSingularAnimation(i, direction, progress);
             }
         }
 
-        if (OnAnimationProgress != null)
+        OnAnimationProgress?.Invoke(this);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void HandleNonSingularAnimation(int index, AnimationDirection direction, double progress)
+    {
+        switch (direction)
         {
-            OnAnimationProgress(this);
+            case AnimationDirection.InOutIn when progress == MAX_VALUE:
+                animationDirections[index] = AnimationDirection.InOutOut;
+                break;
+            case AnimationDirection.InOutRepeatingIn when progress == MIN_VALUE:
+                animationDirections[index] = AnimationDirection.InOutRepeatingOut;
+                break;
+            case AnimationDirection.InOutRepeatingOut when progress == MIN_VALUE:
+                animationDirections[index] = AnimationDirection.InOutRepeatingIn;
+                break;
+            case AnimationDirection.In when progress == MAX_VALUE:
+            case AnimationDirection.Out when progress == MIN_VALUE:
+            case AnimationDirection.InOutOut when progress == MIN_VALUE:
+                RemoveAnimation(index);
+                break;
         }
     }
 
-    public bool IsAnimating()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void HandleSingularAnimation(int index, AnimationDirection direction, double progress)
     {
-        return Running;
+        switch (direction)
+        {
+            case AnimationDirection.InOutIn when progress == MAX_VALUE:
+                animationDirections[index] = AnimationDirection.InOutOut;
+                break;
+            case AnimationDirection.InOutRepeatingIn when progress == MAX_VALUE:
+                animationDirections[index] = AnimationDirection.InOutRepeatingOut;
+                break;
+            case AnimationDirection.InOutRepeatingOut when progress == MIN_VALUE:
+                animationDirections[index] = AnimationDirection.InOutRepeatingIn;
+                break;
+        }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void RemoveAnimation(int index)
+    {
+        if (index < 0 || index >= animationProgresses.Count)
+            return;
+
+        animationProgresses.RemoveAt(index);
+        animationSources.RemoveAt(index);
+        animationDirections.RemoveAt(index);
+        animationDatas.RemoveAt(index);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartNewAnimation(AnimationDirection animationDirection, object[] data = null)
     {
-        StartNewAnimation(animationDirection, new Point(0, 0), data);
+        StartNewAnimation(animationDirection, default, data);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartNewAnimation(AnimationDirection animationDirection, Point animationSource, object[] data = null)
     {
         if (!IsAnimating() || InterruptAnimation)
@@ -128,245 +148,131 @@ public class AnimationEngine
             if (Singular && animationDirections.Count > 0)
             {
                 animationDirections[0] = animationDirection;
+                if (animationSources.Count > 0)
+                    animationSources[0] = animationSource;
+                if (animationDatas.Count > 0)
+                    animationDatas[0] = data ?? Array.Empty<object>();
             }
             else
             {
                 animationDirections.Add(animationDirection);
-            }
-
-            if (Singular && animationSources.Count > 0)
-            {
-                animationSources[0] = animationSource;
-            }
-            else
-            {
                 animationSources.Add(animationSource);
-            }
+                animationDatas.Add(data ?? Array.Empty<object>());
 
-            if (!(Singular && animationProgresses.Count > 0))
-            {
-                switch (animationDirections[animationDirections.Count - 1])
+                if (!(Singular && animationProgresses.Count > 0))
                 {
-                    case AnimationDirection.InOutRepeatingIn:
-                    case AnimationDirection.InOutIn:
-                    case AnimationDirection.In:
-                        animationProgresses.Add(MIN_VALUE);
-                        break;
-
-                    case AnimationDirection.InOutRepeatingOut:
-                    case AnimationDirection.InOutOut:
-                    case AnimationDirection.Out:
-                        animationProgresses.Add(MAX_VALUE);
-                        break;
-
-                    default:
-                        throw new Exception("Invalid AnimationDirection");
+                    animationProgresses.Add(animationDirection switch
+                    {
+                        AnimationDirection.InOutRepeatingIn or AnimationDirection.InOutIn or AnimationDirection.In => MIN_VALUE,
+                        AnimationDirection.InOutRepeatingOut or AnimationDirection.InOutOut or AnimationDirection.Out => MAX_VALUE,
+                        _ => throw new ArgumentException("Invalid AnimationDirection")
+                    });
                 }
-            }
-
-            if (Singular && animationDatas.Count > 0)
-            {
-                animationDatas[0] = data ?? new object[] { };
-            }
-            else
-            {
-                animationDatas.Add(data ?? new object[] { });
             }
         }
 
         Running = true;
     }
 
-    public void UpdateProgress(int index)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void UpdateProgress(int index)
     {
-        switch (animationDirections[index])
+        var direction = animationDirections[index];
+        switch (direction)
         {
             case AnimationDirection.InOutRepeatingIn:
             case AnimationDirection.InOutIn:
             case AnimationDirection.In:
                 IncrementProgress(index);
                 break;
-
-            case AnimationDirection.InOutRepeatingOut:
-            case AnimationDirection.InOutOut:
-            case AnimationDirection.Out:
+            default:
                 DecrementProgress(index);
                 break;
-
-            default:
-                throw new Exception("No AnimationDirection has been set");
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void IncrementProgress(int index)
     {
         animationProgresses[index] += Increment;
         if (animationProgresses[index] > MAX_VALUE)
         {
             animationProgresses[index] = MAX_VALUE;
-
-            for (int i = 0; i < GetAnimationCount(); i++)
-            {
-                if (animationDirections[i] == AnimationDirection.InOutIn) return;
-                if (animationDirections[i] == AnimationDirection.InOutRepeatingIn) return;
-                if (animationDirections[i] == AnimationDirection.InOutRepeatingOut) return;
-                if (animationDirections[i] == AnimationDirection.InOutOut && animationProgresses[i] != MAX_VALUE) return;
-                if (animationDirections[i] == AnimationDirection.In && animationProgresses[i] != MAX_VALUE) return;
-            }
-
-            Running = false;
-            if (OnAnimationFinished != null) OnAnimationFinished(this);
+            CheckAnimationCompletion();
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void DecrementProgress(int index)
     {
-        animationProgresses[index] -= (animationDirections[index] == AnimationDirection.InOutOut || animationDirections[index] == AnimationDirection.InOutRepeatingOut) ? SecondaryIncrement : Increment;
+        animationProgresses[index] -= (animationDirections[index] == AnimationDirection.InOutOut || 
+                                     animationDirections[index] == AnimationDirection.InOutRepeatingOut) 
+            ? SecondaryIncrement : Increment;
+
         if (animationProgresses[index] < MIN_VALUE)
         {
             animationProgresses[index] = MIN_VALUE;
-
-            for (int i = 0; i < GetAnimationCount(); i++)
-            {
-                if (animationDirections[i] == AnimationDirection.InOutIn) return;
-                if (animationDirections[i] == AnimationDirection.InOutRepeatingIn) return;
-                if (animationDirections[i] == AnimationDirection.InOutRepeatingOut) return;
-                if (animationDirections[i] == AnimationDirection.InOutOut && animationProgresses[i] != MIN_VALUE) return;
-                if (animationDirections[i] == AnimationDirection.Out && animationProgresses[i] != MIN_VALUE) return;
-            }
-
-            Running = false;
-            if (OnAnimationFinished != null) OnAnimationFinished(this);
+            CheckAnimationCompletion();
         }
     }
 
-    public double GetProgress()
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private void CheckAnimationCompletion()
     {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationProgresses.Count == 0)
-            throw new Exception("Invalid animation");
-
-        return GetProgress(0);
-    }
-
-    public double GetProgress(int index)
-    {
-        if (!(index < GetAnimationCount()))
-            throw new IndexOutOfRangeException("Invalid animation index");
-
-        switch (AnimationType)
+        for (int i = 0; i < GetAnimationCount(); i++)
         {
-            case AnimationType.Linear:
-                return AnimationLinear.CalculateProgress(animationProgresses[index]);
+            var direction = animationDirections[i];
+            var progress = animationProgresses[i];
 
-            case AnimationType.EaseInOut:
-                return AnimationEaseInOut.CalculateProgress(animationProgresses[index]);
+            if (direction == AnimationDirection.InOutIn || 
+                direction == AnimationDirection.InOutRepeatingIn || 
+                direction == AnimationDirection.InOutRepeatingOut)
+                return;
 
-            case AnimationType.EaseOut:
-                return AnimationEaseOut.CalculateProgress(animationProgresses[index]);
-
-            case AnimationType.CustomQuadratic:
-                return AnimationCustomQuadratic.CalculateProgress(animationProgresses[index]);
-
-            default:
-                throw new NotImplementedException("The given AnimationType is not implemented");
+            if ((direction == AnimationDirection.InOutOut && progress != MIN_VALUE) ||
+                (direction == AnimationDirection.In && progress != MAX_VALUE) ||
+                (direction == AnimationDirection.Out && progress != MIN_VALUE))
+                return;
         }
+
+        OnAnimationFinished?.Invoke(this);
     }
 
-    public Point GetSource(int index)
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public bool IsAnimating() => Running;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public double GetProgress(int index = 0)
     {
-        if (!(index < GetAnimationCount()))
-            throw new IndexOutOfRangeException("Invalid animation index");
+        if (index >= animationProgresses.Count)
+            return 0;
 
-        return animationSources[index];
+        var progress = animationProgresses[index];
+        return AnimationType switch
+        {
+            AnimationType.Linear => AnimationLinear.CalculateProgress(progress),
+            AnimationType.EaseInOut => AnimationEaseInOut.CalculateProgress(progress),
+            AnimationType.EaseOut => AnimationEaseOut.CalculateProgress(progress),
+            AnimationType.CustomQuadratic => AnimationCustomQuadratic.CalculateProgress(progress),
+            _ => progress
+        };
     }
 
-    public Point GetSource()
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public Point GetSource(int index = 0) => index < animationSources.Count ? animationSources[index] : default;
 
-        if (animationSources.Count == 0)
-            throw new Exception("Invalid animation");
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public AnimationDirection GetDirection(int index = 0) => index < animationDirections.Count ? animationDirections[index] : default;
 
-        return animationSources[0];
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public object[] GetData(int index = 0) => index < animationDatas.Count ? animationDatas[index] : null;
 
-    public AnimationDirection GetDirection()
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationDirections.Count == 0)
-            throw new Exception("Invalid animation");
-
-        return animationDirections[0];
-    }
-
-    public AnimationDirection GetDirection(int index)
-    {
-        if (!(index < animationDirections.Count))
-            throw new IndexOutOfRangeException("Invalid animation index");
-
-        return animationDirections[index];
-    }
-
-    public object[] GetData()
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationDatas.Count == 0)
-            throw new Exception("Invalid animation");
-
-        return animationDatas[0];
-    }
-
-    public object[] GetData(int index)
-    {
-        if (!(index < animationDatas.Count))
-            throw new IndexOutOfRangeException("Invalid animation index");
-
-        return animationDatas[index];
-    }
-
-    public int GetAnimationCount()
-    {
-        return animationProgresses.Count;
-    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public int GetAnimationCount() => animationProgresses.Count;
 
     public void SetProgress(double progress)
     {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationProgresses.Count == 0)
-            throw new Exception("Invalid animation");
-
-        animationProgresses[0] = progress;
-    }
-
-    public void SetDirection(AnimationDirection direction)
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationProgresses.Count == 0)
-            throw new Exception("Invalid animation");
-
-        animationDirections[0] = direction;
-    }
-
-    public void SetData(object[] data)
-    {
-        if (!Singular)
-            throw new Exception("Animation is not set to Singular.");
-
-        if (animationDatas.Count == 0)
-            throw new Exception("Invalid animation");
-
-        animationDatas[0] = data;
+        if (Singular && animationProgresses.Count > 0)
+            animationProgresses[0] = progress;
     }
 }
