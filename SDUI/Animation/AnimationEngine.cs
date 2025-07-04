@@ -224,8 +224,8 @@ public class AnimationEngine
             var direction = animationDirections[i];
             var progress = animationProgresses[i];
 
-            if (direction == AnimationDirection.InOutIn || 
-                direction == AnimationDirection.InOutRepeatingIn || 
+            if (direction == AnimationDirection.InOutIn ||
+                direction == AnimationDirection.InOutRepeatingIn ||
                 direction == AnimationDirection.InOutRepeatingOut)
                 return;
 
@@ -235,6 +235,7 @@ public class AnimationEngine
                 return;
         }
 
+        Running = false;
         OnAnimationFinished?.Invoke(this);
     }
 
