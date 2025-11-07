@@ -24,7 +24,7 @@ public partial class ListViewItemCollection : IList
         {
             get
             {
-                return _owner.VirtualMode ? _owner.VirtualListSize : _owner.Items.Count;
+                return _owner.VirtualMode ? _owner.VirtualListSize : _owner._listViewItems?.Count ?? 0;
             }
         }
 
@@ -44,7 +44,7 @@ public partial class ListViewItemCollection : IList
                 }
 
                 ArgumentOutOfRangeException.ThrowIfNegative(displayIndex);
-                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(displayIndex, _owner.Items.Count);
+                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(displayIndex, _owner._listViewItems?.Count ?? 0);
 
 
                 RemoveAt(displayIndex);
@@ -61,30 +61,21 @@ public partial class ListViewItemCollection : IList
 
             if (_owner.VirtualMode)
             {
-                //// If we are showing virtual items, we need to get the item from the user.
-                //RetrieveVirtualItemEventArgs rVI = new(index);
-                //if (rVI.Item is null)
-                //{
-                //    return !throwInVirtualMode ? null : throw new InvalidOperationException();
-                //}
-
-                //return rVI.Item;
+                // Virtual mode not implemented for now
                 return null;
             }
             else
             {
                 ArgumentOutOfRangeException.ThrowIfNegative(index);
-                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _owner.Items.Count);
+                ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _owner._listViewItems?.Count ?? 0);
 
-                if (_owner.IsHandleCreated)
+                if (_owner.IsHandleCreated && _owner._listViewItems is not null)
                 {
-                    var item = _owner.Items[index];
-                    //.TryGetValue(DisplayIndexToID(index), out ListViewItem? item);
-                    return item!;
+                    return _owner._listViewItems[index];
                 }
                 else
                 {
-                    return _owner.Items[index];
+                    return _owner._listViewItems?[index];
                 }
             }
         }
@@ -102,7 +93,7 @@ public partial class ListViewItemCollection : IList
                 // This saves a call into NativeListView to retrieve the real index.
                 bool valueChecked = value.Checked;
 
-                _owner.InsertItems(_owner.Items.Count, [value]);
+                _owner.InsertItems(_owner._listViewItems?.Count ?? 0, [value]);
 
                 if (_owner.IsHandleCreated && !_owner.CheckBoxes && valueChecked)
                 {
@@ -119,7 +110,7 @@ public partial class ListViewItemCollection : IList
 
             if (_owner.VirtualMode)
             {
-                
+                return;
             }
 
             bool[]? checkedValues = null;
@@ -138,8 +129,7 @@ public partial class ListViewItemCollection : IList
 
             try
             {
-                _owner.BeginUpdate();
-                _owner.InsertItems(_owner.Items.Count, values);
+                _owner.InsertItems(_owner._listViewItems?.Count ?? 0, values);
 
                 if (_owner.IsHandleCreated && !_owner.CheckBoxes)
                 {
@@ -154,7 +144,6 @@ public partial class ListViewItemCollection : IList
             }
             finally
             {
-                _owner.EndUpdate();
             }
 
         }
@@ -162,31 +151,18 @@ public partial class ListViewItemCollection : IList
         private int DisplayIndexToID(int displayIndex)
         {
             return displayIndex;
-            Debug.Assert(!_owner.VirtualMode, "in virtual mode, this method does not make any sense");
-            //if (_owner.IsHandleCreated && !_owner.ListViewHandleDestroyed)
-            //{
-            //    // Obtain internal index of the item
-            //    LVITEMW lvItem = new()
-            //    {
-            //        mask = LIST_VIEW_ITEM_FLAGS.LVIF_PARAM,
-            //        iItem = displayIndex
-            //    };
-
-            //    PInvokeCore.SendMessage(_owner, PInvoke.LVM_GETITEMW, (WPARAM)0, ref lvItem);
-            //    return PARAM.ToInt(lvItem.lParam);
-            //}
-            //else
-            //{
-            //    return this[displayIndex]._id;
-            //}
         }
 
         public void Clear()
         {
-            if (_owner.Items.Count <= 0)
+            if ((_owner._listViewItems?.Count ?? 0) <= 0)
             {
                 return;
             }
+
+            _owner._listViewItems!.Clear();
+            _owner.SelectedIndex = -1;
+            _owner.Invalidate();
         }
            
 
@@ -199,18 +175,12 @@ public partial class ListViewItemCollection : IList
             }
             else
             {
-                count = _owner.Items.Count;
+                count = _owner._listViewItems?.Count ?? 0;
             }
 
             ArgumentOutOfRangeException.ThrowIfNegative(index);
             ArgumentOutOfRangeException.ThrowIfGreaterThan(index, count);
 
-
-            if (index < count)
-            {
-                // if we're not inserting at the end, force the add.
-               
-            }
 
             _owner.InsertItems(index, [item]);
             if (_owner.IsHandleCreated && !_owner.CheckBoxes && item.Checked)
@@ -224,15 +194,8 @@ public partial class ListViewItemCollection : IList
         public int IndexOf(ListViewItem item)
         {
             Debug.Assert(!_owner.VirtualMode, "in virtual mode, this function does not make any sense");
-            for (int i = 0; i < Count; i++)
-            {
-                if (item == this[i])
-                {
-                    return i;
-                }
-            }
-
-            return -1;
+            if (_owner._listViewItems is null) return -1;
+            return _owner._listViewItems.IndexOf(item);
         }
 
         public void Remove(ListViewItem item)
@@ -249,27 +212,25 @@ public partial class ListViewItemCollection : IList
         public void RemoveAt(int index)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(index);
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _owner.Items.Count);
+            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, _owner._listViewItems?.Count ?? 0);
 
-
-           
-            int itemID = DisplayIndexToID(index);
 
             this[index].Focused = false;
 
-            if (_owner.IsHandleCreated)
+            if (_owner._listViewItems is not null)
             {
+                _owner._listViewItems.RemoveAt(index);
+                if (_owner.SelectedIndex >= _owner._listViewItems.Count)
+                {
+                    _owner.SelectedIndex = _owner._listViewItems.Count - 1;
+                }
+                _owner.Invalidate();
             }
-            else
-            {
-                _owner.Items.RemoveAt(index);
-            }
-
         }
 
         public void CopyTo(Array dest, int index)
         {
-            if (_owner.Items.Count > 0)
+            if ((_owner._listViewItems?.Count ?? 0) > 0)
             {
                 for (int displayIndex = 0; displayIndex < Count; ++displayIndex)
                 {
@@ -280,7 +241,7 @@ public partial class ListViewItemCollection : IList
 
         public IEnumerator GetEnumerator()
         {
-            ListViewItem[] items = new ListViewItem[_owner.Items.Count];
+            ListViewItem[] items = new ListViewItem[_owner._listViewItems?.Count ?? 0];
             CopyTo(items, 0);
 
             return items.GetEnumerator();
@@ -288,7 +249,11 @@ public partial class ListViewItemCollection : IList
 
         public bool Contains(ListViewItem item)
         {
-            throw new NotImplementedException();
+            if (_owner.VirtualMode)
+            {
+                return false;
+            }
+            return _owner._listViewItems?.Contains(item) ?? false;
         }
     }
     internal interface IInnerList
