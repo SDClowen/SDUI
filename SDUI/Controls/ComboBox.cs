@@ -35,10 +35,11 @@ public class ComboBox : UIElementBase
             _owner = owner;
             BackColor = Color.Transparent;
 
-            _animation = new AnimationEngine
+            _animation = new AnimationEngine(singular: true)
             {
-                Increment = 0.15,
-                AnimationType = AnimationType.EaseInOut
+                Increment = 0.20,
+                AnimationType = AnimationType.EaseInOut,
+                InterruptAnimation = true
             };
             _animation.OnAnimationProgress += (s) =>
             {
@@ -60,10 +61,11 @@ public class ComboBox : UIElementBase
                 Invalidate();
             };
 
-            _hoverAnimation = new AnimationEngine
+            _hoverAnimation = new AnimationEngine(singular: true)
             {
-                Increment = 0.25,
-                AnimationType = AnimationType.EaseInOut
+                Increment = 0.30,
+                AnimationType = AnimationType.EaseInOut,
+                InterruptAnimation = true
             };
             _hoverAnimation.OnAnimationProgress += (s) =>
             {
@@ -550,10 +552,11 @@ public class ComboBox : UIElementBase
         Height = 23;
         _itemHeight = 36;
 
-        _animation = new AnimationEngine
+        _animation = new AnimationEngine(singular: true)
         {
-            Increment = 0.08,
-            AnimationType = AnimationType.Linear
+            Increment = 0.12,
+            AnimationType = AnimationType.EaseInOut,
+            InterruptAnimation = true
         };
         _animation.OnAnimationProgress += (s) => Invalidate();
 

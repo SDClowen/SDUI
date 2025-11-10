@@ -224,10 +224,11 @@ public class FlowLayoutPanel : UIElementBase
         if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;
 
         // Yeni kontrol için animasyon motoru oluştur
-        _animations[e.Element] = new AnimationEngine
+        _animations[e.Element] = new AnimationEngine(singular: true)
         {
-            Increment = 0.08f,
-            AnimationType = AnimationType.EaseInOut
+            Increment = 0.12f,
+            AnimationType = AnimationType.EaseInOut,
+            InterruptAnimation = true
         };
         _animations[e.Element].OnAnimationProgress += (s) => Invalidate();
 

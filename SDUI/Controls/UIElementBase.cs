@@ -55,6 +55,10 @@ namespace SDUI.Controls
             }
         }
 
+        private SKSurface? _renderSurface;
+        private SKImageInfo _renderInfo;
+    private SKImage? _renderSnapshot;
+
         private Size _minimumSize;
         [Category("Layout")]
         [DefaultValue(typeof(Size), "0, 0")]
@@ -775,50 +779,145 @@ namespace SDUI.Controls
 
         public virtual void OnPaint(SKPaintSurfaceEventArgs e)
         {
-            var hostSurface = e.Surface;
-            var canvas = hostSurface?.Canvas;
-            if (canvas == null)
-            {
-                Paint?.Invoke(this, e);
-                return;
-            }
-
-            foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder))
-            {
-                if (!element.Visible || element.Width <= 0 || element.Height <= 0)
-                    continue;
-
-                try
-                {
-                    var childInfo = new SKImageInfo(element.Width, element.Height, e.Info.ColorType, e.Info.AlphaType);
-                    using var childSurface = SKSurface.Create(childInfo);
-                    if (childSurface == null)
-                        continue;
-
-                    childSurface.Canvas.Clear(SKColors.Transparent);
-                    element.OnPaint(new SKPaintSurfaceEventArgs(childSurface, childInfo));
-                    element.NeedsRedraw = false;
-
-                    using var snapshot = childSurface.Snapshot();
-                    canvas.DrawImage(snapshot, element.Location.X, element.Location.Y);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Element render hatası - {element.GetType().Name}: {ex.Message}\n{ex.StackTrace}");
-                }
-            }
-
-            Paint?.Invoke(this, e);
         }
 
         public virtual void Invalidate()
         {
             CheckDisposed();
 
-            if (Parent is UIWindowBase window)
-                window.Invalidate();
+            MarkDirty();
 
+            switch (Parent)
+            {
+                case UIWindowBase window:
+                    window.Invalidate();
+                    break;
+                case UIElementBase element:
+                    element.Invalidate();
+                    break;
+            }
+        }
+
+        protected void MarkDirty()
+        {
             NeedsRedraw = true;
+            _renderSnapshot?.Dispose();
+            _renderSnapshot = null;
+        }
+
+        internal void InvalidateRender()
+        {
+            MarkDirty();
+        }
+
+        internal void InvalidateRenderTree()
+        {
+            MarkDirty();
+            foreach (var child in Controls.OfType<UIElementBase>())
+            {
+                child.InvalidateRenderTree();
+            }
+        }
+
+        private void DisposeRenderResources()
+        {
+            _renderSnapshot?.Dispose();
+            _renderSnapshot = null;
+
+            _renderSurface?.Dispose();
+            _renderSurface = null;
+            _renderInfo = SKImageInfo.Empty;
+        }
+
+        private void EnsureRenderTarget()
+        {
+            if (Width <= 0 || Height <= 0)
+            {
+                DisposeRenderResources();
+                return;
+            }
+
+            // sRGB color space ile yüksek kaliteli render
+            var desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
+
+            if (_renderSurface != null &&
+                _renderInfo.Width == desiredInfo.Width &&
+                _renderInfo.Height == desiredInfo.Height &&
+                _renderInfo.ColorType == desiredInfo.ColorType)
+            {
+                return;
+            }
+
+            DisposeRenderResources();
+            _renderSurface = SKSurface.Create(desiredInfo);
+            _renderInfo = desiredInfo;
+            MarkDirty();
+        }
+
+        private SKColor ResolveBackgroundColor()
+        {
+            var color = BackColor;
+            return color == Color.Transparent
+                ? SKColors.Transparent
+                : color.ToSKColor();
+        }
+
+        private void RenderChildren(SKCanvas canvas)
+        {
+            foreach (var child in Controls.OfType<UIElementBase>().OrderBy(el => el.ZOrder))
+            {
+                var snapshot = child.RenderSnapshot();
+                if (snapshot == null)
+                    continue;
+
+                canvas.DrawImage(snapshot, child.Location.X, child.Location.Y);
+            }
+        }
+
+        internal SKImage? RenderSnapshot()
+        {
+            if (!Visible || Width <= 0 || Height <= 0)
+            {
+                DisposeRenderResources();
+                return null;
+            }
+
+            EnsureRenderTarget();
+            if (_renderSurface == null)
+                return null;
+
+            if (NeedsRedraw)
+            {
+                var canvas = _renderSurface.Canvas;
+                canvas.Save();
+                
+                // Yüksek kaliteli render ayarları
+                canvas.Clear(ResolveBackgroundColor());
+
+                var args = new SKPaintSurfaceEventArgs(_renderSurface, _renderInfo);
+                OnPaint(args);
+                Paint?.Invoke(this, args);
+
+                RenderChildren(canvas);
+
+                canvas.Restore();
+                canvas.Flush();
+
+                _renderSnapshot?.Dispose();
+                _renderSnapshot = _renderSurface.Snapshot();
+                NeedsRedraw = false;
+            }
+
+            return _renderSnapshot;
+        }
+
+        internal void Render(SKCanvas targetCanvas)
+        {
+            var snapshot = RenderSnapshot();
+            if (snapshot == null)
+                return;
+
+            targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
         }
 
         public virtual void Focus()
@@ -1474,6 +1573,7 @@ namespace SDUI.Controls
                 if (disposing)
                 {
                     // Yönetilen kaynakları temizle
+                    DisposeRenderResources();
                     _font?.Dispose();
                     _cursor?.Dispose();
                 }

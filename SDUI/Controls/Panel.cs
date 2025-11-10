@@ -86,17 +86,19 @@ public class Panel : UIElementBase
         // Gölge çizimi
         if (_shadowDepth > 0)
         {
-            using var shadowPaint = new SKPaint();
+            using var shadowPaint = new SKPaint
+            {
+                IsAntialias = true,
+                FilterQuality = SKFilterQuality.High,
+                ImageFilter = SKImageFilter.CreateDropShadow(
+                    _shadowDepth,
+                    _shadowDepth,
+                    3,
+                    3,
+                    SKColors.Black.WithAlpha(30))
+            };
             try
             {
-                shadowPaint.Color = SKColors.Black.WithAlpha(30);
-                shadowPaint.ImageFilter = SKImageFilter.CreateDropShadow(
-                    _shadowDepth,
-                    _shadowDepth,
-                    3,
-                    3,
-                    SKColors.Black.WithAlpha(30));
-                shadowPaint.IsAntialias = true;
 
                 if (_radius > 0)
                 {
@@ -113,11 +115,14 @@ public class Panel : UIElementBase
         }
 
         // Panel arka planı
-        using var paint = new SKPaint();
+        using var paint = new SKPaint
+        {
+            Color = color.ToSKColor(),
+            IsAntialias = true,
+            FilterQuality = SKFilterQuality.High
+        };
         try
         {
-            paint.Color = color.ToSKColor();
-            paint.IsAntialias = true;
 
             if (_radius > 0)
             {

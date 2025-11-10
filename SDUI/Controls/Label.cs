@@ -208,8 +208,10 @@ public class Label : UIElementBase
         {
             IsAntialias = true,
             SubpixelText = true,
+            LcdRenderText = true,
+            FilterQuality = SKFilterQuality.High,
             TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal),
             TextAlign = GetSKTextAlign()
         };
 

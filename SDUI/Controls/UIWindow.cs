@@ -646,7 +646,6 @@ public class UIWindow : UIWindowBase, IUIElement
     public new IUIElement Parent { get; set; }
 
     private bool _layoutSuspended;
-    private readonly HashSet<UIElementBase> _dirtyElements = new();
     private readonly Dictionary<string, SKPaint> _paintCache = new();
     private SKBitmap _cacheBitmap;
     private SKSurface _cacheSurface;
@@ -1415,6 +1414,16 @@ public class UIWindow : UIWindowBase, IUIElement
         _needsFullRedraw = true;
     }
 
+    public new void Invalidate()
+    {
+        base.Invalidate();
+        // Force immediate repaint for real-time responsiveness
+        if (IsHandleCreated && !IsDisposed && !Disposing)
+        {
+            Update();
+        }
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
         if (Width <= 0 || Height <= 0)
@@ -1433,47 +1442,31 @@ public class UIWindow : UIWindowBase, IUIElement
         if (canvas == null)
             return;
 
+        // Her frame'i temiz baştan çiziyoruz
+        canvas.Save();
+        canvas.ResetMatrix();
+        canvas.ClipRect(SKRect.Create(info.Width, info.Height));
+        canvas.Clear(SKColors.Transparent);
+        PaintSurface(canvas, info);
+        canvas.Restore();
+
         if (_needsFullRedraw)
         {
-            canvas.Save();
-            canvas.ResetMatrix();
-            canvas.ClipRect(SKRect.Create(info.Width, info.Height));
-            canvas.Clear(SKColors.Transparent);
-            PaintSurface(canvas, info);
-            canvas.Restore();
-
             foreach (var child in Controls.OfType<UIElementBase>())
             {
-                child.NeedsRedraw = true;
+                child.InvalidateRenderTree();
             }
-
             _needsFullRedraw = false;
         }
 
-        using var clearPaint = new SKPaint { BlendMode = SKBlendMode.Clear };
-
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder))
+        // UI elementlerini Z-order sırasına göre çiz
+        foreach (var element in Controls.OfType<UIElementBase>().OrderBy(el => el.ZOrder))
         {
             if (!element.Visible || element.Width <= 0 || element.Height <= 0)
                 continue;
 
-            if (!element.NeedsRedraw)
-                continue;
-
-            canvas.Save();
-            canvas.Translate(element.Location.X, element.Location.Y);
-            canvas.ClipRect(new SKRect(0, 0, element.Width, element.Height), SKClipOperation.Intersect, true);
-            canvas.DrawRect(new SKRect(0, 0, element.Width, element.Height), clearPaint);
-
-            var childInfo = new SKImageInfo(element.Width, element.Height, info.ColorType, info.AlphaType);
-            element.OnPaint(new SKPaintSurfaceEventArgs(_cacheSurface, childInfo));
-            canvas.Restore();
-
-            element.NeedsRedraw = false;
+            element.Render(canvas);
         }
-
-        if (_dirtyElements.Count > 0)
-            _dirtyElements.Clear();
 
         canvas.Flush();
 
@@ -2148,11 +2141,10 @@ public class UIWindow : UIWindowBase, IUIElement
     {
         if (_layoutSuspended) return;
 
-        _dirtyElements.Add(element);
-        element.NeedsRedraw = true;
+        element.InvalidateRenderTree();
 
         if (!_needsFullRedraw)
-            Invalidate(element.Bounds);
+            Invalidate();
     } 
 
     public new void ResumeLayout()

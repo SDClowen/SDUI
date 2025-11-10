@@ -75,16 +75,20 @@ public class Button : UIElementBase, IButtonControl
     {
         TabStop = true;
 
-        animationManager = new Animation.AnimationEngine(false)
+        // Ripple animasyonu - her tıklamada yeni başlar
+        animationManager = new Animation.AnimationEngine(singular: true)
         {
-            Increment = 0.03,
-            AnimationType = AnimationType.EaseOut
+            Increment = 0.05,
+            AnimationType = AnimationType.EaseOut,
+            InterruptAnimation = true
         };
 
-        hoverAnimationManager = new Animation.AnimationEngine
+        // Hover animasyonu - smooth geçişler
+        hoverAnimationManager = new Animation.AnimationEngine(singular: true)
         {
-            Increment = 0.07,
-            AnimationType = AnimationType.Linear
+            Increment = 0.10,
+            AnimationType = AnimationType.EaseInOut,
+            InterruptAnimation = true
         };
 
         hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
@@ -172,14 +176,16 @@ public class Button : UIElementBase, IButtonControl
     {
         var canvas = e.Surface.Canvas;
 
-        // Arkaplanı temizle
-        canvas.Clear(SKColors.Transparent);
-
+        // Yüksek kaliteli render ayarları
+        canvas.Save();
+        
         // Ana buton çizimi
         DrawButton(canvas);
 
         // Animasyonları çiz
         DrawAnimations(canvas);
+        
+        canvas.Restore();
     }
 
     private void DrawButton(SKCanvas canvas)
@@ -198,28 +204,31 @@ public class Button : UIElementBase, IButtonControl
         rect.Inflate(-inflate, -inflate);
 
         // Gölge çizimi
-        using (var shadowPaint = new SKPaint())
+        using (var shadowPaint = new SKPaint
         {
-            shadowPaint.Color = SKColors.Black.WithAlpha(60);
-            shadowPaint.ImageFilter = SKImageFilter.CreateDropShadow(
+            IsAntialias = true,
+            FilterQuality = SKFilterQuality.High,
+            ImageFilter = SKImageFilter.CreateDropShadow(
                 _shadowDepth,
                 _shadowDepth,
                 3,
                 3,
                 SKColors.Black.WithAlpha(60)
-            );
-            shadowPaint.IsAntialias = true;
-
+            )
+        })
+        {
             canvas.DrawRoundRect(rect, _radius, _radius, shadowPaint);
         }
 
         // Ana buton çizimi
-        using (var paint = new SKPaint())
+        using (var paint = new SKPaint
         {
-            paint.Color = color.ToSKColor();
-            paint.IsAntialias = true;
-            paint.Style = SKPaintStyle.Fill;
-
+            Color = color.ToSKColor(),
+            IsAntialias = true,
+            FilterQuality = SKFilterQuality.High,
+            Style = SKPaintStyle.Fill
+        })
+        {
             // Validasyon durumuna göre kenar rengi
             if (!IsValid)
             {
@@ -254,14 +263,19 @@ public class Button : UIElementBase, IButtonControl
             if (!Enabled)
                 foreColor = Color.Gray;
 
-            using var textPaint = new SKPaint();
-            textPaint.TextSize = Font.Size.PtToPx(this);
-            textPaint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
-            textPaint.Color = foreColor.ToSKColor();
-            textPaint.IsAntialias = true;
-            textPaint.TextAlign = TextAlign == ContentAlignment.MiddleCenter ? SKTextAlign.Center : 
-                                 TextAlign == ContentAlignment.MiddleRight ? SKTextAlign.Right : 
-                                 SKTextAlign.Left;
+            using var textPaint = new SKPaint
+            {
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal),
+                Color = foreColor.ToSKColor(),
+                IsAntialias = true,
+                SubpixelText = true,
+                LcdRenderText = true,
+                FilterQuality = SKFilterQuality.High,
+                TextAlign = TextAlign == ContentAlignment.MiddleCenter ? SKTextAlign.Center : 
+                           TextAlign == ContentAlignment.MiddleRight ? SKTextAlign.Right : 
+                           SKTextAlign.Left
+            };
 
             var x = textPaint.GetTextX(Width, textPaint.MeasureText(Text), TextAlign, Image != null);
             var y = textPaint.GetTextY(Height, TextAlign);
@@ -306,8 +320,9 @@ public class Button : UIElementBase, IButtonControl
         {
             using var hoverPaint = new SKPaint
             {
-                Color = (Color != Color.Transparent ? Color : SystemColors.Control).ToSKColor().WithAlpha((byte)(hoverProgress * 65)),
-                IsAntialias = true
+                Color = (Color != Color.Transparent ? Color : SystemColors.Control).ToSKColor().WithAlpha((byte)(hoverProgress * 80)),
+                IsAntialias = true,
+                FilterQuality = SKFilterQuality.High
             };
             canvas.DrawRoundRect(new SKRect(0, 0, Width, Height), _radius, _radius, hoverPaint);
         }
@@ -320,13 +335,16 @@ public class Button : UIElementBase, IButtonControl
                 var animationValue = animationManager.GetProgress(i);
                 var animationSource = animationManager.GetSource(i);
 
+                var alpha = (byte)((1.0 - animationValue) * 120);
                 using var ripplePaint = new SKPaint
                 {
-                    Color = ColorScheme.BackColor.ToSKColor().WithAlpha((byte)(101 - (animationValue * 100))),
-                    IsAntialias = true
+                    Color = ColorScheme.ForeColor.ToSKColor().WithAlpha(alpha),
+                    IsAntialias = true,
+                    FilterQuality = SKFilterQuality.High,
+                    Style = SKPaintStyle.Fill
                 };
 
-                var rippleSize = (float)(animationValue * Width * 2.0);
+                var rippleSize = (float)(animationValue * Width * 2.5);
                 var rippleRect = new SKRect(
                     animationSource.X - rippleSize / 2,
                     animationSource.Y - rippleSize / 2,
@@ -334,7 +352,10 @@ public class Button : UIElementBase, IButtonControl
                     animationSource.Y + rippleSize / 2
                 );
 
+                canvas.Save();
+                canvas.ClipRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), _radius, _radius), SKClipOperation.Intersect, true);
                 canvas.DrawOval(rippleRect, ripplePaint);
+                canvas.Restore();
             }
         }
     }

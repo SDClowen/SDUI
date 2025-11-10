@@ -118,6 +118,7 @@ public class AnimationEngine
     public void StartNewAnimation(AnimationDirection animationDirection, object[] data = null)
     {
         StartNewAnimation(animationDirection, new Point(0, 0), data);
+        AnimationEngineProvider.Wake();
     }
 
     public void StartNewAnimation(AnimationDirection animationDirection, Point animationSource, object[] data = null)
@@ -141,6 +142,8 @@ public class AnimationEngine
             {
                 animationSources.Add(animationSource);
             }
+
+            AnimationEngineProvider.Wake();
 
             if (!(Singular && animationProgresses.Count > 0))
             {
@@ -174,6 +177,7 @@ public class AnimationEngine
         }
 
         Running = true;
+        AnimationEngineProvider.Wake();
     }
 
     public void UpdateProgress(int index)

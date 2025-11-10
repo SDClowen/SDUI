@@ -8,11 +8,12 @@ namespace SDUI.Animation
     {
         private static readonly List<AnimationEngine> animationEngines = new();
         private static readonly Timer timer;
+        private static int _targetFps = 120;
+        
         static AnimationEngineProvider()
         {
-            timer = new Timer { Interval =1000 /60 }; // ~16ms
+            timer = new Timer { Interval = 1000 / _targetFps };
             timer.Tick += OnTimerTick;
-            timer.Start();
         }
 
         public static void Handle(AnimationEngine animationEngine)
@@ -20,10 +21,19 @@ namespace SDUI.Animation
             animationEngines.Add(animationEngine);
         }
 
+        internal static void Wake()
+        {
+            if (!timer.Enabled)
+            {
+                timer.Interval = 1000 / _targetFps;
+                timer.Start();
+            }
+        }
+
         private static void OnTimerTick(object sender, EventArgs e)
         {
             bool anyRunning = false;
-            for (int i =0; i < animationEngines.Count; i++)
+            for (int i = 0; i < animationEngines.Count; i++)
             {
                 var engine = animationEngines[i];
                 if (engine.Running)
@@ -33,15 +43,9 @@ namespace SDUI.Animation
                 }
             }
 
-            if (!anyRunning)
+            if (!anyRunning && timer.Enabled)
             {
-                // No animations active; throttle timer to reduce CPU.
-                timer.Interval =250; // sleep longer
-            }
-            else if (timer.Interval !=1000 /60)
-            {
-                // Restore responsive interval when animations start again.
-                timer.Interval =1000 /60;
+                timer.Stop();
             }
         }
     }

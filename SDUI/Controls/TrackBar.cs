@@ -383,25 +383,29 @@ namespace SDUI.Controls
             Size = new Size(200, 22);
             MinimumSize = new Size(50, 22);
 
-            _thumbHoverAnimation = new AnimationEngine
-            {
-                Increment = 0.08f,
-                AnimationType = AnimationType.Linear
-            };
-            _thumbPressAnimation = new AnimationEngine
-            {
-                Increment = 0.15f,
-                AnimationType = AnimationType.Linear
-            };
-            _trackHoverAnimation = new AnimationEngine
-            {
-                Increment = 0.06f,
-                AnimationType = AnimationType.Linear
-            };
-            _valueAnimation = new AnimationEngine
+            _thumbHoverAnimation = new AnimationEngine(singular: true)
             {
                 Increment = 0.12f,
-                AnimationType = AnimationType.EaseInOut
+                AnimationType = AnimationType.EaseInOut,
+                InterruptAnimation = true
+            };
+            _thumbPressAnimation = new AnimationEngine(singular: true)
+            {
+                Increment = 0.20f,
+                AnimationType = AnimationType.EaseOut,
+                InterruptAnimation = true
+            };
+            _trackHoverAnimation = new AnimationEngine(singular: true)
+            {
+                Increment = 0.10f,
+                AnimationType = AnimationType.EaseInOut,
+                InterruptAnimation = true
+            };
+            _valueAnimation = new AnimationEngine(singular: true)
+            {
+                Increment = 0.15f,
+                AnimationType = AnimationType.EaseInOut,
+                InterruptAnimation = true
             };
 
             _thumbHoverAnimation.OnAnimationProgress += (s) => Invalidate();
@@ -409,7 +413,7 @@ namespace SDUI.Controls
             _trackHoverAnimation.OnAnimationProgress += (s) => Invalidate();
             _valueAnimation.OnAnimationProgress += (s) =>
             {
-                int pVal = (int)s;
+                int pVal = (int)(s as Animation.AnimationEngine).GetProgress();
                 _animatedValue = (int)(_value * pVal + _animatedValue * (1 - pVal));
                 Invalidate();
             };
