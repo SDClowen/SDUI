@@ -3,13 +3,14 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
 public class SKControl : Control
 {
-    public float DPI => DeviceDpi / 96f;
+    public float DPI => DeviceDpi /96f;
 
     #region TODO
     public bool UseVisualStyleBackColor { get; set; }
@@ -17,7 +18,12 @@ public class SKControl : Control
 
     private readonly bool designMode;
 
-    private Bitmap bitmap;
+    // Persistent rendering resources
+    private IntPtr _pixelPtr = IntPtr.Zero;
+    private int _stride;
+    private SKImageInfo _info;
+    private SKSurface? _surface; // reused between paints
+    private Bitmap? _gdiBitmap; // wraps the pixel buffer for GDI blit
 
     private bool _autoSize;
     [Category("Layout")]
@@ -132,52 +138,88 @@ public class SKControl : Control
         designMode = DesignMode || LicenseManager.UsageMode == LicenseUsageMode.Designtime;
     }
 
-    public SKSize CanvasSize => bitmap == null ? SKSize.Empty : new SKSize(bitmap.Width, bitmap.Height);
+    public SKSize CanvasSize => _info.Size;
 
     [Category("Appearance")]
     public event EventHandler<SKPaintSurfaceEventArgs> PaintSurface;
 
-    protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e)
-    {
-        PaintSurface?.Invoke(this, e);
-    }
+    protected virtual void OnPaintSurface(SKPaintSurfaceEventArgs e) => PaintSurface?.Invoke(this, e);
 
     protected override void OnPaint(PaintEventArgs e)
     {
         if (designMode)
-            return;
-
-        base.OnPaint(e);
-        CheckBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
-
-        // get the bitmap
-        var info = CreateBitmap();
-
-        if (info.Width == 0 || info.Height == 0)
-            return;
-
-        var data = bitmap.LockBits(new Rectangle(0, 0, Width, Height), ImageLockMode.WriteOnly, bitmap.PixelFormat);
-
-        // create the surface
-        using (var surface = SKSurface.Create(info, data.Scan0, data.Stride))
         {
-            // start drawing
-            OnPaintSurface(new SKPaintSurfaceEventArgs(surface, info));
-
-            surface.Canvas.Flush();
+            base.OnPaint(e);
+            return;
         }
 
-        // write the bitmap to the graphics
-        bitmap.UnlockBits(data);
-        e.Graphics.DrawImage(bitmap, 0, 0);
+        EnsureSurface();
+
+        if (_surface == null || _info.Width ==0 || _info.Height ==0)
+            return;
+
+        // Paint parent background onto destination first for proper transparency
+        CheckBoxRenderer.DrawParentBackground(e.Graphics, ClientRectangle, this);
+
+        // Prepare canvas for this frame
+        _surface.Canvas.Clear(SKColors.Transparent);
+
+        // Raise event for client drawing
+        OnPaintSurface(new SKPaintSurfaceEventArgs(_surface, _info));
+
+        _surface.Canvas.Flush();
+
+        if (_gdiBitmap != null)
+        {
+            e.Graphics.DrawImageUnscaled(_gdiBitmap,0,0);
+        }
     }
 
     protected override void OnResize(EventArgs e)
     {
         base.OnResize(e);
+        RecreateSurface();
+        Invalidate();
         if (AutoSize)
             AdjustSize();
     }
+
+    // Handle per-monitor DPI change (Control does not expose OnDpiChanged override)
+    public event EventHandler? DpiChanged; // consumers can subscribe
+
+    protected virtual void OnDpiChanged(float newDpi, Rectangle suggestedBounds)
+    {
+        if (!suggestedBounds.IsEmpty)
+        {
+            try { Bounds = suggestedBounds; } catch { }
+        }
+        RecreateSurface();
+        Invalidate();
+        DpiChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        const int WM_DPICHANGED =0x02E0;
+        if (m.Msg == WM_DPICHANGED)
+        {
+            try
+            {
+                var rect = Marshal.PtrToStructure<RECT>(m.LParam);
+                var suggested = Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
+                OnDpiChanged((float)HIWORD(m.WParam), suggested); // new DPI (Y)
+            }
+            catch
+            {
+                OnDpiChanged(DPI *96f, Rectangle.Empty);
+            }
+        }
+        base.WndProc(ref m);
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
+    private static int HIWORD(IntPtr ptr) => ((int)(long)ptr >>16) &0xFFFF;
 
     protected virtual void AdjustSize()
     {
@@ -198,31 +240,51 @@ public class SKControl : Control
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-
-        FreeBitmap();
+        FreeSurface();
     }
 
-    private SKImageInfo CreateBitmap()
+    private void EnsureSurface()
     {
-        var info = new SKImageInfo(Width, Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
-
-        if (bitmap == null || bitmap.Width != info.Width || bitmap.Height != info.Height)
-        {
-            FreeBitmap();
-
-            if (info.Width != 0 && info.Height != 0)
-                bitmap = new Bitmap(info.Width, info.Height, PixelFormat.Format32bppPArgb);
-        }
-
-        return info;
+        if (_surface != null)
+            return;
+        RecreateSurface();
     }
 
-    private void FreeBitmap()
+    private void RecreateSurface()
     {
-        if (bitmap != null)
+        FreeSurface();
+        if (Width <=0 || Height <=0)
+            return;
+
+        _info = new SKImageInfo(Width, Height, SKImageInfo.PlatformColorType, SKAlphaType.Premul);
+        _stride = _info.RowBytes;
+
+        // Allocate unmanaged pixel buffer
+        _pixelPtr = Marshal.AllocHGlobal(_stride * _info.Height);
+        // Clear initial buffer (transparent) using managed array copy to avoid unsafe code
+        var clear = new byte[_stride * _info.Height];
+        Marshal.Copy(clear,0, _pixelPtr, clear.Length);
+
+        _surface = SKSurface.Create(_info, _pixelPtr, _stride);
+
+        // Wrap with GDI Bitmap for blitting (premultiplied alpha format)
+        _gdiBitmap = new Bitmap(_info.Width, _info.Height, _stride, PixelFormat.Format32bppPArgb, _pixelPtr);
+
+        // No background drawing here; it is drawn per-frame onto destination Graphics
+    }
+
+    private void FreeSurface()
+    {
+        _surface?.Dispose();
+        _surface = null;
+        _gdiBitmap?.Dispose();
+        _gdiBitmap = null;
+        if (_pixelPtr != IntPtr.Zero)
         {
-            bitmap.Dispose();
-            bitmap = null;
+            Marshal.FreeHGlobal(_pixelPtr);
+            _pixelPtr = IntPtr.Zero;
         }
+        _info = SKImageInfo.Empty;
+        _stride =0;
     }
 }

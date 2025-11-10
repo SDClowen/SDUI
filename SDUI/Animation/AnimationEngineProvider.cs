@@ -1,20 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace SDUI.Animation
 {
     public static class AnimationEngineProvider
     {
-        private static List<AnimationEngine> animationEngines = new();
-        private static System.Windows.Forms.Timer timer;
+        private static readonly List<AnimationEngine> animationEngines = new();
+        private static readonly Timer timer;
         static AnimationEngineProvider()
         {
-            timer = new System.Windows.Forms.Timer
-            {
-                Interval = 1000 / 60
-            };
-
-            timer.Tick += onTimerTick;
+            timer = new Timer { Interval =1000 /60 }; // ~16ms
+            timer.Tick += OnTimerTick;
             timer.Start();
         }
 
@@ -23,11 +20,29 @@ namespace SDUI.Animation
             animationEngines.Add(animationEngine);
         }
 
-        private static void onTimerTick(object sender, EventArgs e)
+        private static void OnTimerTick(object sender, EventArgs e)
         {
-            foreach (var animationEngine in animationEngines)
-                if (animationEngine.Running)
-                    animationEngine.AnimationTimerOnTick(sender, e);
+            bool anyRunning = false;
+            for (int i =0; i < animationEngines.Count; i++)
+            {
+                var engine = animationEngines[i];
+                if (engine.Running)
+                {
+                    anyRunning = true;
+                    engine.AnimationTimerOnTick(sender, e);
+                }
+            }
+
+            if (!anyRunning)
+            {
+                // No animations active; throttle timer to reduce CPU.
+                timer.Interval =250; // sleep longer
+            }
+            else if (timer.Interval !=1000 /60)
+            {
+                // Restore responsive interval when animations start again.
+                timer.Interval =1000 /60;
+            }
         }
     }
 }

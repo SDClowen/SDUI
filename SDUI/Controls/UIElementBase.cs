@@ -34,6 +34,9 @@ namespace SDUI.Controls
 
         public Image Image { get; set; }
 
+        private float _currentDpi = 96f;
+        private IUIElement _parent;
+
         #region Properties
 
         private Point _location;
@@ -525,10 +528,10 @@ namespace SDUI.Controls
         protected bool IsCreated => _isCreated;
 
         [Browsable(false)]
-        public virtual int DeviceDpi => DpiHelper.GetSystemDpi();
+        public virtual int DeviceDpi => (int)Math.Round(_currentDpi);
 
         [Browsable(false)]
-        public virtual float ScaleFactor => DpiHelper.GetScaleFactor();
+        public virtual float ScaleFactor => _currentDpi / 96f;
 
         [Browsable(false)]
         protected virtual Keys ModifierKeys
@@ -765,44 +768,39 @@ namespace SDUI.Controls
             _controls = new(this);
             _font = new Font("Segoe UI", 9f);
             _cursor = Cursors.Default;
+            _currentDpi = DpiHelper.GetSystemDpi();
         }
 
         #region Virtual Methods
 
         public virtual void OnPaint(SKPaintSurfaceEventArgs e)
         {
-            var canvas = e.Surface.Canvas;
+            var hostSurface = e.Surface;
+            var canvas = hostSurface?.Canvas;
+            if (canvas == null)
+            {
+                Paint?.Invoke(this, e);
+                return;
+            }
 
-            // Alt elementleri render et
             foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder))
             {
-                if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
+                if (!element.Visible || element.Width <= 0 || element.Height <= 0)
                     continue;
 
                 try
                 {
-                    // Her element için yeni bir surface oluştur
-                    using var elementSurface = SKSurface.Create(new SKImageInfo(element.Size.Width, element.Size.Height, e.Info.ColorType, e.Info.AlphaType));
-                    if (elementSurface == null)
+                    var childInfo = new SKImageInfo(element.Width, element.Height, e.Info.ColorType, e.Info.AlphaType);
+                    using var childSurface = SKSurface.Create(childInfo);
+                    if (childSurface == null)
                         continue;
 
-                    // Element'in kendi render metodunu çağır
-                    element.OnPaint(new SKPaintSurfaceEventArgs(elementSurface, e.Info));
+                    childSurface.Canvas.Clear(SKColors.Transparent);
+                    element.OnPaint(new SKPaintSurfaceEventArgs(childSurface, childInfo));
+                    element.NeedsRedraw = false;
 
-                    // Element'in çizim alanını kaydet
-                    canvas.Save();
-
-                    canvas.ClipRect(element.Bounds.ToSKRect());
-
-                    // Element'in konumuna taşı
-                    canvas.Translate(element.Location.X, element.Location.Y);
-
-                    // Element'i ana canvas'a çiz
-                    using var snapshot = elementSurface.Snapshot();
-                    canvas.DrawImage(snapshot, 0, 0);
-
-                    // Element'in çizim alanını geri yükle
-                    canvas.Restore();
+                    using var snapshot = childSurface.Snapshot();
+                    canvas.DrawImage(snapshot, element.Location.X, element.Location.Y);
                 }
                 catch (Exception ex)
                 {
@@ -810,7 +808,6 @@ namespace SDUI.Controls
                 }
             }
 
-            // Paint olayını tetikle
             Paint?.Invoke(this, e);
         }
 
@@ -1185,44 +1182,123 @@ namespace SDUI.Controls
             MouseWheel?.Invoke(this, e);
         }
 
-        internal virtual void OnDpiChanged(EventArgs e)
+        internal virtual void OnDpiChanged(float newDpi, float oldDpi)
         {
-            DpiChanged?.Invoke(this, e);
+            if (oldDpi <= 0)
+                oldDpi = _currentDpi <= 0 ? DpiHelper.GetSystemDpi() : _currentDpi;
 
-            // Alt kontrollere DPI değişikliğini bildir
-            foreach (UIElementBase control in _controls)
+            if (newDpi <= 0)
+                newDpi = DpiHelper.GetSystemDpi();
+
+            var scaleFactor = oldDpi <= 0 ? 1f : newDpi / oldDpi;
+            _currentDpi = newDpi;
+
+            var previousLocation = Location;
+            var previousSize = Size;
+
+            if (Math.Abs(scaleFactor - 1f) > 0.001f)
             {
-                control.OnDpiChanged(e);
-            }
+                var scaledLocation = new Point(
+                    (int)Math.Round(previousLocation.X * scaleFactor),
+                    (int)Math.Round(previousLocation.Y * scaleFactor));
 
-            // DPI değişikliğinde boyut ve konumu güncelle
-            if (AutoSize)
+                if (scaledLocation != previousLocation)
+                {
+                    Location = scaledLocation;
+                }
+
+                if (!AutoSize)
+                {
+                    var scaledSize = new Size(
+                        Math.Max(1, (int)Math.Round(previousSize.Width * scaleFactor)),
+                        Math.Max(1, (int)Math.Round(previousSize.Height * scaleFactor)));
+
+                    if (scaledSize != previousSize)
+                    {
+                        Size = scaledSize;
+                    }
+                }
+
+                Padding = ScalePadding(Padding, scaleFactor);
+                Margin = ScalePadding(Margin, scaleFactor);
+            }
+            else if (AutoSize)
             {
                 AdjustSize();
             }
-            else
+
+            foreach (UIElementBase control in _controls)
             {
-                // Mevcut boyutu yeni DPI'ya göre ölçekle
-                var scaleFactor = DpiHelper.GetScaleFactor();
-                Size = new Size(
-                    (int)(Width * scaleFactor),
-                    (int)(Height * scaleFactor)
-                );
+                control.OnDpiChanged(newDpi, oldDpi);
             }
 
-            // Yeniden çizim
+            NeedsRedraw = true;
+            DpiChanged?.Invoke(this, EventArgs.Empty);
             Invalidate();
         }
 
         #endregion
 
-        public IUIElement Parent { get; set; }
+        public IUIElement Parent
+        {
+            get => _parent;
+            set
+            {
+                if (_parent == value)
+                    return;
 
-        public UIWindowBase ParentWindow => Parent as UIWindowBase;
+                _parent = value;
+                UpdateCurrentDpiFromParent();
+                NeedsRedraw = true;
+            }
+        }
 
-        public UIElementBase ParentElement => Parent as UIElementBase;
+        public UIWindowBase ParentWindow
+        {
+            get
+            {
+                return _parent switch
+                {
+                    UIWindowBase window => window,
+                    UIElementBase element => element.ParentWindow,
+                    _ => null
+                };
+            }
+        }
 
-        public bool HasParent => Parent != null;
+        public UIElementBase ParentElement => _parent as UIElementBase;
+
+        public bool HasParent => _parent != null;
+
+        private void UpdateCurrentDpiFromParent()
+        {
+            if (_parent is UIWindowBase window && window.IsHandleCreated)
+            {
+                _currentDpi = DpiHelper.GetDpiForWindow(window.Handle);
+            }
+            else if (_parent is UIElementBase element)
+            {
+                _currentDpi = element.ScaleFactor * 96f;
+            }
+            else
+            {
+                _currentDpi = DpiHelper.GetSystemDpi();
+            }
+        }
+
+        private static Padding ScalePadding(Padding padding, float scaleFactor)
+        {
+            if (Math.Abs(scaleFactor - 1f) < 0.001f)
+                return padding;
+
+            static int Scale(int value, float factor) => Math.Max(0, (int)Math.Round(value * factor));
+
+            return new Padding(
+                Scale(padding.Left, scaleFactor),
+                Scale(padding.Top, scaleFactor),
+                Scale(padding.Right, scaleFactor),
+                Scale(padding.Bottom, scaleFactor));
+        }
 
         protected bool IsChildOf(UIWindowBase window)
         {

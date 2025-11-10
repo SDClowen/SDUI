@@ -291,25 +291,27 @@ public class UIWindow : UIWindowBase, IUIElement
 
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
-        base.OnDpiChanged(e); 
-        // Pencere boyutunu ve konumunu güncelle
+        base.OnDpiChanged(e);
+
         var oldDpi = e.DeviceDpiOld;
         var newDpi = e.DeviceDpiNew;
-        var scaleFactor = (float)newDpi / oldDpi;
+        var scaleFactor = oldDpi <= 0 ? 1f : (float)newDpi / oldDpi;
+
+        var previousSize = Size;
+        var previousLocation = Location;
 
         Size = new Size(
-            (int)(Width * scaleFactor),
-            (int)(Height * scaleFactor)
-        );
+            Math.Max(1, (int)Math.Round(previousSize.Width * scaleFactor)),
+            Math.Max(1, (int)Math.Round(previousSize.Height * scaleFactor)));
 
         Location = new Point(
-            (int)(Location.X * scaleFactor),
-            (int)(Location.Y * scaleFactor)
-        );
+            (int)Math.Round(previousLocation.X * scaleFactor),
+            (int)Math.Round(previousLocation.Y * scaleFactor));
 
-        foreach (UIElementBase element in Controls) 
-            element.OnDpiChanged(EventArgs.Empty);
+        foreach (UIElementBase element in Controls)
+            element.OnDpiChanged(newDpi, oldDpi);
 
+        _needsFullRedraw = true;
         Invalidate();
     }
 
@@ -568,8 +570,8 @@ public class UIWindow : UIWindowBase, IUIElement
 
     private UIElementBase _focusedElement;
     private UIElementBase _lastHoveredElement;
-    private Bitmap bitmap;
-    public SKSize CanvasSize => bitmap == null ? SKSize.Empty : new SKSize(bitmap.Width, bitmap.Height);
+    private Bitmap? _gdiBitmap;
+    public SKSize CanvasSize => _cacheBitmap == null ? SKSize.Empty : new SKSize(_cacheBitmap.Width, _cacheBitmap.Height);
 
     public new ElementCollection Controls { get; }
 
@@ -744,15 +746,39 @@ public class UIWindow : UIWindowBase, IUIElement
     }
 
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox, _inTabCloseBox, _inNewTabBox, _inFormMenuBox;
+    private static MouseEventArgs CreateChildMouseEvent(MouseEventArgs source, UIElementBase element)
+    {
+        return new MouseEventArgs(
+            source.Button,
+            source.Clicks,
+            source.X - element.Location.X,
+            source.Y - element.Location.Y,
+            source.Delta);
+    }
+
     private void CreateOrUpdateCache(SKImageInfo info)
     {
+        if (info.Width <= 0 || info.Height <= 0)
+        {
+            _cacheSurface?.Dispose();
+            _cacheSurface = null;
+            _cacheBitmap?.Dispose();
+            _cacheBitmap = null;
+            _gdiBitmap?.Dispose();
+            _gdiBitmap = null;
+            return;
+        }
+
         if (_cacheBitmap == null || _cacheBitmap.Width != info.Width || _cacheBitmap.Height != info.Height)
         {
-            _cacheBitmap?.Dispose();
             _cacheSurface?.Dispose();
+            _cacheBitmap?.Dispose();
+            _gdiBitmap?.Dispose();
 
             _cacheBitmap = new SKBitmap(info);
-            _cacheSurface = SKSurface.Create(info, _cacheBitmap.GetPixels(), _cacheBitmap.RowBytes);
+            var pixels = _cacheBitmap.GetPixels();
+            _cacheSurface = SKSurface.Create(info, pixels, _cacheBitmap.RowBytes);
+            _gdiBitmap = new Bitmap(info.Width, info.Height, _cacheBitmap.RowBytes, PixelFormat.Format32bppPArgb, pixels);
             _needsFullRedraw = true;
         }
     }
@@ -899,7 +925,8 @@ public class UIWindow : UIWindowBase, IUIElement
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
-                element.OnMouseClick(e);
+                var localEvent = CreateChildMouseEvent(e, element);
+                element.OnMouseClick(localEvent);
                 if (_focusedElement != element)
                     _focusedElement = element;
 
@@ -1003,7 +1030,8 @@ public class UIWindow : UIWindowBase, IUIElement
                 if (_focusedElement != element)
                     _focusedElement = element;
 
-                element.OnMouseDown(e);
+                var localEvent = CreateChildMouseEvent(e, element);
+                element.OnMouseDown(localEvent);
                 // Tıklanan elementi en üste getir
                 BringToFront(element);
                 break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
@@ -1058,7 +1086,8 @@ public class UIWindow : UIWindowBase, IUIElement
                 if (_focusedElement != element)
                     _focusedElement = element;
 
-                element.OnMouseDown(e);
+                var localEvent = CreateChildMouseEvent(e, element);
+                element.OnMouseDown(localEvent);
                 // Tıklanan elementi en üste getir
                 BringToFront(element);
                 break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
@@ -1126,7 +1155,8 @@ public class UIWindow : UIWindowBase, IUIElement
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
-                element.OnMouseUp(e); 
+                var localEvent = CreateChildMouseEvent(e, element);
+                element.OnMouseUp(localEvent); 
                 break;
             }
         }
@@ -1259,7 +1289,8 @@ public class UIWindow : UIWindowBase, IUIElement
             if (element.ClientRectangle.Contains(e.Location))
             {
                 hoveredElement = element;
-                element.OnMouseMove(e);
+                var localEvent = CreateChildMouseEvent(e, element);
+                element.OnMouseMove(localEvent);
                 break; // İlk hover edilen elementten sonra diğerlerini kontrol etmeye gerek yok
             }
         }
@@ -1317,7 +1348,8 @@ public class UIWindow : UIWindowBase, IUIElement
         {
             if (element.ClientRectangle.Contains(e.Location))
             {
-                element.OnMouseWheel(e);
+                var localEvent = CreateChildMouseEvent(e, element);
+                element.OnMouseWheel(localEvent);
                 break; // İlk hover edilen elementten sonra diğerlerini kontrol etmeye gerek yok
             }
         }
@@ -1385,40 +1417,71 @@ public class UIWindow : UIWindowBase, IUIElement
 
     protected override void OnPaint(PaintEventArgs e)
     {
+        if (Width <= 0 || Height <= 0)
+        {
+            base.OnPaint(e);
+            return;
+        }
+
         var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
         CreateOrUpdateCache(info);
 
-       // if (_needsFullRedraw)
+        if (_cacheSurface == null || _cacheBitmap == null || _gdiBitmap == null)
+            return;
+
+        var canvas = _cacheSurface.Canvas;
+        if (canvas == null)
+            return;
+
+        if (_needsFullRedraw)
         {
-            _cacheSurface.Canvas.Clear(SKColors.Transparent);
-            PaintSurface(_cacheSurface.Canvas, info);
+            canvas.Save();
+            canvas.ResetMatrix();
+            canvas.ClipRect(SKRect.Create(info.Width, info.Height));
+            canvas.Clear(SKColors.Transparent);
+            PaintSurface(canvas, info);
+            canvas.Restore();
+
+            foreach (var child in Controls.OfType<UIElementBase>())
+            {
+                child.NeedsRedraw = true;
+            }
+
             _needsFullRedraw = false;
         }
-        
 
+        using var clearPaint = new SKPaint { BlendMode = SKBlendMode.Clear };
+
+        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder))
         {
-            // Sadece değişen alanları güncelle
-            foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder))
-            {
-                if (!element.Visible || element.Size.Width <= 0 || element.Size.Height <= 0)
-                    continue;
+            if (!element.Visible || element.Width <= 0 || element.Height <= 0)
+                continue;
 
-                //if (element.NeedsRedraw) continue;
+            if (!element.NeedsRedraw)
+                continue;
 
-                var bounds = element.Bounds;
-                _cacheSurface.Canvas.Save();
-                _cacheSurface.Canvas.ClipRect(SKRect.Create(bounds.X, bounds.Y, bounds.Width, bounds.Height));
-                _cacheSurface.Canvas.Clear(SKColors.Transparent);
-                element.OnPaint(new SKPaintSurfaceEventArgs(_cacheSurface, info));
-                _cacheSurface.Canvas.Restore();
-                element.NeedsRedraw = false;
-            }
+            canvas.Save();
+            canvas.Translate(element.Location.X, element.Location.Y);
+            canvas.ClipRect(new SKRect(0, 0, element.Width, element.Height), SKClipOperation.Intersect, true);
+            canvas.DrawRect(new SKRect(0, 0, element.Width, element.Height), clearPaint);
+
+            var childInfo = new SKImageInfo(element.Width, element.Height, info.ColorType, info.AlphaType);
+            element.OnPaint(new SKPaintSurfaceEventArgs(_cacheSurface, childInfo));
+            canvas.Restore();
+
+            element.NeedsRedraw = false;
         }
 
-        using (var bitmap = _cacheBitmap.ToBitmap())
-        {
-            e.Graphics.DrawImage(bitmap, 0, 0);
-        }
+        if (_dirtyElements.Count > 0)
+            _dirtyElements.Clear();
+
+        canvas.Flush();
+
+        e.Graphics.CompositingMode = CompositingMode.SourceOver;
+        e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
+        e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+        e.Graphics.DrawImageUnscaled(_gdiBitmap, 0, 0);
     }
 
     private void PaintSurface(SKCanvas canvas, SKImageInfo info)
@@ -2122,7 +2185,11 @@ public class UIWindow : UIWindowBase, IUIElement
             _paintCache.Clear();
 
             _cacheBitmap?.Dispose();
+            _cacheBitmap = null;
             _cacheSurface?.Dispose();
+            _cacheSurface = null;
+            _gdiBitmap?.Dispose();
+            _gdiBitmap = null;
         }
         base.Dispose(disposing);
     }

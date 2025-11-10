@@ -7,6 +7,21 @@ namespace SDUI.Helpers
     {
         private const int LOGPIXELSX = 88;
         private const int LOGPIXELSY = 90;
+        private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+
+        private enum MonitorDpiType
+        {
+            EffectiveDpi = 0,
+            AngularDpi = 1,
+            RawDpi = 2,
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
 
         [DllImport("gdi32.dll")]
         private static extern int GetDeviceCaps(IntPtr hdc, int nIndex);
@@ -17,6 +32,21 @@ namespace SDUI.Helpers
         [DllImport("user32.dll")]
         private static extern int ReleaseDC(IntPtr hWnd, IntPtr hDc);
 
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetCursorPos(out POINT lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern uint GetDpiForWindowInternal(IntPtr hwnd);
+
+        [DllImport("shcore.dll")]
+        private static extern int GetDpiForMonitor(IntPtr hmonitor, MonitorDpiType dpiType, out uint dpiX, out uint dpiY);
+
         public static int GetSystemDpi()
         {
             IntPtr screenDC = GetDC(IntPtr.Zero);
@@ -24,7 +54,7 @@ namespace SDUI.Helpers
             {
                 int dpiX = GetDeviceCaps(screenDC, LOGPIXELSX);
                 int dpiY = GetDeviceCaps(screenDC, LOGPIXELSY);
-                return Math.Max(dpiX, dpiY); // Genellikle X ve Y aynıdır, ama en yükseğini alalım
+                return Math.Max(dpiX, dpiY);
             }
             finally
             {
@@ -32,19 +62,83 @@ namespace SDUI.Helpers
             }
         }
 
+        public static int GetDpiForWindow(IntPtr handle)
+        {
+            if (handle != IntPtr.Zero)
+            {
+                try
+                {
+                    return checked((int)GetDpiForWindowInternal(handle));
+                }
+                catch (EntryPointNotFoundException)
+                {
+                    // API not available on this OS version, fallback below.
+                }
+                catch (DllNotFoundException)
+                {
+                    // API not available, fallback below.
+                }
+            }
+
+            var monitor = handle != IntPtr.Zero
+                ? MonitorFromWindow(handle, MONITOR_DEFAULTTONEAREST)
+                : GetMonitorFromCursor();
+
+            if (monitor != IntPtr.Zero)
+            {
+                try
+                {
+                    if (GetDpiForMonitor(monitor, MonitorDpiType.EffectiveDpi, out uint dpiX, out uint _) == 0)
+                    {
+                        return (int)dpiX;
+                    }
+                }
+                catch (DllNotFoundException)
+                {
+                }
+                catch (EntryPointNotFoundException)
+                {
+                }
+            }
+
+            return GetSystemDpi();
+        }
+
+        private static IntPtr GetMonitorFromCursor()
+        {
+            return GetCursorPos(out var pt)
+                ? MonitorFromPoint(pt, MONITOR_DEFAULTTONEAREST)
+                : IntPtr.Zero;
+        }
+
+        public static float GetScaleFactor(IntPtr handle)
+        {
+            return GetDpiForWindow(handle) / 96f;
+        }
+
         public static float GetScaleFactor()
         {
-            return GetSystemDpi() / 96f;
+            return GetScaleFactor(IntPtr.Zero);
+        }
+
+        public static int ScaleValue(int value, IntPtr handle)
+        {
+            return (int)Math.Round(value * GetScaleFactor(handle));
+        }
+
+        public static float ScaleValue(float value, IntPtr handle)
+        {
+            return value * GetScaleFactor(handle);
         }
 
         public static int ScaleValue(int value)
         {
-            return (int)(value * GetScaleFactor());
+            return ScaleValue(value, IntPtr.Zero);
         }
 
         public static float ScaleValue(float value)
         {
-            return value * GetScaleFactor();
+            return ScaleValue(value, IntPtr.Zero);
         }
     }
 }

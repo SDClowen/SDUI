@@ -278,9 +278,9 @@ namespace SDUI.Controls
             UpdateButtonRects();
         }
 
-        internal override void OnDpiChanged(EventArgs e)
+        internal override void OnDpiChanged(float newDpi, float oldDpi)
         {
-            base.OnDpiChanged(e);
+            base.OnDpiChanged(newDpi, oldDpi);
             UpdateButtonRects();
         }
 
