@@ -42,92 +42,44 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
             return;
         }
 
-        // Verify that the control being added is on the same thread as
-        // us...or our parent chain.
-        //if (Owner.CreateThreadId != value.CreateThreadId)
-        //{
-        //    throw new ArgumentException(SR.AddDifferentThreads);
-        //}
-
-        //CheckParentingCycle(Owner, value);
-
         if (value.Parent == Owner)
         {
-            value.SendToBack();
+            value.BringToFront();
             return;
         }
 
         // Remove the new control from its old parent (if any)
         value.Parent?.Controls.Remove(value);
 
-        var index = InnerList.Count - 1;
-
-        // Add the control
-        InnerList.Add(value);
-
-        if (value.TabIndex == -1)
-        {
-            // Find the next highest tab index
-            int nextTabIndex = 0;
-            for (int c = 0; c < (Count - 1); c++)
-            {
-                int t = this[c].TabIndex;
-                if (nextTabIndex <= t)
-                {
-                    nextTabIndex = t + 1;
-                }
-            }
-
-            value.TabIndex = nextTabIndex;
-        }
-
         Owner.SuspendLayout();
 
         try
         {
-            var oldParent = value.Parent;
-            try
+            InnerList.Add(value);
+
+            value.Parent = Owner;
+
+            if (value.TabIndex == -1)
             {
-                // AssignParent calls into user code - this could throw, which
-                // would make us short-circuit the rest of the reparenting logic.
-                // you could end up with a control half reparented.
-                value.Parent = Owner;
-                if (index < 0)
-                    index = 0;
-
-                var oldItem = InnerList[index];
-                if (oldItem != value)
+                int nextTabIndex = 0;
+                for (int c = 0; c < Count - 1; c++)
                 {
-                    if (oldItem != null)
+                    int t = this[c].TabIndex;
+                    if (nextTabIndex <= t)
                     {
-                        oldItem.Parent = null;
-                        if (Owner.FocusedElement == oldItem)
-                        {
-                            Owner.FocusedElement = null;
-                        }
-                    }
-
-                    if (value != null)
-                    {
-                        value.Parent = Owner;
-                        _maxZOrder++;
-                        value.ZOrder = _maxZOrder;
-                        if (Owner.FocusedElement == null && value.TabStop)
-                        {
-                            Owner.FocusedElement = value;
-                        }
+                        nextTabIndex = t + 1;
                     }
                 }
+
+                value.TabIndex = nextTabIndex;
             }
-            finally
+
+            _maxZOrder++;
+            value.ZOrder = _maxZOrder;
+
+            if (Owner.FocusedElement == null && value.TabStop)
             {
-                if (oldParent != value.Parent)
-                {
-                    if (value.Visible)
-                    {
-                        //value.CreateControl();
-                    }
-                }
+                Owner.FocusedElement = value;
             }
 
             value.PerformLayout();
@@ -137,11 +89,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
             Owner.ResumeLayout(false);
         }
 
-        // Not putting in the finally block, as it would eat the original
-        // exception thrown from AssignParent if the following throws an exception.
-        //LayoutTransaction.DoLayout(Owner, value, PropertyNames.Parent);
-        
-        if(Owner is UIElementBase control)
+        if (Owner is UIElementBase control)
         {
             control.OnControlAdded(new UIElementEventArgs(value));
         }
@@ -317,24 +265,26 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
             return;     // Don't do anything
         }
 
-        if (value.Parent == Owner)
+        if (value.Parent != Owner)
         {
-            //value.SetParentHandle(default);
-
-            // Remove the control from the internal control array
-            InnerList.Remove(value);
-            //value.AssignParent(null);
-            //LayoutTransaction.DoLayout(Owner, value, PropertyNames.Parent);
-
-            if (Owner is UIElementBase control)
-                control.OnControlRemoved(new UIElementEventArgs(value));
-
-            // ContainerControl needs to see it needs to find a new ActiveControl.
-            //if (Owner.GetContainerControl() is ContainerControl cc)
-            //{
-            //    cc.AfterControlRemoved(value, Owner);
-            //}
+            return;
         }
+
+        InnerList.Remove(value);
+
+        if (Owner.FocusedElement == value)
+        {
+            Owner.FocusedElement = null;
+        }
+
+        value.Parent = null;
+
+        if (Owner is UIElementBase control)
+        {
+            control.OnControlRemoved(new UIElementEventArgs(value));
+        }
+
+        Owner.Invalidate();
     }
 
     void IList.Remove(object? control)
