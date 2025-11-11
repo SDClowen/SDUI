@@ -1061,6 +1061,9 @@ namespace SDUI.Controls
         {
             MouseClick?.Invoke(this, e);
 
+            // Standart WinForms davranışı: MouseClick sonrası Click olayı
+            OnClick(EventArgs.Empty);
+
             // Propagate event to child controls
             foreach (UIElementBase control in Controls)
             {

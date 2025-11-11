@@ -41,8 +41,9 @@ public class ComboBox : UIElementBase
 
             _animation = new AnimationEngine(singular: true)
             {
-                Increment = 0.20,
-                AnimationType = AnimationType.EaseInOut,
+            Increment = 0.18,
+            SecondaryIncrement = 0.14,
+            AnimationType = AnimationType.CustomQuadratic,
                 InterruptAnimation = true
             };
             _animation.OnAnimationProgress += (s) =>
@@ -63,8 +64,9 @@ public class ComboBox : UIElementBase
 
             _hoverAnimation = new AnimationEngine(singular: true)
             {
-                Increment = 0.30,
-                AnimationType = AnimationType.EaseInOut,
+            Increment = 0.26,
+            SecondaryIncrement = 0.2,
+            AnimationType = AnimationType.CustomQuadratic,
                 InterruptAnimation = true
             };
             _hoverAnimation.OnAnimationProgress += (s) =>
@@ -209,7 +211,15 @@ public class ComboBox : UIElementBase
 
         public void BeginOpen()
         {
-            _targetHeight = (_owner.Items.Count * ITEM_HEIGHT) + (VERTICAL_PADDING * 2);
+            // Varsayılan tam yükseklik
+            var fullHeight = (_owner.Items.Count * ITEM_HEIGHT) + (VERTICAL_PADDING * 2);
+            BeginOpen(fullHeight);
+        }
+
+        public void BeginOpen(int targetHeight)
+        {
+            // Hedef yükseklik limitli açılış
+            _targetHeight = Math.Max(0, targetHeight);
             Size = new Size(_owner.DropDownWidth, 0);
             _currentHeight = 0;
             _hoverIndex = -1;
@@ -566,6 +576,7 @@ public class ComboBox : UIElementBase
         _animation = new AnimationEngine(singular: true)
         {
             Increment = 0.12,
+            SecondaryIncrement = 0.08,
             AnimationType = AnimationType.EaseInOut,
             InterruptAnimation = true
         };
@@ -573,16 +584,18 @@ public class ComboBox : UIElementBase
 
         _hoverAnimation = new AnimationEngine(singular: true)
         {
-            Increment = 0.10,
-            AnimationType = AnimationType.EaseInOut,
+            Increment = 0.09,
+            SecondaryIncrement = 0.07,
+            AnimationType = AnimationType.CustomQuadratic,
             InterruptAnimation = true
         };
         _hoverAnimation.OnAnimationProgress += (s) => Invalidate();
 
         _dropDownAnimation = new AnimationEngine(singular: true)
         {
-            Increment = 0.18,
-            AnimationType = AnimationType.EaseOut,
+            Increment = 0.16,
+            SecondaryIncrement = 0.14,
+            AnimationType = AnimationType.CustomQuadratic,
             InterruptAnimation = true
         };
         _dropDownAnimation.OnAnimationProgress += (s) => Invalidate();
@@ -818,16 +831,56 @@ public class ComboBox : UIElementBase
         {
             _dropDownMenu.Parent?.Controls.Remove(_dropDownMenu);
             window.Controls.Add(_dropDownMenu);
+            // Pencereye eklendiği anda üstte olduğundan emin ol
+            window.BringToFront(_dropDownMenu);
         }
 
-        var screenPoint = PointToScreen(new Point(0, Height));
-        var windowPoint = window.PointToClient(screenPoint);
+        // Pencereye göre mutlak konum (UIElementBase zincirini toplayarak)
+        var bottomPoint = GetRelativeToWindow(this, window);
+        var topPointY = bottomPoint.Y - Height; // elementin üst sınırı
 
-        _dropDownMenu.Location = windowPoint;
+        // Açılma yüksekliğini pencere yüksekliğine göre belirle
+        int fullHeight = (_items?.Count ?? 0) * 32 + 16; // DropDownMenu sabitleri: ITEM_HEIGHT=32, VERTICAL_PADDING=8
+        int availableBelow = Math.Max(0, window.ClientSize.Height - bottomPoint.Y);
+        int availableAbove = Math.Max(0, topPointY);
+
+        bool openUpwards = availableBelow < Math.Min(fullHeight, Math.Max(64, availableAbove)) && availableAbove > availableBelow;
+        int openHeight = openUpwards ? Math.Min(fullHeight, availableAbove - 4) : Math.Min(fullHeight, availableBelow - 4);
+        openHeight = Math.Max(64, openHeight); // en az birkaç öğe görünsün
+
+        var targetLocation = openUpwards
+            ? new Point(bottomPoint.X, Math.Max(0, topPointY - openHeight))
+            : bottomPoint;
+
+        _dropDownMenu.Location = targetLocation;
         _dropDownMenu.Width = DropDownWidth;
+        // Açılmadan hemen önce üstte tut
+        window.BringToFront(_dropDownMenu);
         DroppedDown = true;
         AttachDropDownWindowHandlers(window);
-        _dropDownMenu.BeginOpen();
+        _dropDownMenu.BeginOpen(openHeight);
+    }
+
+    private static Point GetRelativeToWindow(UIElementBase element, UIWindow window)
+    {
+        int x = 0, y = 0;
+        UIElementBase current = element;
+        while (current != null && current.Parent is not UIWindow)
+        {
+            x += current.Location.X;
+            y += current.Location.Y;
+            current = current.Parent as UIElementBase;
+        }
+
+        if (current != null && current.Parent is UIWindow w && w == window)
+        {
+            x += current.Location.X;
+            y += current.Location.Y;
+        }
+
+        // Dropdown aşağı açılmalı
+        y += element.Height;
+        return new Point(x, y);
     }
 
     private void AttachDropDownWindowHandlers(UIWindow window)

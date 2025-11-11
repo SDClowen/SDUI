@@ -55,31 +55,32 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         try
         {
-            InnerList.Add(value);
+        InnerList.Add(value);
 
             value.Parent = Owner;
+            value.OnCreateControl();
 
-            if (value.TabIndex == -1)
-            {
-                int nextTabIndex = 0;
+        if (value.TabIndex == -1)
+        {
+            int nextTabIndex = 0;
                 for (int c = 0; c < Count - 1; c++)
+            {
+                int t = this[c].TabIndex;
+                if (nextTabIndex <= t)
                 {
-                    int t = this[c].TabIndex;
-                    if (nextTabIndex <= t)
-                    {
-                        nextTabIndex = t + 1;
-                    }
+                    nextTabIndex = t + 1;
                 }
-
-                value.TabIndex = nextTabIndex;
             }
 
-            _maxZOrder++;
-            value.ZOrder = _maxZOrder;
+            value.TabIndex = nextTabIndex;
+        }
 
-            if (Owner.FocusedElement == null && value.TabStop)
-            {
-                Owner.FocusedElement = value;
+                        _maxZOrder++;
+                        value.ZOrder = _maxZOrder;
+
+                        if (Owner.FocusedElement == null && value.TabStop)
+                        {
+                            Owner.FocusedElement = value;
             }
 
             value.PerformLayout();
@@ -270,7 +271,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
             return;
         }
 
-        InnerList.Remove(value);
+            InnerList.Remove(value);
 
         if (Owner.FocusedElement == value)
         {
@@ -279,9 +280,9 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         value.Parent = null;
 
-        if (Owner is UIElementBase control)
+            if (Owner is UIElementBase control)
         {
-            control.OnControlRemoved(new UIElementEventArgs(value));
+                control.OnControlRemoved(new UIElementEventArgs(value));
         }
 
         Owner.Invalidate();

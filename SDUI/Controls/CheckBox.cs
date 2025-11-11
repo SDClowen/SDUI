@@ -28,6 +28,7 @@ namespace SDUI.Controls
         private int _mouseState;
         private CheckState _checkState = CheckState.Unchecked;
         private bool _threeState;
+        private bool _inputHandlersAttached;
 
         [Browsable(false)]
         public int Depth { get; set; }
@@ -124,6 +125,7 @@ namespace SDUI.Controls
 
             Ripple = true;
             MouseLocation = new Point(-1, -1);
+            AttachInputHandlers();
         }
 
         private bool IsMouseInCheckArea() => boxRectangle.Contains(MouseLocation);
@@ -146,32 +148,7 @@ namespace SDUI.Controls
         internal override void OnCreateControl()
         {
             base.OnCreateControl();
-
-            MouseEnter += (_, _) => _mouseState = 1;
-            MouseLeave += (_, _) =>
-            {
-                MouseLocation = new Point(-1, -1);
-                _mouseState = 0;
-            };
-            MouseDown += (_, e) =>
-            {
-                _mouseState = 2;
-                if (Ripple && e.Button == MouseButtons.Left && IsMouseInCheckArea())
-                {
-                    rippleAnimationManager.SecondaryIncrement = 0;
-                    rippleAnimationManager.StartNewAnimation(AnimationDirection.InOutIn, new object[] { Checked });
-                }
-            };
-            MouseUp += (_, _) =>
-            {
-                _mouseState = 1;
-                rippleAnimationManager.SecondaryIncrement = 0.08;
-            };
-            MouseMove += (_, e) =>
-            {
-                MouseLocation = e.Location;
-                Cursor = IsMouseInCheckArea() ? Cursors.Hand : Cursors.Default;
-            };
+            AttachInputHandlers();
         }
 
         public override void OnPaint(SKPaintSurfaceEventArgs e)
@@ -353,6 +330,40 @@ namespace SDUI.Controls
                 canvas.DrawText(Text, textX, textY, textPaint);
             }
         }
+
+    private void AttachInputHandlers()
+    {
+        if (_inputHandlersAttached)
+            return;
+
+        MouseEnter += (_, _) => _mouseState = 1;
+        MouseLeave += (_, _) =>
+        {
+            MouseLocation = new Point(-1, -1);
+            _mouseState = 0;
+        };
+        MouseDown += (_, e) =>
+        {
+            _mouseState = 2;
+            if (Ripple && e.Button == MouseButtons.Left && IsMouseInCheckArea())
+            {
+                rippleAnimationManager.SecondaryIncrement = 0;
+                rippleAnimationManager.StartNewAnimation(AnimationDirection.InOutIn, new object[] { Checked });
+            }
+        };
+        MouseUp += (_, _) =>
+        {
+            _mouseState = 1;
+            rippleAnimationManager.SecondaryIncrement = 0.08;
+        };
+        MouseMove += (_, e) =>
+        {
+            MouseLocation = e.Location;
+            Cursor = IsMouseInCheckArea() ? Cursors.Hand : Cursors.Default;
+        };
+
+        _inputHandlersAttached = true;
+    }
 
         internal override void OnSizeChanged(EventArgs e)
         {

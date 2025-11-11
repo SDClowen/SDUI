@@ -188,6 +188,8 @@ public class Button : UIElementBase, IButtonControl
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
+        // Tema arkaplanını her frame temizle (siyah görünümleri engeller)
+        canvas.Clear(ColorScheme.BackColor.ToSKColor());
 
         var hoverProgress = (float)hoverAnimationManager.GetProgress();
         var pressProgress = (float)pressAnimationManager.GetProgress();
@@ -198,12 +200,6 @@ public class Button : UIElementBase, IButtonControl
 
         canvas.Save();
 
-        var scale = 1f - (0.05f * pressProgress);
-        var translateX = (Width - Width * scale) / 2f;
-        var translateY = (Height - Height * scale) / 2f;
-        canvas.Translate(translateX, translateY);
-        canvas.Scale(scale);
-
         DrawButton(canvas, bodyRect, hoverProgress, pressProgress);
         DrawAnimations(canvas, bodyRect, hoverProgress, pressProgress);
 
@@ -213,13 +209,14 @@ public class Button : UIElementBase, IButtonControl
     private void DrawButton(SKCanvas canvas, SKRect bodyRect, float hoverProgress, float pressProgress)
     {
         var accentSk = ColorScheme.AccentColor.ToSKColor();
-        var baseColor = Color != Color.Transparent
-            ? (Enabled ? Color : Color.FromArgb(160, Color))
-            : Color.FromArgb(20, ColorScheme.ForeColor.Determine());
+        // Sade tasarım: temel dolgu her zaman tema arkaplan rengi
+        var baseSk = Color != Color.Transparent
+            ? (Enabled ? Color.ToSKColor() : Color.FromArgb(160, Color).ToSKColor())
+            : ColorScheme.BackColor.ToSKColor();
 
-        var baseSk = baseColor.ToSKColor();
-        var highlightBlend = Math.Clamp(hoverProgress * 0.45f + pressProgress * 0.55f, 0f, 0.9f);
-        var fillColor = baseSk.InterpolateColor(accentSk, highlightBlend);
+        // Sadelik: dolgu rengi doğrudan temel renk (tema arkaplanı veya kullanıcı rengi)
+        var highlightBlend = Math.Clamp(hoverProgress * 0.15f + pressProgress * 0.30f, 0f, 0.4f);
+        var fillColor = baseSk;
 
         if (!Enabled)
         {
@@ -239,7 +236,7 @@ public class Button : UIElementBase, IButtonControl
                 _shadowDepth * (1 - pressProgress * 0.6f),
                 3 * (1 - pressProgress * 0.4f),
                 3 * (1 - pressProgress * 0.4f),
-                SKColors.Black.WithAlpha((byte)(70 * (1 - hoverProgress * 0.3f))))
+                SKColors.Black.WithAlpha((byte)(50 * (1 - hoverProgress * 0.3f))))
         })
         {
             canvas.DrawRoundRect(shadowRect, _radius, _radius, shadowPaint);
@@ -257,12 +254,12 @@ public class Button : UIElementBase, IButtonControl
         }
 
         // Hover/press parıltısı
-        var glowIntensity = Math.Clamp(hoverProgress * 0.7f + pressProgress * 0.5f, 0f, 1f);
+        var glowIntensity = Math.Clamp(hoverProgress * 0.4f + pressProgress * 0.3f, 0f, 1f);
         if (glowIntensity > 0)
         {
             using var glowPaint = new SKPaint
             {
-                Color = accentSk.WithAlpha((byte)(110 * glowIntensity)),
+                Color = accentSk.WithAlpha((byte)(80 * glowIntensity)),
                 IsAntialias = true
             };
             canvas.DrawRoundRect(bodyRect, _radius, _radius, glowPaint);
@@ -322,7 +319,7 @@ public class Button : UIElementBase, IButtonControl
         // Metin çizimi
         if (!string.IsNullOrEmpty(Text))
         {
-            var textColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentSk, Math.Clamp(highlightBlend * 0.6f + hoverProgress * 0.2f, 0f, 1f));
+            var textColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentSk, Math.Clamp(highlightBlend * 0.4f + hoverProgress * 0.1f, 0f, 0.6f));
             if (!Enabled)
                 textColor = textColor.WithAlpha((byte)(textColor.Alpha * 0.6f));
 

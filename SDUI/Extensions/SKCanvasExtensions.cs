@@ -16,12 +16,16 @@ public static class SKCanvasExtensions
         {
             Color = color.ToSKColor(),
             TextSize = font.Size.PtToPx(control),
-            IsAntialias = true,
             TextAlign = alignment.ToSKTextAlign(),
-            Typeface = SKTypeface.FromFamilyName(font.FontFamily.Name, SKFontStyle.Normal),
-            SubpixelText = true,
-            LcdRenderText = true
+            Typeface = SKTypeface.FromFamilyName(font.FontFamily.Name, SKFontStyle.Normal)
         };
+
+        bool isHighDpi = control.DeviceDpi > 96;
+        paint.IsAntialias = true;
+        paint.FilterQuality = isHighDpi ? SKFilterQuality.Medium : SKFilterQuality.None;
+        paint.SubpixelText = isHighDpi;
+        paint.LcdRenderText = isHighDpi;
+        paint.HintingLevel = isHighDpi ? SKPaintHinting.Full : SKPaintHinting.Normal;
 
         return paint;
     }
@@ -31,12 +35,16 @@ public static class SKCanvasExtensions
         {
             Color = color.ToSKColor(),
             TextSize = font.Size.PtToPx(control),
-            IsAntialias = true,
             TextAlign = alignment.ToSKTextAlign(),
-            Typeface = SKTypeface.FromFamilyName(font.FontFamily.Name, SKFontStyle.Normal),
-            SubpixelText = true,
-            LcdRenderText = true
+            Typeface = SKTypeface.FromFamilyName(font.FontFamily.Name, SKFontStyle.Normal)
         };
+
+        bool isHighScale = control.ScaleFactor > 1.0f + 0.01f;
+        paint.IsAntialias = true;
+        paint.FilterQuality = isHighScale ? SKFilterQuality.Medium : SKFilterQuality.None;
+        paint.SubpixelText = isHighScale;
+        paint.LcdRenderText = isHighScale;
+        paint.HintingLevel = isHighScale ? SKPaintHinting.Full : SKPaintHinting.Normal;
 
         return paint;
     }

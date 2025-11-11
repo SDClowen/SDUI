@@ -1298,7 +1298,7 @@ public class UIWindow : UIWindowBase, IUIElement
         {
             _lastHoveredElement?.OnMouseLeave(EventArgs.Empty);
             hoveredElement?.OnMouseEnter(EventArgs.Empty);
-            _lastHoveredElement = hoveredElement;
+            LastHoveredElement = hoveredElement;
         }
 
         base.OnMouseMove(e);
@@ -1317,7 +1317,7 @@ public class UIWindow : UIWindowBase, IUIElement
         formMenuHoverAnimationManager.StartNewAnimation(AnimationDirection.Out);
 
         _lastHoveredElement?.OnMouseLeave(e);
-        _lastHoveredElement = null;
+        LastHoveredElement = null;
 
         Invalidate();
     }
@@ -1528,6 +1528,12 @@ public class UIWindow : UIWindowBase, IUIElement
 
             foreColor = _gradient[0].Determine().ToSKColor();
             hoverColor = foreColor.WithAlpha((byte)(20));
+        }
+
+        // Başlık alanı dışındaki içeriği tema arkaplanı ile doldur
+        using (var contentBgPaint = new SKPaint { Color = ColorScheme.BackColor.ToSKColor() })
+        {
+            canvas.DrawRect(0, _titleHeightDPI, Width, Math.Max(0, Height - _titleHeightDPI), contentBgPaint);
         }
 
         // Kontrol düğmeleri çizimi
