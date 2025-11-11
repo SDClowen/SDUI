@@ -80,7 +80,7 @@ public class Panel : UIElementBase
         canvas.Clear(SKColors.Transparent);
 
         var rect = new SKRect(0, 0, Width, Height);
-        var color = BackColor == Color.Transparent ? ColorScheme.BackColor2 : BackColor;
+        var color = BackColor == Color.Transparent ? ColorScheme.BackColor : BackColor;
         var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
 
         // Gölge çizimi

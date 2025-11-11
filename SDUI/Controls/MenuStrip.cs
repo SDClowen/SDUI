@@ -13,6 +13,8 @@ public class MenuStrip : UIElementBase
     private readonly List<MenuItem> _items = new();
     private MenuItem _hoveredItem;
     private MenuItem _openedItem;
+    private ContextMenuStrip _activeDropDown;
+    private MenuItem _activeDropDownOwner;
     private Color _menuBackColor = Color.FromArgb(32, 32, 32);
     private Color _menuForeColor = Color.White;
     private Color _hoverBackColor = Color.FromArgb(45, 45, 45);
@@ -324,9 +326,10 @@ public class MenuStrip : UIElementBase
             IsAntialias = true
         })
         {
-            if (RoundedCorners)
+            if (RoundedCorners && _cornerRadius > 0)
             {
-                canvas.DrawRoundRect(new SKRect(0, 0, bounds.Width, bounds.Height), _cornerRadius, _cornerRadius, paint);
+                using var roundRect = CreateMenuRoundRect(new SKRect(0, 0, bounds.Width, bounds.Height));
+                canvas.DrawRoundRect(roundRect, paint);
             }
             else
             {
@@ -366,10 +369,10 @@ public class MenuStrip : UIElementBase
             x += itemWidth + ItemPadding + (i < _items.Count - 1 ? extraPadding : 0);
         }
 
-        // Alt menüleri çiz
-        if (_openedItem != null)
+        // Alt menüler context menü üzerinden yönetiliyor (aktif değilse highlight sıfırlanır)
+        if (_activeDropDown == null || !_activeDropDown.IsOpen)
         {
-            DrawSubmenu(canvas, _openedItem);
+            _activeDropDownOwner = null;
         }
     }
 
@@ -727,9 +730,42 @@ public class MenuStrip : UIElementBase
 
     private void OpenSubmenu(MenuItem item)
     {
-        if (_openedItem == item) return;
+        if (!item.HasDropDown)
+        {
+            CloseSubmenu();
+            return;
+        }
 
+        if (_activeDropDownOwner == item && _activeDropDown != null && _activeDropDown.IsOpen)
+        {
+            CloseSubmenu();
+            return;
+        }
+
+        CloseSubmenu();
+
+        EnsureDropDownHost();
+        _activeDropDown.Items.Clear();
+
+        foreach (var child in item.DropDownItems)
+        {
+            _activeDropDown.AddItem(CloneMenuItem(child));
+        }
+
+        _activeDropDown.MenuBackColor = SubmenuBackColor;
+        _activeDropDown.MenuForeColor = MenuForeColor;
+        _activeDropDown.SubmenuBackColor = SubmenuBackColor;
+        _activeDropDown.SeparatorColor = SeparatorColor;
+        _activeDropDown.RoundedCorners = RoundedCorners;
+        _activeDropDown.ItemPadding = ItemPadding;
+
+        var itemBounds = GetItemBounds(item);
+        var screenPoint = PointToScreen(new Point((int)itemBounds.Left, (int)itemBounds.Bottom));
+        _activeDropDownOwner = item;
         _openedItem = item;
+
+        _activeDropDown.Show(this, screenPoint);
+
         _isAnimating = true;
         _animationProgress = 0f;
         _animationTimer.Start();
@@ -738,12 +774,121 @@ public class MenuStrip : UIElementBase
 
     private void CloseSubmenu()
     {
-        if (_openedItem == null) return;
+        if (_activeDropDown != null && _activeDropDown.IsOpen)
+        {
+            _activeDropDown.Hide();
+        }
 
         _openedItem = null;
+        _activeDropDownOwner = null;
         _isAnimating = false;
         _animationTimer.Stop();
         Invalidate();
+    }
+
+    private void EnsureDropDownHost()
+    {
+        if (_activeDropDown != null)
+            return;
+
+        _activeDropDown = new ContextMenuStrip
+        {
+            AutoClose = true,
+            RoundedCorners = true,
+            Dock = DockStyle.None
+        };
+
+        _activeDropDown.Opening += (_, _) => SyncDropDownAppearance();
+        _activeDropDown.Closing += (_, _) =>
+        {
+            _openedItem = null;
+            _activeDropDownOwner = null;
+            Invalidate();
+        };
+    }
+
+    private void SyncDropDownAppearance()
+    {
+        if (_activeDropDown == null)
+            return;
+
+        _activeDropDown.MenuBackColor = SubmenuBackColor;
+        _activeDropDown.MenuForeColor = MenuForeColor;
+        _activeDropDown.SubmenuBackColor = SubmenuBackColor;
+        _activeDropDown.SeparatorColor = SeparatorColor;
+        _activeDropDown.RoundedCorners = RoundedCorners;
+        _activeDropDown.ItemPadding = ItemPadding;
+    }
+
+    private MenuItem CloneMenuItem(MenuItem source)
+    {
+        if (source is MenuItemSeparator separator)
+        {
+            var cloneSeparator = new MenuItemSeparator
+            {
+                Height = separator.Height,
+                Margin = separator.Margin,
+                LineColor = separator.LineColor,
+                ShadowColor = separator.ShadowColor
+            };
+            return cloneSeparator;
+        }
+
+        var clone = new MenuItem
+        {
+            Text = source.Text,
+            Icon = source.Icon,
+            Image = source.Image,
+            ShortcutKeys = source.ShortcutKeys,
+            ShowSubmenuArrow = source.ShowSubmenuArrow,
+            ForeColor = source.ForeColor,
+            BackColor = source.BackColor,
+            Enabled = source.Enabled,
+            Visible = source.Visible,
+            Font = source.Font,
+            AutoSize = source.AutoSize,
+            Padding = source.Padding,
+            Tag = source.Tag,
+            Checked = source.Checked
+        };
+
+        foreach (var child in source.DropDownItems)
+        {
+            clone.AddDropDownItem(CloneMenuItem(child));
+        }
+
+        clone.Click += (_, _) =>
+        {
+            source.OnClick();
+            _activeDropDown?.Hide();
+        };
+
+        return clone;
+    }
+
+    private SKRoundRect CreateMenuRoundRect(SKRect rect)
+    {
+        var radius = Math.Max(0f, _cornerRadius);
+        var topRadius = Dock == DockStyle.Top ? 0f : radius;
+        var bottomRadius = Dock == DockStyle.Bottom ? 0f : radius;
+        var leftRadius = Dock == DockStyle.Left ? 0f : radius;
+        var rightRadius = Dock == DockStyle.Right ? 0f : radius;
+
+        var tl = Math.Min(topRadius, leftRadius);
+        var tr = Math.Min(topRadius, rightRadius);
+        var br = Math.Min(bottomRadius, rightRadius);
+        var bl = Math.Min(bottomRadius, leftRadius);
+
+        var roundRect = new SKRoundRect();
+        roundRect.SetRectRadii(rect, new[]
+        {
+            new SKPoint(tl, tl),
+            new SKPoint(tr, tr),
+            new SKPoint(br, br),
+            new SKPoint(bl, bl)
+        });
+
+        return roundRect;
     }
 
     protected override void Dispose(bool disposing)
@@ -751,6 +896,7 @@ public class MenuStrip : UIElementBase
         if (disposing)
         {
             _animationTimer?.Dispose();
+            _activeDropDown?.Dispose();
         }
         base.Dispose(disposing);
     }

@@ -744,6 +744,7 @@ public class ListView : UIElementBase
 
     internal override void OnMouseMove(MouseEventArgs e)
     {
+        base.OnMouseMove(e);
         bool needInvalidate = false;
 
         if (_isResizingColumn && _resizingColumnIndex >= 0)

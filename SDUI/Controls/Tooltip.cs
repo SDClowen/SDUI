@@ -1,3 +1,4 @@
+using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
 using System;
@@ -18,6 +19,11 @@ namespace SDUI.Controls
         private Timer _hideTimer;
         private readonly Dictionary<UIElementBase, string> _tooltips = new();
         private UIElementBase _currentControl;
+        private UIWindow _currentWindow;
+        private bool _handlersAttached;
+        private MouseEventHandler _windowMouseDownHandler;
+        private EventHandler _windowDeactivateHandler;
+        private KeyEventHandler _windowKeyDownHandler;
         private bool _isBalloon = true;
         private int _cornerRadius = 6;
         private Color _borderColor = Color.FromArgb(100, 100, 100);
@@ -44,14 +50,24 @@ namespace SDUI.Controls
         public int ShowDelay
         {
             get => _showDelay;
-            set => _showDelay = Math.Max(0, value);
+            set
+            {
+                _showDelay = Math.Max(0, value);
+                if (_showTimer != null)
+                    _showTimer.Interval = _showDelay;
+            }
         }
 
         [DefaultValue(5000)]
         public int AutomaticDelay
         {
             get => _autoPopDelay;
-            set => _autoPopDelay = Math.Max(0, value);
+            set
+            {
+                _autoPopDelay = Math.Max(0, value);
+                if (_hideTimer != null)
+                    _hideTimer.Interval = _autoPopDelay;
+            }
         }
 
         [DefaultValue(true)]
@@ -71,6 +87,8 @@ namespace SDUI.Controls
             BackColor = Color.FromArgb(50, 50, 50);
             ForeColor = Color.White;
             Visible = false;
+            AutoSize = false;
+            TabStop = false;
 
             _showTimer = new Timer { Interval = ShowDelay };
             _showTimer.Tick += ShowTimer_Tick;
@@ -131,9 +149,10 @@ namespace SDUI.Controls
 
         private void Control_MouseMove(object sender, MouseEventArgs e)
         {
-            if (_isActive)
+            if (_isActive && sender is UIElementBase control)
             {
-                UpdatePosition(e.Location);
+                var screenPoint = control.PointToScreen(e.Location);
+                UpdatePosition(screenPoint);
             }
         }
 
@@ -170,9 +189,16 @@ namespace SDUI.Controls
         {
             if (_currentControl == null) return;
 
+            var window = _currentControl.ParentWindow as UIWindow ?? (_currentControl.FindForm() as UIWindow);
+            if (window == null)
+                return;
+
+            EnsureAddedToWindow(window);
+
             _isActive = true;
             Visible = true;
-            UpdatePosition(Control.MousePosition);
+            UpdatePosition(Cursor.Position);
+            AttachWindowHandlers(window);
             _hideTimer.Start();
         }
 
@@ -182,19 +208,222 @@ namespace SDUI.Controls
             Visible = false;
             _currentControl = null;
             StopHideTimer();
+            DetachWindowHandlers();
         }
 
-        private void UpdatePosition(Point mousePosition)
+        private void UpdatePosition(Point screenPosition)
         {
-            if (_currentControl == null) return;
+            if (_currentControl == null)
+                return;
 
-            var screenPoint = _currentControl.PointToScreen(mousePosition);
-            var offset = 15; // İmleçten uzaklık
+            var window = _currentWindow ?? _currentControl.ParentWindow as UIWindow ?? (_currentControl.FindForm() as UIWindow);
+            if (window == null)
+                return;
 
-            Location = new Point(
-                screenPoint.X + offset,
-                screenPoint.Y + offset
-            );
+            var offset = 15;
+            var windowPoint = window.PointToClient(screenPosition);
+            var target = new Point(windowPoint.X + offset, windowPoint.Y + offset);
+
+            target.X = Math.Max(0, Math.Min(target.X, window.Width - Width));
+            target.Y = Math.Max(0, Math.Min(target.Y, window.Height - Height));
+
+            Location = target;
+            BringToFront();
+        }
+
+        private void EnsureAddedToWindow(UIWindow window)
+        {
+            if (window == null)
+                return;
+
+            if (Parent is UIWindow existing && existing == window)
+            {
+                _currentWindow = window;
+                return;
+            }
+
+            Parent?.Controls.Remove(this);
+
+            if (!window.Controls.Contains(this))
+            {
+                window.Controls.Add(this);
+            }
+
+            _currentWindow = window;
+        }
+
+        private void AttachWindowHandlers(UIWindow window)
+        {
+            if (window == null)
+                return;
+
+            if (_handlersAttached && _currentWindow == window)
+                return;
+
+            DetachWindowHandlers();
+
+            _currentWindow = window;
+
+            _windowMouseDownHandler ??= Window_MouseDown;
+            _windowDeactivateHandler ??= Window_Deactivate;
+            _windowKeyDownHandler ??= Window_KeyDown;
+
+            window.MouseDown += _windowMouseDownHandler;
+            window.Deactivate += _windowDeactivateHandler;
+            window.KeyDown += _windowKeyDownHandler;
+
+            _handlersAttached = true;
+        }
+
+        private void DetachWindowHandlers()
+        {
+            if (!_handlersAttached || _currentWindow == null)
+                return;
+
+            if (_windowMouseDownHandler != null)
+                _currentWindow.MouseDown -= _windowMouseDownHandler;
+            if (_windowDeactivateHandler != null)
+                _currentWindow.Deactivate -= _windowDeactivateHandler;
+            if (_windowKeyDownHandler != null)
+                _currentWindow.KeyDown -= _windowKeyDownHandler;
+
+            _handlersAttached = false;
+            _currentWindow = null;
+        }
+
+        private void Window_MouseDown(object sender, MouseEventArgs e)
+        {
+            if (!_isActive || _currentWindow == null)
+                return;
+
+            if (Bounds.Contains(e.Location))
+                return;
+
+            if (_currentControl != null)
+            {
+                var controlBounds = GetWindowRelativeBounds(_currentControl, _currentWindow);
+                if (controlBounds.Contains(e.Location))
+                    return;
+            }
+
+            Hide();
+        }
+
+        private void Window_Deactivate(object sender, EventArgs e)
+        {
+            if (_isActive)
+                Hide();
+        }
+
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (!_isActive)
+                return;
+
+            if (e.KeyCode == Keys.Escape)
+            {
+                Hide();
+                e.Handled = true;
+            }
+        }
+
+        private static Rectangle GetWindowRelativeBounds(UIElementBase element, UIWindow window)
+        {
+            var screenLocation = element.PointToScreen(Point.Empty);
+            var windowPoint = window.PointToClient(screenLocation);
+            return new Rectangle(windowPoint, element.Size);
+        }
+
+        private (List<string> Lines, float MaxWidth) WrapTextIntoLines(string text, SKPaint paint, float maxWidth)
+        {
+            List<string> lines = new();
+            float maxLineWidth = 0f;
+
+            foreach (var paragraph in text.Replace("\r\n", "\n").Split('\n'))
+            {
+                if (string.IsNullOrWhiteSpace(paragraph))
+                {
+                    lines.Add(string.Empty);
+                    continue;
+                }
+
+                var words = paragraph.Split(' ');
+                string currentLine = string.Empty;
+
+                foreach (var word in words)
+                {
+                    if (string.IsNullOrWhiteSpace(word))
+                        continue;
+
+                    var candidate = string.IsNullOrEmpty(currentLine)
+                        ? word
+                        : $"{currentLine} {word}";
+
+                    float candidateWidth = paint.MeasureText(candidate);
+
+                    if (candidateWidth > maxWidth && !string.IsNullOrEmpty(currentLine))
+                    {
+                        maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(currentLine));
+                        lines.Add(currentLine);
+                        currentLine = word;
+                    }
+                    else if (candidateWidth > maxWidth)
+                    {
+                        foreach (var wrapped in BreakLongWord(word, paint, maxWidth))
+                        {
+                            maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(wrapped));
+                            lines.Add(wrapped);
+                        }
+                        currentLine = string.Empty;
+                    }
+                    else
+                    {
+                        currentLine = candidate;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(currentLine))
+                {
+                    maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(currentLine));
+                    lines.Add(currentLine);
+                }
+            }
+
+            if (lines.Count == 0)
+            {
+                lines.Add(text);
+                maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(text));
+            }
+
+            return (lines, Math.Max(maxLineWidth, 0));
+        }
+
+        private static IEnumerable<string> BreakLongWord(string word, SKPaint paint, float maxWidth)
+        {
+            List<string> segments = new();
+            string current = string.Empty;
+
+            foreach (char c in word)
+            {
+                string candidate = current + c;
+                if (paint.MeasureText(candidate) > maxWidth && current.Length > 0)
+                {
+                    segments.Add(current);
+                    current = c.ToString();
+                }
+                else
+                {
+                    current = candidate;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(current))
+                segments.Add(current);
+
+            if (segments.Count == 0)
+                segments.Add(word);
+
+            return segments;
         }
 
         private void UpdateSize()
@@ -205,32 +434,24 @@ namespace SDUI.Controls
                 return;
             }
 
-            using (var paint = new SKPaint
+            using var paint = new SKPaint
             {
-                TextSize = Font.Size * DpiHelper.GetScaleFactor(),
-                Typeface = SKTypeface.FromFamilyName(Font.Name)
-            })
-            {
-                var bounds = new SKRect();
-                paint.MeasureText(Text, ref bounds);
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.Name),
+                IsAntialias = true
+            };
 
-                int width = Math.Min(_maxWidth, (int)bounds.Width + (_padding * 2));
-                int height = (int)bounds.Height + (_padding * 2);
+            float maxContentWidth = Math.Max(1, _maxWidth - (_padding * 2));
+            var (lines, maxLineWidth) = WrapTextIntoLines(Text, paint, maxContentWidth);
 
-                if (bounds.Width > _maxWidth)
-                {
-                    // Çok satırlı metin için yüksekliği ayarla
-                    var lines = TextRenderer.MeasureText(
-                        Text,
-                        Font,
-                        new Size(_maxWidth - (_padding * 2), int.MaxValue),
-                        TextFormatFlags.WordBreak
-                    );
-                    height = lines.Height + (_padding * 2);
-                }
+            var metrics = paint.FontMetrics;
+            float lineHeight = metrics.Descent - metrics.Ascent;
+            int lineCount = Math.Max(1, lines.Count);
 
-                Size = new Size(width, height);
-            }
+            int width = (int)Math.Ceiling(Math.Min(_maxWidth, maxLineWidth + (_padding * 2)));
+            int height = (int)Math.Ceiling(lineHeight * lineCount + (_padding * 2));
+
+            Size = new Size(Math.Max(width, _padding * 2), Math.Max(height, _padding * 2));
         }
 
         public override void OnPaint(SKPaintSurfaceEventArgs e)
@@ -294,18 +515,22 @@ namespace SDUI.Controls
                 using (var paint = new SKPaint
                 {
                     Color = new SKColor((byte)(ForeColor.R), (byte)(ForeColor.G), (byte)(ForeColor.B), (byte)(ForeColor.A)),
-                    TextSize = Font.Size * DpiHelper.GetScaleFactor(),
+                    TextSize = Font.Size.PtToPx(this),
                     Typeface = SKTypeface.FromFamilyName(Font.Name),
                     IsAntialias = true
                 })
                 {
-                    var bounds = new SKRect();
-                    paint.MeasureText(Text, ref bounds);
-
+                    var metrics = paint.FontMetrics;
+                    float lineHeight = metrics.Descent - metrics.Ascent;
+                    var (lines, _) = WrapTextIntoLines(Text, paint, Math.Max(1, Width - (_padding * 2)));
                     float x = _padding;
-                    float y = _padding - bounds.Top;
+                    float y = _padding - metrics.Ascent;
 
-                    canvas.DrawText(Text, x, y, paint);
+                    foreach (var line in lines)
+                    {
+                        canvas.DrawText(line, x, y, paint);
+                        y += lineHeight;
+                    }
                 }
             }
         }

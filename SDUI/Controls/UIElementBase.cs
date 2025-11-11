@@ -982,7 +982,7 @@ namespace SDUI.Controls
             Invalidate();
         }
 
-        protected virtual void OnSizeChanged(EventArgs e)
+        internal virtual void OnSizeChanged(EventArgs e)
         {
             SizeChanged?.Invoke(this, e);
             Invalidate();

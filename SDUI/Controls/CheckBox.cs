@@ -354,7 +354,7 @@ namespace SDUI.Controls
             }
         }
 
-        protected override void OnSizeChanged(EventArgs e)
+        internal override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
             boxOffset = (Height - CHECKBOX_SIZE) / 2;

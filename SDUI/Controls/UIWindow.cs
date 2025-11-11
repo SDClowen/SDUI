@@ -959,7 +959,7 @@ public class UIWindow : UIWindowBase, IUIElement
             _inExtendBox = false;
             if (ExtendMenu != null)
             {
-                //ExtendMenu.Show(this, new Point(Convert.ToInt32(_extendBoxRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
+                ExtendMenu.Show(new Point(Convert.ToInt32(_extendBoxRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
             }
             else
             {
@@ -972,7 +972,7 @@ public class UIWindow : UIWindowBase, IUIElement
             _inFormMenuBox = false;
             if (FormMenu != null)
             {
-                //FormMenu.Show(this, new Point(Convert.ToInt32(_formMenuRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
+                FormMenu.Show(new Point(Convert.ToInt32(_formMenuRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
             }
             else
             {
@@ -1050,7 +1050,7 @@ public class UIWindow : UIWindowBase, IUIElement
         if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
         {
             var point = PointToScreen(e.Location);
-            //ContextMenuStrip.Show(this, point);
+            ContextMenuStrip.Show(point);
         }
 
         if (_inCloseBox || _inMaxBox || _inMinBox || _inExtendBox || _inTabCloseBox || _inNewTabBox || _inFormMenuBox)

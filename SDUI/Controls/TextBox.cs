@@ -1292,7 +1292,7 @@ public class TextBox : UIElementBase
         Invalidate();
     }
 
-    protected override void OnSizeChanged(EventArgs e)
+    internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
         UpdateScrollBars();

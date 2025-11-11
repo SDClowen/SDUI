@@ -289,7 +289,7 @@ public class Radio : UIElementBase
         }
     }
 
-    protected override void OnSizeChanged(EventArgs e)
+    internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
         boxOffset = Height / 2 - (int)Math.Ceiling(RADIOBUTTON_SIZE / 2d);
