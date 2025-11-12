@@ -220,8 +220,9 @@ public class ComboBox : UIElementBase
         {
             // Hedef yükseklik limitli açılış
             _targetHeight = Math.Max(0, targetHeight);
-            Size = new Size(_owner.DropDownWidth, 0);
-            _currentHeight = 0;
+            Size = new Size(_owner.DropDownWidth, 1);
+            _currentHeight = 1;
+            Height = 1; // ilk karede görünür olsun
             _hoverIndex = -1;
             _hoverY = 0;
             _targetHoverY = 0;
@@ -835,22 +836,25 @@ public class ComboBox : UIElementBase
             window.BringToFront(_dropDownMenu);
         }
 
-        // Pencereye göre mutlak konum (UIElementBase zincirini toplayarak)
-        var bottomPoint = GetRelativeToWindow(this, window);
-        var topPointY = bottomPoint.Y - Height; // elementin üst sınırı
+        // Pencere koordinatlarıyla güvenilir konum (UIElementBase hiyerarşisi)
+        var clientTop = GetRelativeToWindow(this, window);                  // elementin sol-üstü
+        var clientBottom = new Point(clientTop.X, clientTop.Y + Height);    // elementin altı
 
         // Açılma yüksekliğini pencere yüksekliğine göre belirle
         int fullHeight = (_items?.Count ?? 0) * 32 + 16; // DropDownMenu sabitleri: ITEM_HEIGHT=32, VERTICAL_PADDING=8
-        int availableBelow = Math.Max(0, window.ClientSize.Height - bottomPoint.Y);
-        int availableAbove = Math.Max(0, topPointY);
+        int availableBelow = Math.Max(0, window.Height - clientBottom.Y);
+        int availableAbove = Math.Max(0, clientTop.Y);
 
         bool openUpwards = availableBelow < Math.Min(fullHeight, Math.Max(64, availableAbove)) && availableAbove > availableBelow;
         int openHeight = openUpwards ? Math.Min(fullHeight, availableAbove - 4) : Math.Min(fullHeight, availableBelow - 4);
         openHeight = Math.Max(64, openHeight); // en az birkaç öğe görünsün
 
         var targetLocation = openUpwards
-            ? new Point(bottomPoint.X, Math.Max(0, topPointY - openHeight))
-            : bottomPoint;
+            ? new Point(clientBottom.X, Math.Max(0, clientTop.Y - openHeight))
+            : clientBottom;
+
+        // X ekseninde pencere içinde kal
+        targetLocation.X = Math.Max(0, Math.Min(targetLocation.X, window.Width - DropDownWidth));
 
         _dropDownMenu.Location = targetLocation;
         _dropDownMenu.Width = DropDownWidth;

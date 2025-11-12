@@ -31,7 +31,7 @@ public class MenuItem
     private bool _showSubmenuArrow = true;
 
     private bool _checked;
-    public bool Checked { get => _checked; set { _checked = value; Parent.Invalidate(); } }
+    public bool Checked { get => _checked; set { _checked = value; Parent?.Invalidate(); } }
 
     public string Text
     {

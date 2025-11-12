@@ -1442,7 +1442,6 @@ public class UIWindow : UIWindowBase, IUIElement
         if (canvas == null)
             return;
 
-        // Her frame'i temiz baştan çiziyoruz
         canvas.Save();
         canvas.ResetMatrix();
         canvas.ClipRect(SKRect.Create(info.Width, info.Height));
@@ -1492,7 +1491,7 @@ public class UIWindow : UIWindowBase, IUIElement
         var hoverColor = ColorScheme.BorderColor.ToSKColor();
 
         // Arka planı temizle
-        //canvas.Clear(ColorScheme.BackColor.ToSKColor());
+        canvas.Clear(ColorScheme.BackColor.ToSKColor());
 
         if (FullDrawHatch)
         {
