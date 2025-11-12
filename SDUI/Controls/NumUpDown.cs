@@ -145,6 +145,31 @@ namespace SDUI.Controls
                 downButtonHoverAnimation.StartNewAnimation(_inDownButton ? AnimationDirection.In : AnimationDirection.Out);
             }
 
+            // Mouse sürüklenip buton dışına çıktıysa timer'ı durdur ve animasyonu sıfırla
+            if (_longPressTimer.Enabled)
+            {
+                bool stillInUpButton = _upButtonPressed && inUpButton;
+                bool stillInDownButton = _downButtonPressed && inDownButton;
+                
+                if (!stillInUpButton && !stillInDownButton)
+                {
+                    _longPressTimer.Stop();
+                    _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
+                    
+                    // Press animasyonlarını sıfırla
+                    if (_upButtonPressed)
+                    {
+                        _upButtonPressed = false;
+                        upButtonPressAnimation.StartNewAnimation(AnimationDirection.Out);
+                    }
+                    if (_downButtonPressed)
+                    {
+                        _downButtonPressed = false;
+                        downButtonPressAnimation.StartNewAnimation(AnimationDirection.Out);
+                    }
+                }
+            }
+
             Invalidate();
         }
 
@@ -154,6 +179,26 @@ namespace SDUI.Controls
             _inUpButton = _inDownButton = false;
             upButtonHoverAnimation.StartNewAnimation(AnimationDirection.Out);
             downButtonHoverAnimation.StartNewAnimation(AnimationDirection.Out);
+            
+            // Mouse kontrolden çıktıysa timer'ı durdur ve animasyonu sıfırla
+            if (_longPressTimer.Enabled)
+            {
+                _longPressTimer.Stop();
+                _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
+            }
+            
+            // Press animasyonlarını sıfırla
+            if (_upButtonPressed)
+            {
+                _upButtonPressed = false;
+                upButtonPressAnimation.StartNewAnimation(AnimationDirection.Out);
+            }
+            if (_downButtonPressed)
+            {
+                _downButtonPressed = false;
+                downButtonPressAnimation.StartNewAnimation(AnimationDirection.Out);
+            }
+            
             Invalidate();
         }
 
@@ -185,15 +230,16 @@ namespace SDUI.Controls
             {
                 _upButtonPressed = true;
                 upButtonPressAnimation.StartNewAnimation(AnimationDirection.In);
+                _longPressTimer.Start();
             }
             else if (_mouseLocation.InRect(_downButtonRect))
             {
                 _downButtonPressed = true;
                 downButtonPressAnimation.StartNewAnimation(AnimationDirection.In);
+                _longPressTimer.Start();
             }
 
             ClickButton();
-            _longPressTimer.Start();
         }
 
         internal override void OnMouseUp(MouseEventArgs e)
@@ -217,10 +263,23 @@ namespace SDUI.Controls
 
         private void LongPressTimer_Tick(object sender, EventArgs e)
         {
-            ClickButton();
+            // Mouse hâlâ basılı butonun üzerindeyse devam et
+            bool stillInUpButton = _upButtonPressed && _mouseLocation.InRect(_upButtonRect);
+            bool stillInDownButton = _downButtonPressed && _mouseLocation.InRect(_downButtonRect);
 
-            if (_longPressTimer.Interval == LONG_PRESS_TIMER_INTERVAL)
-                _longPressTimer.Interval = 50;
+            if (stillInUpButton || stillInDownButton)
+            {
+                ClickButton();
+
+                if (_longPressTimer.Interval == LONG_PRESS_TIMER_INTERVAL)
+                    _longPressTimer.Interval = 50;
+            }
+            else
+            {
+                // Mouse sürüklendiyse durdur
+                _longPressTimer.Stop();
+                _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
+            }
         }
 
         internal override void OnKeyPress(KeyPressEventArgs e)

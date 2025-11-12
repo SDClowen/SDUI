@@ -434,6 +434,14 @@ namespace SDUI.Controls
         {
             base.OnMouseMove(e);
 
+            // İçerik alanında (header altında) bir click ise, seçili sayfaya ilet
+            if (e.Y >= HeaderHeight && SelectedPage != null && SelectedPage.Visible)
+            {
+                var pageEvent = new System.Windows.Forms.MouseEventArgs(e.Button, e.Clicks, e.X, e.Y - HeaderHeight, e.Delta);
+                SelectedPage.OnMouseMove(pageEvent);
+                return;
+            }
+
             var oldNewPageButtonHovered = _isNewPageButtonHovered;
             _isNewPageButtonHovered = IsPointInNewPageButton(e.Location);
 
@@ -478,6 +486,14 @@ namespace SDUI.Controls
         {
             base.OnMouseDown(e);
 
+            // İçerik alanında (header altında) bir click ise, seçili sayfaya ilet
+            if (e.Y >= HeaderHeight && SelectedPage != null && SelectedPage.Visible)
+            {
+                var pageEvent = new System.Windows.Forms.MouseEventArgs(e.Button, e.Clicks, e.X, e.Y - HeaderHeight, e.Delta);
+                SelectedPage.OnMouseDown(pageEvent);
+                return;
+            }
+
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
                 var tabIndex = GetTabIndexAtPoint(e.Location);
@@ -494,6 +510,16 @@ namespace SDUI.Controls
         internal override void OnMouseUp(System.Windows.Forms.MouseEventArgs e)
         {
             base.OnMouseUp(e);
+
+            // İçerik alanında (header altında) bir click ise, seçili sayfaya ilet
+            if (e.Y >= HeaderHeight && SelectedPage != null && SelectedPage.Visible)
+            {
+                var pageEvent = new System.Windows.Forms.MouseEventArgs(e.Button, e.Clicks, e.X, e.Y - HeaderHeight, e.Delta);
+                SelectedPage.OnMouseUp(pageEvent);
+                _isDragging = false;
+                _draggedTabIndex = -1;
+                return;
+            }
 
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
@@ -514,6 +540,9 @@ namespace SDUI.Controls
         internal override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
+
+            if (SelectedPage != null)
+                SelectedPage.OnMouseLeave(e);
 
             _hoveredTabIndex = -1;
             _hoveredCloseButtonIndex = -1;

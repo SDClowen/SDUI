@@ -747,12 +747,52 @@ public class UIWindow : UIWindowBase, IUIElement
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox, _inTabCloseBox, _inNewTabBox, _inFormMenuBox;
     private static MouseEventArgs CreateChildMouseEvent(MouseEventArgs source, UIElementBase element)
     {
+        // Kaynak koordinatı pencere tabanlı; elementi pencere tabanlı dikdörtgene çevir
+        var elementWindowRect = GetWindowRelativeBoundsStatic(element);
         return new MouseEventArgs(
             source.Button,
             source.Clicks,
-            source.X - element.Location.X,
-            source.Y - element.Location.Y,
+            source.X - elementWindowRect.X,
+            source.Y - elementWindowRect.Y,
             source.Delta);
+    }
+
+    private static Rectangle GetWindowRelativeBoundsStatic(UIElementBase element)
+    {
+        if (element?.Parent == null)
+            return new Rectangle(element?.Location ?? Point.Empty, element?.Size ?? Size.Empty);
+
+        if (element.Parent is UIWindowBase window)
+        {
+            var screenLoc = element.PointToScreen(Point.Empty);
+            var clientLoc = window.PointToClient(screenLoc);
+            return new Rectangle(clientLoc, element.Size);
+        }
+
+        if (element.Parent is UIElementBase parentElement)
+        {
+            var screenLoc = element.PointToScreen(Point.Empty);
+            // Pencereyi zincirden bul
+            UIWindowBase parentWindow = null;
+            var current = parentElement;
+            while (current != null && parentWindow == null)
+            {
+                if (current.Parent is UIWindowBase w)
+                {
+                    parentWindow = w;
+                    break;
+                }
+                current = current.Parent as UIElementBase;
+            }
+
+            if (parentWindow != null)
+            {
+                var clientLoc = parentWindow.PointToClient(screenLoc);
+                return new Rectangle(clientLoc, element.Size);
+            }
+        }
+
+        return new Rectangle(element.Location, element.Size);
     }
 
     private void CreateOrUpdateCache(SKImageInfo info)
@@ -922,7 +962,7 @@ public class UIWindow : UIWindowBase, IUIElement
 
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            if (element.ClientRectangle.Contains(e.Location))
+            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseClick(localEvent);
@@ -1022,7 +1062,7 @@ public class UIWindow : UIWindowBase, IUIElement
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            if (element.ClientRectangle.Contains(e.Location))
+            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
                 elementClicked = true;
 
@@ -1078,7 +1118,7 @@ public class UIWindow : UIWindowBase, IUIElement
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            if (element.ClientRectangle.Contains(e.Location))
+            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
                 elementClicked = true;
 
@@ -1152,7 +1192,7 @@ public class UIWindow : UIWindowBase, IUIElement
         // Z-order'a göre tersten kontrol et
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            if (element.ClientRectangle.Contains(e.Location))
+            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseUp(localEvent); 
@@ -1285,7 +1325,7 @@ public class UIWindow : UIWindowBase, IUIElement
         // Z-order'a göre tersten kontrol et
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            if (element.ClientRectangle.Contains(e.Location))
+            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
                 hoveredElement = element;
                 var localEvent = CreateChildMouseEvent(e, element);
@@ -1330,7 +1370,7 @@ public class UIWindow : UIWindowBase, IUIElement
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             var mousePos = PointToClient(MousePosition);
-            if (element.ClientRectangle.Contains(mousePos))
+            if (GetWindowRelativeBoundsStatic(element).Contains(mousePos))
             {
                 element.OnMouseEnter(e);
                 break;
@@ -1345,7 +1385,7 @@ public class UIWindow : UIWindowBase, IUIElement
         // Z-order'a göre tersten kontrol et
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            if (element.ClientRectangle.Contains(e.Location))
+            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseWheel(localEvent);

@@ -223,23 +223,16 @@ public class Button : UIElementBase, IButtonControl
             fillColor = fillColor.WithAlpha((byte)(fillColor.Alpha * 0.6f));
         }
 
-        // Gölgeli alanı oluştur
-        var shadowRect = new SKRect(bodyRect.Left, bodyRect.Top, bodyRect.Right, bodyRect.Bottom);
-        shadowRect.Inflate(_shadowDepth / 4f, _shadowDepth / 4f);
-
-        using (var shadowPaint = new SKPaint
+        // Kenarlık (gölge yerine sade kenarlık)
+        using (var borderPaint = new SKPaint
         {
+            Color = ColorScheme.BorderColor.ToSKColor(),
             IsAntialias = true,
-            FilterQuality = SKFilterQuality.High,
-            ImageFilter = SKImageFilter.CreateDropShadow(
-                _shadowDepth * (1 - pressProgress * 0.6f),
-                _shadowDepth * (1 - pressProgress * 0.6f),
-                3 * (1 - pressProgress * 0.4f),
-                3 * (1 - pressProgress * 0.4f),
-                SKColors.Black.WithAlpha((byte)(50 * (1 - hoverProgress * 0.3f))))
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1f
         })
         {
-            canvas.DrawRoundRect(shadowRect, _radius, _radius, shadowPaint);
+            canvas.DrawRoundRect(bodyRect, _radius, _radius, borderPaint);
         }
 
         using (var fillPaint = new SKPaint
@@ -291,8 +284,6 @@ public class Button : UIElementBase, IButtonControl
             canvas.DrawRoundRect(bodyRect, _radius, _radius, invalidPaint);
         }
 
-        float textOffset = pressProgress * 1.5f;
-
         // İkon çizimi
         float contentStartX = bodyRect.Left + 8f;
         if (Image != null)
@@ -311,7 +302,7 @@ public class Button : UIElementBase, IButtonControl
                 Image.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
                 stream.Position = 0;
                 using var skImage = SKImage.FromEncodedData(SKData.Create(stream));
-                canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y + textOffset, imageRect.Width, imageRect.Height));
+                canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y, imageRect.Width, imageRect.Height));
             }
             contentStartX += 24 + 6f;
         }
@@ -344,7 +335,7 @@ public class Button : UIElementBase, IButtonControl
                 ContentAlignment.MiddleRight => bodyRect.Right - 8f,
                 _ => contentStartX
             };
-            float y = bodyRect.MidY + textPaint.TextSize / 3f + textOffset;
+            float y = bodyRect.MidY + textPaint.TextSize / 3f;
 
             if (AutoEllipsis)
             {

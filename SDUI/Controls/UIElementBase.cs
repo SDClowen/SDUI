@@ -995,14 +995,15 @@ namespace SDUI.Controls
             MouseMove?.Invoke(this, e);
 
             UIElementBase hoveredElement = null;
-            // Propagate event to child controls
-            foreach (UIElementBase control in Controls)
+            // Z-order'a göre tersten kontrol et (üstteki element önce)
+            foreach (UIElementBase control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder).Where(c => c.Visible && c.Enabled))
             {
                 if (control.Bounds.Contains(e.Location))
                 {
                     hoveredElement = control;
                     var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
                     control.OnMouseMove(childEventArgs);
+                    break; // İlk eşleşenden sonra dur
                 }
             }
 
@@ -1025,8 +1026,8 @@ namespace SDUI.Controls
             MouseDown?.Invoke(this, e);
 
             bool elementClicked = false;
-            // Propagate event to child controls
-            foreach (UIElementBase control in Controls)
+            // Z-order'a göre tersten kontrol et (üstteki element önce)
+            foreach (UIElementBase control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder).Where(c => c.Visible && c.Enabled))
             {
                 if (control.Bounds.Contains(e.Location))
                 {
@@ -1035,6 +1036,7 @@ namespace SDUI.Controls
                     control.OnMouseDown(childEventArgs);
                     if (_focusedElement != control)
                         _focusedElement = control;
+                    break; // İlk eşleşenden sonra dur
                 }
             }
 
@@ -1046,13 +1048,14 @@ namespace SDUI.Controls
         {
             MouseUp?.Invoke(this, e);
 
-            // Propagate event to child controls
-            foreach (UIElementBase control in Controls)
+            // Z-order'a göre tersten kontrol et (üstteki element önce)
+            foreach (UIElementBase control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder).Where(c => c.Visible && c.Enabled))
             {
                 if (control.Bounds.Contains(e.Location))
                 {
                     var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
                     control.OnMouseUp(childEventArgs);
+                    break; // İlk eşleşenden sonra dur
                 }
             }
         }
@@ -1064,8 +1067,8 @@ namespace SDUI.Controls
             // Standart WinForms davranışı: MouseClick sonrası Click olayı
             OnClick(EventArgs.Empty);
 
-            // Propagate event to child controls
-            foreach (UIElementBase control in Controls)
+            // Z-order'a göre tersten kontrol et (üstteki element önce)
+            foreach (UIElementBase control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder).Where(c => c.Visible && c.Enabled))
             {
                 if (control.Bounds.Contains(e.Location))
                 {
@@ -1074,6 +1077,7 @@ namespace SDUI.Controls
 
                     if (_focusedElement != control)
                         _focusedElement = control;
+                    break; // İlk eşleşenden sonra dur
                 }
             }
         }
@@ -1082,13 +1086,14 @@ namespace SDUI.Controls
         {
             MouseDoubleClick?.Invoke(this, e);
 
-            // Propagate event to child controls
-            foreach (UIElementBase control in Controls)
+            // Z-order'a göre tersten kontrol et (üstteki element önce)
+            foreach (UIElementBase control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder).Where(c => c.Visible && c.Enabled))
             {
                 if (control.Bounds.Contains(e.Location))
                 {
                     var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
                     control.OnMouseDoubleClick(childEventArgs);
+                    break; // İlk eşleşenden sonra dur
                 }
             }
         }
