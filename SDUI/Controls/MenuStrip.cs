@@ -15,13 +15,13 @@ public class MenuStrip : UIElementBase
     private MenuItem _openedItem;
     private ContextMenuStrip _activeDropDown;
     private MenuItem _activeDropDownOwner;
-    private Color _menuBackColor = Color.FromArgb(32, 32, 32);
+    private Color _menuBackColor = Color.FromArgb(45, 45, 45);
     private Color _menuForeColor = Color.White;
-    private Color _hoverBackColor = Color.FromArgb(45, 45, 45);
-    private Color _hoverForeColor = Color.FromArgb(0, 120, 215);
-    private Color _submenuBackColor = Color.FromArgb(28, 28, 28);
-    private Color _submenuBorderColor = Color.FromArgb(64, 64, 64);
-    private Color _separatorColor = Color.FromArgb(64, 64, 64);
+    private Color _hoverBackColor = Color.FromArgb(62, 62, 62);
+    private Color _hoverForeColor = Color.FromArgb(0, 122, 204);
+    private Color _submenuBackColor = Color.FromArgb(37, 37, 37);
+    private Color _submenuBorderColor = Color.FromArgb(80, 80, 80);
+    private Color _separatorColor = Color.FromArgb(80, 80, 80);
     private float _itemHeight = 28f;
     private float _itemPadding = 12f;
     private float _submenuArrowSize = 8f;
@@ -31,8 +31,8 @@ public class MenuStrip : UIElementBase
     private bool _showHoverEffect = true;
     private bool _showSubmenuArrow = true;
     private bool _roundedCorners = true;
-    private float _cornerRadius = 4f;
-    private float _submenuCornerRadius = 6f;
+    private float _cornerRadius = 6f;
+    private float _submenuCornerRadius = 8f;
     private float _submenuShadowBlur = 10f;
     private float _submenuOffset = 2f;
     private int _submenuAnimationDuration = 150;
@@ -44,12 +44,13 @@ public class MenuStrip : UIElementBase
     private Color _separatorBackColor = Color.FromArgb(50, 50, 50);
     private Color _separatorForeColor = Color.FromArgb(100, 100, 100);
     private float _separatorMargin = 4f;
+    private SDUI.Orientation _orientation = SDUI.Orientation.Horizontal;
 
     public MenuStrip()
     {
         Height = (int)_itemHeight;
-        BackColor = _menuBackColor;
-        ForeColor = _menuForeColor;
+        BackColor = ColorScheme.BackColor; // tema uyumu
+        ForeColor = ColorScheme.ForeColor;
         InitializeAnimationTimer();
     }
 
@@ -61,12 +62,15 @@ public class MenuStrip : UIElementBase
     public bool Stretch
     {
         get => _stretch;
-        set
-        {
-            if (_stretch == value) return;
-            _stretch = value;
-            Invalidate();
-        }
+        set { if (_stretch == value) return; _stretch = value; Invalidate(); }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue(SDUI.Orientation.Horizontal)]
+    public SDUI.Orientation Orientation
+    {
+        get => _orientation;
+        set { if (_orientation == value) return; _orientation = value; Invalidate(); }
     }
 
     [Category("Appearance")]
@@ -74,13 +78,7 @@ public class MenuStrip : UIElementBase
     public Size ImageScalingSize
     {
         get => _imageScalingSize;
-        set
-        {
-            if (_imageScalingSize == value) return;
-            _imageScalingSize = value;
-            _iconSize = Math.Min(value.Width, value.Height);
-            Invalidate();
-        }
+        set { if (_imageScalingSize == value) return; _imageScalingSize = value; _iconSize = Math.Min(value.Width, value.Height); Invalidate(); }
     }
 
     [Category("Behavior")]
@@ -88,21 +86,15 @@ public class MenuStrip : UIElementBase
     public bool ShowSubmenuArrow
     {
         get => _showSubmenuArrow;
-        set
-        {
-            if (_showSubmenuArrow == value) return;
-            _showSubmenuArrow = value;
-            Invalidate();
-        }
+        set { if (_showSubmenuArrow == value) return; _showSubmenuArrow = value; Invalidate(); }
     }
 
     private void InitializeAnimationTimer()
     {
-        _animationTimer = new Timer { Interval = 16 }; // ~60 FPS
+        _animationTimer = new Timer { Interval = 16 };
         _animationTimer.Tick += (s, e) =>
         {
             if (!_isAnimating) return;
-
             _animationProgress = Math.Min(1f, _animationProgress + (16f / _submenuAnimationDuration));
             if (_animationProgress >= 1f)
             {
@@ -113,267 +105,77 @@ public class MenuStrip : UIElementBase
         };
     }
 
-    [Category("Appearance")]
-    public Color MenuBackColor
-    {
-        get => _menuBackColor;
-        set
-        {
-            if (_menuBackColor == value) return;
-            _menuBackColor = value;
-            Invalidate();
-        }
-    }
+    [Category("Appearance")] public Color MenuBackColor { get => _menuBackColor; set { if (_menuBackColor == value) return; _menuBackColor = value; Invalidate(); } }
+    [Category("Appearance")] public Color MenuForeColor { get => _menuForeColor; set { if (_menuForeColor == value) return; _menuForeColor = value; Invalidate(); } }
+    [Category("Appearance")] public Color HoverBackColor { get => _hoverBackColor; set { if (_hoverBackColor == value) return; _hoverBackColor = value; Invalidate(); } }
+    [Category("Appearance")] public Color HoverForeColor { get => _hoverForeColor; set { if (_hoverForeColor == value) return; _hoverForeColor = value; Invalidate(); } }
+    [Category("Appearance")] public Color SubmenuBackColor { get => _submenuBackColor; set { if (_submenuBackColor == value) return; _submenuBackColor = value; Invalidate(); } }
+    [Category("Appearance")] public Color SubmenuBorderColor { get => _submenuBorderColor; set { if (_submenuBorderColor == value) return; _submenuBorderColor = value; Invalidate(); } }
+    [Category("Appearance")] public Color SeparatorColor { get => _separatorColor; set { if (_separatorColor == value) return; _separatorColor = value; Invalidate(); } }
+    [Category("Layout")] public float ItemHeight { get => _itemHeight; set { if (_itemHeight == value) return; _itemHeight = value; Height = (int)value; Invalidate(); } }
+    [Category("Layout")] public float ItemPadding { get => _itemPadding; set { if (_itemPadding == value) return; _itemPadding = value; Invalidate(); } }
+    [Category("Appearance")] public bool ShowIcons { get => _showIcons; set { if (_showIcons == value) return; _showIcons = value; Invalidate(); } }
+    [Category("Behavior")] public bool ShowHoverEffect { get => _showHoverEffect; set { if (_showHoverEffect == value) return; _showHoverEffect = value; Invalidate(); } }
+    [Category("Appearance")] public bool RoundedCorners { get => _roundedCorners; set { if (_roundedCorners == value) return; _roundedCorners = value; Invalidate(); } }
+    [Category("Appearance")] public Color SeparatorBackColor { get => _separatorBackColor; set { if (_separatorBackColor == value) return; _separatorBackColor = value; Invalidate(); } }
+    [Category("Appearance")] public Color SeparatorForeColor { get => _separatorForeColor; set { if (_separatorForeColor == value) return; _separatorForeColor = value; Invalidate(); } }
+    [Category("Layout")] public float SeparatorMargin { get => _separatorMargin; set { if (_separatorMargin == value) return; _separatorMargin = value; Invalidate(); } }
 
-    [Category("Appearance")]
-    public Color MenuForeColor
-    {
-        get => _menuForeColor;
-        set
-        {
-            if (_menuForeColor == value) return;
-            _menuForeColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color HoverBackColor
-    {
-        get => _hoverBackColor;
-        set
-        {
-            if (_hoverBackColor == value) return;
-            _hoverBackColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color HoverForeColor
-    {
-        get => _hoverForeColor;
-        set
-        {
-            if (_hoverForeColor == value) return;
-            _hoverForeColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color SubmenuBackColor
-    {
-        get => _submenuBackColor;
-        set
-        {
-            if (_submenuBackColor == value) return;
-            _submenuBackColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color SubmenuBorderColor
-    {
-        get => _submenuBorderColor;
-        set
-        {
-            if (_submenuBorderColor == value) return;
-            _submenuBorderColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color SeparatorColor
-    {
-        get => _separatorColor;
-        set
-        {
-            if (_separatorColor == value) return;
-            _separatorColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Layout")]
-    public float ItemHeight
-    {
-        get => _itemHeight;
-        set
-        {
-            if (_itemHeight == value) return;
-            _itemHeight = value;
-            Height = (int)value;
-            Invalidate();
-        }
-    }
-
-    [Category("Layout")]
-    public float ItemPadding
-    {
-        get => _itemPadding;
-        set
-        {
-            if (_itemPadding == value) return;
-            _itemPadding = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public bool ShowIcons
-    {
-        get => _showIcons;
-        set
-        {
-            if (_showIcons == value) return;
-            _showIcons = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Behavior")]
-    public bool ShowHoverEffect
-    {
-        get => _showHoverEffect;
-        set
-        {
-            if (_showHoverEffect == value) return;
-            _showHoverEffect = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public bool RoundedCorners
-    {
-        get => _roundedCorners;
-        set
-        {
-            if (_roundedCorners == value) return;
-            _roundedCorners = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color SeparatorBackColor
-    {
-        get => _separatorBackColor;
-        set
-        {
-            if (_separatorBackColor == value) return;
-            _separatorBackColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color SeparatorForeColor
-    {
-        get => _separatorForeColor;
-        set
-        {
-            if (_separatorForeColor == value) return;
-            _separatorForeColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Layout")]
-    public float SeparatorMargin
-    {
-        get => _separatorMargin;
-        set
-        {
-            if (_separatorMargin == value) return;
-            _separatorMargin = value;
-            Invalidate();
-        }
-    }
-
-    public void AddItem(MenuItem item)
-    {
-        if (item == null) throw new ArgumentNullException(nameof(item));
-        _items.Add(item);
-        item.Parent = this;
-        Invalidate();
-    }
-
-    public void RemoveItem(MenuItem item)
-    {
-        if (item == null) throw new ArgumentNullException(nameof(item));
-        if (_items.Remove(item))
-        {
-            item.Parent = null;
-            Invalidate();
-        }
-    }
+    public void AddItem(MenuItem item) { if (item == null) throw new ArgumentNullException(nameof(item)); _items.Add(item); item.Parent = this; Invalidate(); }
+    public void RemoveItem(MenuItem item) { if (item == null) throw new ArgumentNullException(nameof(item)); if (_items.Remove(item)) { item.Parent = null; Invalidate(); } }
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         base.OnPaint(e);
-
         var canvas = e.Surface.Canvas;
         var bounds = ClientRectangle;
 
-        // Ana menü arka planı
-        using (var paint = new SKPaint
+        // Background
+        using (var paint = new SKPaint { Color = MenuBackColor.ToSKColor(), IsAntialias = true })
         {
-            Color = MenuBackColor.ToSKColor(),
-            IsAntialias = true
-        })
+            canvas.DrawRect(new SKRect(0, 0, bounds.Width, bounds.Height), paint);
+        }
+
+        if (Orientation == SDUI.Orientation.Horizontal)
         {
-            if (RoundedCorners && _cornerRadius > 0)
+            float x = ItemPadding;
+            float availableWidth = bounds.Width - (ItemPadding * 2);
+            float totalItemWidth = 0;
+            float[] itemWidths = new float[_items.Count];
+            for (int i = 0; i < _items.Count; i++)
             {
-                using var roundRect = CreateMenuRoundRect(new SKRect(0, 0, bounds.Width, bounds.Height));
-                canvas.DrawRoundRect(roundRect, paint);
+                itemWidths[i] = MeasureItemWidth(_items[i]);
+                totalItemWidth += itemWidths[i];
+                if (i < _items.Count - 1) totalItemWidth += ItemPadding;
             }
-            else
+            float extraPadding = 0;
+            if (Stretch && _items.Count > 1 && totalItemWidth < availableWidth)
+                extraPadding = (availableWidth - totalItemWidth) / (_items.Count - 1);
+
+            for (int i = 0; i < _items.Count; i++)
             {
-                canvas.DrawRect(new SKRect(0, 0, bounds.Width, bounds.Height), paint);
+                var item = _items[i];
+                var itemWidth = itemWidths[i];
+                var itemBounds = new SKRect(x, 0, x + itemWidth, ItemHeight);
+                DrawMenuItem(canvas, item, itemBounds);
+                x += itemWidth + ItemPadding + (i < _items.Count - 1 ? extraPadding : 0);
+            }
+        }
+        else
+        {
+            float y = ItemPadding;
+            for (int i = 0; i < _items.Count; i++)
+            {
+                var item = _items[i];
+                var itemWidth = bounds.Width - (ItemPadding * 2);
+                var itemBounds = new SKRect(ItemPadding, y, ItemPadding + itemWidth, y + ItemHeight);
+                DrawMenuItem(canvas, item, itemBounds);
+                y += ItemHeight + ItemPadding;
             }
         }
 
-        // Menü öğelerini çiz
-        float x = ItemPadding;
-        float availableWidth = bounds.Width - (ItemPadding * 2);
-        float totalItemWidth = 0;
-        float[] itemWidths = new float[_items.Count];
-
-        // Önce tüm öğelerin genişliklerini hesapla
-        for (int i = 0; i < _items.Count; i++)
-        {
-            itemWidths[i] = MeasureItemWidth(_items[i]);
-            totalItemWidth += itemWidths[i];
-            if (i < _items.Count - 1)
-                totalItemWidth += ItemPadding;
-        }
-
-        // Stretch modunda ise boşlukları eşit dağıt
-        float extraPadding = 0;
-        if (Stretch && _items.Count > 0 && totalItemWidth < availableWidth)
-        {
-            extraPadding = (availableWidth - totalItemWidth) / (_items.Count - 1);
-        }
-
-        // Öğeleri çiz
-        for (int i = 0; i < _items.Count; i++)
-        {
-            var item = _items[i];
-            var itemWidth = itemWidths[i];
-            var itemBounds = new SKRect(x, 0, x + itemWidth, ItemHeight);
-            DrawMenuItem(canvas, item, itemBounds);
-            x += itemWidth + ItemPadding + (i < _items.Count - 1 ? extraPadding : 0);
-        }
-
-        // Alt menüler context menü üzerinden yönetiliyor (aktif değilse highlight sıfırlanır)
         if (_activeDropDown == null || !_activeDropDown.IsOpen)
-        {
             _activeDropDownOwner = null;
-        }
     }
 
     private void DrawMenuItem(SKCanvas canvas, MenuItem item, SKRect bounds)
@@ -381,39 +183,21 @@ public class MenuStrip : UIElementBase
         var isHovered = item == _hoveredItem;
         var isOpened = item == _openedItem;
 
-        // Hover efekti
         if ((isHovered || isOpened) && ShowHoverEffect)
         {
-            using var paint = new SKPaint
-            {
-                Color = HoverBackColor.ToSKColor(),
-                IsAntialias = true
-            };
-
-            if (RoundedCorners)
-            {
-                canvas.DrawRoundRect(bounds, _cornerRadius, _cornerRadius, paint);
-            }
-            else
-            {
-                canvas.DrawRect(bounds, paint);
-            }
+            using var bgPaint = new SKPaint { Color = HoverBackColor.ToSKColor(), IsAntialias = true };
+            canvas.DrawRect(bounds, bgPaint);
         }
 
-        float textX = bounds.Left;
-
-        // İkon
+        float textX = bounds.Left + 8;
         if (ShowIcons && item.Icon != null)
         {
-            var iconY = (ItemHeight - _iconSize) / 2;
+            var iconY = bounds.Top + (ItemHeight - _iconSize) / 2;
             using (var image = SKImage.FromBitmap(item.Icon.ToSKBitmap()))
-            {
-                canvas.DrawImage(image, new SKRect(bounds.Left, iconY, bounds.Left + _iconSize, iconY + _iconSize));
-            }
-            textX += _iconSize + 4;
+                canvas.DrawImage(image, new SKRect(bounds.Left + 8, iconY, bounds.Left + 8 + _iconSize, iconY + _iconSize));
+            textX += _iconSize + 8;
         }
 
-        // Metin
         using (var paint = new SKPaint
         {
             Color = (isHovered || isOpened ? HoverForeColor : MenuForeColor).ToSKColor(),
@@ -425,233 +209,74 @@ public class MenuStrip : UIElementBase
             var textBounds = new SKRect();
             paint.MeasureText(item.Text, ref textBounds);
             var textY = bounds.MidY + (textBounds.Height / 2);
-            canvas.DrawText(item.Text, textX, textY, paint);
+            if (item.Text.Contains("&")) canvas.DrawTextWithMnemonic(item.Text, paint, textX, textY);
+            else canvas.DrawText(item.Text, textX, textY, paint);
         }
 
-        // Alt menü oku
         if (ShowSubmenuArrow && item.HasDropDown)
         {
-            using var paint = new SKPaint
-            {
-                Color = (isHovered || isOpened ? HoverForeColor : MenuForeColor).ToSKColor(),
-                IsAntialias = true
-            };
-
-            var arrowX = bounds.Right - _submenuArrowSize - 4;
+            using var paint = new SKPaint { Color = (isHovered || isOpened ? HoverForeColor : MenuForeColor).ToSKColor(), IsAntialias = true };
+            var arrowX = bounds.Right - _submenuArrowSize - 6;
             var arrowY = bounds.MidY;
             var path = new SKPath();
             path.MoveTo(arrowX, arrowY - _submenuArrowSize / 2);
             path.LineTo(arrowX + _submenuArrowSize, arrowY);
             path.LineTo(arrowX, arrowY + _submenuArrowSize / 2);
             path.Close();
-
             canvas.DrawPath(path, paint);
         }
     }
 
-    private void DrawSubmenu(SKCanvas canvas, MenuItem parentItem)
+    private List<RectangleF> ComputeItemRects()
     {
-        if (!parentItem.HasDropDown) return;
-
-        var parentBounds = GetItemBounds(parentItem);
-        var submenuWidth = MeasureSubmenuWidth(parentItem);
-        var submenuHeight = MeasureSubmenuHeight(parentItem);
-
-        var x = parentBounds.Left;
-        var y = parentBounds.Bottom + _submenuOffset;
-
-        // Gölge efekti
-        using (var shadowPaint = new SKPaint
+        var rects = new List<RectangleF>(_items.Count);
+        var bounds = ClientRectangle;
+        if (Orientation == SDUI.Orientation.Horizontal)
         {
-            Color = SKColors.Black.WithAlpha(50),
-            ImageFilter = SKImageFilter.CreateBlur(_submenuShadowBlur, _submenuShadowBlur),
-            IsAntialias = true
-        })
-        {
-            if (RoundedCorners)
+            float x = ItemPadding;
+            float availableWidth = bounds.Width - (ItemPadding * 2);
+            float totalItemWidth = 0;
+            float[] itemWidths = new float[_items.Count];
+            for (int i = 0; i < _items.Count; i++)
             {
-                canvas.DrawRoundRect(
-                    new SKRect(x, y, x + submenuWidth, y + submenuHeight),
-                    _submenuCornerRadius, _submenuCornerRadius,
-                    shadowPaint);
+                itemWidths[i] = MeasureItemWidth(_items[i]);
+                totalItemWidth += itemWidths[i];
+                if (i < _items.Count - 1) totalItemWidth += ItemPadding;
             }
-            else
+            float extraPadding = 0;
+            if (Stretch && _items.Count > 1 && totalItemWidth < availableWidth)
+                extraPadding = (availableWidth - totalItemWidth) / (_items.Count - 1);
+
+            for (int i = 0; i < _items.Count; i++)
             {
-                canvas.DrawRect(
-                    new SKRect(x, y, x + submenuWidth, y + submenuHeight),
-                    shadowPaint);
+                float w = itemWidths[i];
+                rects.Add(new RectangleF(x, 0, w, ItemHeight));
+                x += w + ItemPadding + (i < _items.Count - 1 ? extraPadding : 0);
             }
         }
-
-        // Alt menü arka planı
-        using (var paint = new SKPaint
+        else
         {
-            Color = SubmenuBackColor.ToSKColor(),
-            IsAntialias = true
-        })
-        {
-            if (RoundedCorners)
+            float y = ItemPadding;
+            float w = bounds.Width - (ItemPadding * 2);
+            for (int i = 0; i < _items.Count; i++)
             {
-                canvas.DrawRoundRect(
-                    new SKRect(x, y, x + submenuWidth, y + submenuHeight),
-                    _submenuCornerRadius, _submenuCornerRadius,
-                    paint);
-            }
-            else
-            {
-                canvas.DrawRect(
-                    new SKRect(x, y, x + submenuWidth, y + submenuHeight),
-                    paint);
+                rects.Add(new RectangleF(ItemPadding, y, w, ItemHeight));
+                y += ItemHeight + ItemPadding;
             }
         }
-
-        // Alt menü kenarlığı
-        using (var paint = new SKPaint
-        {
-            Color = SubmenuBorderColor.ToSKColor(),
-            IsAntialias = true,
-            IsStroke = true,
-            StrokeWidth = 1
-        })
-        {
-            if (RoundedCorners)
-            {
-                canvas.DrawRoundRect(
-                    new SKRect(x, y, x + submenuWidth, y + submenuHeight),
-                    _submenuCornerRadius, _submenuCornerRadius,
-                    paint);
-            }
-            else
-            {
-                canvas.DrawRect(
-                    new SKRect(x, y, x + submenuWidth, y + submenuHeight),
-                    paint);
-            }
-        }
-
-        // Alt menü öğelerini çiz
-        float currentY = y + _itemPadding;
-        foreach (var item in parentItem.DropDownItems)
-        {
-            if (item.IsSeparator)
-            {
-                DrawSeparator(canvas, x, currentY, submenuWidth);
-                currentY += _separatorHeight + _itemPadding;
-            }
-            else
-            {
-                var itemBounds = new SKRect(x + _itemPadding, currentY,
-                    x + submenuWidth - _itemPadding, currentY + ItemHeight);
-                DrawMenuItem(canvas, item, itemBounds);
-                currentY += ItemHeight + _itemPadding;
-            }
-        }
-    }
-
-    private void DrawSeparator(SKCanvas canvas, float x, float y, float width)
-    {
-        var margin = _separatorMargin;
-        var height = _separatorHeight;
-
-        // Arka plan
-        using (var paint = new SKPaint
-        {
-            Color = _separatorBackColor.ToSKColor(),
-            IsAntialias = true
-        })
-        {
-            canvas.DrawRect(
-                new SKRect(x + margin, y, x + width - margin, y + height),
-                paint);
-        }
-
-        // Ön plan çizgisi
-        using (var paint = new SKPaint
-        {
-            Color = _separatorForeColor.ToSKColor(),
-            IsAntialias = true,
-            StrokeWidth = 1,
-            IsStroke = true
-        })
-        {
-            canvas.DrawLine(
-                x + margin,
-                y + height / 2,
-                x + width - margin,
-                y + height / 2,
-                paint);
-        }
-    }
-
-    protected float MeasureItemWidth(MenuItem item)
-    {
-        if (item is MenuItemSeparator)
-            return 20f; // Sabit ayraç genişliği
-
-        using var paint = new SKPaint
-        {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
-        };
-
-        var textBounds = new SKRect();
-        paint.MeasureText(item.Text, ref textBounds);
-        float width = textBounds.Width;
-
-        if (ShowIcons && item.Icon != null)
-        {
-            width += _iconSize + 4;
-        }
-
-        if (ShowSubmenuArrow && item.HasDropDown)
-        {
-            width += _submenuArrowSize + 8;
-        }
-
-        return width;
-    }
-
-    private float MeasureSubmenuWidth(MenuItem parentItem)
-    {
-        float maxWidth = 0;
-        foreach (var item in parentItem.DropDownItems)
-        {
-            if (!item.IsSeparator)
-            {
-                maxWidth = Math.Max(maxWidth, MeasureItemWidth(item));
-            }
-        }
-        return maxWidth + (_itemPadding * 2);
-    }
-
-    private float MeasureSubmenuHeight(MenuItem parentItem)
-    {
-        float height = _itemPadding;
-        foreach (var item in parentItem.DropDownItems)
-        {
-            if (item.IsSeparator)
-            {
-                height += _separatorHeight + _itemPadding;
-            }
-            else
-            {
-                height += ItemHeight + _itemPadding;
-            }
-        }
-        return height;
+        return rects;
     }
 
     private SKRect GetItemBounds(MenuItem item)
     {
-        float x = ItemPadding;
-        foreach (var menuItem in _items)
+        var rects = ComputeItemRects();
+        for (int i = 0; i < _items.Count; i++)
         {
-            var width = MeasureItemWidth(menuItem);
-            if (menuItem == item)
+            if (_items[i] == item)
             {
-                return new SKRect(x, 0, x + width, ItemHeight);
+                var r = rects[i];
+                return new SKRect(r.Left, r.Top, r.Right, r.Bottom);
             }
-            x += width + ItemPadding;
         }
         return SKRect.Empty;
     }
@@ -659,16 +284,18 @@ public class MenuStrip : UIElementBase
     internal override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-
+        var rects = ComputeItemRects();
+        MenuItem hovered = null;
+        for (int i = 0; i < _items.Count; i++)
+        {
+            if (rects[i].Contains(e.Location)) { hovered = _items[i]; break; }
+        }
         var oldHovered = _hoveredItem;
-        _hoveredItem = GetItemAtPoint(e.Location);
-
+        _hoveredItem = hovered;
         if (oldHovered != _hoveredItem)
         {
             if (_hoveredItem?.HasDropDown == true && _openedItem != _hoveredItem)
-            {
                 OpenSubmenu(_hoveredItem);
-            }
             Invalidate();
         }
     }
@@ -676,33 +303,27 @@ public class MenuStrip : UIElementBase
     internal override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
-
         if (e.Button == MouseButtons.Left)
         {
-            var item = GetItemAtPoint(e.Location);
-            if (item != null)
+            var rects = ComputeItemRects();
+            for (int i = 0; i < _items.Count; i++)
             {
-                if (item.HasDropDown)
+                if (rects[i].Contains(e.Location))
                 {
-                    if (_openedItem == item)
+                    var item = _items[i];
+                    if (item.HasDropDown)
                     {
-                        CloseSubmenu();
+                        if (_openedItem == item) CloseSubmenu(); else OpenSubmenu(item);
                     }
                     else
                     {
-                        OpenSubmenu(item);
+                        item.OnClick();
+                        CloseSubmenu();
                     }
-                }
-                else
-                {
-                    item.OnClick();
-                    CloseSubmenu();
+                    return;
                 }
             }
-            else
-            {
-                CloseSubmenu();
-            }
+            CloseSubmenu();
         }
     }
 
@@ -713,59 +334,32 @@ public class MenuStrip : UIElementBase
         Invalidate();
     }
 
-    private MenuItem GetItemAtPoint(Point point)
-    {
-        float x = ItemPadding;
-        foreach (var item in _items)
-        {
-            var width = MeasureItemWidth(item);
-            if (point.X >= x && point.X <= x + width && point.Y <= ItemHeight)
-            {
-                return item;
-            }
-            x += width + ItemPadding;
-        }
-        return null;
-    }
-
     private void OpenSubmenu(MenuItem item)
     {
-        if (!item.HasDropDown)
-        {
-            CloseSubmenu();
-            return;
-        }
-
+        if (!item.HasDropDown) { CloseSubmenu(); return; }
         if (_activeDropDownOwner == item && _activeDropDown != null && _activeDropDown.IsOpen)
-        {
-            CloseSubmenu();
-            return;
-        }
-
+        { CloseSubmenu(); return; }
         CloseSubmenu();
-
         EnsureDropDownHost();
         _activeDropDown.Items.Clear();
-
-        foreach (var child in item.DropDownItems)
-        {
-            _activeDropDown.AddItem(CloneMenuItem(child));
-        }
-
-        _activeDropDown.MenuBackColor = SubmenuBackColor;
-        _activeDropDown.MenuForeColor = MenuForeColor;
-        _activeDropDown.SubmenuBackColor = SubmenuBackColor;
-        _activeDropDown.SeparatorColor = SeparatorColor;
-        _activeDropDown.RoundedCorners = RoundedCorners;
-        _activeDropDown.ItemPadding = ItemPadding;
+        foreach (var child in item.DropDownItems) _activeDropDown.AddItem(CloneMenuItem(child));
+        SyncDropDownAppearance();
 
         var itemBounds = GetItemBounds(item);
-        var screenPoint = PointToScreen(new Point((int)itemBounds.Left, (int)itemBounds.Bottom));
+        Point screenPoint;
+        if (this is ContextMenuStrip)
+        {
+            var rightTop = new Point((int)itemBounds.Right, (int)itemBounds.Top);
+            screenPoint = PointToScreen(rightTop);
+        }
+        else
+        {
+            var leftBottom = new Point((int)itemBounds.Left, (int)itemBounds.Bottom);
+            screenPoint = PointToScreen(leftBottom);
+        }
         _activeDropDownOwner = item;
         _openedItem = item;
-
         _activeDropDown.Show(this, screenPoint);
-
         _isAnimating = true;
         _animationProgress = 0f;
         _animationTimer.Start();
@@ -774,11 +368,7 @@ public class MenuStrip : UIElementBase
 
     private void CloseSubmenu()
     {
-        if (_activeDropDown != null && _activeDropDown.IsOpen)
-        {
-            _activeDropDown.Hide();
-        }
-
+        if (_activeDropDown != null && _activeDropDown.IsOpen) _activeDropDown.Hide();
         _openedItem = null;
         _activeDropDownOwner = null;
         _isAnimating = false;
@@ -788,52 +378,31 @@ public class MenuStrip : UIElementBase
 
     private void EnsureDropDownHost()
     {
-        if (_activeDropDown != null)
-            return;
-
-        _activeDropDown = new ContextMenuStrip
-        {
-            AutoClose = true,
-            RoundedCorners = true,
-            Dock = DockStyle.None
-        };
-
+        if (_activeDropDown != null) return;
+        _activeDropDown = new ContextMenuStrip { AutoClose = true, RoundedCorners = true, Dock = DockStyle.None };
         _activeDropDown.Opening += (_, _) => SyncDropDownAppearance();
-        _activeDropDown.Closing += (_, _) =>
-        {
-            _openedItem = null;
-            _activeDropDownOwner = null;
-            Invalidate();
-        };
+        _activeDropDown.Closing += (_, _) => { _openedItem = null; _activeDropDownOwner = null; Invalidate(); };
     }
 
     private void SyncDropDownAppearance()
     {
-        if (_activeDropDown == null)
-            return;
-
+        if (_activeDropDown == null) return;
         _activeDropDown.MenuBackColor = SubmenuBackColor;
         _activeDropDown.MenuForeColor = MenuForeColor;
         _activeDropDown.SubmenuBackColor = SubmenuBackColor;
         _activeDropDown.SeparatorColor = SeparatorColor;
         _activeDropDown.RoundedCorners = RoundedCorners;
         _activeDropDown.ItemPadding = ItemPadding;
+        _activeDropDown.Orientation = SDUI.Orientation.Vertical;
     }
 
     private MenuItem CloneMenuItem(MenuItem source)
     {
         if (source is MenuItemSeparator separator)
         {
-            var cloneSeparator = new MenuItemSeparator
-            {
-                Height = separator.Height,
-                Margin = separator.Margin,
-                LineColor = separator.LineColor,
-                ShadowColor = separator.ShadowColor
-            };
+            var cloneSeparator = new MenuItemSeparator { Height = separator.Height, Margin = separator.Margin, LineColor = separator.LineColor, ShadowColor = separator.ShadowColor };
             return cloneSeparator;
         }
-
         var clone = new MenuItem
         {
             Text = source.Text,
@@ -851,44 +420,21 @@ public class MenuStrip : UIElementBase
             Tag = source.Tag,
             Checked = source.Checked
         };
-
-        foreach (var child in source.DropDownItems)
-        {
-            clone.AddDropDownItem(CloneMenuItem(child));
-        }
-
-        clone.Click += (_, _) =>
-        {
-            source.OnClick();
-            _activeDropDown?.Hide();
-        };
-
+        foreach (var child in source.DropDownItems) clone.AddDropDownItem(CloneMenuItem(child));
+        clone.Click += (_, _) => { source.OnClick(); _activeDropDown?.Hide(); };
         return clone;
     }
 
-    private SKRoundRect CreateMenuRoundRect(SKRect rect)
+    protected float MeasureItemWidth(MenuItem item)
     {
-        var radius = Math.Max(0f, _cornerRadius);
-        var topRadius = Dock == DockStyle.Top ? 0f : radius;
-        var bottomRadius = Dock == DockStyle.Bottom ? 0f : radius;
-        var leftRadius = Dock == DockStyle.Left ? 0f : radius;
-        var rightRadius = Dock == DockStyle.Right ? 0f : radius;
-
-        var tl = Math.Min(topRadius, leftRadius);
-        var tr = Math.Min(topRadius, rightRadius);
-        var br = Math.Min(bottomRadius, rightRadius);
-        var bl = Math.Min(bottomRadius, leftRadius);
-
-        var roundRect = new SKRoundRect();
-        roundRect.SetRectRadii(rect, new[]
-        {
-            new SKPoint(tl, tl),
-            new SKPoint(tr, tr),
-            new SKPoint(br, br),
-            new SKPoint(bl, bl)
-        });
-
-        return roundRect;
+        if (item is MenuItemSeparator) return 20f;
+        using var paint = new SKPaint { TextSize = Font.Size.PtToPx(this), Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name) };
+        var textBounds = new SKRect();
+        paint.MeasureText(item.Text, ref textBounds);
+        float width = textBounds.Width;
+        if (ShowIcons && item.Icon != null) width += _iconSize + 8;
+        if (ShowSubmenuArrow && item.HasDropDown) width += _submenuArrowSize + 12;
+        return width + 16; // padding
     }
 
     protected override void Dispose(bool disposing)

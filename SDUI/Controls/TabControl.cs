@@ -4,7 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
+using SDUI.Animation;
 
 namespace SDUI.Controls
 {
@@ -13,34 +15,61 @@ namespace SDUI.Controls
         public Size ItemSize { get; set; } = new Size(100, 23);
         private readonly List<TabPage> _pages = new();
         private int _selectedIndex = -1;
+
+        // Colors
         private Color _headerBackColor = Color.FromArgb(240, 240, 240);
         private Color _headerForeColor = Color.FromArgb(68, 68, 68);
         private Color _selectedTabColor = Color.White;
         private Color _selectedTabForeColor = Color.FromArgb(0, 120, 215);
         private Color _borderColor = Color.FromArgb(171, 173, 179);
         private float _borderWidth = 1.0f;
-        private float _cornerRadius = 4.0f;
-        private int _headerHeight = 32;
+
+        // Shape and layout
+        private float _cornerRadius = 8.0f;
+        private int _headerHeight = 40;
+        private int _tabGap = 6;
+        private int _indicatorHeight = 3;
+        private bool _renderNewPageButton = true;
+        private bool _renderPageClose = true;
+        private bool _renderPageIcon = true;
+        private Size _headerControlSize = new Size(20, 20);
+
+        // Close button
         private bool _showCloseButton = true;
         private Color _closeButtonColor = Color.FromArgb(150, 150, 150);
         private Color _closeButtonHoverColor = Color.FromArgb(255, 80, 80);
         private int _hoveredCloseButtonIndex = -1;
+
+        // Hover/drag
         private int _hoveredTabIndex = -1;
         private bool _isDragging;
         private Point _dragStartPoint;
         private int _draggedTabIndex = -1;
-        private Size _headerControlSize = new Size(24, 24);
-        private bool _renderNewPageButton = true;
-        private bool _renderPageClose = true;
-        private bool _renderPageIcon = true;
         private bool _isNewPageButtonHovered;
 
+        // Chrome-like animation
+        private readonly AnimationEngine _selectionAnim;
+        private int _prevSelectedIndex = -1;
+        private double _selectionAnimIncrement = 0.18;
+        private AnimationType _selectionAnimType = AnimationType.EaseInOut;
+        private readonly Dictionary<int, AnimationEngine> _hoverAnims = new();
+        private readonly List<RectangleF> _tabRects = new();
+
         public event EventHandler NewPageButtonClicked;
+        public event EventHandler SelectedIndexChanged;
 
         public TabControl()
         {
-            Size = new Size(400, 300);
-            BackColor = Color.White;
+            Size = new Size(500, 320);
+            BackColor = ColorScheme.BackColor; // tema ile uyumlu
+
+            _selectionAnim = new AnimationEngine(singular: true)
+            {
+                Increment = _selectionAnimIncrement,
+                AnimationType = _selectionAnimType,
+                InterruptAnimation = true
+            };
+            _selectionAnim.OnAnimationProgress += _ => Invalidate();
         }
 
         [Browsable(false)]
@@ -55,171 +84,68 @@ namespace SDUI.Controls
                 if (_selectedIndex == value) return;
                 if (value >= -1 && value < _pages.Count)
                 {
+                    _prevSelectedIndex = _selectedIndex;
                     var oldIndex = _selectedIndex;
                     _selectedIndex = value;
+                    _selectionAnim.SetProgress(0);
+                    _selectionAnim.StartNewAnimation(AnimationDirection.In);
                     OnSelectedIndexChanged(oldIndex, _selectedIndex);
                     Invalidate();
                 }
             }
         }
 
+        // Appearance properties
         [Category("Appearance")]
-        public Color HeaderBackColor
-        {
-            get => _headerBackColor;
-            set
-            {
-                if (_headerBackColor == value) return;
-                _headerBackColor = value;
-                Invalidate();
-            }
-        }
-
+        public Color HeaderBackColor { get => _headerBackColor; set { if (_headerBackColor == value) return; _headerBackColor = value; Invalidate(); } }
         [Category("Appearance")]
-        public Color HeaderForeColor
-        {
-            get => _headerForeColor;
-            set
-            {
-                if (_headerForeColor == value) return;
-                _headerForeColor = value;
-                Invalidate();
-            }
-        }
-
+        public Color HeaderForeColor { get => _headerForeColor; set { if (_headerForeColor == value) return; _headerForeColor = value; Invalidate(); } }
         [Category("Appearance")]
-        public Color SelectedTabColor
-        {
-            get => _selectedTabColor;
-            set
-            {
-                if (_selectedTabColor == value) return;
-                _selectedTabColor = value;
-                Invalidate();
-            }
-        }
-
+        public Color SelectedTabColor { get => _selectedTabColor; set { if (_selectedTabColor == value) return; _selectedTabColor = value; Invalidate(); } }
         [Category("Appearance")]
-        public Color SelectedTabForeColor
-        {
-            get => _selectedTabForeColor;
-            set
-            {
-                if (_selectedTabForeColor == value) return;
-                _selectedTabForeColor = value;
-                Invalidate();
-            }
-        }
-
+        public Color SelectedTabForeColor { get => _selectedTabForeColor; set { if (_selectedTabForeColor == value) return; _selectedTabForeColor = value; Invalidate(); } }
         [Category("Appearance")]
-        public Color BorderColor
-        {
-            get => _borderColor;
-            set
-            {
-                if (_borderColor == value) return;
-                _borderColor = value;
-                Invalidate();
-            }
-        }
-
+        public Color BorderColor { get => _borderColor; set { if (_borderColor == value) return; _borderColor = value; Invalidate(); } }
         [Category("Appearance")]
-        public float BorderWidth
-        {
-            get => _borderWidth;
-            set
-            {
-                if (_borderWidth == value) return;
-                _borderWidth = value;
-                Invalidate();
-            }
-        }
-
+        public float BorderWidth { get => _borderWidth; set { if (_borderWidth == value) return; _borderWidth = value; Invalidate(); } }
         [Category("Appearance")]
-        public float CornerRadius
-        {
-            get => _cornerRadius;
-            set
-            {
-                if (_cornerRadius == value) return;
-                _cornerRadius = value;
-                Invalidate();
-            }
-        }
-
+        public float CornerRadius { get => _cornerRadius; set { if (_cornerRadius == value) return; _cornerRadius = value; Invalidate(); } }
         [Category("Appearance")]
-        public int HeaderHeight
-        {
-            get => _headerHeight;
-            set
-            {
-                if (_headerHeight == value) return;
-                _headerHeight = value;
-                Invalidate();
-            }
-        }
+        public int HeaderHeight { get => _headerHeight; set { if (_headerHeight == value) return; _headerHeight = value; Invalidate(); } }
+        [Category("Appearance")]
+        public int TabGap { get => _tabGap; set { if (_tabGap == value) return; _tabGap = Math.Max(0, value); Invalidate(); } }
+        [Category("Appearance")]
+        public int IndicatorHeight { get => _indicatorHeight; set { if (_indicatorHeight == value) return; _indicatorHeight = Math.Max(1, value); Invalidate(); } }
+        [Category("Appearance")]
+        public Size HeaderControlSize { get => _headerControlSize; set { if (_headerControlSize == value) return; _headerControlSize = value; Invalidate(); } }
 
+        // Behavior
         [Category("Behavior")]
-        public bool ShowCloseButton
-        {
-            get => _showCloseButton;
-            set
-            {
-                if (_showCloseButton == value) return;
-                _showCloseButton = value;
-                Invalidate();
-            }
-        }
-
-        [Category("Appearance")]
-        public Size HeaderControlSize
-        {
-            get => _headerControlSize;
-            set
-            {
-                if (_headerControlSize == value) return;
-                _headerControlSize = value;
-                Invalidate();
-            }
-        }
-
+        public bool ShowCloseButton { get => _showCloseButton; set { if (_showCloseButton == value) return; _showCloseButton = value; Invalidate(); } }
         [Category("Behavior")]
         [DefaultValue(true)]
-        public bool RenderNewPageButton
-        {
-            get => _renderNewPageButton;
-            set
-            {
-                if (_renderNewPageButton == value) return;
-                _renderNewPageButton = value;
-                Invalidate();
-            }
-        }
-
+        public bool RenderNewPageButton { get => _renderNewPageButton; set { if (_renderNewPageButton == value) return; _renderNewPageButton = value; Invalidate(); } }
         [Category("Behavior")]
         [DefaultValue(true)]
-        public bool RenderPageClose
-        {
-            get => _renderPageClose;
-            set
-            {
-                if (_renderPageClose == value) return;
-                _renderPageClose = value;
-                Invalidate();
-            }
-        }
-
+        public bool RenderPageClose { get => _renderPageClose; set { if (_renderPageClose == value) return; _renderPageClose = value; Invalidate(); } }
         [Category("Behavior")]
         [DefaultValue(true)]
-        public bool RenderPageIcon
+        public bool RenderPageIcon { get => _renderPageIcon; set { if (_renderPageIcon == value) return; _renderPageIcon = value; Invalidate(); } }
+
+        // Animation properties
+        [Category("Animation")]
+        [DefaultValue(0.18)]
+        public double SelectionAnimationIncrement
         {
-            get => _renderPageIcon;
-            set
-            {
-                if (_renderPageIcon == value) return;
-                _renderPageIcon = value;
-                Invalidate();
-            }
+            get => _selectionAnimIncrement;
+            set { _selectionAnimIncrement = Math.Clamp(value, 0.01, 1.0); _selectionAnim.Increment = _selectionAnimIncrement; }
+        }
+        [Category("Animation")]
+        [DefaultValue(typeof(AnimationType), "EaseInOut")]
+        public AnimationType SelectionAnimationType
+        {
+            get => _selectionAnimType;
+            set { _selectionAnimType = value; _selectionAnim.AnimationType = _selectionAnimType; }
         }
 
         public void AddPage(TabPage page)
@@ -228,6 +154,7 @@ namespace SDUI.Controls
 
             _pages.Add(page);
             page.Parent = this;
+            EnsureHoverAnim(_pages.Count - 1);
 
             if (_selectedIndex == -1)
                 SelectedIndex = 0;
@@ -244,6 +171,8 @@ namespace SDUI.Controls
             {
                 _pages.RemoveAt(index);
                 page.Parent = null;
+                if (_hoverAnims.ContainsKey(index))
+                    _hoverAnims.Remove(index);
 
                 if (_selectedIndex >= _pages.Count)
                     SelectedIndex = _pages.Count - 1;
@@ -263,6 +192,37 @@ namespace SDUI.Controls
             RemovePage(page);
         }
 
+        private void EnsureHoverAnim(int index)
+        {
+            if (!_hoverAnims.ContainsKey(index))
+            {
+                var ae = new AnimationEngine(singular: true)
+                {
+                    Increment = 0.2,
+                    AnimationType = AnimationType.EaseInOut,
+                    InterruptAnimation = true
+                };
+                ae.OnAnimationProgress += _ => Invalidate();
+                _hoverAnims[index] = ae;
+            }
+        }
+
+        private void UpdateTabRects(SKPaint measurePaint)
+        {
+            _tabRects.Clear();
+            float x = _borderWidth;
+            for (int i = 0; i < _pages.Count; i++)
+            {
+                var page = _pages[i];
+                var textWidth = measurePaint.MeasureText(page.Text);
+                float tabWidth = 16 + textWidth + 16; // padding
+                if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
+                if (RenderPageClose) tabWidth += HeaderControlSize.Width;
+                _tabRects.Add(new RectangleF(x, 0, tabWidth, HeaderHeight));
+                x += tabWidth + _tabGap;
+            }
+        }
+
         public override void OnPaint(SKPaintSurfaceEventArgs e)
         {
             base.OnPaint(e);
@@ -270,229 +230,132 @@ namespace SDUI.Controls
             var canvas = e.Surface.Canvas;
             var bounds = ClientRectangle;
 
-            // Arka plan
-            using (var paint = new SKPaint
+            using var fontPaint = new SKPaint
             {
-                Color = BackColor.ToSKColor(),
-                IsAntialias = true
-            })
+                TextSize = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                IsAntialias = true,
+                SubpixelText = true
+            };
+
+            UpdateTabRects(fontPaint);
+
+            // Header background
+            using (var headerPaint = new SKPaint { Color = HeaderBackColor.ToSKColor(), IsAntialias = true })
             {
-                canvas.DrawRoundRect(
-                    new SKRect(0, 0, bounds.Width, bounds.Height),
-                    CornerRadius, CornerRadius, paint);
+                canvas.DrawRect(new SKRect(0, 0, bounds.Width, HeaderHeight), headerPaint);
             }
 
-            // Header arka planı
-            using (var paint = new SKPaint
-            {
-                Color = HeaderBackColor.ToSKColor(),
-                IsAntialias = true
-            })
-            {
-                canvas.DrawRoundRect(
-                    new SKRect(0, 0, bounds.Width, HeaderHeight),
-                    CornerRadius, CornerRadius, paint);
-            }
-
-            // Sekmeleri çiz
-            var tabX = BorderWidth;
+            // Draw tabs
             for (int i = 0; i < _pages.Count; i++)
             {
-                var page = _pages[i];
+                EnsureHoverAnim(i);
+                var rect = _tabRects[i];
                 var isSelected = i == _selectedIndex;
                 var isHovered = i == _hoveredTabIndex;
 
-                using (var paint = new SKPaint
+                if (isHovered)
+                    _hoverAnims[i].StartNewAnimation(AnimationDirection.In);
+                else
+                    _hoverAnims[i].StartNewAnimation(AnimationDirection.Out);
+
+                var hoverProgress = (float)_hoverAnims[i].GetProgress();
+
+                // Background (Chrome-like: pill with top rounding)
+                using (var bgPaint = new SKPaint { IsAntialias = true })
                 {
+                    var baseColor = isSelected ? SelectedTabColor : HeaderBackColor;
+                    var hoverColor = baseColor.BlendWith(ColorScheme.ForeColor, isSelected ? 0.05f : 0.12f);
+                    var color = baseColor.BlendWith(hoverColor, hoverProgress);
+                    bgPaint.Color = color.ToSKColor();
+
+                    var r = new SKRect(rect.X, rect.Y + 4, rect.Right, rect.Bottom - 2);
+                    canvas.DrawRoundRect(r, CornerRadius, CornerRadius, bgPaint);
+                }
+
+                // Text
+                using (var textPaint = new SKPaint
+                {
+                    Color = (isSelected ? SelectedTabForeColor : HeaderForeColor).ToSKColor(),
                     TextSize = Font.Size.PtToPx(this),
                     Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                    IsAntialias = true
-                })
-                {
-                    // Tab genişliğini hesapla
-                    var tabWidth = paint.MeasureText(page.Text) + 20;
-                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
-                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
-
-                    // Tab arka planı
-                    using (var bgPaint = new SKPaint
-                    {
-                        Color = isSelected ? SelectedTabColor.ToSKColor() :
-                               isHovered ? Color.FromArgb(250, 250, 250).ToSKColor() :
-                               HeaderBackColor.ToSKColor(),
-                        IsAntialias = true
-                    })
-                    {
-                        var tabRect = new SKRect(tabX, 0, tabX + tabWidth, HeaderHeight);
-                        canvas.DrawRoundRect(tabRect, CornerRadius, CornerRadius, bgPaint);
-                    }
-
-                    float textX = tabX + 10;
-
-                    // Sayfa ikonu
-                    if (RenderPageIcon)
-                    {
-                        var iconY = (HeaderHeight - HeaderControlSize.Height) / 2;
-                        // Burada sayfa ikonu çizimi yapılabilir
-                        textX += HeaderControlSize.Width;
-                    }
-
-                    // Tab başlığı
-                    paint.Color = isSelected ? SelectedTabForeColor.ToSKColor() : HeaderForeColor.ToSKColor();
-                    var textY = (HeaderHeight + paint.TextSize) / 2;
-                    canvas.DrawText(page.Text, textX, textY, paint);
-
-                    // Kapatma düğmesi
-                    if (RenderPageClose)
-                    {
-                        var closeButtonX = tabX + tabWidth - HeaderControlSize.Width;
-                        var closeButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
-                        var isCloseHovered = i == _hoveredCloseButtonIndex;
-
-                        using (var closePaint = new SKPaint
-                        {
-                            Color = isCloseHovered ? _closeButtonHoverColor.ToSKColor() : _closeButtonColor.ToSKColor(),
-                            IsAntialias = true,
-                            StrokeWidth = 2
-                        })
-                        {
-                            canvas.DrawLine(
-                                closeButtonX + 8, closeButtonY + 8,
-                                closeButtonX + HeaderControlSize.Width - 8, closeButtonY + HeaderControlSize.Height - 8,
-                                closePaint);
-                            canvas.DrawLine(
-                                closeButtonX + HeaderControlSize.Width - 8, closeButtonY + 8,
-                                closeButtonX + 8, closeButtonY + HeaderControlSize.Height - 8,
-                                closePaint);
-                        }
-                    }
-
-                    tabX += tabWidth;
-                }
-            }
-
-            // Yeni sayfa düğmesi
-            if (RenderNewPageButton)
-            {
-                var newPageButtonX = tabX + 5;
-                var newPageButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
-
-                using (var paint = new SKPaint
-                {
-                    Color = _isNewPageButtonHovered ? SelectedTabForeColor.ToSKColor() : HeaderForeColor.ToSKColor(),
                     IsAntialias = true,
-                    StrokeWidth = 2
+                    SubpixelText = true
                 })
                 {
-                    // + işareti çiz
-                    var centerX = newPageButtonX + HeaderControlSize.Width / 2;
-                    var centerY = newPageButtonY + HeaderControlSize.Height / 2;
-                    canvas.DrawLine(
-                        centerX - 6, centerY,
-                        centerX + 6, centerY,
-                        paint);
-                    canvas.DrawLine(
-                        centerX, centerY - 6,
-                        centerX, centerY + 6,
-                        paint);
+                    float textX = rect.X + 16 + (RenderPageIcon ? HeaderControlSize.Width : 0);
+                    float textY = rect.Y + HeaderHeight / 2f + textPaint.FontMetrics.CapHeight / 2f;
+                    canvas.DrawText(_pages[i].Text, textX, textY, textPaint);
+                }
+
+                // Close button
+                if (RenderPageClose)
+                {
+                    float midY = rect.Y + rect.Height / 2f;
+                    var closeRect = new SKRect(rect.Right - HeaderControlSize.Width - 8, midY - HeaderControlSize.Height / 2f, rect.Right - 8, midY + HeaderControlSize.Height / 2f);
+                    var isCloseHovered = i == _hoveredCloseButtonIndex;
+                    using var linePaint = new SKPaint { Color = (isCloseHovered ? _closeButtonHoverColor : _closeButtonColor).ToSKColor(), StrokeWidth = 2, IsAntialias = true };
+                    canvas.DrawLine(closeRect.Left + 6, closeRect.Top + 6, closeRect.Right - 6, closeRect.Bottom - 6, linePaint);
+                    canvas.DrawLine(closeRect.Right - 6, closeRect.Top + 6, closeRect.Left + 6, closeRect.Bottom - 6, linePaint);
                 }
             }
 
-            // Alt çizgi
-            using (var paint = new SKPaint
+            // Indicator animation
+            if (_selectedIndex >= 0 && _selectedIndex < _tabRects.Count)
             {
-                Color = BorderColor.ToSKColor(),
-                IsAntialias = true,
-                IsStroke = true,
-                StrokeWidth = BorderWidth
-            })
-            {
-                canvas.DrawLine(
-                    0, HeaderHeight,
-                    bounds.Width, HeaderHeight,
-                    paint);
+                var progress = (float)_selectionAnim.GetProgress();
+                int prev = _prevSelectedIndex;
+                if (prev < 0 || prev >= _tabRects.Count) prev = _selectedIndex;
+                var fromRect = _tabRects[prev];
+                var toRect = _tabRects[_selectedIndex];
+
+                float x = fromRect.X + (toRect.X - fromRect.X) * progress;
+                float w = fromRect.Width + (toRect.Width - fromRect.Width) * progress;
+                using var indPaint = new SKPaint { Color = SelectedTabForeColor.ToSKColor(), IsAntialias = true };
+                canvas.DrawRect(new SKRect(x + 12, HeaderHeight - IndicatorHeight, x + w - 12, HeaderHeight), indPaint);
             }
 
-            // Seçili sayfayı çiz
-            if (SelectedPage != null)
+            // Bottom border
+            using (var paint = new SKPaint { Color = BorderColor.ToSKColor(), IsAntialias = true, StrokeWidth = BorderWidth })
             {
-                var pageRect = new SKRect(
-                    0, HeaderHeight,
-                    bounds.Width, bounds.Height);
-
-                using var surface = SKSurface.Create(e.Info);
-                SelectedPage.OnPaint(new SKPaintSurfaceEventArgs(surface, new SKImageInfo(
-                    (int)pageRect.Width,
-                    (int)pageRect.Height)));
-
-                var pageImage = surface.Snapshot();
-                canvas.DrawImage(pageImage, pageRect.Left, pageRect.Top);
+                canvas.DrawLine(0, HeaderHeight - 0.5f, bounds.Width, HeaderHeight - 0.5f, paint);
             }
+
+            // Page content area is rendered by parent layout; keep header only.
         }
 
         internal override void OnMouseMove(System.Windows.Forms.MouseEventArgs e)
         {
             base.OnMouseMove(e);
 
-            // İçerik alanında (header altında) bir click ise, seçili sayfaya ilet
-            if (e.Y >= HeaderHeight && SelectedPage != null && SelectedPage.Visible)
-            {
-                var pageEvent = new System.Windows.Forms.MouseEventArgs(e.Button, e.Clicks, e.X, e.Y - HeaderHeight, e.Delta);
-                SelectedPage.OnMouseMove(pageEvent);
-                return;
-            }
-
-            var oldNewPageButtonHovered = _isNewPageButtonHovered;
+            // Header interactions only
+            var oldNew = _isNewPageButtonHovered;
+            _hoveredTabIndex = GetTabIndexAtPoint(e.Location);
+            _hoveredCloseButtonIndex = GetCloseButtonIndexAtPoint(e.Location);
             _isNewPageButtonHovered = IsPointInNewPageButton(e.Location);
 
             if (_isDragging && _draggedTabIndex >= 0)
             {
-                // Sürükleme işlemi
-                var dragDistance = e.X - _dragStartPoint.X;
-                if (Math.Abs(dragDistance) > 10)
+                var targetIndex = GetTabIndexAtPoint(e.Location);
+                if (targetIndex >= 0 && targetIndex != _draggedTabIndex)
                 {
-                    var targetIndex = GetTabIndexAtPoint(e.Location);
-                    if (targetIndex >= 0 && targetIndex != _draggedTabIndex)
-                    {
-                        var page = _pages[_draggedTabIndex];
-                        _pages.RemoveAt(_draggedTabIndex);
-                        _pages.Insert(targetIndex, page);
-                        _draggedTabIndex = targetIndex;
-                        if (_selectedIndex == _draggedTabIndex)
-                            _selectedIndex = targetIndex;
-                        Invalidate();
-                    }
-                }
-            }
-            else
-            {
-                // Hover efektleri
-                var oldHoverTab = _hoveredTabIndex;
-                var oldHoverClose = _hoveredCloseButtonIndex;
-
-                _hoveredTabIndex = GetTabIndexAtPoint(e.Location);
-                _hoveredCloseButtonIndex = GetCloseButtonIndexAtPoint(e.Location);
-
-                if (oldHoverTab != _hoveredTabIndex ||
-                    oldHoverClose != _hoveredCloseButtonIndex ||
-                    oldNewPageButtonHovered != _isNewPageButtonHovered)
-                {
+                    var page = _pages[_draggedTabIndex];
+                    _pages.RemoveAt(_draggedTabIndex);
+                    _pages.Insert(targetIndex, page);
+                    _draggedTabIndex = targetIndex;
+                    if (_selectedIndex == _draggedTabIndex)
+                        _selectedIndex = targetIndex;
                     Invalidate();
                 }
             }
+
+            if (oldNew != _isNewPageButtonHovered)
+                Invalidate();
         }
 
         internal override void OnMouseDown(System.Windows.Forms.MouseEventArgs e)
         {
             base.OnMouseDown(e);
-
-            // İçerik alanında (header altında) bir click ise, seçili sayfaya ilet
-            if (e.Y >= HeaderHeight && SelectedPage != null && SelectedPage.Visible)
-            {
-                var pageEvent = new System.Windows.Forms.MouseEventArgs(e.Button, e.Clicks, e.X, e.Y - HeaderHeight, e.Delta);
-                SelectedPage.OnMouseDown(pageEvent);
-                return;
-            }
 
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
@@ -510,16 +373,6 @@ namespace SDUI.Controls
         internal override void OnMouseUp(System.Windows.Forms.MouseEventArgs e)
         {
             base.OnMouseUp(e);
-
-            // İçerik alanında (header altında) bir click ise, seçili sayfaya ilet
-            if (e.Y >= HeaderHeight && SelectedPage != null && SelectedPage.Visible)
-            {
-                var pageEvent = new System.Windows.Forms.MouseEventArgs(e.Button, e.Clicks, e.X, e.Y - HeaderHeight, e.Delta);
-                SelectedPage.OnMouseUp(pageEvent);
-                _isDragging = false;
-                _draggedTabIndex = -1;
-                return;
-            }
 
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
@@ -540,10 +393,6 @@ namespace SDUI.Controls
         internal override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
-
-            if (SelectedPage != null)
-                SelectedPage.OnMouseLeave(e);
-
             _hoveredTabIndex = -1;
             _hoveredCloseButtonIndex = -1;
             _isNewPageButtonHovered = false;
@@ -553,90 +402,33 @@ namespace SDUI.Controls
         private int GetTabIndexAtPoint(Point point)
         {
             if (point.Y > HeaderHeight) return -1;
-
-            var x = BorderWidth;
-            for (int i = 0; i < _pages.Count; i++)
+            for (int i = 0; i < _tabRects.Count; i++)
             {
-                using (var paint = new SKPaint
-                {
-                    TextSize = Font.Size.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
-                })
-                {
-                    var tabWidth = paint.MeasureText(_pages[i].Text) + 20;
-                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
-                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
-
-                    if (point.X >= x && point.X < x + tabWidth)
-                        return i;
-
-                    x += tabWidth;
-                }
+                if (_tabRects[i].Contains(point))
+                    return i;
             }
-
             return -1;
         }
 
         private int GetCloseButtonIndexAtPoint(Point point)
         {
             if (!RenderPageClose || point.Y > HeaderHeight) return -1;
-
-            var x = BorderWidth;
-            for (int i = 0; i < _pages.Count; i++)
+            for (int i = 0; i < _tabRects.Count; i++)
             {
-                using (var paint = new SKPaint
-                {
-                    TextSize = Font.Size.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
-                })
-                {
-                    var tabWidth = paint.MeasureText(_pages[i].Text) + 20;
-                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
-                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
-
-                    var closeButtonX = x + tabWidth - HeaderControlSize.Width;
-                    var closeButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
-
-                    if (point.X >= closeButtonX && point.X <= closeButtonX + HeaderControlSize.Width &&
-                        point.Y >= closeButtonY && point.Y <= closeButtonY + HeaderControlSize.Height)
-                        return i;
-
-                    x += tabWidth;
-                }
+                var rect = _tabRects[i];
+                var closeRect = new RectangleF(rect.Right - HeaderControlSize.Width - 8, rect.Y + (HeaderHeight - HeaderControlSize.Height) / 2f, HeaderControlSize.Width, HeaderControlSize.Height);
+                if (closeRect.Contains(point)) return i;
             }
-
             return -1;
         }
 
         private bool IsPointInNewPageButton(Point point)
         {
             if (!RenderNewPageButton || point.Y > HeaderHeight) return false;
-
-            var x = BorderWidth;
-            foreach (var page in _pages)
-            {
-                using (var paint = new SKPaint
-                {
-                    TextSize = Font.Size.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
-                })
-                {
-                    var tabWidth = paint.MeasureText(page.Text) + 20;
-                    if (RenderPageIcon) tabWidth += HeaderControlSize.Width;
-                    if (RenderPageClose) tabWidth += HeaderControlSize.Width;
-                    x += tabWidth;
-                }
-            }
-
-            var newPageButtonX = x + 5;
-            var newPageButtonY = (HeaderHeight - HeaderControlSize.Height) / 2;
-            var buttonRect = new Rectangle(
-                (int)newPageButtonX,
-                (int)newPageButtonY,
-                HeaderControlSize.Width,
-                HeaderControlSize.Height);
-
-            return buttonRect.Contains(point);
+            if (_tabRects.Count == 0) return false;
+            var last = _tabRects.Last();
+            var btnRect = new RectangleF(last.Right + 8, (HeaderHeight - HeaderControlSize.Height) / 2f, HeaderControlSize.Width, HeaderControlSize.Height);
+            return btnRect.Contains(point);
         }
 
         protected virtual void OnSelectedIndexChanged(int oldIndex, int newIndex)
@@ -649,8 +441,6 @@ namespace SDUI.Controls
 
             SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
         }
-
-        public event EventHandler SelectedIndexChanged;
     }
 
     public class TabPage : UIElementBase
@@ -667,20 +457,13 @@ namespace SDUI.Controls
             {
                 if (_title == value) return;
                 _title = value;
-                if (Parent is MultiPageControl mpc)
-                    mpc.Invalidate();
+                if (Parent is TabControl tc)
+                    tc.Invalidate();
             }
         }
 
-        internal virtual void OnSelected()
-        {
-            Selected?.Invoke(this, EventArgs.Empty);
-        }
-
-        internal virtual void OnDeselected()
-        {
-            Deselected?.Invoke(this, EventArgs.Empty);
-        }
+        internal virtual void OnSelected() => Selected?.Invoke(this, EventArgs.Empty);
+        internal virtual void OnDeselected() => Deselected?.Invoke(this, EventArgs.Empty);
 
         public event EventHandler Selected;
         public event EventHandler Deselected;

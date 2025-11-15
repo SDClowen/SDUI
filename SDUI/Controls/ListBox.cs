@@ -41,7 +41,7 @@ namespace SDUI.Controls
                 SmallChange = 1,
                 LargeChange = 5,
                 Visible = false,
-                Orientation = ScrollOrientation.Vertical
+                Orientation = Orientation.Vertical
             };
 
             _horizontalScrollBar = new ScrollBar
@@ -52,7 +52,7 @@ namespace SDUI.Controls
                 SmallChange = 10,
                 LargeChange = 50,
                 Visible = false,
-                Orientation = ScrollOrientation.Horizontal
+                Orientation = Orientation.Horizontal
             };
 
             _verticalScrollBar.ValueChanged += OnVerticalScrollValueChanged;

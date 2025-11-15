@@ -1,11 +1,9 @@
 ﻿using SDUI.Controls;
 using System;
-using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace SDUI.Demo
 {
-    [ToolboxItem(false)]
     public partial class MultiPageControlTestPage : SDUI.Controls.Panel
     {
         private Type[] _types = { typeof(GeneralPage), typeof(ListViewPage), typeof(ConfigPage) };

@@ -762,7 +762,7 @@ public class UIWindow : UIWindowBase, IUIElement
         if (element?.Parent == null)
             return new Rectangle(element?.Location ?? Point.Empty, element?.Size ?? Size.Empty);
 
-        if (element.Parent is UIWindowBase window)
+        if (element.Parent is UIWindowBase window && !window.IsDisposed)
         {
             var screenLoc = element.PointToScreen(Point.Empty);
             var clientLoc = window.PointToClient(screenLoc);

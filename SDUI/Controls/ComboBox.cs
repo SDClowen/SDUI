@@ -12,99 +12,168 @@ namespace SDUI.Controls;
 
 public class ComboBox : UIElementBase
 {
-    private class DropDownMenu : UIElementBase
+    #region Inner Classes
+
+    private class DropDownPanel : UIElementBase
     {
         private readonly ComboBox _owner;
-        private int _hoverIndex = -1;
-        private readonly AnimationEngine _animation;
-        private float _currentHeight;
-        private float _targetHeight;
-        private float _hoverY;
-        private float _targetHoverY;
-        private readonly AnimationEngine _hoverAnimation;
+        private int _hoveredIndex = -1;
+        private int _selectedIndex = -1;
+        private ScrollBar _scrollBar;
+        private int _scrollOffset = 0;
+        private int _visibleItemCount;
+        private readonly AnimationEngine _openAnimation = new AnimationEngine(singular: true)
+        {
+            Increment = 0.16,
+            AnimationType = AnimationType.EaseOut,
+            InterruptAnimation = true
+        };
+        private bool _isClosing;
+        private bool _openingUpwards;
 
-        private const int ITEM_HEIGHT = 32;
-        private const int ITEM_PADDING = 8;
-        private const int VERTICAL_PADDING = 8;
-        private const float CORNER_RADIUS = 8;
-        private const int SHADOW_OFFSET = 6;
-        private const int SHADOW_BLUR = 16;
+        // Per-item hover animasyonları
+        private readonly Dictionary<int, AnimationEngine> _itemHoverAnims = new();
 
-        public DropDownMenu(ComboBox owner)
+        // macOS benzeri daha sıkı boşluklar
+        private const int VERTICAL_PADDING = 6;
+        private const int H_PADDING_LEFT = 10;
+        private const int H_PADDING_RIGHT = 10;
+        private const float CORNER_RADIUS = 8f;
+        private const int SCROLL_BAR_WIDTH = 14;
+
+        public DropDownPanel(ComboBox owner)
         {
             _owner = owner;
             BackColor = Color.Transparent;
-            Dock = DockStyle.None;
-            Anchor = AnchorStyles.Top | AnchorStyles.Left;
-            AutoSize = false;
+            Visible = false;
             TabStop = false;
 
-            _animation = new AnimationEngine(singular: true)
+            _scrollBar = new ScrollBar
             {
-            Increment = 0.18,
-            SecondaryIncrement = 0.14,
-            AnimationType = AnimationType.CustomQuadratic,
-                InterruptAnimation = true
+                Orientation = SDUI.Orientation.Vertical,
+                Visible = false,
+                Minimum = 0,
+                Maximum = 0,
+                Value = 0,
+                SmallChange = 1,
+                LargeChange = 3,
+                Thickness = 6,
+                Radius = 6,
+                AutoHide = true
             };
-            _animation.OnAnimationProgress += (s) =>
-            {
-                var progress = (float)_animation.GetProgress();
-                _currentHeight = _currentHeight + (_targetHeight - _currentHeight) * progress;
-                Height = (int)_currentHeight;
+            _scrollBar.ValueChanged += ScrollBar_ValueChanged;
+            Controls.Add(_scrollBar);
 
-                if (Height <= 0 && _animation.GetDirection() == AnimationDirection.Out)
+            _openAnimation.OnAnimationProgress += _ =>
+            {
+                Invalidate();
+                var p = _openAnimation.GetProgress();
+                if (_isClosing && p <= 0.001)
+                    Hide();
+            };
+        }
+
+        private int ItemHeight => Math.Max(22, _owner.ItemHeight);
+
+        private void ScrollBar_ValueChanged(object sender, EventArgs e)
+        {
+            _scrollOffset = _scrollBar.Value;
+            Invalidate();
+        }
+
+        private AnimationEngine EnsureItemAnim(int index)
+        {
+            if (!_itemHoverAnims.TryGetValue(index, out var ae))
+            {
+                ae = new AnimationEngine(singular: true)
                 {
-                    Visible = false;
-                    _owner.DroppedDown = false;
-                    Parent?.Controls?.Remove(this);
-                }
+                    Increment = 0.22,
+                    AnimationType = AnimationType.EaseInOut,
+                    InterruptAnimation = true
+                };
+                ae.OnAnimationProgress += _ => Invalidate();
+                _itemHoverAnims[index] = ae;
+            }
+            return ae;
+        }
 
-                Invalidate();
-            };
+        public void ShowItems()
+        {
+            _hoveredIndex = -1;
+            _selectedIndex = _owner.SelectedIndex;
 
-            _hoverAnimation = new AnimationEngine(singular: true)
+            int totalItems = _owner.Items.Count;
+            int maxVisibleItems = Math.Max(1, (Height - 2 * VERTICAL_PADDING) / ItemHeight);
+            _visibleItemCount = Math.Min(totalItems, maxVisibleItems);
+
+            bool needsScrollBar = totalItems > maxVisibleItems;
+            _scrollBar.Visible = needsScrollBar;
+
+            if (needsScrollBar)
             {
-            Increment = 0.26,
-            SecondaryIncrement = 0.2,
-            AnimationType = AnimationType.CustomQuadratic,
-                InterruptAnimation = true
-            };
-            _hoverAnimation.OnAnimationProgress += (s) =>
-            {
-                var progress = (float)_hoverAnimation.GetProgress();
-                _hoverY = _hoverY + (_targetHoverY - _hoverY) * progress;
-                Invalidate();
-            };
+                _scrollBar.Location = new Point(Width - SCROLL_BAR_WIDTH - 2, VERTICAL_PADDING);
+                _scrollBar.Size = new Size(SCROLL_BAR_WIDTH, Height - 2 * VERTICAL_PADDING);
+                _scrollBar.Maximum = Math.Max(0, totalItems - maxVisibleItems);
+                _scrollBar.LargeChange = maxVisibleItems;
+            }
+
+            _scrollOffset = 0;
+            _scrollBar.Value = 0;
+
+            Invalidate();
+        }
+
+        public void BeginOpen(bool openUpwards)
+        {
+            _openingUpwards = openUpwards;
+            _isClosing = false;
+            ShowItems();
+            Visible = true;
+            _openAnimation.StartNewAnimation(AnimationDirection.In);
+        }
+
+        public void BeginClose()
+        {
+            if (!Visible) return;
+            _isClosing = true;
+            _openAnimation.StartNewAnimation(AnimationDirection.Out);
         }
 
         internal override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
 
-            var newHoverIndex = GetItemIndexAtPoint(e.Location);
-            if (newHoverIndex >= 0 && newHoverIndex < _owner.Items.Count)
+            int newIndex = GetItemIndexAtPoint(e.Location);
+            if (newIndex != _hoveredIndex)
             {
-                if (newHoverIndex != _hoverIndex)
-                {
-                    _hoverIndex = newHoverIndex;
-                    _targetHoverY = VERTICAL_PADDING + (_hoverIndex * ITEM_HEIGHT);
-                    _hoverAnimation.StartNewAnimation(AnimationDirection.In);
-                }
+                if (_hoveredIndex >= 0)
+                    EnsureItemAnim(_hoveredIndex).StartNewAnimation(AnimationDirection.Out);
+
+                _hoveredIndex = newIndex;
+                if (_hoveredIndex >= 0)
+                    EnsureItemAnim(_hoveredIndex).StartNewAnimation(AnimationDirection.In);
+
+                Invalidate();
             }
-            else
-            {
-                _hoverIndex = -1;
-                _hoverAnimation.StartNewAnimation(AnimationDirection.Out);
-            }
-            Invalidate();
         }
 
         internal override void OnMouseLeave(EventArgs e)
         {
             base.OnMouseLeave(e);
-            _hoverIndex = -1;
-            _hoverAnimation.StartNewAnimation(AnimationDirection.Out);
+            if (_hoveredIndex >= 0)
+                EnsureItemAnim(_hoveredIndex).StartNewAnimation(AnimationDirection.Out);
+            _hoveredIndex = -1;
             Invalidate();
+        }
+
+        internal override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            if (!_scrollBar.Visible) return;
+            int delta = e.Delta > 0 ? -1 : 1;
+            int newValue = _scrollBar.Value + delta;
+            newValue = Math.Max(_scrollBar.Minimum, Math.Min(_scrollBar.Maximum, newValue));
+            _scrollBar.Value = newValue;
         }
 
         internal override void OnMouseDown(MouseEventArgs e)
@@ -112,143 +181,26 @@ public class ComboBox : UIElementBase
             base.OnMouseDown(e);
             if (e.Button == MouseButtons.Left)
             {
-                var itemIndex = GetItemIndexAtPoint(e.Location);
+                int itemIndex = GetItemIndexAtPoint(e.Location);
                 if (itemIndex >= 0 && itemIndex < _owner.Items.Count)
                 {
                     _owner.SelectedIndex = itemIndex;
                     _owner.OnSelectionChangeCommitted(EventArgs.Empty);
-                    BeginClose();
+                    Hide();
                 }
             }
         }
 
-        public override void OnPaint(SKPaintSurfaceEventArgs e)
+        public new void Hide()
         {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear();
-
-            if (Height <= 0) return;
-
-            // Gölge
-            using (var shadowPaint = new SKPaint
-            {
-                Color = SKColors.Black.WithAlpha(100),
-                ImageFilter = SKImageFilter.CreateDropShadow(0, SHADOW_OFFSET, SHADOW_BLUR, SHADOW_BLUR, SKColors.Black.WithAlpha(180)),
-                IsAntialias = true
-            })
-            {
-                var shadowRect = new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS);
-                canvas.DrawRoundRect(shadowRect, shadowPaint);
-            }
-
-            // Arka plan
-            using (var paint = new SKPaint
-            {
-                Color = ColorScheme.BackColor.ToSKColor(),
-                IsAntialias = true
-            })
-            {
-                var rect = new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS);
-                canvas.DrawRoundRect(rect, paint);
-            }
-
-            // Hover efekti
-            if (_hoverIndex >= 0 && _hoverAnimation.GetProgress() > 0)
-            {
-                using var hoverPaint = new SKPaint
-                {
-                    Color = ColorScheme.AccentColor.Alpha(30).ToSKColor(),
-                    IsAntialias = true
-                };
-                var hoverRect = new SKRoundRect(
-                    new SKRect(ITEM_PADDING, _hoverY, Width - ITEM_PADDING, _hoverY + ITEM_HEIGHT), 6);
-                canvas.DrawRoundRect(hoverRect, hoverPaint);
-            }
-
-            // Öğeleri çiz
-            using var textPaint = new SKPaint
-            {
-                Color = ColorScheme.ForeColor.ToSKColor(),
-                TextSize = _owner.Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(_owner.Font.FontFamily.Name),
-                IsAntialias = true,
-                SubpixelText = true
-            };
-
-            float y = VERTICAL_PADDING;
-            for (int i = 0; i < _owner.Items.Count; i++)
-            {
-                var itemRect = new SKRect(ITEM_PADDING, y, Width - ITEM_PADDING, y + ITEM_HEIGHT);
-
-                // Seçili öğe için arka plan
-                if (i == _owner.SelectedIndex)
-                {
-                    using var selectedPaint = new SKPaint
-                    {
-                        Color = ColorScheme.AccentColor.Alpha(50).ToSKColor(),
-                        IsAntialias = true
-                    };
-                    var selectedRect = new SKRoundRect(itemRect, 6);
-                    canvas.DrawRoundRect(selectedRect, selectedPaint);
-                }
-
-                var text = _owner.GetItemText(_owner.Items[i]);
-
-                // Metin rengi ayarla
-                textPaint.Color = (i == _owner.SelectedIndex)
-                    ? ColorScheme.AccentColor.ToSKColor()
-                    : ColorScheme.ForeColor.ToSKColor();
-
-                // Metni dikey olarak ortala
-                var textBounds = new SKRect();
-                textPaint.MeasureText(text, ref textBounds);
-                float textY = y + (ITEM_HEIGHT / 2) + (Math.Abs(textPaint.FontMetrics.Ascent + textPaint.FontMetrics.Descent) / 2);
-                canvas.DrawText(text, ITEM_PADDING + 4, textY, textPaint);
-
-                y += ITEM_HEIGHT;
-            }
-        }
-
-        public void BeginOpen()
-        {
-            // Varsayılan tam yükseklik
-            var fullHeight = (_owner.Items.Count * ITEM_HEIGHT) + (VERTICAL_PADDING * 2);
-            BeginOpen(fullHeight);
-        }
-
-        public void BeginOpen(int targetHeight)
-        {
-            // Hedef yükseklik limitli açılış
-            _targetHeight = Math.Max(0, targetHeight);
-            Size = new Size(_owner.DropDownWidth, 1);
-            _currentHeight = 1;
-            Height = 1; // ilk karede görünür olsun
-            _hoverIndex = -1;
-            _hoverY = 0;
-            _targetHoverY = 0;
-
-            Visible = true;
-            _animation.StartNewAnimation(AnimationDirection.In);
-            BringToFront();
-            _owner.RestartDropDownAnimation(AnimationDirection.In);
-
-            // Hover animasyonunu sıfırla
-            //_hoverAnimation.Reset();
-        }
-
-        public void BeginClose()
-        {
-            _animation.StartNewAnimation(AnimationDirection.Out);
+            Visible = false;
+            Width = 0;
+            Height = 0;
             _owner.DroppedDown = false;
+            _owner._arrowAnimation.SetProgress(0);
             _owner.OnDropDownClosed(EventArgs.Empty);
-            _owner.DetachDropDownWindowHandlers();
-            _owner.RestartDropDownAnimation(AnimationDirection.Out);
-
-            if (Parent != null)
-            {
-                Parent.Controls.Remove(this);
-                Visible = false;
-            }
+            _owner.DetachWindowHandlers();
+            Parent?.Controls.Remove(this);
         }
 
         private int GetItemIndexAtPoint(Point point)
@@ -256,20 +208,142 @@ public class ComboBox : UIElementBase
             if (point.Y < VERTICAL_PADDING || point.Y > Height - VERTICAL_PADDING)
                 return -1;
 
-            return (int)Math.Floor((point.Y - VERTICAL_PADDING) / (float)ITEM_HEIGHT);
+            if (_scrollBar.Visible && point.X >= _scrollBar.Bounds.Left)
+                return -1;
+
+            int relativeY = point.Y - VERTICAL_PADDING;
+            int itemIndex = (relativeY / ItemHeight) + _scrollOffset;
+
+            return (itemIndex >= 0 && itemIndex < _owner.Items.Count) ? itemIndex : -1;
+        }
+
+        public override void OnPaint(SKPaintSurfaceEventArgs e)
+        {
+            var canvas = e.Surface.Canvas;
+            canvas.Clear(SKColors.Transparent);
+
+            if (Width <= 0 || Height <= 0 || _owner.Items.Count == 0)
+                return;
+
+            float openProgress = (float)_openAnimation.GetProgress();
+            if (!Visible) openProgress = 0;
+
+            // Arka plan + gölge
+            using (var layerPaint = new SKPaint { Color = SKColors.White.WithAlpha((byte)(255 * openProgress)) })
+            {
+                canvas.SaveLayer(layerPaint);
+                float translateY = (_openingUpwards ? 1f - openProgress : openProgress - 1f) * 8f;
+                canvas.Translate(0, translateY);
+
+                // Daha belirgin, yumuşak gölge
+                using (var shadowPaint = new SKPaint
+                {
+                    Color = SKColors.Black.WithAlpha((byte)(90 * openProgress)),
+                    ImageFilter = SKImageFilter.CreateDropShadow(0, 10, 24, 24, SKColors.Black.WithAlpha((byte)(140 * openProgress))),
+                    IsAntialias = true
+                })
+                {
+                    var rr = new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS);
+                    canvas.DrawRoundRect(rr, shadowPaint);
+                }
+
+                // Arka plan
+                using (var bgPaint = new SKPaint { Color = ColorScheme.BackColor.ToSKColor(), IsAntialias = true })
+                {
+                    var bgRect = new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS);
+                    canvas.DrawRoundRect(bgRect, bgPaint);
+                }
+
+                // Clip: köşelerden taşma olmasın
+                using (var clipPath = new SKPath())
+                {
+                    clipPath.AddRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS));
+                    canvas.ClipPath(clipPath, antialias: true);
+                }
+
+                // Üst highlight
+                using (var highlightPaint = new SKPaint
+                {
+                    Shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(0, Height * 0.3f), new[] { SKColors.White.WithAlpha(14), SKColors.Transparent }, null, SKShaderTileMode.Clamp),
+                    IsAntialias = true
+                })
+                {
+                    canvas.DrawRect(new SKRect(0, 0, Width, Height), highlightPaint);
+                }
+
+                // Kenarlık
+                using (var borderPaint = new SKPaint { Color = ColorScheme.BorderColor.Alpha(200).ToSKColor(), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f })
+                {
+                    var borderRect = new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 1, Height - 1), CORNER_RADIUS - 0.5f);
+                    canvas.DrawRoundRect(borderRect, borderPaint);
+                }
+
+                // Metin ve öğeler
+                using var textPaint = new SKPaint
+                {
+                    TextSize = _owner.Font.Size.PtToPx(this),
+                    Typeface = SKTypeface.FromFamilyName(_owner.Font.FontFamily.Name),
+                    IsAntialias = true,
+                    SubpixelText = true
+                };
+
+                float contentRightInset = (_scrollBar.Visible ? SCROLL_BAR_WIDTH + 6 : 0);
+                float currentY = VERTICAL_PADDING;
+                int startIndex = _scrollOffset;
+                int endIndex = Math.Min(_owner.Items.Count, startIndex + _visibleItemCount);
+
+                for (int i = startIndex; i < endIndex && currentY < Height - VERTICAL_PADDING; i++)
+                {
+                    var itemRect = new SKRect(H_PADDING_LEFT, currentY, Width - H_PADDING_RIGHT - contentRightInset, currentY + ItemHeight);
+
+                    // Hover animasyonu (per item)
+                    var hoverAE = EnsureItemAnim(i);
+                    float hProg = (float)hoverAE.GetProgress();
+
+                    // Hover arkaplan rengi (macOS benzeri açık mavi/tema uyumlu)
+                    if (hProg > 0.001f)
+                    {
+                        var hoverColor = ColorScheme.AccentColor.Alpha((byte)(28 + 80 * hProg)).ToSKColor();
+                        using var hoverPaint = new SKPaint { Color = hoverColor, IsAntialias = true };
+                        var hr = new SKRoundRect(itemRect, 6);
+                        canvas.DrawRoundRect(hr, hoverPaint);
+                    }
+
+                    // Seçili öğe vurgu
+                    if (i == _selectedIndex)
+                    {
+                        using var selBG = new SKPaint { Color = ColorScheme.AccentColor.Alpha(55).ToSKColor(), IsAntialias = true };
+                        var sr = new SKRoundRect(itemRect, 6);
+                        canvas.DrawRoundRect(sr, selBG);
+                        using var selBorder = new SKPaint { Color = ColorScheme.AccentColor.Alpha(160).ToSKColor(), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
+                        canvas.DrawRoundRect(sr, selBorder);
+                    }
+
+                    // Metin
+                    string text = _owner.GetItemText(_owner.Items[i]);
+                    textPaint.Color = ColorScheme.ForeColor.ToSKColor();
+                    float baseTextY = currentY + ItemHeight / 2f + textPaint.FontMetrics.XHeight / 2f;
+                    // Hover ile hafif yatay kayma
+                    float textX = H_PADDING_LEFT + 8 + (4f * hProg);
+                    canvas.DrawText(text, textX, baseTextY, textPaint);
+
+                    currentY += ItemHeight;
+                }
+
+                canvas.Restore();
+            }
         }
     }
 
+    /// <summary>
+    /// ComboBox öğeleri koleksiyonu
+    /// </summary>
     public class ObjectCollection : IList
     {
-        private readonly List<object> _items;
+        private readonly List<object> _items = new();
         private readonly ComboBox _owner;
 
-        public ObjectCollection(ComboBox owner)
-        {
-            _owner = owner;
-            _items = new List<object>();
-        }
+        public ObjectCollection(ComboBox owner) => _owner = owner;
 
         public int Count => _items.Count;
         public bool IsFixedSize => false;
@@ -301,11 +375,8 @@ public class ComboBox : UIElementBase
         }
 
         public bool Contains(object value) => _items.Contains(value);
-
         public void CopyTo(Array array, int index) => _items.CopyTo((object[])array, index);
-
         public IEnumerator GetEnumerator() => _items.GetEnumerator();
-
         public int IndexOf(object value) => _items.IndexOf(value);
 
         public void Insert(int index, object value)
@@ -329,14 +400,17 @@ public class ComboBox : UIElementBase
         public void AddRange(IEnumerable items)
         {
             foreach (var item in items)
-            {
                 _items.Add(item);
-            }
             _owner.Invalidate();
         }
     }
 
-    private int _radius = 5;
+    #endregion
+
+    #region Properties
+
+    private int _radius = 6;
+    [Browsable(true)]
     public int Radius
     {
         get => _radius;
@@ -347,79 +421,10 @@ public class ComboBox : UIElementBase
         }
     }
 
-    private float _shadowDepth = 4f;
-    public float ShadowDepth
-    {
-        get => _shadowDepth;
-        set
-        {
-            if (_shadowDepth == value)
-                return;
-
-            _shadowDepth = value;
-            Invalidate();
-        }
-    }
-
-    #region ComboBox Properties
-    private DrawMode _drawMode = DrawMode.Normal;
-    [Browsable(true)]
-    public DrawMode DrawMode
-    {
-        get => _drawMode;
-        set
-        {
-            _drawMode = value;
-            Invalidate();
-        }
-    }
-
-    private bool _formattingEnabled;
-    [Browsable(true)]
-    public bool FormattingEnabled
-    {
-        get => _formattingEnabled;
-        set => _formattingEnabled = value;
-    }
-
-    private bool _integralHeight = true;
-    [Browsable(true)]
-    public bool IntegralHeight
-    {
-        get => _integralHeight;
-        set => _integralHeight = value;
-    }
-
-    private int _itemHeight = 36;
-    [Browsable(true)]
-    public int ItemHeight
-    {
-        get => _itemHeight;
-        set
-        {
-            if (_itemHeight == value) return;
-            _itemHeight = value;
-            if (_dropDownMenu != null && _dropDownMenu.Visible)
-            {
-                var dropDownHeight = Math.Min(Items.Count * _itemHeight, MaxDropDownItems * _itemHeight);
-                _dropDownMenu.Size = new Size(DropDownWidth, dropDownHeight);
-            }
-            Invalidate();
-        }
-    }
-
     private ObjectCollection _items;
     [Browsable(true)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Content)]
-    public ObjectCollection Items
-    {
-        get
-        {
-            if (_items == null)
-                _items = new ObjectCollection(this);
-            return _items;
-        }
-    }
+    public ObjectCollection Items => _items ??= new ObjectCollection(this);
 
     private object _selectedItem;
     [Browsable(true)]
@@ -445,10 +450,15 @@ public class ComboBox : UIElementBase
         get => _selectedIndex;
         set
         {
-            if (_selectedIndex != value)
+            if (_selectedIndex != value && value >= -1 && value < Items.Count)
             {
                 _selectedIndex = value;
-                _selectedItem = (_selectedIndex >= 0 && _selectedIndex < Items.Count) ? Items[_selectedIndex] : null;
+                _selectedItem = value >= 0 ? Items[value] : null;
+                // DropDown stilinde kullanıcı listeden bir seçim yapınca metni güncelle
+                if (_dropDownStyle == ComboBoxStyle.DropDown && _selectedItem != null)
+                {
+                    _text = GetItemText(_selectedItem);
+                }
                 OnSelectedIndexChanged(EventArgs.Empty);
                 Invalidate();
             }
@@ -492,14 +502,6 @@ public class ComboBox : UIElementBase
         }
     }
 
-    private int _dropDownHeight = 106;
-    [Browsable(true)]
-    public int DropDownHeight
-    {
-        get => _dropDownHeight;
-        set => _dropDownHeight = value;
-    }
-
     private int _dropDownWidth;
     [Browsable(true)]
     public int DropDownWidth
@@ -508,24 +510,90 @@ public class ComboBox : UIElementBase
         set => _dropDownWidth = value;
     }
 
-    private ComboBoxStyle _dropDownStyle = ComboBoxStyle.DropDownList;
-    [Browsable(true)]
-    public ComboBoxStyle DropDownStyle
-    {
-        get => _dropDownStyle;
-        set
-        {
-            _dropDownStyle = value;
-            Invalidate();
-        }
-    }
-
     private int _maxDropDownItems = 8;
     [Browsable(true)]
     public int MaxDropDownItems
     {
         get => _maxDropDownItems;
         set => _maxDropDownItems = value;
+    }
+
+    private DrawMode _drawMode = DrawMode.Normal;
+    [Browsable(true)]
+    public DrawMode DrawMode
+    {
+        get => _drawMode;
+        set => _drawMode = value;
+    }
+
+    private bool _formattingEnabled;
+    [Browsable(true)]
+    public bool FormattingEnabled
+    {
+        get => _formattingEnabled;
+        set => _formattingEnabled = value;
+    }
+
+    private bool _integralHeight = true;
+    [Browsable(true)]
+    public bool IntegralHeight
+    {
+        get => _integralHeight;
+        set => _integralHeight = value;
+    }
+
+    private int _itemHeight = 32;
+    [Browsable(true)]
+    public int ItemHeight
+    {
+        get => _itemHeight;
+        set => _itemHeight = value;
+    }
+
+    private int _dropDownHeight = 150;
+    [Browsable(true)]
+    public int DropDownHeight
+    {
+        get => _dropDownHeight;
+        set => _dropDownHeight = value;
+    }
+
+    private ComboBoxStyle _dropDownStyle = ComboBoxStyle.DropDown;
+    [Browsable(true)]
+    public ComboBoxStyle DropDownStyle
+    {
+        get => _dropDownStyle;
+        set
+        {
+            if (_dropDownStyle == value) return;
+            _dropDownStyle = value;
+            Invalidate();
+        }
+    }
+
+    private float _shadowDepth = 4;
+    [Browsable(true)]
+    public float ShadowDepth
+    {
+        get => _shadowDepth;
+        set => _shadowDepth = value;
+    }
+
+    private string _text = "";
+    [Browsable(true)]
+    public override string Text
+    {
+        get => DropDownStyle == ComboBoxStyle.DropDown ? _text :
+               _selectedItem != null ? GetItemText(_selectedItem) : "";
+        set
+        {
+            if (DropDownStyle == ComboBoxStyle.DropDown)
+            {
+                _text = value;
+                Invalidate();
+            }
+            // DropDownList'te text düzenlenemez
+        }
     }
 
     private bool _droppedDown;
@@ -545,261 +613,118 @@ public class ComboBox : UIElementBase
             }
         }
     }
+
     #endregion
 
     #region Events
+
     public event EventHandler SelectedIndexChanged;
     public event EventHandler SelectedItemChanged;
     public event EventHandler DropDown;
     public event EventHandler DropDownClosed;
     public event EventHandler SelectionChangeCommitted;
-    public event DrawItemEventHandler DrawItem;
-    public event MeasureItemEventHandler MeasureItem;
+
     #endregion
 
-    private DropDownMenu _dropDownMenu;
-    private readonly AnimationEngine _animation;
+    #region Private Fields
+
+    private DropDownPanel _dropDownPanel;
     private readonly AnimationEngine _hoverAnimation;
-    private readonly AnimationEngine _dropDownAnimation;
-    private UIWindow _dropDownWindow;
-    private MouseEventHandler _dropDownWindowMouseDownHandler;
-    private EventHandler _dropDownWindowDeactivateHandler;
-    private KeyEventHandler _dropDownWindowKeyDownHandler;
-    private bool _dropDownHandlersAttached;
-    private bool _previousKeyPreview;
+    private readonly AnimationEngine _pressAnimation;
+    private readonly AnimationEngine _arrowAnimation;
+    private UIWindow _parentWindow;
+    private MouseEventHandler _windowMouseDownHandler;
+    private EventHandler _windowDeactivateHandler;
+    private KeyEventHandler _windowKeyDownHandler;
+    private bool _handlersAttached;
+    private bool _ignoreNextClick;
+
+    #endregion
+
+    #region Constructor
 
     public ComboBox()
     {
-        MinimumSize = new Size(0, 23);
-        Height = 23;
-        _itemHeight = 36;
-
-        _animation = new AnimationEngine(singular: true)
-        {
-            Increment = 0.12,
-            SecondaryIncrement = 0.08,
-            AnimationType = AnimationType.EaseInOut,
-            InterruptAnimation = true
-        };
-        _animation.OnAnimationProgress += (s) => Invalidate();
+        MinimumSize = new Size(50, 28);
+        Size = new Size(120, 28);
 
         _hoverAnimation = new AnimationEngine(singular: true)
         {
-            Increment = 0.09,
-            SecondaryIncrement = 0.07,
-            AnimationType = AnimationType.CustomQuadratic,
-            InterruptAnimation = true
+            Increment = 0.15,
+            AnimationType = AnimationType.EaseInOut
         };
-        _hoverAnimation.OnAnimationProgress += (s) => Invalidate();
+        _hoverAnimation.OnAnimationProgress += _ => Invalidate();
 
-        _dropDownAnimation = new AnimationEngine(singular: true)
+        _pressAnimation = new AnimationEngine(singular: true)
         {
-            Increment = 0.16,
-            SecondaryIncrement = 0.14,
-            AnimationType = AnimationType.CustomQuadratic,
-            InterruptAnimation = true
+            Increment = 0.2,
+            AnimationType = AnimationType.EaseInOut
         };
-        _dropDownAnimation.OnAnimationProgress += (s) => Invalidate();
+        _pressAnimation.OnAnimationProgress += _ => Invalidate();
 
-        _dropDownMenu = new DropDownMenu(this);
-        _dropDownMenu.Visible = false;
+        _arrowAnimation = new AnimationEngine(singular: true)
+        {
+            Increment = 0.12,
+            AnimationType = AnimationType.EaseInOut
+        };
+        _arrowAnimation.OnAnimationProgress += _ => Invalidate();
+        // Başlangıçta ok aşağı bakmalı (0 rotation)
+        _arrowAnimation.SetProgress(0);
+
+        _dropDownPanel = new DropDownPanel(this);
     }
 
-    protected virtual void OnSelectedIndexChanged(EventArgs e)
-    {
-        SelectedIndexChanged?.Invoke(this, e);
-    }
+    #endregion
 
-    protected virtual void OnSelectedItemChanged(EventArgs e)
-    {
-        SelectedItemChanged?.Invoke(this, e);
-    }
+    #region Event Handlers
 
-    protected virtual void OnDropDown(EventArgs e)
-    {
-        DropDown?.Invoke(this, e);
-    }
-
-    protected virtual void OnDropDownClosed(EventArgs e)
-    {
-        DropDownClosed?.Invoke(this, e);
-    }
-
-    protected virtual void OnSelectionChangeCommitted(EventArgs e)
-    {
-        SelectionChangeCommitted?.Invoke(this, e);
-    }
-
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
-    {
-        base.OnPaint(e);
-
-        var canvas = e.Surface.Canvas;
-
-        var rect = new SKRect(0, 0, Width, Height);
-        var pressProgress = (float)_animation.GetProgress();
-        var hoverProgress = (float)_hoverAnimation.GetProgress();
-        var dropDownProgress = (float)_dropDownAnimation.GetProgress();
-        var dpiScale = DeviceDpi / 96f;
-        var pressOffset = pressProgress * 1.5f * dpiScale;
-
-        var accentColor = ColorScheme.AccentColor.ToSKColor();
-
-        // Gölge çizimi
-        using (var shadowPaint = new SKPaint
-        {
-            Color = SKColors.Black.WithAlpha((byte)(80 * (1 - 0.3f * (hoverProgress + dropDownProgress)))),
-            ImageFilter = SKImageFilter.CreateDropShadow(
-                0,
-                _shadowDepth * (1 - pressProgress * 0.5f),
-                3 * (1 - pressProgress * 0.5f),
-                3 * (1 - pressProgress * 0.5f),
-                SKColors.Black.WithAlpha((byte)(90 * (1 - pressProgress * 0.4f)))),
-            IsAntialias = true
-        })
-        {
-            using var path = new SKPath();
-            path.AddRoundRect(rect, _radius, _radius);
-            canvas.DrawPath(path, shadowPaint);
-        }
-
-        var baseSkColor = ColorScheme.BackColor.Alpha(200).ToSKColor();
-        var highlightBlend = Math.Clamp(hoverProgress * 0.35f + dropDownProgress * 0.45f + pressProgress * 0.25f, 0f, 0.75f);
-        var backgroundColor = baseSkColor.InterpolateColor(accentColor, highlightBlend);
-
-        // Arka plan çizimi
-        using (var paint = new SKPaint
-        {
-            Color = backgroundColor,
-            IsAntialias = true
-        })
-        {
-            using var path = new SKPath();
-            path.AddRoundRect(rect, _radius, _radius);
-            canvas.DrawPath(path, paint);
-        }
-
-        // Hover parıltısı
-        var glowIntensity = Math.Clamp((hoverProgress + dropDownProgress) * 0.6f, 0f, 1f);
-        if (glowIntensity > 0f)
-        {
-            using var glowPaint = new SKPaint
-            {
-                Color = accentColor.WithAlpha((byte)(80 * glowIntensity)),
-                IsAntialias = true
-            };
-            canvas.DrawRoundRect(rect, _radius, _radius, glowPaint);
-        }
-
-        // Kenarlık çizimi
-        var borderBlend = Math.Clamp(hoverProgress * 0.4f + dropDownProgress * 0.4f + pressProgress * 0.2f, 0f, 0.9f);
-        using (var paint = new SKPaint
-        {
-            Color = ColorScheme.BorderColor.ToSKColor().InterpolateColor(accentColor, borderBlend),
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1
-        })
-        {
-            using var path = new SKPath();
-            path.AddRoundRect(rect, _radius, _radius);
-            canvas.DrawPath(path, paint);
-        }
-
-        // Metin çizimi
-        if (_selectedItem != null)
-        {
-            var textColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentColor, Math.Clamp(borderBlend + dropDownProgress * 0.2f, 0f, 1f));
-            using var textPaint = new SKPaint
-            {
-                Color = textColor,
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                IsAntialias = true
-            };
-
-            string displayText = GetItemText(_selectedItem);
-            var textBounds = new SKRect();
-            textPaint.MeasureText(displayText, ref textBounds);
-
-            canvas.DrawText(
-                displayText,
-                8f * dpiScale,
-                (Height + textBounds.Height) / 2f + pressOffset,
-                textPaint);
-        }
-
-        // Ok işareti çizimi
-        var arrowRect = new SKRect(
-            rect.Width - (24f * dpiScale),
-            0,
-            rect.Width - (8f * dpiScale),
-            rect.Height - (4f * dpiScale) + _shadowDepth);
-
-        var arrowColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentColor, Math.Clamp(hoverProgress + dropDownProgress, 0f, 1f));
-
-        using (var paint = new SKPaint
-        {
-            Color = arrowColor,
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1.2f
-        })
-        {
-            var centerX = arrowRect.Left + arrowRect.Width / 2f - (1f * dpiScale);
-            var centerY = arrowRect.MidY;
-            var leftX = centerX - 4f * dpiScale;
-            var rightX = centerX + 4f * dpiScale;
-        var topYOffset = Lerp(-2f * dpiScale, 2f * dpiScale, dropDownProgress);
-        var bottomYOffset = Lerp(3f * dpiScale, -3f * dpiScale, dropDownProgress);
-
-            canvas.DrawLine(
-                leftX,
-                centerY + topYOffset + pressOffset,
-                centerX,
-                centerY + bottomYOffset + pressOffset,
-                paint);
-
-            canvas.DrawLine(
-                rightX,
-                centerY + topYOffset + pressOffset,
-                centerX,
-                centerY + bottomYOffset + pressOffset,
-                paint);
-        }
-    }
+    protected virtual void OnSelectedIndexChanged(EventArgs e) => SelectedIndexChanged?.Invoke(this, e);
+    protected virtual void OnSelectedItemChanged(EventArgs e) => SelectedItemChanged?.Invoke(this, e);
+    protected virtual void OnDropDown(EventArgs e) => DropDown?.Invoke(this, e);
+    protected virtual void OnDropDownClosed(EventArgs e) => DropDownClosed?.Invoke(this, e);
+    protected virtual void OnSelectionChangeCommitted(EventArgs e) => SelectionChangeCommitted?.Invoke(this, e);
 
     internal override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
-        RestartAnimation(_hoverAnimation, AnimationDirection.In);
-        RestartAnimation(_animation, AnimationDirection.In);
+        _hoverAnimation.StartNewAnimation(AnimationDirection.In);
     }
 
     internal override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
-        RestartAnimation(_hoverAnimation, AnimationDirection.Out);
-        RestartAnimation(_animation, AnimationDirection.Out);
+        _hoverAnimation.StartNewAnimation(AnimationDirection.Out);
     }
 
     internal override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
+
         if (e.Button == MouseButtons.Left)
         {
-            RestartAnimation(_animation, AnimationDirection.InOutIn);
+            _pressAnimation.StartNewAnimation(AnimationDirection.In);
 
-            if (_dropDownMenu != null)
+            // DropDownStyle'a göre davranış
+            if (DropDownStyle == ComboBoxStyle.Simple)
             {
-                if (_dropDownMenu.Visible)
-                {
-                    _dropDownMenu.BeginClose();
-                }
-                else if (Items.Count > 0)
-                {
-                    ShowDropDown();
-                }
+                // Simple modda dropdown açılmaz
+                return;
+            }
+
+            if (DroppedDown)
+            {
+                CloseDropDown();
+            }
+            else if (Items.Count > 0)
+            {
+                // Debug: Console'a yaz
+                System.Diagnostics.Debug.WriteLine($"ComboBox OnMouseDown: Items.Count={Items.Count}, Opening dropdown");
+                _arrowAnimation.StartNewAnimation(AnimationDirection.In);
+                OpenDropDown();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine($"ComboBox OnMouseDown: No items to show (Items.Count={Items.Count})");
             }
         }
     }
@@ -807,178 +732,226 @@ public class ComboBox : UIElementBase
     internal override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
+
         if (e.Button == MouseButtons.Left)
         {
-            RestartAnimation(_animation, AnimationDirection.Out);
+            _pressAnimation.StartNewAnimation(AnimationDirection.Out);
         }
     }
 
-    public override void OnClick(EventArgs e)
+    #endregion
+
+    #region Private Methods
+
+    // helper to measure dropdown auto width based on items
+    private int MeasureDropDownAutoWidth()
     {
-        base.OnClick(e);
+        if (Items.Count == 0) return Width;
+        using var paint = new SKPaint
+        {
+            TextSize = Font.Size.PtToPx(this),
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+            IsAntialias = true
+        };
+        float maxText = 0f;
+        for (int i = 0; i < Items.Count; i++)
+        {
+            var txt = GetItemText(Items[i]) ?? string.Empty;
+            var bounds = new SKRect();
+            paint.MeasureText(txt, ref bounds);
+            maxText = Math.Max(maxText, bounds.Width);
+        }
+        // padding + potential scrollbar + borders
+        int hPadding = 10 + 10 + 8; // left + right + extra inset
+        bool predictScrollbar = Items.Count > MaxDropDownItems;
+        int scrollbar = predictScrollbar ? 14 + 6 : 0;
+        int autoWidth = (int)Math.Ceiling(maxText) + hPadding + scrollbar;
+        return Math.Max(autoWidth, Width);
     }
 
-    private void ShowDropDown()
+    private void OpenDropDown()
     {
-        if (Items.Count == 0) return;
+        System.Diagnostics.Debug.WriteLine($"OpenDropDown called: Items.Count={Items.Count}, DroppedDown={DroppedDown}");
 
-        var window = ParentWindow as UIWindow ?? (Parent as UIWindow) ?? (FindForm() as UIWindow);
-        if (window == null)
+        if (Items.Count == 0 || DroppedDown)
+            return;
+
+        _parentWindow = ParentWindow as UIWindow ?? Parent as UIWindow ?? FindForm() as UIWindow;
+        if (_parentWindow == null)
+            return;
+
+        if (_dropDownPanel.Parent != _parentWindow)
         {
+            _dropDownPanel.Parent?.Controls.Remove(_dropDownPanel);
+            _parentWindow.Controls.Add(_dropDownPanel);
+        }
+
+        Point comboLocation = GetLocationRelativeToWindow();
+
+        int totalItemsHeight = Items.Count * ItemHeight + (2 * 6);
+        int preferredHeight = Math.Min(totalItemsHeight, MaxDropDownItems * ItemHeight + (2 * 6));
+
+        int maxAvailableHeight = _parentWindow.Height - comboLocation.Y - Height - 20;
+        int actualHeight = Math.Min(preferredHeight, maxAvailableHeight);
+        actualHeight = Math.Max(actualHeight, ItemHeight + (2 * 6));
+
+        int dropdownHeight = Math.Min(DropDownHeight, actualHeight);
+
+        // otomatik genişlik: kullanıcı DropDownWidth belirlemediyse içeriğe göre ölç
+        int dropdownWidth = _dropDownWidth == 0 ? MeasureDropDownAutoWidth() : DropDownWidth;
+
+        bool canOpenDown = comboLocation.Y + Height + dropdownHeight <= _parentWindow.Height;
+        bool canOpenUp = comboLocation.Y - dropdownHeight >= 0;
+
+        Point dropdownLocation;
+        if (canOpenDown)
+            dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height);
+        else if (canOpenUp)
+            dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight);
+        else
+        {
+            dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height);
+            dropdownHeight = Math.Max(100, _parentWindow.Height - comboLocation.Y - Height - 10);
+        }
+
+        dropdownLocation.X = Math.Max(0, Math.Min(dropdownLocation.X, _parentWindow.Width - dropdownWidth));
+
+        _dropDownPanel.Location = dropdownLocation;
+        _dropDownPanel.Width = dropdownWidth;
+        _dropDownPanel.Height = dropdownHeight;
+
+        _dropDownPanel.BeginOpen(openUpwards: !canOpenDown && canOpenUp);
+        _dropDownPanel.ZOrder = 9999;
+
+        DroppedDown = true;
+        _ignoreNextClick = true;
+
+        AttachWindowHandlers();
+        _parentWindow.Invalidate();
+
+        System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
+        {
+            if (_parentWindow?.InvokeRequired == true) _parentWindow.Invoke(() => _ignoreNextClick = false);
+            else _ignoreNextClick = false;
+        });
+    }
+
+    private void CloseDropDown()
+    {
+        System.Diagnostics.Debug.WriteLine($"CloseDropDown called: DroppedDown={DroppedDown}");
+        if (!DroppedDown)
+        {
+            System.Diagnostics.Debug.WriteLine("CloseDropDown: Already closed");
             return;
         }
 
-        if (_dropDownMenu.Parent != window)
-        {
-            _dropDownMenu.Parent?.Controls.Remove(_dropDownMenu);
-            window.Controls.Add(_dropDownMenu);
-            // Pencereye eklendiği anda üstte olduğundan emin ol
-            window.BringToFront(_dropDownMenu);
-        }
-
-        // Pencere koordinatlarıyla güvenilir konum (UIElementBase hiyerarşisi)
-        var clientTop = GetRelativeToWindow(this, window);                  // elementin sol-üstü
-        var clientBottom = new Point(clientTop.X, clientTop.Y + Height);    // elementin altı
-
-        // Açılma yüksekliğini pencere yüksekliğine göre belirle
-        int fullHeight = (_items?.Count ?? 0) * 32 + 16; // DropDownMenu sabitleri: ITEM_HEIGHT=32, VERTICAL_PADDING=8
-        int availableBelow = Math.Max(0, window.Height - clientBottom.Y);
-        int availableAbove = Math.Max(0, clientTop.Y);
-
-        bool openUpwards = availableBelow < Math.Min(fullHeight, Math.Max(64, availableAbove)) && availableAbove > availableBelow;
-        int openHeight = openUpwards ? Math.Min(fullHeight, availableAbove - 4) : Math.Min(fullHeight, availableBelow - 4);
-        openHeight = Math.Max(64, openHeight); // en az birkaç öğe görünsün
-
-        var targetLocation = openUpwards
-            ? new Point(clientBottom.X, Math.Max(0, clientTop.Y - openHeight))
-            : clientBottom;
-
-        // X ekseninde pencere içinde kal
-        targetLocation.X = Math.Max(0, Math.Min(targetLocation.X, window.Width - DropDownWidth));
-
-        _dropDownMenu.Location = targetLocation;
-        _dropDownMenu.Width = DropDownWidth;
-        // Açılmadan hemen önce üstte tut
-        window.BringToFront(_dropDownMenu);
-        DroppedDown = true;
-        AttachDropDownWindowHandlers(window);
-        _dropDownMenu.BeginOpen(openHeight);
+        _arrowAnimation.StartNewAnimation(AnimationDirection.Out);
+        _dropDownPanel.BeginClose();
+        System.Diagnostics.Debug.WriteLine("CloseDropDown: Dropdown closed");
     }
 
-    private static Point GetRelativeToWindow(UIElementBase element, UIWindow window)
+    private Point GetLocationRelativeToWindow()
     {
         int x = 0, y = 0;
-        UIElementBase current = element;
-        while (current != null && current.Parent is not UIWindow)
+        UIElementBase current = this;
+
+        while (current != null && current.Parent != _parentWindow)
         {
             x += current.Location.X;
             y += current.Location.Y;
             current = current.Parent as UIElementBase;
         }
 
-        if (current != null && current.Parent is UIWindow w && w == window)
+        if (current != null && current.Parent == _parentWindow)
         {
             x += current.Location.X;
             y += current.Location.Y;
         }
 
-        // Dropdown aşağı açılmalı
-        y += element.Height;
         return new Point(x, y);
     }
 
-    private void AttachDropDownWindowHandlers(UIWindow window)
+    private void AttachWindowHandlers()
     {
-        if (_dropDownHandlersAttached && _dropDownWindow == window)
+        if (_handlersAttached)
             return;
 
-        DetachDropDownWindowHandlers();
+        _windowMouseDownHandler ??= OnWindowMouseDown;
+        _windowDeactivateHandler ??= OnWindowDeactivate;
+        _windowKeyDownHandler ??= OnWindowKeyDown;
 
-        _dropDownWindow = window;
-        _dropDownWindowMouseDownHandler ??= DropDownWindowOnMouseDown;
-        _dropDownWindowDeactivateHandler ??= DropDownWindowOnDeactivate;
-        _dropDownWindowKeyDownHandler ??= DropDownWindowOnKeyDown;
+        _parentWindow.MouseDown += _windowMouseDownHandler;
+        _parentWindow.Deactivate += _windowDeactivateHandler;
+        _parentWindow.KeyDown += _windowKeyDownHandler;
 
-        _previousKeyPreview = window.KeyPreview;
-        window.KeyPreview = true;
-
-        window.MouseDown += _dropDownWindowMouseDownHandler;
-        window.Deactivate += _dropDownWindowDeactivateHandler;
-        window.KeyDown += _dropDownWindowKeyDownHandler;
-
-        _dropDownHandlersAttached = true;
+        _handlersAttached = true;
     }
 
-    internal void DetachDropDownWindowHandlers()
+    private void DetachWindowHandlers()
     {
-        if (!_dropDownHandlersAttached || _dropDownWindow == null)
+        if (!_handlersAttached || _parentWindow == null)
             return;
 
-        if (_dropDownWindowMouseDownHandler != null)
-            _dropDownWindow.MouseDown -= _dropDownWindowMouseDownHandler;
-        if (_dropDownWindowDeactivateHandler != null)
-            _dropDownWindow.Deactivate -= _dropDownWindowDeactivateHandler;
-        if (_dropDownWindowKeyDownHandler != null)
-            _dropDownWindow.KeyDown -= _dropDownWindowKeyDownHandler;
+        _parentWindow.MouseDown -= _windowMouseDownHandler;
+        _parentWindow.Deactivate -= _windowDeactivateHandler;
+        _parentWindow.KeyDown -= _windowKeyDownHandler;
 
-        _dropDownWindow.KeyPreview = _previousKeyPreview;
-
-        _dropDownWindow = null;
-        _dropDownHandlersAttached = false;
+        _handlersAttached = false;
     }
 
-    private void DropDownWindowOnMouseDown(object sender, MouseEventArgs e)
+    private void OnWindowMouseDown(object sender, MouseEventArgs e)
     {
-        if (!_dropDownHandlersAttached || _dropDownMenu == null || !_dropDownMenu.Visible)
-            return;
+        System.Diagnostics.Debug.WriteLine($"OnWindowMouseDown: Click at ({e.Location.X},{e.Location.Y}), _ignoreNextClick={_ignoreNextClick}");
 
-        if (_dropDownMenu.Bounds.Contains(e.Location))
-            return;
-
-        if (_dropDownWindow != null)
+        if (_ignoreNextClick)
         {
-            var comboBounds = GetWindowRelativeBounds(this, _dropDownWindow);
-            if (comboBounds.Contains(e.Location))
-                return;
+            _ignoreNextClick = false;
+            System.Diagnostics.Debug.WriteLine("OnWindowMouseDown: Ignoring click (first click after open)");
+            return;
         }
 
-        _dropDownMenu.BeginClose();
-    }
-
-    private void DropDownWindowOnDeactivate(object sender, EventArgs e)
-    {
-        if (_dropDownMenu != null && _dropDownMenu.Visible)
+        // ComboBox'ın kendi alanı içinde mi kontrol et
+        var comboBounds = new Rectangle(GetLocationRelativeToWindow(), Size);
+        System.Diagnostics.Debug.WriteLine($"OnWindowMouseDown: ComboBox bounds=({comboBounds.X},{comboBounds.Y},{comboBounds.Width},{comboBounds.Height})");
+        if (comboBounds.Contains(e.Location))
         {
-            _dropDownMenu.BeginClose();
+            System.Diagnostics.Debug.WriteLine("OnWindowMouseDown: Click inside ComboBox, not closing");
+            return;
         }
+
+        // Dropdown panel içinde mi kontrol et
+        var panelBounds = new Rectangle(_dropDownPanel.Location, _dropDownPanel.Size);
+        System.Diagnostics.Debug.WriteLine($"OnWindowMouseDown: Panel bounds=({panelBounds.X},{panelBounds.Y},{panelBounds.Width},{panelBounds.Height})");
+        if (panelBounds.Contains(e.Location))
+        {
+            System.Diagnostics.Debug.WriteLine("OnWindowMouseDown: Click inside panel, not closing");
+            return;
+        }
+
+        System.Diagnostics.Debug.WriteLine("OnWindowMouseDown: Click outside, closing dropdown");
+        CloseDropDown();
     }
 
-    private void DropDownWindowOnKeyDown(object sender, KeyEventArgs e)
+    private void OnWindowDeactivate(object sender, EventArgs e)
     {
-        if (_dropDownMenu == null || !_dropDownMenu.Visible)
-            return;
+        CloseDropDown();
+    }
 
+    private void OnWindowKeyDown(object sender, KeyEventArgs e)
+    {
         if (e.KeyCode == Keys.Escape)
         {
-            _dropDownMenu.BeginClose();
+            CloseDropDown();
             e.Handled = true;
         }
     }
 
-    private static Rectangle GetWindowRelativeBounds(UIElementBase element, UIWindow window)
-    {
-        var screenLocation = element.PointToScreen(Point.Empty);
-        var windowPoint = window.PointToClient(screenLocation);
-        return new Rectangle(windowPoint, element.Size);
-    }
-
-    private static float Lerp(float start, float end, float progress) => start + (end - start) * progress;
-
     private string GetItemText(object item)
     {
-        if (item == null) return string.Empty;
+        if (item == null)
+            return string.Empty;
 
-        if (!string.IsNullOrEmpty(_displayMember) && item is IList list)
+        if (!string.IsNullOrEmpty(_displayMember))
         {
             var prop = item.GetType().GetProperty(_displayMember);
             if (prop != null)
@@ -988,50 +961,200 @@ public class ComboBox : UIElementBase
         return item.ToString();
     }
 
+    #endregion
+
+    #region Rendering
+
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    {
+        var canvas = e.Surface.Canvas;
+        var rect = new SKRect(0, 0, Width, Height);
+
+        float hoverProgress = (float)_hoverAnimation.GetProgress();
+        float pressProgress = (float)_pressAnimation.GetProgress();
+
+        var accentColor = ColorScheme.AccentColor.ToSKColor();
+        var baseColor = ColorScheme.BackColor.ToSKColor();
+
+        // Arka plan rengi hesapla (daha yumuşak blend)
+        float blendFactor = Math.Clamp(hoverProgress * 0.15f + pressProgress * 0.1f + (DroppedDown ? 0.2f : 0f), 0f, 0.4f);
+        var backgroundColor = baseColor.InterpolateColor(accentColor, blendFactor);
+
+        // Modern gölge efekti (hover ile dinamik - daha subtle)
+        if (ShadowDepth > 0)
+        {
+            float shadowAlpha = 18 + (hoverProgress * 12) + (pressProgress * 8);
+            using (var shadowPaint = new SKPaint
+            {
+                Color = SKColors.Black.WithAlpha((byte)shadowAlpha),
+                ImageFilter = SKImageFilter.CreateDropShadow(0, ShadowDepth * 0.25f, ShadowDepth * 0.5f, ShadowDepth * 0.5f, SKColors.Black.WithAlpha((byte)(shadowAlpha * 1.2f))),
+                IsAntialias = true
+            })
+            {
+                var shadowPath = new SKPath();
+                shadowPath.AddRoundRect(rect, _radius, _radius);
+                canvas.DrawPath(shadowPath, shadowPaint);
+            }
+        }
+
+        // Base arka plan
+        using (var basePaint = new SKPaint
+        {
+            Color = backgroundColor,
+            IsAntialias = true
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, basePaint);
+        }
+
+        // Hover/press glow overlay
+        if (hoverProgress > 0 || pressProgress > 0)
+        {
+            byte glowAlpha = (byte)((hoverProgress * 15 + pressProgress * 10));
+            using var glowPaint = new SKPaint
+            {
+                Color = accentColor.WithAlpha(glowAlpha),
+                IsAntialias = true
+            };
+            canvas.DrawRoundRect(rect, _radius, _radius, glowPaint);
+        }
+
+        // Üstte ince aydınlık highlight (acrylic effect)
+        using (var highlightPaint = new SKPaint
+        {
+            Shader = SKShader.CreateLinearGradient(
+                new SKPoint(0, 0),
+                new SKPoint(0, Height * 0.4f),
+                new[]
+                {
+                    SKColors.White.WithAlpha(10),
+                    SKColors.Transparent
+                },
+                null,
+                SKShaderTileMode.Clamp),
+            IsAntialias = true
+        })
+        {
+            canvas.DrawRoundRect(rect, _radius, _radius, highlightPaint);
+        }
+
+        // Modern kenarlık (ince ve zarif)
+        float borderAlpha = 0.7f + (hoverProgress * 0.2f) + (pressProgress * 0.1f);
+        using (var borderPaint = new SKPaint
+        {
+            Color = ColorScheme.BorderColor.ToSKColor().InterpolateColor(accentColor, blendFactor * 0.4f).ToColor().Alpha((byte)(255 * borderAlpha)).ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1f
+        })
+        {
+            rect.Inflate(-0.5f, -0.5f);
+            canvas.DrawRoundRect(rect, _radius - 0.5f, _radius - 0.5f, borderPaint);
+        }
+
+        // Metin çizimi
+        string displayText = Text;
+        if (string.IsNullOrEmpty(displayText))
+        {
+            displayText = "Seçiniz...";
+        }
+        var textColor = ColorScheme.ForeColor.ToSKColor();
+
+        using var textPaint = new SKPaint
+        {
+            Color = textColor,
+            TextSize = Font.Size.PtToPx(this),
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+            IsAntialias = true,
+            SubpixelText = true
+        };
+
+        var textBounds = new SKRect();
+        textPaint.MeasureText(displayText, ref textBounds);
+        float textY = Height / 2f + textPaint.FontMetrics.XHeight / 2f;
+        float textX = 16;
+
+        canvas.DrawText(displayText, textX, textY, textPaint);
+
+        // Modern Chevron ikonu - DropDown ve DropDownList stillerinde göster
+        if (DropDownStyle != ComboBoxStyle.Simple)
+        {
+            float chevronSize = 10;
+            float chevronX = Width - 22;
+            float chevronY = Height / 2f;
+
+            // Arrow rotation animasyonu: 0° kapalı, 180° açık
+            float arrowProgress = (float)_arrowAnimation.GetProgress();
+            float rotation = 180f * arrowProgress;
+
+            // Chevron rengi (hover ve press durumuna göre)
+            float chevronBlend = Math.Clamp(hoverProgress * 0.35f + pressProgress * 0.5f, 0f, 1f);
+            var chevronColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentColor, chevronBlend);
+
+            // Chevron hover background circle (animasyonlu)
+            if (hoverProgress > 0.05f)
+            {
+                float circleRadius = 13f * (float)Math.Clamp(hoverProgress, 0, 1);
+                using var bgPaint = new SKPaint
+                {
+                    Color = accentColor.WithAlpha((byte)(hoverProgress * 18)),
+                    IsAntialias = true
+                };
+                canvas.DrawCircle(chevronX, chevronY, circleRadius, bgPaint);
+            }
+
+            // Rotasyon için canvas'ı kaydet
+            canvas.Save();
+            canvas.Translate(chevronX, chevronY);
+            canvas.RotateDegrees(rotation);
+
+            // Modern chevron (V şekli) - ince ve zarif
+            using (var chevronPaint = new SKPaint
+            {
+                Color = chevronColor,
+                IsAntialias = true,
+                Style = SKPaintStyle.Stroke,
+                StrokeWidth = 1.5f,
+                StrokeCap = SKStrokeCap.Round,
+                StrokeJoin = SKStrokeJoin.Round
+            })
+            {
+                float halfSize = chevronSize * 0.45f;
+                using var chevronPath = new SKPath();
+                chevronPath.MoveTo(-halfSize, -halfSize * 0.5f);
+                chevronPath.LineTo(0, halfSize * 0.5f);
+                chevronPath.LineTo(halfSize, -halfSize * 0.5f);
+                canvas.DrawPath(chevronPath, chevronPaint);
+            }
+
+            canvas.Restore();
+        }
+    }
+
+    #endregion
+
+    #region Overrides
+
     public override Size GetPreferredSize(Size proposedSize)
     {
-        var size = base.GetPreferredSize(proposedSize);
-        size.Height = 23;
-        return size;
+        return new Size(Math.Max(120, proposedSize.Width), 28);
     }
 
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
-        Height = 23;
+        Height = 28; // Sabit yükseklik
     }
 
-    public void BeginUpdate() { /* Not implemented */ }
-    public void EndUpdate() { /* Not implemented */ }
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            DetachDropDownWindowHandlers();
-            _dropDownMenu?.Dispose();
+            DetachWindowHandlers();
+            _dropDownPanel?.Dispose();
         }
         base.Dispose(disposing);
     }
 
-    private static void RestartAnimation(AnimationEngine engine, AnimationDirection direction)
-    {
-        if (engine == null)
-            return;
-
-        engine.SetDirection(direction);
-
-        var startProgress = direction switch
-        {
-            AnimationDirection.Out or AnimationDirection.InOutOut or AnimationDirection.InOutRepeatingOut => 1.0,
-            _ => 0.0
-        };
-
-        engine.SetProgress(startProgress);
-        engine.StartNewAnimation(direction);
-    }
-
-    private void RestartDropDownAnimation(AnimationDirection direction)
-    {
-        RestartAnimation(_dropDownAnimation, direction);
-    }
+    #endregion
 }

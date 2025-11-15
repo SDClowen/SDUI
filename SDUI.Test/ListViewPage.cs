@@ -1,10 +1,8 @@
-﻿using System.ComponentModel;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Forms;
 
 namespace SDUI.Demo
 {
-    [ToolboxItem(false)]
     public partial class ListViewPage : SDUI.Controls.Panel
     {
         public ListViewPage()

@@ -39,6 +39,7 @@ public class FlowLayoutPanel : UIElementBase
     private readonly ScrollBar _vScrollBar;
     private readonly ScrollBar _hScrollBar;
     private bool _isLayouting;
+    private bool _hoveringContentArea;
 
     #endregion
 
@@ -195,13 +196,13 @@ public class FlowLayoutPanel : UIElementBase
         {
             Dock = DockStyle.Right,
             Visible = false,
-            Orientation = ScrollOrientation.Vertical
+            Orientation = Orientation.Vertical
         };
         _hScrollBar = new()
         {
             Dock = DockStyle.Bottom,
             Visible = false,
-            Orientation = ScrollOrientation.Horizontal
+            Orientation = Orientation.Horizontal
         };
 
         _vScrollBar.ValueChanged += ScrollBar_ValueChanged;
@@ -251,6 +252,33 @@ public class FlowLayoutPanel : UIElementBase
         }
 
         PerformLayout();
+    }
+
+    internal override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        if (_autoScroll)
+        {
+            var clientArea = GetClientArea();
+            bool hover = clientArea.Contains(e.Location);
+            if (hover != _hoveringContentArea)
+            {
+                _hoveringContentArea = hover;
+                _vScrollBar?.SetHostHover(hover);
+                _hScrollBar?.SetHostHover(hover);
+            }
+        }
+    }
+
+    internal override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        if (_autoScroll && _hoveringContentArea)
+        {
+            _hoveringContentArea = false;
+            _vScrollBar?.SetHostHover(false);
+            _hScrollBar?.SetHostHover(false);
+        }
     }
 
     protected override void OnLayout(UILayoutEventArgs e)

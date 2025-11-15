@@ -1,12 +1,10 @@
 ﻿using SDUI.Controls;
 using System;
-using System.ComponentModel;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
 namespace SDUI.Demo
 {
-    [ToolboxItem(false)]
     public partial class ConfigPage : SDUI.Controls.Panel
     {
         public ConfigPage()

@@ -143,7 +143,7 @@ public class TextBox : UIElementBase
     {
         _verticalScrollBar = new ScrollBar
         {
-            Orientation = ScrollOrientation.Vertical,
+            Orientation = Orientation.Vertical,
             Visible = false,
             Width = 12
         };
@@ -155,7 +155,7 @@ public class TextBox : UIElementBase
 
         _horizontalScrollBar = new ScrollBar
         {
-            Orientation = ScrollOrientation.Horizontal,
+            Orientation = Orientation.Horizontal,
             Visible = false,
             Height = 12
         };

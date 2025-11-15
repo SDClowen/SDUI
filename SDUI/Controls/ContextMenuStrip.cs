@@ -25,6 +25,7 @@ public class ContextMenuStrip : MenuStrip
         Visible = false;
         ShowHoverEffect = true;
         RoundedCorners = true;
+        Orientation = SDUI.Orientation.Vertical;
         Dock = DockStyle.None;
         Anchor = AnchorStyles.Top | AnchorStyles.Left;
         AutoSize = false;

@@ -29,25 +29,69 @@ public static class ColorExtentions
     /// </returns>
     public static Color Brightness(this Color color, float correctionFactor)
     {
-        float red = (float)color.R;
-        float green = (float)color.G;
-        float blue = (float)color.B;
+        // brightnessChange: -1.0 (dark) ... 0 (nothing change) ... +1.0 (light)
+        RgbToHsl(color.R / 255f, color.G / 255f, color.B / 255f, out float h, out float s, out float l);
 
-        if (correctionFactor < 0)
+        l = Math.Clamp(l + correctionFactor, 0, 1);
+
+        Color rgb = HslToRgb(h, s, l);
+        return Color.FromArgb(color.A, rgb.R, rgb.G, rgb.B);
+    }
+
+    // RGB (0–1) → HSL (0–1)
+    static void RgbToHsl(float r, float g, float b, out float h, out float s, out float l)
+    {
+        float max = Math.Max(r, Math.Max(g, b));
+        float min = Math.Min(r, Math.Min(g, b));
+        float delta = max - min;
+
+        l = (max + min) / 2;
+
+        if (delta == 0)
         {
-            correctionFactor = 1 + correctionFactor;
-            red *= correctionFactor;
-            green *= correctionFactor;
-            blue *= correctionFactor;
+            h = s = 0;
         }
         else
         {
-            red = (255 - red) * correctionFactor + red;
-            green = (255 - green) * correctionFactor + green;
-            blue = (255 - blue) * correctionFactor + blue;
+            s = l > 0.5f ? delta / (2 - max - min) : delta / (max + min);
+            if (max == r) h = (g - b) / delta + (g < b ? 6 : 0);
+            else if (max == g) h = (b - r) / delta + 2;
+            else h = (r - g) / delta + 4;
+            h /= 6;
+        }
+    }
+
+    // HSL (0–1) → RGB (0–255)
+    static Color HslToRgb(float h, float s, float l)
+    {
+        float HueToRgb(float p, float q, float t)
+        {
+            if (t < 0) t += 1;
+            if (t > 1) t -= 1;
+            if (t < 1f / 6) return p + (q - p) * 6 * t;
+            if (t < 1f / 2) return q;
+            if (t < 2f / 3) return p + (q - p) * (2f / 3 - t) * 6;
+            return p;
         }
 
-        return Color.FromArgb(color.A, (int)red, (int)green, (int)blue);
+        if (s == 0)
+        {
+            byte gray = (byte)Math.Round(l * 255);
+            return Color.FromArgb(gray, gray, gray);
+        }
+
+        float q = l < 0.5f ? l * (1 + s) : l + s - l * s;
+        float p = 2 * l - q;
+
+        float r = HueToRgb(p, q, h + 1f / 3);
+        float g = HueToRgb(p, q, h);
+        float b = HueToRgb(p, q, h - 1f / 3);
+
+        return Color.FromArgb(
+            (byte)Math.Clamp(r * 255, 0, 255),
+            (byte)Math.Clamp(g * 255, 0, 255),
+            (byte)Math.Clamp(b * 255, 0, 255)
+        );
     }
 
     /// <summary>

@@ -1550,7 +1550,7 @@ namespace SDUI.Controls
             if (Parent == null)
                 return p;
 
-            if (Parent is UIWindowBase parentWindow)
+            if (Parent is UIWindowBase parentWindow && !parentWindow.IsDisposed)
                 return parentWindow.PointToScreen(new Point(p.X + Location.X, p.Y + Location.Y));
             else if (Parent is UIElementBase parentElement)
                 return parentElement.PointToScreen(new Point(p.X + Location.X, p.Y + Location.Y));
