@@ -50,6 +50,7 @@ public partial class InputDialog : UIWindowBase
     public InputDialog(string formTitle, string title, string message, InputType inputType = InputType.Textbox, object defaultValue = null)
     {
         InitializeComponent();
+        this.AcceptButton = this.btnOK;
         BackColor = ColorScheme.BackColor;
         ForeColor = ColorScheme.ForeColor;
 
