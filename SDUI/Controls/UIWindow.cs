@@ -657,6 +657,7 @@ public class UIWindow : UIWindowBase, IUIElement
     public UIWindow()
         : base()
     {
+        CheckForIllegalCrossThreadCalls = false;
         SetStyle(
             ControlStyles.UserPaint |
             ControlStyles.DoubleBuffer |

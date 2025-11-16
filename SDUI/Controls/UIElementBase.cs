@@ -1381,7 +1381,7 @@ namespace SDUI.Controls
         {
             if (_parent is UIWindowBase window && window.IsHandleCreated)
             {
-                _currentDpi = DpiHelper.GetDpiForWindow(window.Handle);
+                _currentDpi = DpiHelper.GetDpiForWindowInternal(window.Handle);
             }
             else if (_parent is UIElementBase element)
             {

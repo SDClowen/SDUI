@@ -42,7 +42,7 @@ namespace SDUI.Helpers
         private static extern bool GetCursorPos(out POINT lpPoint);
 
         [DllImport("user32.dll")]
-        private static extern uint GetDpiForWindowInternal(IntPtr hwnd);
+        private static extern uint GetDpiForWindow(IntPtr hwnd);
 
         [DllImport("shcore.dll")]
         private static extern int GetDpiForMonitor(IntPtr hmonitor, MonitorDpiType dpiType, out uint dpiX, out uint dpiY);
@@ -62,13 +62,13 @@ namespace SDUI.Helpers
             }
         }
 
-        public static int GetDpiForWindow(IntPtr handle)
+        public static int GetDpiForWindowInternal(IntPtr handle)
         {
             if (handle != IntPtr.Zero)
             {
                 try
                 {
-                    return checked((int)GetDpiForWindowInternal(handle));
+                    return checked((int)GetDpiForWindow(handle));
                 }
                 catch (EntryPointNotFoundException)
                 {
@@ -113,7 +113,7 @@ namespace SDUI.Helpers
 
         public static float GetScaleFactor(IntPtr handle)
         {
-            return GetDpiForWindow(handle) / 96f;
+            return GetDpiForWindowInternal(handle) / 96f;
         }
 
         public static float GetScaleFactor()

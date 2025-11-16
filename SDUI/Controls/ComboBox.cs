@@ -24,7 +24,7 @@ public class ComboBox : UIElementBase
         private int _visibleItemCount;
         private readonly AnimationEngine _openAnimation = new AnimationEngine(singular: true)
         {
-            Increment = 0.16,
+            Increment = 0.13,
             AnimationType = AnimationType.EaseOut,
             InterruptAnimation = true
         };
@@ -34,10 +34,9 @@ public class ComboBox : UIElementBase
         // Per-item hover animasyonları
         private readonly Dictionary<int, AnimationEngine> _itemHoverAnims = new();
 
-        // macOS benzeri daha sıkı boşluklar
-        private const int VERTICAL_PADDING = 6;
-        private const int H_PADDING_LEFT = 10;
-        private const int H_PADDING_RIGHT = 10;
+        // Windows 11 WinUI3 benzeri modern boşluklar
+        private const int VERTICAL_PADDING = 4;
+        private const int ITEM_MARGIN = 6; // Dropdown kenarından item arkaplan kenarına kadar margin
         private const float CORNER_RADIUS = 8f;
         private const int SCROLL_BAR_WIDTH = 14;
 
@@ -73,7 +72,7 @@ public class ComboBox : UIElementBase
             };
         }
 
-        private int ItemHeight => Math.Max(22, _owner.ItemHeight);
+        private int ItemHeight => Math.Max(32, _owner.ItemHeight);
 
         private void ScrollBar_ValueChanged(object sender, EventArgs e)
         {
@@ -87,7 +86,7 @@ public class ComboBox : UIElementBase
             {
                 ae = new AnimationEngine(singular: true)
                 {
-                    Increment = 0.22,
+                    Increment = 0.18,
                     AnimationType = AnimationType.EaseInOut,
                     InterruptAnimation = true
                 };
@@ -129,6 +128,7 @@ public class ComboBox : UIElementBase
             _isClosing = false;
             ShowItems();
             Visible = true;
+            _openAnimation.SetProgress(0); // Her açılışta 0'dan başla
             _openAnimation.StartNewAnimation(AnimationDirection.In);
         }
 
@@ -228,63 +228,102 @@ public class ComboBox : UIElementBase
             float openProgress = (float)_openAnimation.GetProgress();
             if (!Visible) openProgress = 0;
 
-            // Arka plan + gölge
             using (var layerPaint = new SKPaint { Color = SKColors.White.WithAlpha((byte)(255 * openProgress)) })
             {
                 canvas.SaveLayer(layerPaint);
+                
+                // Subtle fade-in animasyonu
                 float translateY = (_openingUpwards ? 1f - openProgress : openProgress - 1f) * 8f;
                 canvas.Translate(0, translateY);
 
-                // Daha belirgin, yumuşak gölge
-                using (var shadowPaint = new SKPaint
+                var mainRect = new SKRect(0, 0, Width, Height);
+                var mainRoundRect = new SKRoundRect(mainRect, CORNER_RADIUS);
+                
+                // Multi-layer modern shadow (ContextMenuStrip gibi)
+                canvas.Save();
+                for (int i = 0; i < 4; i++)
                 {
-                    Color = SKColors.Black.WithAlpha((byte)(90 * openProgress)),
-                    ImageFilter = SKImageFilter.CreateDropShadow(0, 10, 24, 24, SKColors.Black.WithAlpha((byte)(140 * openProgress))),
-                    IsAntialias = true
+                    float offsetY = 2 + i * 2;
+                    float blurRadius = 6 + i * 4;
+                    byte shadowAlpha = (byte)((25 - i * 5) * openProgress);
+
+                    using var shadowPaint = new SKPaint
+                    {
+                        Color = SKColors.Black.WithAlpha(shadowAlpha),
+                        MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blurRadius),
+                        IsAntialias = true
+                    };
+
+                    canvas.Save();
+                    canvas.Translate(0, offsetY);
+                    canvas.DrawRoundRect(mainRoundRect, shadowPaint);
+                    canvas.Restore();
+                }
+                canvas.Restore();
+                
+                // High-quality solid background
+                using (var bgPaint = new SKPaint 
+                { 
+                    Color = ColorScheme.BackColor.ToSKColor(),
+                    IsAntialias = true,
+                    FilterQuality = SKFilterQuality.High
                 })
                 {
-                    var rr = new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS);
-                    canvas.DrawRoundRect(rr, shadowPaint);
+                    canvas.DrawRoundRect(mainRoundRect, bgPaint);
                 }
 
-                // Arka plan
-                using (var bgPaint = new SKPaint { Color = ColorScheme.BackColor.ToSKColor(), IsAntialias = true })
-                {
-                    var bgRect = new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS);
-                    canvas.DrawRoundRect(bgRect, bgPaint);
-                }
-
-                // Clip: köşelerden taşma olmasın
+                // Clip path
                 using (var clipPath = new SKPath())
                 {
-                    clipPath.AddRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), CORNER_RADIUS));
+                    clipPath.AddRoundRect(mainRoundRect);
+                    canvas.Save();
                     canvas.ClipPath(clipPath, antialias: true);
                 }
 
-                // Üst highlight
+                // Minimal üst highlight
                 using (var highlightPaint = new SKPaint
                 {
-                    Shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(0, Height * 0.3f), new[] { SKColors.White.WithAlpha(14), SKColors.Transparent }, null, SKShaderTileMode.Clamp),
+                    Shader = SKShader.CreateLinearGradient(
+                        new SKPoint(0, 0), 
+                        new SKPoint(0, Height * 0.15f),
+                        new[] 
+                        { 
+                            SKColors.White.WithAlpha(12), 
+                            SKColors.Transparent 
+                        },
+                        null,
+                        SKShaderTileMode.Clamp),
                     IsAntialias = true
                 })
                 {
-                    canvas.DrawRect(new SKRect(0, 0, Width, Height), highlightPaint);
+                    canvas.DrawRect(mainRect, highlightPaint);
                 }
 
-                // Kenarlık
-                using (var borderPaint = new SKPaint { Color = ColorScheme.BorderColor.Alpha(200).ToSKColor(), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f })
+                // High-quality border
+                using (var borderPaint = new SKPaint 
+                { 
+                    Color = ColorScheme.BorderColor.Alpha(100).ToSKColor(),
+                    IsAntialias = true, 
+                    Style = SKPaintStyle.Stroke, 
+                    StrokeWidth = 1f,
+                    FilterQuality = SKFilterQuality.High
+                })
                 {
-                    var borderRect = new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 1, Height - 1), CORNER_RADIUS - 0.5f);
+                    var borderRect = new SKRoundRect(
+                        new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 
+                        CORNER_RADIUS - 0.5f);
                     canvas.DrawRoundRect(borderRect, borderPaint);
                 }
 
-                // Metin ve öğeler
+                // High-quality text paint
                 using var textPaint = new SKPaint
                 {
                     TextSize = _owner.Font.Size.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName(_owner.Font.FontFamily.Name),
+                    Typeface = SKTypeface.FromFamilyName(_owner.Font.FontFamily.Name, SKFontStyle.Normal),
                     IsAntialias = true,
-                    SubpixelText = true
+                    SubpixelText = true,
+                    LcdRenderText = true,
+                    FilterQuality = SKFilterQuality.High
                 };
 
                 float contentRightInset = (_scrollBar.Visible ? SCROLL_BAR_WIDTH + 6 : 0);
@@ -294,43 +333,61 @@ public class ComboBox : UIElementBase
 
                 for (int i = startIndex; i < endIndex && currentY < Height - VERTICAL_PADDING; i++)
                 {
-                    var itemRect = new SKRect(H_PADDING_LEFT, currentY, Width - H_PADDING_RIGHT - contentRightInset, currentY + ItemHeight);
+                    // Item rect with proper margins from dropdown edges
+                    float itemLeftEdge = ITEM_MARGIN;
+                    float itemRightEdge = Width - ITEM_MARGIN - contentRightInset;
+                    var itemRect = new SKRect(
+                        itemLeftEdge, 
+                        currentY, 
+                        itemRightEdge, 
+                        currentY + ItemHeight);
 
-                    // Hover animasyonu (per item)
                     var hoverAE = EnsureItemAnim(i);
                     float hProg = (float)hoverAE.GetProgress();
+                    
+                    bool isSelected = (i == _selectedIndex);
+                    float itemRadius = 4f;
 
-                    // Hover arkaplan rengi (macOS benzeri açık mavi/tema uyumlu)
-                    if (hProg > 0.001f)
+                    // High-quality selection background
+                    if (isSelected)
                     {
-                        var hoverColor = ColorScheme.AccentColor.Alpha((byte)(28 + 80 * hProg)).ToSKColor();
-                        using var hoverPaint = new SKPaint { Color = hoverColor, IsAntialias = true };
-                        var hr = new SKRoundRect(itemRect, 6);
-                        canvas.DrawRoundRect(hr, hoverPaint);
+                        using var selPaint = new SKPaint
+                        {
+                            Color = ColorScheme.AccentColor.Alpha(45).ToSKColor(),
+                            IsAntialias = true,
+                            FilterQuality = SKFilterQuality.High
+                        };
+                        var selRect = new SKRoundRect(itemRect, itemRadius);
+                        canvas.DrawRoundRect(selRect, selPaint);
+                    }
+                    // High-quality hover effect
+                    else if (hProg > 0.001f)
+                    {
+                        byte hoverAlpha = (byte)(25 + 35 * hProg);
+                        using var hoverPaint = new SKPaint 
+                        { 
+                            Color = ColorScheme.AccentColor.Alpha(hoverAlpha).ToSKColor(),
+                            IsAntialias = true,
+                            FilterQuality = SKFilterQuality.High
+                        };
+                        var hoverRect = new SKRoundRect(itemRect, itemRadius);
+                        canvas.DrawRoundRect(hoverRect, hoverPaint);
                     }
 
-                    // Seçili öğe vurgu
-                    if (i == _selectedIndex)
-                    {
-                        using var selBG = new SKPaint { Color = ColorScheme.AccentColor.Alpha(55).ToSKColor(), IsAntialias = true };
-                        var sr = new SKRoundRect(itemRect, 6);
-                        canvas.DrawRoundRect(sr, selBG);
-                        using var selBorder = new SKPaint { Color = ColorScheme.AccentColor.Alpha(160).ToSKColor(), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
-                        canvas.DrawRoundRect(sr, selBorder);
-                    }
-
-                    // Metin
+                    // High-quality text rendering
                     string text = _owner.GetItemText(_owner.Items[i]);
                     textPaint.Color = ColorScheme.ForeColor.ToSKColor();
+
                     float baseTextY = currentY + ItemHeight / 2f + textPaint.FontMetrics.XHeight / 2f;
-                    // Hover ile hafif yatay kayma
-                    float textX = H_PADDING_LEFT + 8 + (4f * hProg);
+                    float textX = ITEM_MARGIN + 8;
+                    
                     canvas.DrawText(text, textX, baseTextY, textPaint);
 
                     currentY += ItemHeight;
                 }
 
-                canvas.Restore();
+                canvas.Restore(); // clipPath restore
+                canvas.Restore(); // layerPaint restore
             }
         }
     }
@@ -787,34 +844,67 @@ public class ComboBox : UIElementBase
         }
 
         Point comboLocation = GetLocationRelativeToWindow();
+        var client = _parentWindow.ClientRectangle;
 
-        int totalItemsHeight = Items.Count * ItemHeight + (2 * 6);
-        int preferredHeight = Math.Min(totalItemsHeight, MaxDropDownItems * ItemHeight + (2 * 6));
+        const int MARGIN = 8;
+        int totalItemsHeight = Items.Count * ItemHeight + (2 * 4); // VERTICAL_PADDING
+        int preferredHeight = Math.Min(totalItemsHeight, MaxDropDownItems * ItemHeight + (2 * 4));
 
-        int maxAvailableHeight = _parentWindow.Height - comboLocation.Y - Height - 20;
+        int maxAvailableHeight = _parentWindow.Height - comboLocation.Y - Height - MARGIN;
         int actualHeight = Math.Min(preferredHeight, maxAvailableHeight);
-        actualHeight = Math.Max(actualHeight, ItemHeight + (2 * 6));
+        actualHeight = Math.Max(actualHeight, ItemHeight + (2 * 4));
 
         int dropdownHeight = Math.Min(DropDownHeight, actualHeight);
-
-        // otomatik genişlik: kullanıcı DropDownWidth belirlemediyse içeriğe göre ölç
         int dropdownWidth = _dropDownWidth == 0 ? MeasureDropDownAutoWidth() : DropDownWidth;
 
-        bool canOpenDown = comboLocation.Y + Height + dropdownHeight <= _parentWindow.Height;
-        bool canOpenUp = comboLocation.Y - dropdownHeight >= 0;
+        // Smart positioning with flip support (ContextMenuStrip gibi)
+        bool canOpenDown = comboLocation.Y + Height + dropdownHeight <= client.Bottom - MARGIN;
+        bool canOpenUp = comboLocation.Y - dropdownHeight >= client.Top + MARGIN;
 
         Point dropdownLocation;
         if (canOpenDown)
-            dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height);
+        {
+            dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height + 2);
+        }
         else if (canOpenUp)
-            dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight);
+        {
+            dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
+        }
         else
         {
-            dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height);
-            dropdownHeight = Math.Max(100, _parentWindow.Height - comboLocation.Y - Height - 10);
+            // Neither fits perfectly - pick the side with more space
+            int spaceBelow = client.Bottom - (comboLocation.Y + Height);
+            int spaceAbove = comboLocation.Y;
+            
+            if (spaceBelow > spaceAbove)
+            {
+                dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height + 2);
+                dropdownHeight = Math.Max(ItemHeight + 8, spaceBelow - MARGIN);
+            }
+            else
+            {
+                dropdownHeight = Math.Max(ItemHeight + 8, spaceAbove - MARGIN);
+                dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
+            }
         }
 
-        dropdownLocation.X = Math.Max(0, Math.Min(dropdownLocation.X, _parentWindow.Width - dropdownWidth));
+        // Horizontal bounds check with flip
+        if (dropdownLocation.X + dropdownWidth > client.Right - MARGIN)
+        {
+            int leftPos = dropdownLocation.X - dropdownWidth + Width;
+            if (leftPos >= client.Left + MARGIN)
+                dropdownLocation.X = leftPos;
+            else
+                dropdownLocation.X = client.Right - dropdownWidth - MARGIN;
+        }
+
+        // Final safety clamp
+        dropdownLocation.X = Math.Max(client.Left + MARGIN, Math.Min(dropdownLocation.X, client.Right - dropdownWidth - MARGIN));
+        dropdownLocation.Y = Math.Max(client.Top + MARGIN, Math.Min(dropdownLocation.Y, client.Bottom - dropdownHeight - MARGIN));
+        
+        // Clamp size to available space
+        dropdownWidth = Math.Min(dropdownWidth, client.Width - MARGIN * 2);
+        dropdownHeight = Math.Min(dropdownHeight, client.Height - MARGIN * 2);
 
         _dropDownPanel.Location = dropdownLocation;
         _dropDownPanel.Width = dropdownWidth;
@@ -829,10 +919,12 @@ public class ComboBox : UIElementBase
         AttachWindowHandlers();
         _parentWindow.Invalidate();
 
-        System.Threading.Tasks.Task.Delay(150).ContinueWith(_ =>
+        System.Threading.Tasks.Task.Delay(100).ContinueWith(_ =>
         {
-            if (_parentWindow?.InvokeRequired == true) _parentWindow.Invoke(() => _ignoreNextClick = false);
-            else _ignoreNextClick = false;
+            if (_parentWindow?.InvokeRequired == true) 
+                _parentWindow.Invoke(() => _ignoreNextClick = false);
+            else 
+                _ignoreNextClick = false;
         });
     }
 
@@ -983,17 +1075,18 @@ public class ComboBox : UIElementBase
         // Modern gölge efekti (hover ile dinamik - daha subtle)
         if (ShadowDepth > 0)
         {
-            float shadowAlpha = 18 + (hoverProgress * 12) + (pressProgress * 8);
+            float shadowAlpha = 12 + (hoverProgress * 8) + (pressProgress * 5);
             using (var shadowPaint = new SKPaint
             {
                 Color = SKColors.Black.WithAlpha((byte)shadowAlpha),
-                ImageFilter = SKImageFilter.CreateDropShadow(0, ShadowDepth * 0.25f, ShadowDepth * 0.5f, ShadowDepth * 0.5f, SKColors.Black.WithAlpha((byte)(shadowAlpha * 1.2f))),
+                MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, ShadowDepth * 0.5f),
                 IsAntialias = true
             })
             {
-                var shadowPath = new SKPath();
-                shadowPath.AddRoundRect(rect, _radius, _radius);
-                canvas.DrawPath(shadowPath, shadowPaint);
+                canvas.Save();
+                canvas.Translate(0, ShadowDepth * 0.3f);
+                canvas.DrawRoundRect(rect, _radius, _radius, shadowPaint);
+                canvas.Restore();
             }
         }
 
@@ -1039,7 +1132,7 @@ public class ComboBox : UIElementBase
         }
 
         // Modern kenarlık (ince ve zarif)
-        float borderAlpha = 0.7f + (hoverProgress * 0.2f) + (pressProgress * 0.1f);
+        float borderAlpha = 0.4f + (hoverProgress * 0.2f) + (pressProgress * 0.1f);
         using (var borderPaint = new SKPaint
         {
             Color = ColorScheme.BorderColor.ToSKColor().InterpolateColor(accentColor, blendFactor * 0.4f).ToColor().Alpha((byte)(255 * borderAlpha)).ToSKColor(),
