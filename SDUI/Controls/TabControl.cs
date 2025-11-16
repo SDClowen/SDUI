@@ -48,11 +48,11 @@ namespace SDUI.Controls
         private bool _isNewPageButtonHovered;
 
         // Chrome-like animation
-        private readonly AnimationEngine _selectionAnim;
+        private readonly Animation.AnimationEngine _selectionAnim;
         private int _prevSelectedIndex = -1;
         private double _selectionAnimIncrement = 0.18;
         private AnimationType _selectionAnimType = AnimationType.EaseInOut;
-        private readonly Dictionary<int, AnimationEngine> _hoverAnims = new();
+        private readonly Dictionary<int, Animation.AnimationEngine> _hoverAnims = new();
         private readonly List<RectangleF> _tabRects = new();
 
         public event EventHandler NewPageButtonClicked;
@@ -63,7 +63,7 @@ namespace SDUI.Controls
             Size = new Size(500, 320);
             BackColor = ColorScheme.BackColor; // tema ile uyumlu
 
-            _selectionAnim = new AnimationEngine(singular: true)
+            _selectionAnim = new Animation.AnimationEngine(singular: true)
             {
                 Increment = _selectionAnimIncrement,
                 AnimationType = _selectionAnimType,
@@ -196,7 +196,7 @@ namespace SDUI.Controls
         {
             if (!_hoverAnims.ContainsKey(index))
             {
-                var ae = new AnimationEngine(singular: true)
+                var ae = new Animation.AnimationEngine(singular: true)
                 {
                     Increment = 0.2,
                     AnimationType = AnimationType.EaseInOut,

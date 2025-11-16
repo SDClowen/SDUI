@@ -15,10 +15,10 @@ public class TrackBar : UIElementBase
     private bool _isDragging;
     private bool _isHovered;
     private Point _mouseLocation;
-    private readonly AnimationEngine _thumbHoverAnimation;
-    private readonly AnimationEngine _thumbPressAnimation;
-    private readonly AnimationEngine _trackHoverAnimation;
-    private readonly AnimationEngine _valueAnimation;
+    private readonly Animation.AnimationEngine _thumbHoverAnimation;
+    private readonly Animation.AnimationEngine _thumbPressAnimation;
+    private readonly Animation.AnimationEngine _trackHoverAnimation;
+    private readonly Animation.AnimationEngine _valueAnimation;
     private readonly ToolTip _tooltip;
 
     private int _minimum = 0;
@@ -353,25 +353,25 @@ public class TrackBar : UIElementBase
         Size = new Size(200, 22);
         MinimumSize = new Size(50, 22);
 
-        _thumbHoverAnimation = new AnimationEngine(singular: true)
+        _thumbHoverAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.12f,
             AnimationType = AnimationType.EaseInOut,
             InterruptAnimation = true
         };
-        _thumbPressAnimation = new AnimationEngine(singular: true)
+        _thumbPressAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.20f,
             AnimationType = AnimationType.EaseOut,
             InterruptAnimation = true
         };
-        _trackHoverAnimation = new AnimationEngine(singular: true)
+        _trackHoverAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.10f,
             AnimationType = AnimationType.EaseInOut,
             InterruptAnimation = true
         };
-        _valueAnimation = new AnimationEngine(singular: true)
+        _valueAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.15f,
             AnimationType = AnimationType.EaseInOut,

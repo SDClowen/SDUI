@@ -35,7 +35,7 @@ public class FlowLayoutPanel : UIElementBase
     private FlowAlignment _horizontalAlignment = FlowAlignment.Near;
     private Padding _itemPadding = new(3);
     private readonly Dictionary<UIElementBase, Point> _targetLocations = new();
-    private readonly Dictionary<UIElementBase, AnimationEngine> _animations = new();
+    private readonly Dictionary<UIElementBase, Animation.AnimationEngine> _animations = new();
     private readonly ScrollBar _vScrollBar;
     private readonly ScrollBar _hScrollBar;
     private bool _isLayouting;
@@ -225,7 +225,7 @@ public class FlowLayoutPanel : UIElementBase
         if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;
 
         // Yeni kontrol için animasyon motoru oluştur
-        _animations[e.Element] = new AnimationEngine(singular: true)
+        _animations[e.Element] = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.12f,
             AnimationType = AnimationType.EaseInOut,
@@ -407,7 +407,7 @@ public class FlowLayoutPanel : UIElementBase
         var currentLoc = control.Location;
         animation.OnAnimationProgress += (progress) =>
         {
-            var engine = progress as AnimationEngine;
+            var engine = progress as Animation.AnimationEngine;
             control.Location = new Point(
                 (int)(currentLoc.X + (targetPoint.X - currentLoc.X) * (float)engine.GetProgress()),
                 (int)(currentLoc.Y + (targetPoint.Y - currentLoc.Y) * (float)engine.GetProgress())

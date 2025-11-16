@@ -22,7 +22,7 @@ public class ComboBox : UIElementBase
         private ScrollBar _scrollBar;
         private int _scrollOffset = 0;
         private int _visibleItemCount;
-        private readonly AnimationEngine _openAnimation = new AnimationEngine(singular: true)
+        private readonly Animation.AnimationEngine _openAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.13,
             AnimationType = AnimationType.EaseOut,
@@ -32,7 +32,7 @@ public class ComboBox : UIElementBase
         private bool _openingUpwards;
 
         // Per-item hover animasyonları
-        private readonly Dictionary<int, AnimationEngine> _itemHoverAnims = new();
+        private readonly Dictionary<int, Animation.AnimationEngine> _itemHoverAnims = new();
 
         // Windows 11 WinUI3 benzeri modern boşluklar
         private const int VERTICAL_PADDING = 4;
@@ -80,11 +80,11 @@ public class ComboBox : UIElementBase
             Invalidate();
         }
 
-        private AnimationEngine EnsureItemAnim(int index)
+        private Animation.AnimationEngine EnsureItemAnim(int index)
         {
             if (!_itemHoverAnims.TryGetValue(index, out var ae))
             {
-                ae = new AnimationEngine(singular: true)
+                ae = new Animation.AnimationEngine(singular: true)
                 {
                     Increment = 0.18,
                     AnimationType = AnimationType.EaseInOut,
@@ -686,9 +686,9 @@ public class ComboBox : UIElementBase
     #region Private Fields
 
     private DropDownPanel _dropDownPanel;
-    private readonly AnimationEngine _hoverAnimation;
-    private readonly AnimationEngine _pressAnimation;
-    private readonly AnimationEngine _arrowAnimation;
+    private readonly Animation.AnimationEngine _hoverAnimation;
+    private readonly Animation.AnimationEngine _pressAnimation;
+    private readonly Animation.AnimationEngine _arrowAnimation;
     private UIWindow _parentWindow;
     private MouseEventHandler _windowMouseDownHandler;
     private EventHandler _windowDeactivateHandler;
@@ -705,21 +705,21 @@ public class ComboBox : UIElementBase
         MinimumSize = new Size(50, 28);
         Size = new Size(120, 28);
 
-        _hoverAnimation = new AnimationEngine(singular: true)
+        _hoverAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.15,
             AnimationType = AnimationType.EaseInOut
         };
         _hoverAnimation.OnAnimationProgress += _ => Invalidate();
 
-        _pressAnimation = new AnimationEngine(singular: true)
+        _pressAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.2,
             AnimationType = AnimationType.EaseInOut
         };
         _pressAnimation.OnAnimationProgress += _ => Invalidate();
 
-        _arrowAnimation = new AnimationEngine(singular: true)
+        _arrowAnimation = new Animation.AnimationEngine(singular: true)
         {
             Increment = 0.12,
             AnimationType = AnimationType.EaseInOut

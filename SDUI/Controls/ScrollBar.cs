@@ -32,8 +32,8 @@ namespace SDUI.Controls
         private bool _autoHide = true;
         private int _hideDelay = 1200; // ms
         private bool _useThumbShadow = true;
-        private readonly AnimationEngine _visibilityAnim;
-        private readonly AnimationEngine _scrollAnim; // scroll animasyonu
+        private readonly Animation.AnimationEngine _visibilityAnim;
+        private readonly Animation.AnimationEngine _scrollAnim; // scroll animasyonu
         private readonly Timer _hideTimer;
 
         // Yeni: animasyon ayarları
@@ -285,7 +285,7 @@ namespace SDUI.Controls
             Cursor = Cursors.Default;
             ApplyOrientationSize();
 
-            _visibilityAnim = new AnimationEngine(singular: true)
+            _visibilityAnim = new Animation.AnimationEngine(singular: true)
             {
                 Increment = _visibilityAnimIncrement,
                 AnimationType = _visibilityAnimType,
@@ -293,7 +293,7 @@ namespace SDUI.Controls
             };
             _visibilityAnim.OnAnimationProgress += (s) => Invalidate();
 
-            _scrollAnim = new AnimationEngine(singular: true)
+            _scrollAnim = new Animation.AnimationEngine(singular: true)
             {
                 Increment = _scrollAnimIncrement,
                 AnimationType = _scrollAnimType,

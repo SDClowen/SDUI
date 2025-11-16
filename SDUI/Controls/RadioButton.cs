@@ -22,9 +22,9 @@ public class Radio : UIElementBase
     private const int TEXT_PADDING = 4;
 
     // animation managers
-    private readonly AnimationEngine animationManager;
+    private readonly Animation.AnimationEngine animationManager;
 
-    private readonly AnimationEngine rippleAnimationManager;
+    private readonly Animation.AnimationEngine rippleAnimationManager;
 
     private int boxOffset;
     private int _mouseState;

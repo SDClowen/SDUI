@@ -1,4 +1,4 @@
-﻿namespace SDUI.Animation2
+﻿namespace SDUI.AnimationEngine
 {
     /// <summary>
     /// A method that provides values for smooth transitions.

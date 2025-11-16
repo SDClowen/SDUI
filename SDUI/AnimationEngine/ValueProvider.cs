@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SDUI.Animation2
+namespace SDUI.AnimationEngine
 {
     /// <summary>
     /// A class for providing transition values. You can use it as a base for animations of custom-drawn controls, game objects, ...

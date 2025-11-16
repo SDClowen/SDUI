@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SDUI.Animation2
+namespace SDUI.AnimationEngine
 {
     public static partial class EasingMethods
     {
