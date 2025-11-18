@@ -58,9 +58,9 @@ public class Button : UIElementBase, IButtonControl
         }
     }
 
-    private readonly Animation.AnimationEngine animationManager;
-    private readonly Animation.AnimationEngine hoverAnimationManager;
-    private readonly Animation.AnimationEngine pressAnimationManager;
+    private readonly AnimationManager animationManager;
+    private readonly AnimationManager hoverAnimationManager;
+    private readonly AnimationManager pressAnimationManager;
 
     private SKImage _cachedImage;
     private bool _needsRedraw = true;
@@ -77,7 +77,7 @@ public class Button : UIElementBase, IButtonControl
         TabStop = true;
 
         // Ripple animasyonu - her tıklamada yeni başlar
-        animationManager = new Animation.AnimationEngine(singular: true)
+        animationManager = new AnimationManager(singular: true)
         {
             Increment = 0.05,
             AnimationType = AnimationType.EaseOut,
@@ -85,7 +85,7 @@ public class Button : UIElementBase, IButtonControl
         };
 
         // Hover animasyonu - smooth geçişler
-        hoverAnimationManager = new Animation.AnimationEngine(singular: true)
+        hoverAnimationManager = new AnimationManager(singular: true)
         {
             Increment = 0.10,
             AnimationType = AnimationType.EaseInOut,
@@ -95,7 +95,7 @@ public class Button : UIElementBase, IButtonControl
         hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
         animationManager.OnAnimationProgress += sender => Invalidate();
 
-        pressAnimationManager = new Animation.AnimationEngine(singular: true)
+        pressAnimationManager = new AnimationManager(singular: true)
         {
             Increment = 0.18,
             AnimationType = AnimationType.EaseInOut,
@@ -418,7 +418,7 @@ public class Button : UIElementBase, IButtonControl
         }
     }
 
-    private static void RestartAnimation(Animation.AnimationEngine engine, AnimationDirection direction, Point? source = null)
+    private static void RestartAnimation(AnimationManager engine, AnimationDirection direction, Point? source = null)
     {
         if (engine == null)
             return;

@@ -28,7 +28,7 @@ public class MenuStrip : UIElementBase
     private float _itemPadding = 6f; // 12 -> 6 (daha az margin)
     private float _submenuArrowSize = 8f;
     private float _iconSize = 16f;
-    private readonly Dictionary<MenuItem, Animation.AnimationEngine> _itemHoverAnims = new();
+    private readonly Dictionary<MenuItem, AnimationManager> _itemHoverAnims = new();
     private bool _stretch = true;
     private Size _imageScalingSize = new(20, 20);
     private bool _showSubmenuArrow = true;
@@ -349,5 +349,5 @@ public class MenuStrip : UIElementBase
 
     protected override void Dispose(bool disposing){ if(disposing){ _animationTimer?.Dispose(); _activeDropDown?.Dispose(); } base.Dispose(disposing); }
 
-    private Animation.AnimationEngine EnsureHoverAnim(MenuItem item){ if(!_itemHoverAnims.TryGetValue(item,out var engine)){ engine=new Animation.AnimationEngine(singular:true){ Increment=0.28, AnimationType= AnimationType.EaseOut, InterruptAnimation=true }; engine.OnAnimationProgress+=_=>Invalidate(); _itemHoverAnims[item]=engine; } return engine; }
+    private AnimationManager EnsureHoverAnim(MenuItem item){ if(!_itemHoverAnims.TryGetValue(item,out var engine)){ engine=new AnimationManager(singular:true){ Increment=0.28, AnimationType= AnimationType.EaseOut, InterruptAnimation=true }; engine.OnAnimationProgress+=_=>Invalidate(); _itemHoverAnims[item]=engine; } return engine; }
 }

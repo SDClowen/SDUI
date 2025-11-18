@@ -17,8 +17,8 @@ namespace SDUI.Controls
         // Tik işareti koordinatları - checkbox içinde ortalı olacak şekilde ayarlandı
         private static readonly Point[] CHECKMARK_LINE = { new(4, 8), new(7, 11), new(12, 6) };
 
-        private readonly Animation.AnimationEngine animationManager;
-        private readonly Animation.AnimationEngine rippleAnimationManager;
+        private readonly AnimationManager animationManager;
+        private readonly AnimationManager rippleAnimationManager;
 
         private int boxOffset;
         private RectangleF boxRectangle;

@@ -257,42 +257,6 @@ public class UIWindowBase : Form
         base.WndProc(ref m);
     }
 
-    public void ChangeControlsTheme(Control control)
-    {
-        control.Enabled = false;
-
-        var isDark = ColorScheme.BackColor.IsDark();
-        if (control is ListView)
-        {
-            if (WindowsHelper.IsModern)
-            {
-                SendMessage(control.Handle, 0x0127, (1 << 16) | (1 & 0xffff), 0);
-
-                AllowDarkModeForWindow(control.Handle, true);
-            }
-        }
-
-        if (control is RichTextBox || control is ListBox)
-        {
-            try
-            {
-                control.BackColor = ColorScheme.BackColor;
-                control.ForeColor = ColorScheme.ForeColor;
-            }
-            catch (Exception)
-            {
-            }
-        }
-
-        WindowsHelper.UseImmersiveDarkMode(control.Handle, isDark);
-
-        foreach (Control subControl in control.Controls)
-        {
-            ChangeControlsTheme(subControl);
-        }
-        control.Enabled = true;
-    }
-
     protected override void OnHandleCreated(EventArgs e)
     {
         base.OnHandleCreated(e);
@@ -326,8 +290,6 @@ public class UIWindowBase : Form
         base.OnBackColorChanged(e);
         if (DesignMode)
             return;
-
-        ChangeControlsTheme(this);
 
         if (!WindowsHelper.IsModern)
             return;

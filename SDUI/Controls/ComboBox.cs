@@ -1,4 +1,4 @@
-ï»¿using SDUI.Animation;
+using SDUI.Animation;
 using SDUI.Extensions;
 using SkiaSharp;
 using System;
@@ -22,7 +22,7 @@ public class ComboBox : UIElementBase
         private ScrollBar _scrollBar;
         private int _scrollOffset = 0;
         private int _visibleItemCount;
-        private readonly Animation.AnimationEngine _openAnimation = new Animation.AnimationEngine(singular: true)
+        private readonly AnimationManager _openAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.13,
             AnimationType = AnimationType.EaseOut,
@@ -31,12 +31,12 @@ public class ComboBox : UIElementBase
         private bool _isClosing;
         private bool _openingUpwards;
 
-        // Per-item hover animasyonlarÄ±
-        private readonly Dictionary<int, Animation.AnimationEngine> _itemHoverAnims = new();
+        // Per-item hover animasyonlarý
+        private readonly Dictionary<int, AnimationManager> _itemHoverAnims = new();
 
-        // Windows 11 WinUI3 benzeri modern boÅŸluklar
+        // Windows 11 WinUI3 benzeri modern boþluklar
         private const int VERTICAL_PADDING = 4;
-        private const int ITEM_MARGIN = 6; // Dropdown kenarÄ±ndan item arkaplan kenarÄ±na kadar margin
+        private const int ITEM_MARGIN = 6; // Dropdown kenarýndan item arkaplan kenarýna kadar margin
         private const float CORNER_RADIUS = 8f;
         private const int SCROLL_BAR_WIDTH = 14;
 
@@ -80,11 +80,11 @@ public class ComboBox : UIElementBase
             Invalidate();
         }
 
-        private Animation.AnimationEngine EnsureItemAnim(int index)
+        private AnimationManager EnsureItemAnim(int index)
         {
             if (!_itemHoverAnims.TryGetValue(index, out var ae))
             {
-                ae = new Animation.AnimationEngine(singular: true)
+                ae = new AnimationManager(singular: true)
                 {
                     Increment = 0.18,
                     AnimationType = AnimationType.EaseInOut,
@@ -128,7 +128,7 @@ public class ComboBox : UIElementBase
             _isClosing = false;
             ShowItems();
             Visible = true;
-            _openAnimation.SetProgress(0); // Her aÃ§Ä±lÄ±ÅŸta 0'dan baÅŸla
+            _openAnimation.SetProgress(0); // Her açýlýþta 0'dan baþla
             _openAnimation.StartNewAnimation(AnimationDirection.In);
         }
 
@@ -280,7 +280,7 @@ public class ComboBox : UIElementBase
                     canvas.ClipPath(clipPath, antialias: true);
                 }
 
-                // Minimal Ã¼st highlight
+                // Minimal üst highlight
                 using (var highlightPaint = new SKPaint
                 {
                     Shader = SKShader.CreateLinearGradient(
@@ -393,7 +393,7 @@ public class ComboBox : UIElementBase
     }
 
     /// <summary>
-    /// ComboBox Ã¶ÄŸeleri koleksiyonu
+    /// ComboBox öðeleri koleksiyonu
     /// </summary>
     public class ObjectCollection : IList
     {
@@ -511,7 +511,7 @@ public class ComboBox : UIElementBase
             {
                 _selectedIndex = value;
                 _selectedItem = value >= 0 ? Items[value] : null;
-                // DropDown stilinde kullanÄ±cÄ± listeden bir seÃ§im yapÄ±nca metni gÃ¼ncelle
+                // DropDown stilinde kullanýcý listeden bir seçim yapýnca metni güncelle
                 if (_dropDownStyle == ComboBoxStyle.DropDown && _selectedItem != null)
                 {
                     _text = GetItemText(_selectedItem);
@@ -649,7 +649,7 @@ public class ComboBox : UIElementBase
                 _text = value;
                 Invalidate();
             }
-            // DropDownList'te text dÃ¼zenlenemez
+            // DropDownList'te text düzenlenemez
         }
     }
 
@@ -686,9 +686,9 @@ public class ComboBox : UIElementBase
     #region Private Fields
 
     private DropDownPanel _dropDownPanel;
-    private readonly Animation.AnimationEngine _hoverAnimation;
-    private readonly Animation.AnimationEngine _pressAnimation;
-    private readonly Animation.AnimationEngine _arrowAnimation;
+    private readonly AnimationManager _hoverAnimation;
+    private readonly AnimationManager _pressAnimation;
+    private readonly AnimationManager _arrowAnimation;
     private UIWindow _parentWindow;
     private MouseEventHandler _windowMouseDownHandler;
     private EventHandler _windowDeactivateHandler;
@@ -705,27 +705,27 @@ public class ComboBox : UIElementBase
         MinimumSize = new Size(50, 28);
         Size = new Size(120, 28);
 
-        _hoverAnimation = new Animation.AnimationEngine(singular: true)
+        _hoverAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.15,
             AnimationType = AnimationType.EaseInOut
         };
         _hoverAnimation.OnAnimationProgress += _ => Invalidate();
 
-        _pressAnimation = new Animation.AnimationEngine(singular: true)
+        _pressAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.2,
             AnimationType = AnimationType.EaseInOut
         };
         _pressAnimation.OnAnimationProgress += _ => Invalidate();
 
-        _arrowAnimation = new Animation.AnimationEngine(singular: true)
+        _arrowAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.12,
             AnimationType = AnimationType.EaseInOut
         };
         _arrowAnimation.OnAnimationProgress += _ => Invalidate();
-        // BaÅŸlangÄ±Ã§ta ok aÅŸaÄŸÄ± bakmalÄ± (0 rotation)
+        // Baþlangýçta ok aþaðý bakmalý (0 rotation)
         _arrowAnimation.SetProgress(0);
 
         _dropDownPanel = new DropDownPanel(this);
@@ -761,10 +761,10 @@ public class ComboBox : UIElementBase
         {
             _pressAnimation.StartNewAnimation(AnimationDirection.In);
 
-            // DropDownStyle'a gÃ¶re davranÄ±ÅŸ
+            // DropDownStyle'a göre davranýþ
             if (DropDownStyle == ComboBoxStyle.Simple)
             {
-                // Simple modda dropdown aÃ§Ä±lmaz
+                // Simple modda dropdown açýlmaz
                 return;
             }
 
@@ -1002,7 +1002,7 @@ public class ComboBox : UIElementBase
             return;
         }
 
-        // ComboBox'Ä±n kendi alanÄ± iÃ§inde mi kontrol et
+        // ComboBox'ýn kendi alaný içinde mi kontrol et
         var comboBounds = new Rectangle(GetLocationRelativeToWindow(), Size);
         System.Diagnostics.Debug.WriteLine($"OnWindowMouseDown: ComboBox bounds=({comboBounds.X},{comboBounds.Y},{comboBounds.Width},{comboBounds.Height})");
         if (comboBounds.Contains(e.Location))
@@ -1011,7 +1011,7 @@ public class ComboBox : UIElementBase
             return;
         }
 
-        // Dropdown panel iÃ§inde mi kontrol et
+        // Dropdown panel içinde mi kontrol et
         var panelBounds = new Rectangle(_dropDownPanel.Location, _dropDownPanel.Size);
         System.Diagnostics.Debug.WriteLine($"OnWindowMouseDown: Panel bounds=({panelBounds.X},{panelBounds.Y},{panelBounds.Width},{panelBounds.Height})");
         if (panelBounds.Contains(e.Location))
@@ -1068,11 +1068,11 @@ public class ComboBox : UIElementBase
         var accentColor = ColorScheme.AccentColor.ToSKColor();
         var baseColor = ColorScheme.BackColor.ToSKColor();
 
-        // Arka plan rengi hesapla (daha yumuÅŸak blend)
+        // Arka plan rengi hesapla (daha yumuþak blend)
         float blendFactor = Math.Clamp(hoverProgress * 0.15f + pressProgress * 0.1f + (DroppedDown ? 0.2f : 0f), 0f, 0.4f);
         var backgroundColor = baseColor.InterpolateColor(accentColor, blendFactor);
 
-        // Modern gÃ¶lge efekti (hover ile dinamik - daha subtle)
+        // Modern gölge efekti (hover ile dinamik - daha subtle)
         if (ShadowDepth > 0)
         {
             float shadowAlpha = 12 + (hoverProgress * 8) + (pressProgress * 5);
@@ -1112,7 +1112,7 @@ public class ComboBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius, _radius, glowPaint);
         }
 
-        // Ãœstte ince aydÄ±nlÄ±k highlight (acrylic effect)
+        // Üstte ince aydýnlýk highlight (acrylic effect)
         using (var highlightPaint = new SKPaint
         {
             Shader = SKShader.CreateLinearGradient(
@@ -1131,7 +1131,7 @@ public class ComboBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius, _radius, highlightPaint);
         }
 
-        // Modern kenarlÄ±k (ince ve zarif)
+        // Modern kenarlýk (ince ve zarif)
         float borderAlpha = 0.4f + (hoverProgress * 0.2f) + (pressProgress * 0.1f);
         using (var borderPaint = new SKPaint
         {
@@ -1145,11 +1145,11 @@ public class ComboBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius - 0.5f, _radius - 0.5f, borderPaint);
         }
 
-        // Metin Ã§izimi
+        // Metin çizimi
         string displayText = Text;
         if (string.IsNullOrEmpty(displayText))
         {
-            displayText = "SeÃ§iniz...";
+            displayText = "Seçiniz...";
         }
         var textColor = ColorScheme.ForeColor.ToSKColor();
 
@@ -1169,18 +1169,18 @@ public class ComboBox : UIElementBase
 
         canvas.DrawText(displayText, textX, textY, textPaint);
 
-        // Modern Chevron ikonu - DropDown ve DropDownList stillerinde gÃ¶ster
+        // Modern Chevron ikonu - DropDown ve DropDownList stillerinde göster
         if (DropDownStyle != ComboBoxStyle.Simple)
         {
             float chevronSize = 10;
             float chevronX = Width - 22;
             float chevronY = Height / 2f;
 
-            // Arrow rotation animasyonu: 0Â° kapalÄ±, 180Â° aÃ§Ä±k
+            // Arrow rotation animasyonu: 0° kapalý, 180° açýk
             float arrowProgress = (float)_arrowAnimation.GetProgress();
             float rotation = 180f * arrowProgress;
 
-            // Chevron rengi (hover ve press durumuna gÃ¶re)
+            // Chevron rengi (hover ve press durumuna göre)
             float chevronBlend = Math.Clamp(hoverProgress * 0.35f + pressProgress * 0.5f, 0f, 1f);
             var chevronColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentColor, chevronBlend);
 
@@ -1196,12 +1196,12 @@ public class ComboBox : UIElementBase
                 canvas.DrawCircle(chevronX, chevronY, circleRadius, bgPaint);
             }
 
-            // Rotasyon iÃ§in canvas'Ä± kaydet
+            // Rotasyon için canvas'ý kaydet
             canvas.Save();
             canvas.Translate(chevronX, chevronY);
             canvas.RotateDegrees(rotation);
 
-            // Modern chevron (V ÅŸekli) - ince ve zarif
+            // Modern chevron (V þekli) - ince ve zarif
             using (var chevronPaint = new SKPaint
             {
                 Color = chevronColor,
@@ -1236,7 +1236,7 @@ public class ComboBox : UIElementBase
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
-        Height = 28; // Sabit yÃ¼kseklik
+        Height = 28; // Sabit yükseklik
     }
 
     protected override void Dispose(bool disposing)

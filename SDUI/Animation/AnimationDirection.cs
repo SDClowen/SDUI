@@ -1,11 +1,15 @@
-﻿namespace SDUI.Animation;
-
-public enum AnimationDirection
+namespace SDUI.Animation
 {
-    In,
-    Out,
-    InOutIn,
-    InOutOut,
-    InOutRepeatingIn,
-    InOutRepeatingOut
+    /// <summary>
+    /// Animation direction enum
+    /// </summary>
+    public enum AnimationDirection
+    {
+        In,
+        Out,
+        InOutIn,
+        InOutOut,
+        InOutRepeatingIn,
+        InOutRepeatingOut
+    }
 }

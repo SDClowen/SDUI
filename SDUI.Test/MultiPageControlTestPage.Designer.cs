@@ -1,4 +1,6 @@
-﻿namespace SDUI.Demo
+﻿using System.Drawing;
+
+namespace SDUI.Demo
 {
     partial class MultiPageControlTestPage
     {
@@ -33,16 +35,14 @@
             // 
             // multiPageControl
             // 
-            this.multiPageControl.BackColor = System.Drawing.Color.Transparent;
             this.multiPageControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.multiPageControl.HeaderControlSize = new System.Drawing.Size(80, 30);
             this.multiPageControl.Location = new System.Drawing.Point(0, 0);
             this.multiPageControl.Name = "multiPageControl";
-            this.multiPageControl.Padding = new System.Windows.Forms.Padding(0, 30, 0, 0);
             this.multiPageControl.RenderNewPageButton = true;
             this.multiPageControl.RenderPageClose = true;
-            this.multiPageControl.RenderPageIcon = true;
+            this.multiPageControl.RenderPageIcon = false;
             this.multiPageControl.SelectedIndex = -1;
+            this.multiPageControl.BorderColor = Color.Red;
             this.multiPageControl.Size = new System.Drawing.Size(1083, 552);
             this.multiPageControl.TabIndex = 6;
             this.multiPageControl.NewPageButtonClicked += new System.EventHandler(this.multiPageControl_NewPageButtonClicked);

@@ -25,10 +25,10 @@ namespace SDUI.Controls
 
         private const int SIZE = 20;
 
-        private readonly Animation.AnimationEngine upButtonHoverAnimation;
-        private readonly Animation.AnimationEngine downButtonHoverAnimation;
-        private readonly Animation.AnimationEngine upButtonPressAnimation;
-        private readonly Animation.AnimationEngine downButtonPressAnimation;
+        private readonly AnimationManager upButtonHoverAnimation;
+        private readonly AnimationManager downButtonHoverAnimation;
+        private readonly AnimationManager upButtonPressAnimation;
+        private readonly AnimationManager downButtonPressAnimation;
 
         private bool _inUpButton, _inDownButton;
         private bool _upButtonPressed, _downButtonPressed;

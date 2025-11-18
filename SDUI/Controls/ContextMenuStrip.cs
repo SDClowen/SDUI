@@ -21,8 +21,8 @@ public class ContextMenuStrip : MenuStrip
     private KeyEventHandler _ownerKeyDownHandler;
     private bool _ownerPreviousKeyPreview;
     private MenuItem _hoveredItem;
-    private readonly Animation.AnimationEngine _fadeInAnimation;
-    private readonly Dictionary<MenuItem, Animation.AnimationEngine> _itemHoverAnims = new();
+    private readonly AnimationManager _fadeInAnimation;
+    private readonly Dictionary<MenuItem, AnimationManager> _itemHoverAnims = new();
 
     public event EventHandler Opening;
     public event EventHandler Closing;
@@ -34,7 +34,7 @@ public class ContextMenuStrip : MenuStrip
         TabStop = false;
         Orientation = SDUI.Orientation.Vertical;
 
-        _fadeInAnimation = new Animation.AnimationEngine
+        _fadeInAnimation = new AnimationManager
         {
             Increment = 0.30,
             AnimationType = AnimationType.EaseOut,
@@ -206,11 +206,11 @@ public class ContextMenuStrip : MenuStrip
 
     internal override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hoveredItem = null; Invalidate(); }
 
-    private Animation.AnimationEngine EnsureItemHoverAnim(MenuItem item)
+    private AnimationManager EnsureItemHoverAnim(MenuItem item)
     {
         if (!_itemHoverAnims.TryGetValue(item, out var engine))
         {
-            engine = new Animation.AnimationEngine { Increment = 0.25, AnimationType = AnimationType.EaseOut, Singular = true, InterruptAnimation = true };
+            engine = new AnimationManager { Increment = 0.25, AnimationType = AnimationType.EaseOut, Singular = true, InterruptAnimation = true };
             engine.OnAnimationProgress += _ => Invalidate();
             _itemHoverAnims[item] = engine;
         }

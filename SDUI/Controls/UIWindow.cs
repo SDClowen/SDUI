@@ -509,42 +509,42 @@ public class UIWindow : UIWindowBase, IUIElement
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine minBoxHoverAnimationManager;
+    private readonly AnimationManager minBoxHoverAnimationManager;
 
     /// <summary>
     /// Tab Area hover animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine pageAreaAnimationManager;
+    private readonly AnimationManager pageAreaAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine maxBoxHoverAnimationManager;
+    private readonly AnimationManager maxBoxHoverAnimationManager;
 
     /// <summary>
     /// Min Box hover animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine extendBoxHoverAnimationManager;
+    private readonly AnimationManager extendBoxHoverAnimationManager;
 
     /// <summary>
     /// Close tab hover animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine closeBoxHoverAnimationManager;
+    private readonly AnimationManager closeBoxHoverAnimationManager;
 
     /// <summary>
     /// new Tab hover animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine newTabHoverAnimationManager;
+    private readonly AnimationManager newTabHoverAnimationManager;
 
     /// <summary>
     /// tab area animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine tabCloseHoverAnimationManager;
+    private readonly AnimationManager tabCloseHoverAnimationManager;
 
     /// <summary>
     /// tab area animation manager
     /// </summary>
-    private readonly Animation.AnimationEngine formMenuHoverAnimationManager;
+    private readonly AnimationManager formMenuHoverAnimationManager;
 
     private int previousSelectedPageIndex;
     private Point animationSource;

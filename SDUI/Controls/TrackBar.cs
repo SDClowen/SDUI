@@ -15,10 +15,10 @@ public class TrackBar : UIElementBase
     private bool _isDragging;
     private bool _isHovered;
     private Point _mouseLocation;
-    private readonly Animation.AnimationEngine _thumbHoverAnimation;
-    private readonly Animation.AnimationEngine _thumbPressAnimation;
-    private readonly Animation.AnimationEngine _trackHoverAnimation;
-    private readonly Animation.AnimationEngine _valueAnimation;
+    private readonly AnimationManager _thumbHoverAnimation;
+    private readonly AnimationManager _thumbPressAnimation;
+    private readonly AnimationManager _trackHoverAnimation;
+    private readonly AnimationManager _valueAnimation;
     private readonly ToolTip _tooltip;
 
     private int _minimum = 0;
@@ -353,25 +353,25 @@ public class TrackBar : UIElementBase
         Size = new Size(200, 22);
         MinimumSize = new Size(50, 22);
 
-        _thumbHoverAnimation = new Animation.AnimationEngine(singular: true)
+        _thumbHoverAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.12f,
             AnimationType = AnimationType.EaseInOut,
             InterruptAnimation = true
         };
-        _thumbPressAnimation = new Animation.AnimationEngine(singular: true)
+        _thumbPressAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.20f,
             AnimationType = AnimationType.EaseOut,
             InterruptAnimation = true
         };
-        _trackHoverAnimation = new Animation.AnimationEngine(singular: true)
+        _trackHoverAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.10f,
             AnimationType = AnimationType.EaseInOut,
             InterruptAnimation = true
         };
-        _valueAnimation = new Animation.AnimationEngine(singular: true)
+        _valueAnimation = new AnimationManager(singular: true)
         {
             Increment = 0.15f,
             AnimationType = AnimationType.EaseInOut,
@@ -383,7 +383,7 @@ public class TrackBar : UIElementBase
         _trackHoverAnimation.OnAnimationProgress += (s) => Invalidate();
         _valueAnimation.OnAnimationProgress += (s) =>
         {
-            int pVal = (int)(s as Animation.AnimationEngine).GetProgress();
+            int pVal = (int)(s as AnimationManager).GetProgress();
             _animatedValue = (int)(_value * pVal + _animatedValue * (1 - pVal));
             Invalidate();
         };

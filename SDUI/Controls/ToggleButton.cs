@@ -10,7 +10,7 @@ namespace SDUI.Controls;
 
 public class ToggleButton : UIElementBase
 {
-    private readonly Animation.AnimationEngine animationManager;
+    private readonly AnimationManager animationManager;
     private Point _mouseLocation;
     private int _mouseState;
     private bool _checked;

@@ -20,10 +20,10 @@ public partial class MainWindow : UIWindow
     private void MainWindow_Load(object sender, EventArgs e)
     {
         windowPageControl.Controls.AddRange([
-            new GeneralPage(),
-            new ListViewPage(),
-            new ConfigPage(),
-            new MultiPageControlTestPage()
+            new GeneralPage() {Dock = System.Windows.Forms.DockStyle.Fill },
+            new ListViewPage() {Dock = System.Windows.Forms.DockStyle.Fill },
+            new ConfigPage() {Dock = System.Windows.Forms.DockStyle.Fill },
+            new MultiPageControlTestPage() {Dock = System.Windows.Forms.DockStyle.Fill }
         ]);
     }
 }
