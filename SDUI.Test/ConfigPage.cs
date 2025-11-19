@@ -2,7 +2,6 @@
 using System;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using TabControl = SDUI.Controls.TabControl;
 
 namespace SDUI.Demo
 {
@@ -14,12 +13,12 @@ namespace SDUI.Demo
             this.Text = "Config";
             comboBoxHatchType.Items.AddRange(Enum.GetNames<HatchStyle>());
 
-            //TabControl ne = new();
-            //ne.AddPage(new SDUI.Controls.TabPage() { Text = "General", Controls = { new GeneralPage() { Dock = DockStyle.Fill } } });
-            //ne.AddPage(new SDUI.Controls.TabPage() { Text = "ListView", Controls = { new ListViewPage() { Dock = DockStyle.Fill } } });
-            //ne.AddPage(new SDUI.Controls.TabPage() { Text = "Config", Controls = { new ConfigPage() { Dock = DockStyle.Fill } } });
-            //ne.Dock = DockStyle.Bottom;
-            //this.Controls.Add(ne);
+            // TabControl kullanımı:
+            // var tc = new TabControl();
+            // tc.AddPage(new TabPage() { Text = "General", Controls = { new GeneralPage() { Dock = DockStyle.Fill } } });
+            // tc.AddPage(new TabPage() { Text = "ListView", Controls = { new ListViewPage() { Dock = DockStyle.Fill } } });
+            // tc.Dock = DockStyle.Bottom;
+            // this.Controls.Add(tc);
         }
 
         private void checkBoxDrawFullHatch_CheckedChanged(object sender, EventArgs e)

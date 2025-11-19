@@ -382,11 +382,16 @@ public class ListView : UIElementBase
     internal override void OnMouseWheel(MouseEventArgs e)
     {
         base.OnMouseWheel(e);
+        
+        if (e == null)
+            return;
+
         var delta = e.Delta / 120f;
 
         if ((ModifierKeys & Keys.Shift) == Keys.Shift)
         {
-            _horizontalScrollOffset = Math.Max(-Width / 4, Math.Min(_horizontalScrollOffset - delta * 30, Columns.Sum(c => c.Width) - Width + Width / 4));
+            int totalColumnsWidth = Columns.Sum(c => c.Width);
+            _horizontalScrollOffset = Math.Max(-Width / 4, Math.Min(_horizontalScrollOffset - delta * 30, totalColumnsWidth - Width + Width / 4));
         }
         else
         {
@@ -763,7 +768,22 @@ public class ListView : UIElementBase
             if (newHover != _hoverSeparatorIndex)
             {
                 _hoverSeparatorIndex = newHover;
-                Cursor = _hoverSeparatorIndex >= 0 ? Cursors.SizeWE : Cursors.Default;
+                
+                // Cursor'u değiştir ve parent window'a bildir
+                if (_hoverSeparatorIndex >= 0)
+                {
+                    Cursor = Cursors.SizeWE;
+                }
+                else
+                {
+                    Cursor = Cursors.Default;
+                }
+                
+                // Parent window'a cursor değişikliğini bildir
+                if (Parent is UIWindow parentWindow)
+                {
+                    parentWindow.UpdateCursor(this);
+                }
             }
         }
 
@@ -815,13 +835,31 @@ public class ListView : UIElementBase
     {
         _isResizingColumn = false;
         _isDraggingScrollbar = false;
+        
+        // Resize bittiğinde cursor'u sıfırla
+        if (_hoverSeparatorIndex < 0)
+        {
+            Cursor = Cursors.Default;
+            if (Parent is UIWindow parentWindow)
+            {
+                parentWindow.UpdateCursor(this);
+            }
+        }
     }
 
     internal override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
         _hoverSeparatorIndex = -1;
-        if (!_isResizingColumn) Cursor = Cursors.Default;
+        
+        if (!_isResizingColumn)
+        {
+            Cursor = Cursors.Default;
+            if (Parent is UIWindow parentWindow)
+            {
+                parentWindow.UpdateCursor(null);
+            }
+        }
     }
 
     internal override void OnMouseDoubleClick(MouseEventArgs e)

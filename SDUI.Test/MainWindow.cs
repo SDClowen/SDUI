@@ -23,7 +23,8 @@ public partial class MainWindow : UIWindow
             new GeneralPage() {Dock = System.Windows.Forms.DockStyle.Fill },
             new ListViewPage() {Dock = System.Windows.Forms.DockStyle.Fill },
             new ConfigPage() {Dock = System.Windows.Forms.DockStyle.Fill },
-            new MultiPageControlTestPage() {Dock = System.Windows.Forms.DockStyle.Fill }
+            new TabControlTestPage() {Dock = System.Windows.Forms.DockStyle.Fill },
+            new TabControlTestPage() {Dock = System.Windows.Forms.DockStyle.Fill }
         ]);
     }
 }

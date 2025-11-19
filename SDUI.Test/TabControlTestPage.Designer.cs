@@ -2,7 +2,7 @@
 
 namespace SDUI.Demo
 {
-    partial class MultiPageControlTestPage
+    partial class TabControlTestPage
     {
         /// <summary> 
         /// Required designer variable.
@@ -30,7 +30,7 @@ namespace SDUI.Demo
         /// </summary>
         private void InitializeComponent()
         {
-            this.multiPageControl = new SDUI.Controls.MultiPageControl();
+            this.multiPageControl = new SDUI.Controls.TabControl();
             this.SuspendLayout();
             // 
             // multiPageControl
@@ -58,6 +58,6 @@ namespace SDUI.Demo
 
         #endregion
 
-        private Controls.MultiPageControl multiPageControl;
+        private Controls.TabControl multiPageControl;
     }
 }
