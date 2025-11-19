@@ -1,0 +1,26 @@
+name: Build SDUI
+
+on:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1
+
+      - name: Restore NuGet packages
+        uses: nuget/setup-nuget@v1
+        with:
+          nuget-version: "5.x"
+
+      - name: Restore solution
+        run: nuget restore SDUI.sln
+
+      - name: Build solution
+        run: msbuild SDUI.sln /p:Configuration=Release
