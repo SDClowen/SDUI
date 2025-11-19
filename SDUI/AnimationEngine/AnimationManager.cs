@@ -1,16 +1,17 @@
 using System;
 using System.Windows.Forms;
 using SDUI.AnimationEngine;
+using SDUI.Helpers;
 
 namespace SDUI.Animation
 {
     /// <summary>
-    /// Modern, optimize edilmiþ animation manager - ValueProvider tabanlý
+    /// Modern, optimize edilmiÅŸ animation manager - ValueProvider tabanlÄ±
     /// </summary>
     public class AnimationEngine : IDisposable
     {
         private readonly ValueProvider<double> _valueProvider;
-        private Timer _timer; // Lazy initialization için readonly kaldýrýldý
+        private Timer _timer; // Lazy initialization iÃ§in readonly kaldÄ±rÄ±ldÄ±
         private bool _isRunning;
         private bool _disposed;
         private System.Drawing.Point _animationSource;
@@ -35,19 +36,19 @@ namespace SDUI.Animation
             AnimationType = AnimationType.EaseInOut;
 
             _valueProvider = new ValueProvider<double>(0, ValueFactories.DoubleFactory, EasingMethods.DefaultEase);
-            
-            // Timer'ý lazy initialization ile oluþtur - handle sorununu çözer
+
+            // Timer'Ä± lazy initialization ile oluÅŸtur - handle sorununu Ã§Ã¶zer
             // _timer = new Timer { Interval = 16 }; // BU SATIR KALDIRILDI
             // _timer.Tick += OnTick; // BU SATIR KALDIRILDI
         }
 
         public bool Running => _isRunning;
-        
-        // Lazy initialization - Timer sadece gerektiðinde oluþturulur
+
+        // Lazy initialization - Timer sadece gerektiÄŸinde oluturulur
         private void EnsureTimer()
         {
             if (_timer != null) return;
-            
+
             try
             {
                 _timer = new Timer { Interval = 16 }; // ~60 FPS
@@ -55,8 +56,8 @@ namespace SDUI.Animation
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"AnimationManager: Timer oluþturulamadý - {ex.Message}");
-                // Timer oluþturulamazsa animasyon devre dýþý býrakýlýr
+                System.Diagnostics.Debug.WriteLine($"AnimationManager: Timer oluturulamad - {ex.Message}");
+                // Timer oluÅŸturulamazsa animasyon devre dÄ±ÅŸÄ± bÄ±rakÄ±lÄ±r
                 _timer = null;
             }
         }
@@ -78,6 +79,15 @@ namespace SDUI.Animation
 
         public void StartNewAnimation(AnimationDirection direction, System.Drawing.Point source, object[] data)
         {
+            if (!SystemAnimations.AreAnimationsEnabled)
+            {
+                var instantTarget = direction == AnimationDirection.In || direction == AnimationDirection.InOutIn ? 1.0 : 0.0;
+                SetProgress(instantTarget);
+                OnAnimationProgress?.Invoke(this);
+                OnAnimationFinished?.Invoke(this);
+                return;
+            }
+
             if (_isRunning && !InterruptAnimation)
                 return;
 
@@ -91,12 +101,12 @@ namespace SDUI.Animation
             double duration = Math.Abs(target - _valueProvider.CurrentValue) / currentIncrement * 16; // milliseconds
 
             _valueProvider.StartTransition(_valueProvider.CurrentValue, target, TimeSpan.FromMilliseconds(Math.Max(16, duration)));
-            
+
             _isRunning = true;
-            
-            // Timer'ý lazy initialization ile oluþtur
+
+            // Timer'Ä± lazy initialization ile oluÅŸtur
             EnsureTimer();
-            
+
             if (_timer != null && !_timer.Enabled)
                 _timer.Start();
         }
@@ -176,7 +186,7 @@ namespace SDUI.Animation
                     _timer.Stop();
                 OnAnimationFinished?.Invoke(this);
             }
-            
+
             OnAnimationProgress?.Invoke(this);
         }
 
@@ -201,15 +211,15 @@ namespace SDUI.Animation
         public void Dispose()
         {
             if (_disposed) return;
-            
+
             if (_timer != null)
             {
                 _timer.Stop();
-                _timer.Tick -= OnTick; // Event handler'ý kaldýr
+                _timer.Tick -= OnTick; // Event handler'Ä± kaldÄ±r
                 _timer.Dispose();
                 _timer = null;
             }
-            
+
             _disposed = true;
         }
     }
