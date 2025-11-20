@@ -18,7 +18,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double DefaultEase(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : .3 * progress + 2.4 * Math.Pow(progress, 2) - 1.7 * Math.Pow(progress, 3);
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : .3 * progress + 2.4 * Math.Pow(progress, 2) - 1.7 * Math.Pow(progress, 3);
         }
     }
 }

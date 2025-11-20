@@ -1,7 +1,7 @@
-﻿using SDUI.Controls;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using SDUI.Controls;
 
 namespace SDUI.Test
 {
@@ -22,7 +22,10 @@ namespace SDUI.Test
             for (int i = 0; i <= 5; i++)
             {
                 var title = "Item " + i.ToString();
-                var listItem = new ListViewItem(new[] { i.ToString(), title + " Column 2", title + " Column 3", title + " Column 4" }, group1);
+                var listItem = new ListViewItem(
+                    new[] { i.ToString(), title + " Column 2", title + " Column 3", title + " Column 4" },
+                    group1
+                );
                 if (i == 0)
                 {
                     listItem.BackColor = ControlPaint.Light(ColorScheme.BackColor, .15f);
@@ -34,7 +37,12 @@ namespace SDUI.Test
             for (int i = 6; i <= 1000; i++)
             {
                 string sItem = "Item " + i.ToString();
-                listView1.Items.Add(new ListViewItem(new[] { i.ToString(), sItem + " Column 2", sItem + " Column 3", sItem + " Column 4" }, group2));
+                listView1.Items.Add(
+                    new ListViewItem(
+                        new[] { i.ToString(), sItem + " Column 2", sItem + " Column 3", sItem + " Column 4" },
+                        group2
+                    )
+                );
             }
 
             //listView1.SetGroupInfo(listView1.Handle, 1, NativeMethods.LVGS_COLLAPSIBLE);

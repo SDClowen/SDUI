@@ -16,7 +16,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double QuarticEaseIn(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(progress, 4);
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Pow(progress, 4);
         }
 
         /// <summary>
@@ -28,10 +30,16 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double QuarticEaseOut(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : -(Math.Pow(progress - 1, 4) - 1);
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : -(Math.Pow(progress - 1, 4) - 1);
         }
 
-        private static readonly EasingMethod quarticEaseInOut = EasingMethods.Chain(EasingMethods.QuarticEaseIn, EasingMethods.QuarticEaseOut);
+        private static readonly EasingMethod quarticEaseInOut = EasingMethods.Chain(
+            EasingMethods.QuarticEaseIn,
+            EasingMethods.QuarticEaseOut
+        );
+
         /// <summary>
         ///     <para>A combination of the <see cref="EasingMethods.QuarticEaseIn"/> and <see cref="EasingMethods.QuarticEaseOut"/> methods.</para>
         ///     <para>It accelerates from 0 to a velocity of 4 and then decelerates back to a velocity of 0.</para>

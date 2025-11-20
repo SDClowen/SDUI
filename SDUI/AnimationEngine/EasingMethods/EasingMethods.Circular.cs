@@ -16,7 +16,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double CircularEaseIn(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : -(Math.Sqrt(1 - progress * progress) - 1);
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : -(Math.Sqrt(1 - progress * progress) - 1);
         }
 
         /// <summary>
@@ -28,10 +30,16 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double CircularEaseOut(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Sqrt(1 - Math.Pow(progress - 1, 2));
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Sqrt(1 - Math.Pow(progress - 1, 2));
         }
 
-        private static readonly EasingMethod circularEaseInOut = EasingMethods.Chain(EasingMethods.CircularEaseIn, EasingMethods.CircularEaseOut);
+        private static readonly EasingMethod circularEaseInOut = EasingMethods.Chain(
+            EasingMethods.CircularEaseIn,
+            EasingMethods.CircularEaseOut
+        );
+
         /// <summary>
         ///     <para>A combination of the <see cref="EasingMethods.CircularEaseIn"/> and <see cref="EasingMethods.CircularEaseOut"/> methods.</para>
         ///     <para>It accelerates from 0 to infinite velocity and then decelerates back to a velocity of 0.</para>

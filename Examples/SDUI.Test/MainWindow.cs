@@ -1,5 +1,5 @@
-using SDUI.Controls;
 using System;
+using SDUI.Controls;
 
 namespace SDUI.Test;
 
@@ -7,7 +7,7 @@ public partial class MainWindow : UIWindow
 {
     public MainWindow()
     {
-        InitializeComponent(); 
+        InitializeComponent();
     }
 
     protected override void OnBackColorChanged(EventArgs e)
@@ -19,11 +19,14 @@ public partial class MainWindow : UIWindow
 
     private void MainWindow_Load(object sender, EventArgs e)
     {
-        windowPageControl.Controls.AddRange(new System.Windows.Forms.Control[] {
-            new GeneralPage(),
-            new ListViewPage(),
-            new ConfigPage(),
-            new MultiPageControlTestPage()
-        });
+        windowPageControl.Controls.AddRange(
+            new System.Windows.Forms.Control[]
+            {
+                new GeneralPage(),
+                new ListViewPage(),
+                new ConfigPage(),
+                new MultiPageControlTestPage(),
+            }
+        );
     }
 }

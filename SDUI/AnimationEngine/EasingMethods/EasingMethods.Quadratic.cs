@@ -16,7 +16,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double QuadraticEaseIn(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : progress * progress;
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : progress * progress;
         }
 
         /// <summary>
@@ -28,10 +30,16 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double QuadraticEaseOut(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : -(progress * (progress - 2));
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : -(progress * (progress - 2));
         }
 
-        private static readonly EasingMethod quadraticEaseInOut = EasingMethods.Chain(EasingMethods.QuadraticEaseIn, EasingMethods.QuadraticEaseOut);
+        private static readonly EasingMethod quadraticEaseInOut = EasingMethods.Chain(
+            EasingMethods.QuadraticEaseIn,
+            EasingMethods.QuadraticEaseOut
+        );
+
         /// <summary>
         ///     <para>A combination of the <see cref="EasingMethods.QuadraticEaseIn"/> and <see cref="EasingMethods.QuadraticEaseOut"/> methods.</para>
         ///     <para>It accelerates from 0 to a velocity of 2 and then decelerates back to a velocity of 0.</para>

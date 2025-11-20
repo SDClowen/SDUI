@@ -50,13 +50,17 @@ public class TextBox : Control
             Invalidate();
         }
     }
+
     protected override void OnEnter(System.EventArgs e)
     {
-        if (UseSystemPasswordChar && PassFocusShow) _textBox.UseSystemPasswordChar = false;
+        if (UseSystemPasswordChar && PassFocusShow)
+            _textBox.UseSystemPasswordChar = false;
     }
+
     protected override void OnLeave(System.EventArgs e)
     {
-        if (UseSystemPasswordChar && PassFocusShow) _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
+        if (UseSystemPasswordChar && PassFocusShow)
+            _textBox.UseSystemPasswordChar = UseSystemPasswordChar;
     }
 
     private int _maxchars = 32767;
@@ -185,7 +189,12 @@ public class TextBox : Control
         var colorBegin = determinedColor.Brightness(.1f).Alpha(90);
         var colorEnd = determinedColor.Brightness(-.1f).Alpha(60);
 
-        using var innerBorderBrush = new LinearGradientBrush(new Rectangle(1, 1, Width - 2, Height - 2), colorBegin, colorEnd, 90);
+        using var innerBorderBrush = new LinearGradientBrush(
+            new Rectangle(1, 1, Width - 2, Height - 2),
+            colorBegin,
+            colorEnd,
+            90
+        );
         using var innerBorderPen = new Pen(innerBorderBrush);
 
         graphics.DrawPath(innerBorderPen, new Rectangle(1, 1, Width - _radius, Height - _radius).Radius(_radius));

@@ -25,7 +25,8 @@ namespace SDUI.AnimationEngine
         /// <returns>An easing method that uses the first specified easing method for the first half of the animation and the second one for the second half of the animation.</returns>
         public static EasingMethod Chain(this EasingMethod first, EasingMethod second)
         {
-            return (double progress) => (progress < 0.5) ? .5 * first(progress * 2) : .5 + .5 * second((progress - .5) * 2);
+            return (double progress) =>
+                (progress < 0.5) ? .5 * first(progress * 2) : .5 + .5 * second((progress - .5) * 2);
         }
 
         /// <summary>
@@ -36,7 +37,6 @@ namespace SDUI.AnimationEngine
         public static EasingMethod Invert(this EasingMethod method)
         {
             return (double progress) => 1 - method(1 - progress);
-            
         }
 
         /// <summary>

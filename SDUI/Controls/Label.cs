@@ -31,13 +31,17 @@ public class Label : System.Windows.Forms.Label
         get => _gradient;
         set
         {
-            _gradient = value; Invalidate();
+            _gradient = value;
+            Invalidate();
         }
     }
 
     public Label()
     {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.OptimizedDoubleBuffer, true);
+        SetStyle(
+            ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.OptimizedDoubleBuffer,
+            true
+        );
     }
 
     protected override void OnSizeChanged(EventArgs e)
@@ -67,7 +71,12 @@ public class Label : System.Windows.Forms.Label
 
         if (ApplyGradient)
         {
-            using var brush = new LinearGradientBrush(ClientRectangle, _gradient[0], _gradient[1], Angle/*LinearGradientMode.Horizontal */);
+            using var brush = new LinearGradientBrush(
+                ClientRectangle,
+                _gradient[0],
+                _gradient[1],
+                Angle /*LinearGradientMode.Horizontal */
+            );
 
             using var format = this.CreateStringFormat(TextAlign, AutoEllipsis, UseMnemonic);
             e.Graphics.DrawString(Text, Font, brush, ClientRectangle, format);

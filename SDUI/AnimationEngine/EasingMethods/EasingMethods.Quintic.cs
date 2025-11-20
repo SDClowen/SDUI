@@ -16,7 +16,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double QuinticEaseIn(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(progress, 5);
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Pow(progress, 5);
         }
 
         /// <summary>
@@ -28,10 +30,16 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double QuinticEaseOut(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(progress - 1, 5) + 1;
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Pow(progress - 1, 5) + 1;
         }
 
-        private static readonly EasingMethod quinticEaseInOut = EasingMethods.Chain(EasingMethods.QuinticEaseIn, EasingMethods.QuinticEaseOut);
+        private static readonly EasingMethod quinticEaseInOut = EasingMethods.Chain(
+            EasingMethods.QuinticEaseIn,
+            EasingMethods.QuinticEaseOut
+        );
+
         /// <summary>
         ///     <para>A combination of the <see cref="EasingMethods.QuinticEaseIn"/> and <see cref="EasingMethods.QuinticEaseOut"/> methods.</para>
         ///     <para>It accelerates from 0 to a velocity of 5 and then decelerates back to a velocity of 0.</para>

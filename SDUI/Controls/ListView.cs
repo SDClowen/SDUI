@@ -1,9 +1,9 @@
-﻿using SDUI.Controls.Subclasses;
-using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using SDUI.Controls.Subclasses;
+using SDUI.Helpers;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
@@ -27,11 +27,13 @@ public class ListView : System.Windows.Forms.ListView
         : base()
     {
         SetStyle(
-            ControlStyles.Opaque |
-            ControlStyles.AllPaintingInWmPaint |
-            ControlStyles.ResizeRedraw |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.EnableNotifyMessage, true);
+            ControlStyles.Opaque
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.EnableNotifyMessage,
+            true
+        );
 
         LvwColumnSorter = new ListViewColumnSorter();
         ListViewItemSorter = LvwColumnSorter;
@@ -96,9 +98,8 @@ public class ListView : System.Windows.Forms.ListView
         if (e.Column == LvwColumnSorter.SortColumn)
         {
             // Reverse the current sort direction for this column.
-            LvwColumnSorter.Order = (LvwColumnSorter.Order == SortOrder.Ascending)
-                ? SortOrder.Descending
-                : SortOrder.Ascending;
+            LvwColumnSorter.Order =
+                (LvwColumnSorter.Order == SortOrder.Ascending) ? SortOrder.Descending : SortOrder.Ascending;
         }
         else
         {
@@ -178,17 +179,19 @@ public class ListView : System.Windows.Forms.ListView
                     case CDDS.CDDS_PREPAINT:
                         if (pnmlv.dwItemType == LVCDI_GROUP)
                         {
-                            var rectHeader = new Rect
-                            {
-                                Top = LVGGR_HEADER
-                            };
+                            var rectHeader = new Rect { Top = LVGGR_HEADER };
                             var nItem = (int)pnmlv.nmcd.dwItemSpec;
 
                             SendMessage(m.HWnd, LVM_GETGROUPRECT, nItem, ref rectHeader);
 
                             using (var graphics = Graphics.FromHdc(pnmlv.nmcd.hdc))
                             {
-                                var rect = new Rectangle(rectHeader.Left, rectHeader.Top, rectHeader.Right - rectHeader.Left, rectHeader.Bottom - rectHeader.Top);
+                                var rect = new Rectangle(
+                                    rectHeader.Left,
+                                    rectHeader.Top,
+                                    rectHeader.Right - rectHeader.Left,
+                                    rectHeader.Bottom - rectHeader.Top
+                                );
 
                                 //var backgroundBrush = new SolidBrush(_groupHeadingBackColor);
                                 //graphics.FillRectangle(backgroundBrush, rect);
@@ -205,7 +208,9 @@ public class ListView : System.Windows.Forms.ListView
 
                                 rect.Offset(10, rectHeightMiddle);
 
-                                var color = Color.FromArgb(80, 1, 52, 153).Brightness(ColorScheme.BackColor.Determine().GetBrightness());
+                                var color = Color
+                                    .FromArgb(80, 1, 52, 153)
+                                    .Brightness(ColorScheme.BackColor.Determine().GetBrightness());
                                 using (var drawBrush = new SolidBrush(color))
                                 {
                                     TextRenderer.DrawText(graphics, sText, Font, rect, color, TextFormatFlags.Left);
@@ -214,12 +219,19 @@ public class ListView : System.Windows.Forms.ListView
 
                                     using (var lineBrush = new SolidBrush(color))
                                     {
-                                        graphics.DrawLine(new Pen(lineBrush), rect.X + graphics.MeasureString(sText, Font).Width + 10, rect.Y + (int)Math.Round(rect.Height / 2d), rect.X + (int)Math.Round(rect.Width * 95 / 100d), rect.Y + (int)Math.Round(rect.Height / 2d));
+                                        graphics.DrawLine(
+                                            new Pen(lineBrush),
+                                            rect.X + graphics.MeasureString(sText, Font).Width + 10,
+                                            rect.Y + (int)Math.Round(rect.Height / 2d),
+                                            rect.X + (int)Math.Round(rect.Width * 95 / 100d),
+                                            rect.Y + (int)Math.Round(rect.Height / 2d)
+                                        );
                                     }
                                 }
                             }
 
-                            m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULT); return;
+                            m.Result = new IntPtr((int)CDRF.CDRF_SKIPDEFAULT);
+                            return;
                         }
                         else
                         {
@@ -228,40 +240,40 @@ public class ListView : System.Windows.Forms.ListView
 
                         break;
 
-                        /*case CDDS.CDDS_ITEMPREPAINT:
-                            m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
+                    /*case CDDS.CDDS_ITEMPREPAINT:
+                        m.Result = new IntPtr((int)(CDRF.CDRF_NOTIFYSUBITEMDRAW | CDRF.CDRF_NOTIFYPOSTPAINT));
 
-                            ListView lv = this;
-                            IntPtr hHeader = GetHeaderControl(lv);
-                            IntPtr hdc = GetDC(hHeader);
+                        ListView lv = this;
+                        IntPtr hHeader = GetHeaderControl(lv);
+                        IntPtr hdc = GetDC(hHeader);
 
-                            using (var graphics = Graphics.FromHdc(hdc))
+                        using (var graphics = Graphics.FromHdc(hdc))
+                        {
+                            graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), graphics.ClipBounds);
+
+                            var width = 0;
+                            foreach (ColumnHeader column in Columns)
                             {
-                                graphics.FillRectangle(new SolidBrush(ColorScheme.BackColor), graphics.ClipBounds);
+                                var size = TextRenderer.MeasureText(column.Text, Font);
+                                var bounds = new Rectangle(new Point(width, 0), new Size(column.Width + 5, 24));
 
-                                var width = 0;
-                                foreach (ColumnHeader column in Columns)
-                                {
-                                    var size = TextRenderer.MeasureText(column.Text, Font);
-                                    var bounds = new Rectangle(new Point(width, 0), new Size(column.Width + 5, 24));
+                                if(column.TextAlign == HorizontalAlignment.Left)
+                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis | TextFormatFlags.VerticalCenter);
+                                else if (column.TextAlign == HorizontalAlignment.Right)
+                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
+                                else
+                                    TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
 
-                                    if(column.TextAlign == HorizontalAlignment.Left)
-                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Left | TextFormatFlags.LeftAndRightPadding | TextFormatFlags.PathEllipsis | TextFormatFlags.VerticalCenter);
-                                    else if (column.TextAlign == HorizontalAlignment.Right)
-                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.Right | TextFormatFlags.VerticalCenter);
-                                    else
-                                        TextRenderer.DrawText(graphics, column.Text, Font, bounds, ColorScheme.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
+                                var x = bounds.X - 2;
+                                graphics.DrawLine(new Pen(ColorScheme.BorderColor), x, 0, x, Height);
 
-                                    var x = bounds.X - 2;
-                                    graphics.DrawLine(new Pen(ColorScheme.BorderColor), x, 0, x, Height);
-
-                                    width += column.Width;
-                                }
+                                width += column.Width;
                             }
+                        }
 
-                            //ReleaseDC(hHeader, hdc);
+                        //ReleaseDC(hHeader, hdc);
 
-                                break;*/
+                            break;*/
                 }
             }
         }
@@ -270,16 +282,12 @@ public class ListView : System.Windows.Forms.ListView
             //AllowDarkModeForWindow(m.HWnd, ColorScheme.BackColor.IsDark());
             try
             {
-
                 BackColor = ColorScheme.BackColor;
                 ForeColor = ColorScheme.ForeColor;
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
         }
-        else if (m.Msg != WM_KILLFOCUS &&
-            (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
+        else if (m.Msg != WM_KILLFOCUS && (m.Msg == WM_HSCROLL || m.Msg == WM_VSCROLL))
             Invalidate();
 
         base.WndProc(ref m);

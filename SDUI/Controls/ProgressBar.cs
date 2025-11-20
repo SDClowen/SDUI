@@ -93,10 +93,7 @@ public class ProgressBar : Control
     private int _radius = 4;
     public int Radius
     {
-        get
-        {
-            return _radius;
-        }
+        get { return _radius; }
         set
         {
             _radius = value <= 0 ? 1 : value;
@@ -129,12 +126,15 @@ public class ProgressBar : Control
 
     public ProgressBar()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-                  ControlStyles.OptimizedDoubleBuffer |
-                  ControlStyles.ResizeRedraw |
-                  ControlStyles.Opaque |
-            ControlStyles.AllPaintingInWmPaint |
-                  ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.SupportsTransparentBackColor
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.Opaque
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.UserPaint,
+            true
+        );
 
         UpdateStyles();
         BackColor = Color.Transparent;
@@ -161,8 +161,17 @@ public class ProgressBar : Control
         var intValue = ((_value / (float)_maximum) * Width);
         var percent = ((100.0f * Value) / Maximum);
 
-        using var linearGradientBrush = new LinearGradientBrush(new RectangleF(0, 0, Width, Height), _gradient[0], _gradient[1], 90);
-        using var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1]));
+        using var linearGradientBrush = new LinearGradientBrush(
+            new RectangleF(0, 0, Width, Height),
+            _gradient[0],
+            _gradient[1],
+            90
+        );
+        using var hatchBrush = new HatchBrush(
+            HatchType,
+            Color.FromArgb(50, _gradient[0]),
+            Color.FromArgb(50, _gradient[1])
+        );
 
         var rect = ClientRectangle.ToRectangleF();
 
@@ -177,7 +186,10 @@ public class ProgressBar : Control
             graphics.FillPath(hatchBrush, path);
         }
 
-        graphics.DrawPath(new Pen(Color.FromArgb(10, Parent.BackColor.Determine())), new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius));
+        graphics.DrawPath(
+            new Pen(Color.FromArgb(10, Parent.BackColor.Determine())),
+            new Rectangle(0, 0, Width - 1, Height - 1).Radius(_radius)
+        );
 
         if (ShowValue)
         {
@@ -203,21 +215,24 @@ public class ProgressBar : Control
 
             // draw shadow
             var shadowBrush = new SolidBrush(textShadowColor);
-            e.Graphics.DrawString(Text, Font, shadowBrush, new Rectangle(1, 1, Width, Height), new StringFormat
-            {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center
-            });
+            e.Graphics.DrawString(
+                Text,
+                Font,
+                shadowBrush,
+                new Rectangle(1, 1, Width, Height),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }
+            );
 
             shadowBrush.Dispose();
             // draw text
             var textBrush = new SolidBrush(textColor);
-            e.Graphics.DrawString(Text, Font, textBrush, new Rectangle(0, 0, Width, Height), new StringFormat
-            {
-                Alignment = StringAlignment.Center,
-                LineAlignment = StringAlignment.Center
-            });
+            e.Graphics.DrawString(
+                Text,
+                Font,
+                textBrush,
+                new Rectangle(0, 0, Width, Height),
+                new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center }
+            );
         }
     }
-
 }

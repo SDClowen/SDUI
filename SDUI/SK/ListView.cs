@@ -1,10 +1,10 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Timers;
 using System.Windows.Forms;
+using SkiaSharp;
 
 namespace SDUI.SK;
 
@@ -55,29 +55,32 @@ public class ListView : SKControl
             if (_horizontalScrollOffset < 0)
             {
                 _horizontalScrollOffset *= ElasticDecay;
-                if (_horizontalScrollOffset > -1) _horizontalScrollOffset = 0;
+                if (_horizontalScrollOffset > -1)
+                    _horizontalScrollOffset = 0;
                 needsRefresh = true;
             }
             else if (_horizontalScrollOffset > Columns.Sum(c => c.Width) - Width)
             {
-                _horizontalScrollOffset -= (_horizontalScrollOffset - (Columns.Sum(c => c.Width) - Width)) * (1 - ElasticDecay);
+                _horizontalScrollOffset -=
+                    (_horizontalScrollOffset - (Columns.Sum(c => c.Width) - Width)) * (1 - ElasticDecay);
                 if (_horizontalScrollOffset < Columns.Sum(c => c.Width) - Width + 1)
                     _horizontalScrollOffset = Columns.Sum(c => c.Width) - Width;
                 needsRefresh = true;
             }
-
         }
 
         // Vertical pull-back
         if (_verticalScrollOffset < 0)
         {
             _verticalScrollOffset *= ElasticDecay;
-            if (_verticalScrollOffset > -1) _verticalScrollOffset = 0;
+            if (_verticalScrollOffset > -1)
+                _verticalScrollOffset = 0;
             needsRefresh = true;
         }
         else if (_verticalScrollOffset > (Items.Count - maxVisibleRows) * rowBoundsHeight)
         {
-            _verticalScrollOffset -= (_verticalScrollOffset - (Items.Count - maxVisibleRows) * rowBoundsHeight) * (1 - ElasticDecay);
+            _verticalScrollOffset -=
+                (_verticalScrollOffset - (Items.Count - maxVisibleRows) * rowBoundsHeight) * (1 - ElasticDecay);
             if (_verticalScrollOffset < (Items.Count - maxVisibleRows) * rowBoundsHeight + 1)
                 _verticalScrollOffset = (Items.Count - maxVisibleRows) * rowBoundsHeight;
             needsRefresh = true;
@@ -111,7 +114,7 @@ public class ListView : SKControl
             IsAntialias = true,
             Color = SKColors.LightGray,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = .5f
+            StrokeWidth = .5f,
         };
 
         using var headerPaint = new SKPaint
@@ -163,8 +166,12 @@ public class ListView : SKControl
             rect.Location = new SKPoint(5, y + 8);
             rect.Size = new SKSize(16, 16);
 
-            groupPaint.Style = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? SKPaintStyle.Fill : SKPaintStyle.Stroke;
-            groupPaint.Color = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? SKColors.DarkSlateGray : SKColors.LightSlateGray;
+            groupPaint.Style =
+                group.CollapsedState == ListViewGroupCollapsedState.Expanded ? SKPaintStyle.Fill : SKPaintStyle.Stroke;
+            groupPaint.Color =
+                group.CollapsedState == ListViewGroupCollapsedState.Expanded
+                    ? SKColors.DarkSlateGray
+                    : SKColors.LightSlateGray;
 
             canvas.DrawRoundRect(rect, 4, 4, groupPaint);
             canvas.DrawText(group.Header, 25, y + 20, groupTextPaint);
@@ -197,7 +204,7 @@ public class ListView : SKControl
             IsAntialias = true,
             Color = SKColors.WhiteSmoke,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1f
+            StrokeWidth = 1f,
         };
 
         paint.Color = row.Selected ? SKColors.WhiteSmoke : SKColors.White;
@@ -226,7 +233,7 @@ public class ListView : SKControl
         {
             IsAntialias = true,
             Color = SKColors.Silver,
-            Style = SKPaintStyle.StrokeAndFill
+            Style = SKPaintStyle.StrokeAndFill,
         };
 
         // Horizontal ScrollBar
@@ -242,7 +249,10 @@ public class ListView : SKControl
         if (Items.Sum(r => rowBoundsHeight) > Height - 30)
         {
             float scrollbarHeight = (Height - 30) * ((Height - 30) / (float)Items.Sum(r => rowBoundsHeight));
-            float scrollbarY = _verticalScrollOffset * ((Height - 30) - scrollbarHeight) / (Items.Sum(r => rowBoundsHeight) - (Height - 30));
+            float scrollbarY =
+                _verticalScrollOffset
+                * ((Height - 30) - scrollbarHeight)
+                / (Items.Sum(r => rowBoundsHeight) - (Height - 30));
             var rect = new SKRect(Width - 5, 35 + scrollbarY, Width - 15, 15 + scrollbarY + scrollbarHeight);
             canvas.DrawRoundRect(rect, 8, 8, paint);
         }
@@ -255,7 +265,10 @@ public class ListView : SKControl
 
         if ((ModifierKeys & Keys.Shift) == Keys.Shift)
         {
-            _horizontalScrollOffset = Math.Max(-Width / 4, Math.Min(_horizontalScrollOffset - delta * 30, Columns.Sum(c => c.Width) - Width + Width / 4));
+            _horizontalScrollOffset = Math.Max(
+                -Width / 4,
+                Math.Min(_horizontalScrollOffset - delta * 30, Columns.Sum(c => c.Width) - Width + Width / 4)
+            );
         }
         else
         {
@@ -309,7 +322,10 @@ public class ListView : SKControl
             var groupRect = new SKRect(0, y, Width, y + rowBoundsHeight);
             if (groupRect.Contains(e.X, e.Y))
             {
-                group.CollapsedState = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? ListViewGroupCollapsedState.Collapsed : ListViewGroupCollapsedState.Expanded;
+                group.CollapsedState =
+                    group.CollapsedState == ListViewGroupCollapsedState.Expanded
+                        ? ListViewGroupCollapsedState.Collapsed
+                        : ListViewGroupCollapsedState.Expanded;
 
                 Invalidate();
                 return;
@@ -381,11 +397,20 @@ public class ListView : SKControl
             int delta = _isVerticalScrollbar ? e.Y - _scrollbarDragStart.Y : e.X - _scrollbarDragStart.X;
             if (_isVerticalScrollbar)
             {
-                _verticalScrollOffset = Math.Max(-Height / 4, Math.Min(_verticalScrollOffset + delta * 3, Items.Sum(r => rowBoundsHeight) - Height + 30 + Height / 4));
+                _verticalScrollOffset = Math.Max(
+                    -Height / 4,
+                    Math.Min(
+                        _verticalScrollOffset + delta * 3,
+                        Items.Sum(r => rowBoundsHeight) - Height + 30 + Height / 4
+                    )
+                );
             }
             else
             {
-                _horizontalScrollOffset = Math.Max(-Width / 4, Math.Min(_horizontalScrollOffset + delta * 3, Columns.Sum(c => c.Width) - Width + Width / 4));
+                _horizontalScrollOffset = Math.Max(
+                    -Width / 4,
+                    Math.Min(_horizontalScrollOffset + delta * 3, Columns.Sum(c => c.Width) - Width + Width / 4)
+                );
             }
         }
         _scrollbarDragStart = e.Location;

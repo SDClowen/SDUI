@@ -1,7 +1,7 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Windows.Forms;
+using SDUI.Controls;
 
 namespace SDUI.Test
 {
@@ -9,6 +9,7 @@ namespace SDUI.Test
     public partial class MultiPageControlTestPage : DoubleBufferedControl
     {
         private Type[] _types = { typeof(GeneralPage), typeof(ListViewPage), typeof(ConfigPage) };
+
         public MultiPageControlTestPage()
         {
             InitializeComponent();

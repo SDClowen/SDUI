@@ -74,10 +74,7 @@ public class ShapeProgressBar : Control
     private HatchStyle _hatchType = HatchStyle.Min;
     public HatchStyle HatchType
     {
-        get
-        {
-            return _hatchType;
-        }
+        get { return _hatchType; }
         set
         {
             _hatchType = value;
@@ -99,8 +96,13 @@ public class ShapeProgressBar : Control
     {
         Size = new Size(100, 100);
         Font = new Font("Segoe UI", 15);
-        SetStyle(ControlStyles.UserPaint |
-            ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        SetStyle(
+            ControlStyles.UserPaint
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.SupportsTransparentBackColor,
+            true
+        );
         BackColor = Color.Transparent;
     }
 
@@ -117,7 +119,14 @@ public class ShapeProgressBar : Control
         var renderWidth = ClientRectangle.Width - _weight - 1;
         var renderHeight = ClientRectangle.Height - _weight - 1;
 
-        using (var brush = new LinearGradientBrush(ClientRectangle, _gradient[0], _gradient[1], LinearGradientMode.ForwardDiagonal))
+        using (
+            var brush = new LinearGradientBrush(
+                ClientRectangle,
+                _gradient[0],
+                _gradient[1],
+                LinearGradientMode.ForwardDiagonal
+            )
+        )
         {
             using (var pen = new Pen(brush, _weight))
             {
@@ -129,7 +138,13 @@ public class ShapeProgressBar : Control
 
         if (_drawHatch)
         {
-            using (var hatchBrush = new HatchBrush(HatchType, Color.FromArgb(50, _gradient[0]), Color.FromArgb(50, _gradient[1])))
+            using (
+                var hatchBrush = new HatchBrush(
+                    HatchType,
+                    Color.FromArgb(50, _gradient[0]),
+                    Color.FromArgb(50, _gradient[1])
+                )
+            )
             {
                 using (var pen = new Pen(hatchBrush, 14f))
                 {
@@ -140,7 +155,14 @@ public class ShapeProgressBar : Control
             }
         }
 
-        using (var brush = new LinearGradientBrush(ClientRectangle, ColorScheme.BackColor, ColorScheme.BackColor2, LinearGradientMode.Vertical))
+        using (
+            var brush = new LinearGradientBrush(
+                ClientRectangle,
+                ColorScheme.BackColor,
+                ColorScheme.BackColor2,
+                LinearGradientMode.Vertical
+            )
+        )
             graphics.FillEllipse(brush, _weight / 2, _weight / 2, renderWidth, renderHeight);
 
         var percent = (100 / _maximum) * _value;
@@ -148,7 +170,12 @@ public class ShapeProgressBar : Control
         var stringSize = graphics.MeasureString(percentString, Font);
 
         using (var textBrush = new SolidBrush(ColorScheme.ForeColor))
-            graphics.DrawString(percentString, Font, textBrush, Width / 2 - stringSize.Width / 2, Height / 2 - stringSize.Height / 2);
-
+            graphics.DrawString(
+                percentString,
+                Font,
+                textBrush,
+                Width / 2 - stringSize.Width / 2,
+                Height / 2 - stringSize.Height / 2
+            );
     }
 }

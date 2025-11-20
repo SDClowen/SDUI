@@ -16,7 +16,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double ExponentialEaseIn(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(2, 10 * (progress - 1));
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Pow(2, 10 * (progress - 1));
         }
 
         /// <summary>
@@ -28,10 +30,16 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double ExponentialEaseOut(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : -Math.Pow(2, -10 * progress) + 1;
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : -Math.Pow(2, -10 * progress) + 1;
         }
 
-        private static readonly EasingMethod exponentialEaseInOut = EasingMethods.Chain(EasingMethods.ExponentialEaseIn, EasingMethods.ExponentialEaseOut);
+        private static readonly EasingMethod exponentialEaseInOut = EasingMethods.Chain(
+            EasingMethods.ExponentialEaseIn,
+            EasingMethods.ExponentialEaseOut
+        );
+
         /// <summary>
         ///     <para>A combination of the <see cref="EasingMethods.ExponentialEaseIn"/> and <see cref="EasingMethods.ExponentialEaseOut"/> methods.</para>
         ///     <para>It accelerates from approximately 0 to a velocity of approximately 7 (log 1024) and then decelerates back to a velocity of approximately 0.</para>

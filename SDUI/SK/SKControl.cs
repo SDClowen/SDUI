@@ -1,9 +1,9 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Windows.Forms;
+using SkiaSharp;
 
 namespace SDUI.SK;
 
@@ -12,9 +12,15 @@ public class SKControl : Control
     private readonly bool designMode;
 
     private Bitmap bitmap;
+
     public SKControl()
     {
-        SetStyle(ControlStyles.ResizeRedraw | ControlStyles.OptimizedDoubleBuffer | ControlStyles.SupportsTransparentBackColor, true);
+        SetStyle(
+            ControlStyles.ResizeRedraw
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.SupportsTransparentBackColor,
+            true
+        );
         BackColor = Color.Transparent;
         DoubleBuffered = true;
 

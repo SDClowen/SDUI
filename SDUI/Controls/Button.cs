@@ -1,8 +1,8 @@
-﻿using SDUI.Animation;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SDUI.Animation;
 
 namespace SDUI.Controls;
 
@@ -65,12 +65,18 @@ public class Button : System.Windows.Forms.Button
 
     public Button()
     {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.SupportsTransparentBackColor, true);
+        SetStyle(
+            ControlStyles.UserPaint
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.SupportsTransparentBackColor,
+            true
+        );
 
         animationManager = new Animation.AnimationEngine(false)
         {
             Increment = 0.03,
-            AnimationType = AnimationType.EaseOut
+            AnimationType = AnimationType.EaseOut,
         };
 
         hoverAnimationManager = new Animation.AnimationEngine
@@ -79,9 +85,7 @@ public class Button : System.Windows.Forms.Button
             AnimationType = AnimationType.Linear,
         };
 
-        hoverAnimationManager.OnAnimationFinished += (sender) =>
-        {
-        };
+        hoverAnimationManager.OnAnimationFinished += (sender) => { };
         hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
 
         animationManager.OnAnimationProgress += sender => Invalidate();
@@ -145,7 +149,6 @@ public class Button : System.Windows.Forms.Button
         else
             color = ColorScheme.ForeColor.Alpha(20);
 
-
         using var brush = new SolidBrush(color);
         using var outerPen = new Pen(ColorScheme.BorderColor);
 
@@ -177,10 +180,17 @@ public class Button : System.Windows.Forms.Button
                     var animationValue = animationManager.GetProgress(i);
                     var animationSource = animationManager.GetSource(i);
 
-                    using var rippleBrush = new SolidBrush(ColorScheme.BackColor.Alpha((int)(101 - (animationValue * 100))));
+                    using var rippleBrush = new SolidBrush(
+                        ColorScheme.BackColor.Alpha((int)(101 - (animationValue * 100)))
+                    );
                     var rippleSize = (float)(animationValue * Width * 2.0);
 
-                    var rippleRect = new RectangleF(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize);
+                    var rippleRect = new RectangleF(
+                        animationSource.X - rippleSize / 2,
+                        animationSource.Y - rippleSize / 2,
+                        rippleSize,
+                        rippleSize
+                    );
                     path.AddEllipse(rippleRect);
                     graphics.FillPath(rippleBrush, path);
                 }

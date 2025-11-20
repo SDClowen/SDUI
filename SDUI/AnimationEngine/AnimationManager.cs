@@ -47,7 +47,8 @@ namespace SDUI.Animation
         // Lazy initialization - Timer sadece gerektiğinde oluturulur
         private void EnsureTimer()
         {
-            if (_timer != null) return;
+            if (_timer != null)
+                return;
 
             try
             {
@@ -81,7 +82,8 @@ namespace SDUI.Animation
         {
             if (!SystemAnimations.AreAnimationsEnabled)
             {
-                var instantTarget = direction == AnimationDirection.In || direction == AnimationDirection.InOutIn ? 1.0 : 0.0;
+                var instantTarget =
+                    direction == AnimationDirection.In || direction == AnimationDirection.InOutIn ? 1.0 : 0.0;
                 SetProgress(instantTarget);
                 OnAnimationProgress?.Invoke(this);
                 OnAnimationFinished?.Invoke(this);
@@ -97,10 +99,17 @@ namespace SDUI.Animation
             UpdateEasingMethod();
 
             double target = direction == AnimationDirection.In || direction == AnimationDirection.InOutIn ? 1.0 : 0.0;
-            double currentIncrement = direction == AnimationDirection.InOutOut || direction == AnimationDirection.InOutRepeatingOut ? SecondaryIncrement : Increment;
+            double currentIncrement =
+                direction == AnimationDirection.InOutOut || direction == AnimationDirection.InOutRepeatingOut
+                    ? SecondaryIncrement
+                    : Increment;
             double duration = Math.Abs(target - _valueProvider.CurrentValue) / currentIncrement * 16; // milliseconds
 
-            _valueProvider.StartTransition(_valueProvider.CurrentValue, target, TimeSpan.FromMilliseconds(Math.Max(16, duration)));
+            _valueProvider.StartTransition(
+                _valueProvider.CurrentValue,
+                target,
+                TimeSpan.FromMilliseconds(Math.Max(16, duration))
+            );
 
             _isRunning = true;
 
@@ -204,13 +213,14 @@ namespace SDUI.Animation
                 AnimationType.QuarticEaseIn => EasingMethods.QuarticEaseIn,
                 AnimationType.QuarticEaseOut => EasingMethods.QuarticEaseOut,
                 AnimationType.QuarticEaseInOut => EasingMethods.QuarticEaseInOut,
-                _ => EasingMethods.DefaultEase
+                _ => EasingMethods.DefaultEase,
             };
         }
 
         public void Dispose()
         {
-            if (_disposed) return;
+            if (_disposed)
+                return;
 
             if (_timer != null)
             {

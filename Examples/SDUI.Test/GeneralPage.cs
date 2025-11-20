@@ -1,10 +1,10 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SDUI.Controls;
 
 namespace SDUI.Test
 {
@@ -78,7 +78,6 @@ namespace SDUI.Test
             MessageBox.Show(textBox1.Text);
         }
 
-
         private void buttonOpenInputDialog_Click(object sender, EventArgs e)
         {
             var dialog = new InputDialog("The input dialog", "This is a input dialog", "Please set the value!");
@@ -100,7 +99,7 @@ namespace SDUI.Test
                 return;
 
             var parent = form as UIWindow;
-            if(parent != null)
+            if (parent != null)
             {
                 ColorScheme.BackColor = Color.FromArgb(r, g, b);
                 parent.BackColor = ColorScheme.BackColor;

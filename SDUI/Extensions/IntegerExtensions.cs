@@ -8,10 +8,7 @@ public static class IntegerExtensions
     /// <returns></returns>
     public static uint ToAbgr(this Color color)
     {
-        return ((uint)color.A << 24)
-            | ((uint)color.B << 16)
-            | ((uint)color.G << 8)
-            | color.R;
+        return ((uint)color.A << 24) | ((uint)color.B << 16) | ((uint)color.G << 8) | color.R;
     }
 
     /// <summary>
@@ -20,10 +17,7 @@ public static class IntegerExtensions
     /// <returns></returns>
     public static Color ToColor(this int argb)
     {
-        return Color.FromArgb(
-            (argb & 0xff0000) >> 16,
-            (argb & 0xff00) >> 8,
-             argb & 0xff);
+        return Color.FromArgb((argb & 0xff0000) >> 16, (argb & 0xff00) >> 8, argb & 0xff);
     }
 
     /// <summary>

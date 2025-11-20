@@ -36,12 +36,13 @@ public class ComboBox : System.Windows.Forms.ComboBox
     public ComboBox()
     {
         SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.ResizeRedraw |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.AllPaintingInWmPaint |
-            ControlStyles.Selectable |
-            ControlStyles.SupportsTransparentBackColor, true
+            ControlStyles.UserPaint
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.Selectable
+                | ControlStyles.SupportsTransparentBackColor,
+            true
         );
 
         DrawMode = DrawMode.OwnerDrawVariable;
@@ -56,9 +57,11 @@ public class ComboBox : System.Windows.Forms.ComboBox
 
         var foreColor = ColorScheme.ForeColor;
 
-        if ((e.State & DrawItemState.Selected) == DrawItemState.Selected ||
-               (e.State & DrawItemState.Focus) == DrawItemState.Focus ||
-               (e.State & DrawItemState.NoFocusRect) != DrawItemState.NoFocusRect)
+        if (
+            (e.State & DrawItemState.Selected) == DrawItemState.Selected
+            || (e.State & DrawItemState.Focus) == DrawItemState.Focus
+            || (e.State & DrawItemState.NoFocusRect) != DrawItemState.NoFocusRect
+        )
         {
             foreColor = Color.White;
             using var brush = new SolidBrush(Color.Blue);
@@ -72,7 +75,7 @@ public class ComboBox : System.Windows.Forms.ComboBox
             LineAlignment = StringAlignment.Center,
             Alignment = StringAlignment.Near,
             FormatFlags = StringFormatFlags.NoWrap,
-            Trimming = StringTrimming.EllipsisCharacter
+            Trimming = StringTrimming.EllipsisCharacter,
         };
 
         using var textBrush = new SolidBrush(foreColor);
@@ -122,21 +125,29 @@ public class ComboBox : System.Windows.Forms.ComboBox
         using var backBrush = new SolidBrush(backColor);
         e.Graphics.FillPath(backBrush, path);
 
-        
-        var _extendBoxRect = new RectangleF(rectf.Width - (24f * (DeviceDpi / 96)), 0, (16 * (DeviceDpi / 96)), rectf.Height - (4 * (DeviceDpi / 96)) + _shadowDepth);
+        var _extendBoxRect = new RectangleF(
+            rectf.Width - (24f * (DeviceDpi / 96)),
+            0,
+            (16 * (DeviceDpi / 96)),
+            rectf.Height - (4 * (DeviceDpi / 96)) + _shadowDepth
+        );
 
         using var symbolPen = new Pen(ColorScheme.ForeColor);
-        graphics.DrawLine(symbolPen,
-                _extendBoxRect.Left + _extendBoxRect.Width / 2 - (5 * (DeviceDpi / 96)) - 1,
-                _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * (DeviceDpi / 96)),
-                _extendBoxRect.Left + _extendBoxRect.Width / 2 - (1 * (DeviceDpi / 96)),
-                _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96)));
+        graphics.DrawLine(
+            symbolPen,
+            _extendBoxRect.Left + _extendBoxRect.Width / 2 - (5 * (DeviceDpi / 96)) - 1,
+            _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * (DeviceDpi / 96)),
+            _extendBoxRect.Left + _extendBoxRect.Width / 2 - (1 * (DeviceDpi / 96)),
+            _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96))
+        );
 
-        graphics.DrawLine(symbolPen,
+        graphics.DrawLine(
+            symbolPen,
             _extendBoxRect.Left + _extendBoxRect.Width / 2 + (5 * (DeviceDpi / 96)) - 1,
             _extendBoxRect.Top + _extendBoxRect.Height / 2 - (2 * (DeviceDpi / 96)),
             _extendBoxRect.Left + _extendBoxRect.Width / 2 - (1 * (DeviceDpi / 96)),
-            _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96)));
+            _extendBoxRect.Top + _extendBoxRect.Height / 2 + (3 * (DeviceDpi / 96))
+        );
 
         graphics.DrawShadow(rectf, _shadowDepth, _radius);
         e.Graphics.DrawPath(ColorScheme.BorderColor, path);

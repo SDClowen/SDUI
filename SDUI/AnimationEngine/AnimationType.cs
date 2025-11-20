@@ -15,6 +15,6 @@ namespace SDUI.Animation
         QuarticEaseIn,
         QuarticEaseOut,
         QuarticEaseInOut,
-        CustomQuadratic
+        CustomQuadratic,
     }
 }

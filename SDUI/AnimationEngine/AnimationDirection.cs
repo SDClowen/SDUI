@@ -10,6 +10,6 @@ namespace SDUI.Animation
         InOutIn,
         InOutOut,
         InOutRepeatingIn,
-        InOutRepeatingOut
+        InOutRepeatingOut,
     }
 }

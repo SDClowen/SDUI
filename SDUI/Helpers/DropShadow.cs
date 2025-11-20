@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -10,10 +10,11 @@ using System.Windows.Forms;
 namespace SDUI.Helpers;
 
 using static System.Math;
+
 public static class DropShadow
 {
     const int CHANNELS = 4;
-    const int InflateMultiple = 2;//单边外延radius的倍数
+    const int InflateMultiple = 2; //单边外延radius的倍数
 
     /// <summary>
     /// 获取阴影边界。供外部定位阴影用
@@ -66,8 +67,8 @@ public static class DropShadow
         try
         {
             matrix = new Matrix();
-            matrix.Translate(-pathBounds.X + inflate, -pathBounds.Y + inflate);//先清除形状原有偏移再向中心偏移
-            pathCopy = (GraphicsPath)path.Clone();                             //基于形状副本操作
+            matrix.Translate(-pathBounds.X + inflate, -pathBounds.Y + inflate); //先清除形状原有偏移再向中心偏移
+            pathCopy = (GraphicsPath)path.Clone(); //基于形状副本操作
             pathCopy.Transform(matrix);
 
             brush = new SolidBrush(color);
@@ -93,7 +94,11 @@ public static class DropShadow
         BitmapData data = null;
         try
         {
-            data = shadow.LockBits(new Rectangle(0, 0, shadow.Width, shadow.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            data = shadow.LockBits(
+                new Rectangle(0, 0, shadow.Width, shadow.Height),
+                ImageLockMode.ReadWrite,
+                PixelFormat.Format32bppArgb
+            );
 
             //两次方框模糊就能达到不错的效果
             //var boxes = DetermineBoxes(radius, 3);
@@ -116,13 +121,13 @@ public static class DropShadow
     /// <param name="radius">模糊半径</param>
     /// <param name="color">透明色值</param>
 #if UNSAFE
-        private static unsafe void BoxBlur(BitmapData data, int radius, Color color)
+    private static unsafe void BoxBlur(BitmapData data, int radius, Color color)
 #else
     private static void BoxBlur(BitmapData data, int radius, Color color)
 #endif
     {
 #if UNSAFE //unsafe项目下请定义编译条件：UNSAFE
-            IntPtr p1 = data1.Scan0;
+        IntPtr p1 = data1.Scan0;
 #else
         byte[] p1 = new byte[data.Stride * data.Height];
         Marshal.Copy(data.Scan0, p1, 0, p1.Length);
@@ -131,7 +136,9 @@ public static class DropShadow
         //这步的意义在于让图片中的透明像素拥有color的色值（但仍然保持透明）
         //这样在混合时才能合出基于color的颜色（只是透明度不同），
         //否则它是与RGB(0,0,0)合，就会得到乌黑的渣特技
-        byte R = color.R, G = color.G, B = color.B;
+        byte R = color.R,
+            G = color.G,
+            B = color.B;
         for (int i = 3; i < p1.Length; i += 4)
         {
             if (p1[i] == 0)
@@ -144,7 +151,9 @@ public static class DropShadow
 
         byte[] p2 = new byte[p1.Length];
         int radius2 = 2 * radius + 1;
-        int First, Last, Sum;
+        int First,
+            Last,
+            Sum;
         int stride = data.Stride,
             width = data.Width,
             height = data.Height;
@@ -171,7 +180,11 @@ public static class DropShadow
                 Sum += p1[right + 3] - First;
                 p2[start + 3] = (byte)(Sum / radius2);
             }
-            for (var column = radius + 1; column < width - radius; column++, left += CHANNELS, right += CHANNELS, start += CHANNELS)
+            for (
+                var column = radius + 1;
+                column < width - radius;
+                column++, left += CHANNELS, right += CHANNELS, start += CHANNELS
+            )
             {
                 Sum += p1[right + 3] - p1[left + 3];
                 p2[start + 3] = (byte)(Sum / radius2);
@@ -243,16 +256,23 @@ public static class ShadowUtils
     {
         bool ShouldShowShadow();
     }
+
     enum RenderSide
     {
         Top,
         Bottom,
         Left,
-        Right
+        Right,
     }
 
-    static RenderSide[] VisibleTop = { RenderSide.Bottom/*, RenderSide.Top*/ };
-    static RenderSide[] VisibleBottom = { RenderSide.Top/*, RenderSide.Bottom*/ };
+    static RenderSide[] VisibleTop =
+    {
+        RenderSide.Bottom, /*, RenderSide.Top*/
+    };
+    static RenderSide[] VisibleBottom =
+    {
+        RenderSide.Top, /*, RenderSide.Bottom*/
+    };
     static RenderSide[] VisibleLeft = { RenderSide.Right };
     static RenderSide[] VisibleRight = { RenderSide.Left };
 
@@ -274,7 +294,6 @@ public static class ShadowUtils
         return true;
     }
 
-
     public static void DrawShadow(Graphics G, Color c, Rectangle r, int d, DockStyle st = DockStyle.None)
     {
         Color[] colors = GetColorVector(c, d).ToArray();
@@ -284,7 +303,11 @@ public static class ShadowUtils
             {
                 //TOP
                 using (Pen pen = new Pen(colors[i], 1f))
-                    G.DrawLine(pen, new Point(r.Left - Max(i - 1, 0), r.Top - i), new Point(r.Right + Max(i - 1, 0), r.Top - i));
+                    G.DrawLine(
+                        pen,
+                        new Point(r.Left - Max(i - 1, 0), r.Top - i),
+                        new Point(r.Right + Max(i - 1, 0), r.Top - i)
+                    );
             }
 
         if (IsVisible(RenderSide.Bottom, st))
@@ -292,7 +315,11 @@ public static class ShadowUtils
             {
                 //BOTTOM
                 using (Pen pen = new Pen(colors[i], 1f))
-                    G.DrawLine(pen, new Point(r.Left - Max(i - 1, 0), r.Bottom + i), new Point(r.Right + i, r.Bottom + i));
+                    G.DrawLine(
+                        pen,
+                        new Point(r.Left - Max(i - 1, 0), r.Bottom + i),
+                        new Point(r.Right + i, r.Bottom + i)
+                    );
             }
         if (IsVisible(RenderSide.Left, st))
             for (int i = 1; i < d; i++)
@@ -306,13 +333,23 @@ public static class ShadowUtils
             {
                 //RIGHT
                 using (Pen pen = new Pen(colors[i], 1f))
-                    G.DrawLine(pen, new Point(r.Right + i, r.Top - i), new Point(r.Right + i, r.Bottom + Max(i - 1, 0)));
+                    G.DrawLine(
+                        pen,
+                        new Point(r.Right + i, r.Top - i),
+                        new Point(r.Right + i, r.Bottom + Max(i - 1, 0))
+                    );
             }
     }
 
     //Code taken and adapted from StackOverflow (https://stackoverflow.com/a/13653167).
     //All credits go to Marino Šimić (https://stackoverflow.com/users/610204/marino-%c5%a0imi%c4%87).
-    public static void DrawRoundedRectangle(this Graphics gfx, Rectangle bounds, int cornerRadius, Pen drawPen, Color fillColor)
+    public static void DrawRoundedRectangle(
+        this Graphics gfx,
+        Rectangle bounds,
+        int cornerRadius,
+        Pen drawPen,
+        Color fillColor
+    )
     {
         int strokeOffset = Convert.ToInt32(Ceiling(drawPen.Width));
         bounds = Rectangle.Inflate(bounds, -strokeOffset, -strokeOffset);
@@ -322,8 +359,14 @@ public static class ShadowUtils
         {
             gfxPath.AddArc(bounds.X, bounds.Y, cornerRadius, cornerRadius, 180, 90);
             gfxPath.AddArc(bounds.X + bounds.Width - cornerRadius, bounds.Y, cornerRadius, cornerRadius, 270, 90);
-            gfxPath.AddArc(bounds.X + bounds.Width - cornerRadius, bounds.Y + bounds.Height - cornerRadius, cornerRadius,
-                           cornerRadius, 0, 90);
+            gfxPath.AddArc(
+                bounds.X + bounds.Width - cornerRadius,
+                bounds.Y + bounds.Height - cornerRadius,
+                cornerRadius,
+                cornerRadius,
+                0,
+                90
+            );
             gfxPath.AddArc(bounds.X, bounds.Y + bounds.Height - cornerRadius, cornerRadius, cornerRadius, 90, 90);
         }
         else
@@ -347,7 +390,15 @@ public static class ShadowUtils
 
     //Code taken and adapted from StackOverflow (https://stackoverflow.com/a/13653167).
     //All credits go to Marino Šimić (https://stackoverflow.com/users/610204/marino-%c5%a0imi%c4%87).
-    public static void DrawOutsetShadow(Graphics g, Color shadowColor, int hShadow, int vShadow, int blur, int spread, Control control)
+    public static void DrawOutsetShadow(
+        Graphics g,
+        Color shadowColor,
+        int hShadow,
+        int vShadow,
+        int blur,
+        int spread,
+        Control control
+    )
     {
         var rOuter = Rectangle.Inflate(control.Bounds, blur / 2, blur / 2);
         var rInner = Rectangle.Inflate(control.Bounds, blur / 2, blur / 2);
@@ -396,19 +447,19 @@ public static class ShadowUtils
         return cv;
     }
 
-
     //Code taken and adapted from https://stackoverflow.com/a/25741405
     //All credits go to TaW (https://stackoverflow.com/users/3152130/taw)
     static GraphicsPath GetRectPath(Rectangle R)
     {
         byte[] fm = new byte[3];
-        for (int b = 0; b < 3; b++) fm[b] = 1;
+        for (int b = 0; b < 3; b++)
+            fm[b] = 1;
         List<Point> points = new List<Point>
-            {
-                new Point(R.Left, R.Bottom),
-                new Point(R.Right, R.Bottom),
-                new Point(R.Right, R.Top)
-            };
+        {
+            new Point(R.Left, R.Bottom),
+            new Point(R.Right, R.Bottom),
+            new Point(R.Right, R.Top),
+        };
         return new GraphicsPath(points.ToArray(), fm);
     }
 
@@ -416,8 +467,13 @@ public static class ShadowUtils
     {
         if (ctrl.Parent != null)
         {
-            ctrl.Parent.Paint += (s, e) => {
-                if (ctrl.Parent != null && ctrl.Visible && (!(ctrl is IShadowController) || ((IShadowController)ctrl).ShouldShowShadow()))
+            ctrl.Parent.Paint += (s, e) =>
+            {
+                if (
+                    ctrl.Parent != null
+                    && ctrl.Visible
+                    && (!(ctrl is IShadowController) || ((IShadowController)ctrl).ShouldShowShadow())
+                )
                     DrawShadow(e.Graphics, Color.Black, ctrl.Bounds, 7, ctrl.Dock);
             };
         }

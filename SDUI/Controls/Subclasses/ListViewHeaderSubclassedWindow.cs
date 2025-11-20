@@ -59,7 +59,6 @@ namespace SDUI.Controls.Subclasses
             ++_uses;
             Handle = handle;
 
-
             IntPtr hHeader = SendMessage(handle, LVM_GETHEADER, 0, 0);
 
             var isDark = ColorScheme.BackColor.IsDark();
@@ -108,7 +107,11 @@ namespace SDUI.Controls.Subclasses
                                     break;
                                 case (int)CDDS.CDDS_ITEMPREPAINT:
 
-                                    var info = (SubclassInfo)Marshal.PtrToStructure(unchecked((IntPtr)(long)(ulong)dwRefData), typeof(SubclassInfo));
+                                    var info = (SubclassInfo)
+                                        Marshal.PtrToStructure(
+                                            unchecked((IntPtr)(long)(ulong)dwRefData),
+                                            typeof(SubclassInfo)
+                                        );
                                     SetTextColor(nmcd.hdc, info.headerTextColor);
 
                                     m.Result = new IntPtr((int)CDRF.CDRF_DODEFAULT);
@@ -127,7 +130,6 @@ namespace SDUI.Controls.Subclasses
 
                         //SetWindowTheme(hHeader, isDark ? "DarkMode_ItemsView" : "ItemsView", null); // DarkMode
                         //SetWindowTheme(Handle, isDark ? "DarkMode_ItemsView" : "ItemsView", null); // DarkMode
-
 
                         //AllowDarkModeForWindow(Handle, ColorScheme.BackColor.IsDark());
                         //AllowDarkModeForWindow(hHeader, ColorScheme.BackColor.IsDark());
@@ -188,7 +190,10 @@ namespace SDUI.Controls.Subclasses
             }
             finally
             {
-                if (msg == 0x82/*WM_NCDESTROY*/ && Handle != IntPtr.Zero)
+                if (
+                    msg == 0x82 /*WM_NCDESTROY*/
+                    && Handle != IntPtr.Zero
+                )
                 {
                     InternalReleaseHandle();
                 }
@@ -219,18 +224,17 @@ namespace SDUI.Controls.Subclasses
         /// </summary>
         public void DefWndProc(ref System.Windows.Forms.Message m)
         {
-            Debug.Assert(m.HWnd == Handle, "ListViewHeaderSubclassedWindow is not attached to the window m is addressed to.");
-
-
+            Debug.Assert(
+                m.HWnd == Handle,
+                "ListViewHeaderSubclassedWindow is not attached to the window m is addressed to."
+            );
         }
 
         /// <summary>
         ///  Specifies a notification method that is called when the handle for a
         ///  window is changed.
         /// </summary>
-        protected virtual void OnHandleChange()
-        {
-        }
+        protected virtual void OnHandleChange() { }
 
         /// <summary>
         ///  On class load, we connect an event to Application to let us know when
@@ -251,9 +255,7 @@ namespace SDUI.Controls.Subclasses
         /// <summary>
         ///  When overridden in a derived class, manages an unhandled thread exception.
         /// </summary>
-        protected virtual void OnThreadException(Exception e)
-        {
-        }
+        protected virtual void OnThreadException(Exception e) { }
 
         private void InternalReleaseHandle()
         {

@@ -1,9 +1,9 @@
-﻿using SDUI;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Security.Policy;
 using System.Windows.Forms;
+using SDUI;
 
 namespace SDUI.Controls
 {
@@ -28,10 +28,7 @@ namespace SDUI.Controls
 
         public decimal Value
         {
-            get
-            {
-                return _value;
-            }
+            get { return _value; }
             set
             {
                 if (value <= _max & value >= _min)
@@ -45,10 +42,7 @@ namespace SDUI.Controls
 
         public decimal Minimum
         {
-            get
-            {
-                return _min;
-            }
+            get { return _min; }
             set
             {
                 if (value < _max)
@@ -65,10 +59,7 @@ namespace SDUI.Controls
 
         public decimal Maximum
         {
-            get
-            {
-                return _max;
-            }
+            get { return _max; }
             set
             {
                 if (value > _min)
@@ -81,16 +72,23 @@ namespace SDUI.Controls
             }
         }
 
-        public override Color BackColor { get => base.BackColor; set => base.BackColor = Color.Transparent; }
+        public override Color BackColor
+        {
+            get => base.BackColor;
+            set => base.BackColor = Color.Transparent;
+        }
 
         public NumUpDown()
         {
-            SetStyle(ControlStyles.SupportsTransparentBackColor |
-                ControlStyles.AllPaintingInWmPaint |
-                      ControlStyles.OptimizedDoubleBuffer |
-                      ControlStyles.DoubleBuffer |
-                      ControlStyles.ResizeRedraw |
-                      ControlStyles.UserPaint, true);
+            SetStyle(
+                ControlStyles.SupportsTransparentBackColor
+                    | ControlStyles.AllPaintingInWmPaint
+                    | ControlStyles.OptimizedDoubleBuffer
+                    | ControlStyles.DoubleBuffer
+                    | ControlStyles.ResizeRedraw
+                    | ControlStyles.UserPaint,
+                true
+            );
 
             UpdateStyles();
             this.DoubleBuffered = true;
@@ -164,9 +162,7 @@ namespace SDUI.Controls
                 if (_isUsingKeyboard == true && _value < _max)
                     Value = long.Parse(_value.ToString() + e.KeyChar.ToString());
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
         }
 
         protected override void OnKeyUp(KeyEventArgs e)
@@ -236,14 +232,20 @@ namespace SDUI.Controls
             graphics.FillPath(backColorBrush, round);
             graphics.DrawPath(borderPen, round);
 
-
             this.DrawString(graphics, "▲", ColorScheme.ForeColor, _upButtonRect);
             this.DrawString(graphics, "▼", ColorScheme.ForeColor, _downButtonRect);
 
             graphics.DrawLine(borderPen, _upButtonRect.X, 0, _upButtonRect.X, _upButtonRect.Height);
             graphics.DrawLine(borderPen, _downButtonRect.X, 0, _downButtonRect.X, _downButtonRect.Height);
 
-            TextRenderer.DrawText(graphics, Value.ToString(), Font, new Rectangle(Padding.Left, 0, Width - 1, Height - 1), ColorScheme.ForeColor, TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left);
+            TextRenderer.DrawText(
+                graphics,
+                Value.ToString(),
+                Font,
+                new Rectangle(Padding.Left, 0, Width - 1, Height - 1),
+                ColorScheme.ForeColor,
+                TextFormatFlags.PreserveGraphicsClipping | TextFormatFlags.VerticalCenter | TextFormatFlags.Left
+            );
         }
     }
 }

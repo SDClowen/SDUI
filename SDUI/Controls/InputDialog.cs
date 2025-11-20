@@ -9,7 +9,7 @@ public partial class InputDialog : UIWindowBase
     {
         Combobox,
         Textbox,
-        Numeric
+        Numeric,
     }
 
     /// <summary>
@@ -47,7 +47,13 @@ public partial class InputDialog : UIWindowBase
     /// <param name="title">The title.</param>
     /// <param name="message">The message.</param>
     /// <param name="selector">If you want to active the selector instead of textbox <c>true</c>; otherwise <c>false</c></param>
-    public InputDialog(string formTitle, string title, string message, InputType inputType = InputType.Textbox, object defaultValue = null)
+    public InputDialog(
+        string formTitle,
+        string title,
+        string message,
+        InputType inputType = InputType.Textbox,
+        object defaultValue = null
+    )
     {
         InitializeComponent();
         this.AcceptButton = this.btnOK;
@@ -103,8 +109,8 @@ public partial class InputDialog : UIWindowBase
     /// <param name="message">The dialog message</param>
     /// <param name="selector">If you want to active the selector instead of textbox <c>true</c>; otherwise <c>false</c></param>
     /// <returns>The <seealso cref="DialogResult"/></returns>
-    public static DialogResult Show(string formTitle, string title, string message, InputType inputType)
-        => new InputDialog(formTitle, title, message, inputType).ShowDialog();
+    public static DialogResult Show(string formTitle, string title, string message, InputType inputType) =>
+        new InputDialog(formTitle, title, message, inputType).ShowDialog();
 
     /// <summary>
     /// Handles the Click event of the btnOK control.

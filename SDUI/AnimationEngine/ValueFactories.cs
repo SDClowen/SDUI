@@ -70,37 +70,64 @@ namespace SDUI.AnimationEngine
 
         public static Point PointFactory(Point startValue, Point targetValue, double progress)
         {
-            return new Point(IntegerFactory(startValue.X, targetValue.X, progress), IntegerFactory(startValue.Y, targetValue.Y, progress));
+            return new Point(
+                IntegerFactory(startValue.X, targetValue.X, progress),
+                IntegerFactory(startValue.Y, targetValue.Y, progress)
+            );
         }
 
         public static PointF PointFFactory(PointF startValue, PointF targetValue, double progress)
         {
-            return new PointF(FloatFactory(startValue.X, targetValue.X, progress), FloatFactory(startValue.Y, targetValue.Y, progress));
+            return new PointF(
+                FloatFactory(startValue.X, targetValue.X, progress),
+                FloatFactory(startValue.Y, targetValue.Y, progress)
+            );
         }
 
         public static Size SizeFactory(Size startValue, Size targetValue, double progress)
         {
-            return new Size(IntegerFactory(startValue.Width, targetValue.Width, progress), IntegerFactory(startValue.Height, targetValue.Height, progress));
+            return new Size(
+                IntegerFactory(startValue.Width, targetValue.Width, progress),
+                IntegerFactory(startValue.Height, targetValue.Height, progress)
+            );
         }
 
         public static SizeF SizeFFactory(SizeF startValue, SizeF targetValue, double progress)
         {
-            return new SizeF(FloatFactory(startValue.Width, targetValue.Width, progress), FloatFactory(startValue.Height, targetValue.Height, progress));
+            return new SizeF(
+                FloatFactory(startValue.Width, targetValue.Width, progress),
+                FloatFactory(startValue.Height, targetValue.Height, progress)
+            );
         }
 
         public static Rectangle RectangleFactory(Rectangle startValue, Rectangle targetValue, double progress)
         {
-            return new Rectangle(IntegerFactory(startValue.X, targetValue.X, progress), IntegerFactory(startValue.Y, targetValue.Y, progress), IntegerFactory(startValue.Width, targetValue.Width, progress), IntegerFactory(startValue.Height, targetValue.Height, progress));
+            return new Rectangle(
+                IntegerFactory(startValue.X, targetValue.X, progress),
+                IntegerFactory(startValue.Y, targetValue.Y, progress),
+                IntegerFactory(startValue.Width, targetValue.Width, progress),
+                IntegerFactory(startValue.Height, targetValue.Height, progress)
+            );
         }
 
         public static RectangleF RectangleFFactory(RectangleF startValue, RectangleF targetValue, double progress)
         {
-            return new RectangleF(FloatFactory(startValue.X, targetValue.X, progress), FloatFactory(startValue.Y, targetValue.Y, progress), FloatFactory(startValue.Width, targetValue.Width, progress), FloatFactory(startValue.Height, targetValue.Height, progress));
+            return new RectangleF(
+                FloatFactory(startValue.X, targetValue.X, progress),
+                FloatFactory(startValue.Y, targetValue.Y, progress),
+                FloatFactory(startValue.Width, targetValue.Width, progress),
+                FloatFactory(startValue.Height, targetValue.Height, progress)
+            );
         }
 
         public static Color ColorRgbFactory(Color startValue, Color targetValue, double progress)
         {
-            return Color.FromArgb(IntegerFactory(startValue.A, targetValue.A, progress), IntegerFactory(startValue.R, targetValue.R, progress), IntegerFactory(startValue.G, targetValue.G, progress), IntegerFactory(startValue.B, targetValue.B, progress));
+            return Color.FromArgb(
+                IntegerFactory(startValue.A, targetValue.A, progress),
+                IntegerFactory(startValue.R, targetValue.R, progress),
+                IntegerFactory(startValue.G, targetValue.G, progress),
+                IntegerFactory(startValue.B, targetValue.B, progress)
+            );
         }
 
         #endregion
@@ -119,7 +146,9 @@ namespace SDUI.AnimationEngine
 
         public static TimeSpan TimeSpanFactory(TimeSpan startValue, TimeSpan targetValue, double progress)
         {
-            return startValue.Add(TimeSpan.FromMilliseconds(targetValue.Subtract(startValue).TotalMilliseconds * progress));
+            return startValue.Add(
+                TimeSpan.FromMilliseconds(targetValue.Subtract(startValue).TotalMilliseconds * progress)
+            );
         }
 
         #endregion
