@@ -52,6 +52,7 @@ public class NativeMethods
     public const int LVM_GETGROUPINFOBYINDEX = LVM_FIRST + 153;
     public const int LVM_MOVEITEMTOGROUP = LVM_FIRST + 154;
     public const int WM_LBUTTONUP = 0x202;
+    public const int WM_EXITSIZEMOVE = 0x0232;
 
     public const int LVGF_NONE = 0x0;
     public const int LVGF_HEADER = 0x1;
@@ -141,7 +142,7 @@ public class NativeMethods
 
     [DllImport("user32.dll")]
     public static extern IntPtr GetDCEx(IntPtr hwnd, IntPtr hrgnclip, uint fdwOptions);
-    
+
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool SetRect(Rect rect, int w, int h, int x, int y);
@@ -210,6 +211,9 @@ public class NativeMethods
 
     [DllImport(user32, EntryPoint = "SendMessageW", SetLastError = true)]
     public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref Rect lParam);
+
+    [DllImport(user32, SetLastError = true)]
+    public static extern bool PostMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
     [DllImport(user32, EntryPoint = "PostMessageW", SetLastError = true)]
     public static extern int PostMessage(IntPtr hWnd, int Msg, int wParam, ref IntPtr lParam);
@@ -452,12 +456,12 @@ public class NativeMethods
             window.Handle,
             ref data);
     }
-    
+
     /// <summary>
-     /// Fills an area for glass rendering
-     /// </summary>
-     /// <param name="g"></param>
-     /// <param name="r"></param>
+    /// Fills an area for glass rendering
+    /// </summary>
+    /// <param name="g"></param>
+    /// <param name="r"></param>
     public static void FillForGlass(Graphics g, Rectangle r)
     {
         var rc = new Rect

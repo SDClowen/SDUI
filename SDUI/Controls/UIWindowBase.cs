@@ -83,6 +83,12 @@ public class UIWindowBase : Form
         SendMessage(handle, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, 0);
     }
 
+    protected void PostDragForm(IntPtr handle)
+    {
+        ReleaseCapture();
+        PostMessage(handle, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, 0);
+    }
+
     protected override CreateParams CreateParams
     {
         get

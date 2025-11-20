@@ -50,6 +50,16 @@ public class UIWindow : UIWindowBase
     private bool _formMoveMouseDown;
 
     /// <summary>
+    /// Determines whether the user is dragging the form
+    /// </summary>
+    private bool _isDragging;
+
+    /// <summary>
+    /// The starting point of the drag
+    /// </summary>
+    private Point _dragStartPoint;
+
+    /// <summary>
     /// The position of the form when the left mouse button is pressed
     /// </summary>
     private Point _location;
@@ -699,6 +709,9 @@ public class UIWindow : UIWindowBase
         if (!ShowTitle)
             return;
 
+        if (_isDragging)
+            return;
+
         if (_inCloseBox)
         {
             _inCloseBox = false;
@@ -760,9 +773,6 @@ public class UIWindow : UIWindowBase
         if (pageRect == null)
             UpdateTabRects();
 
-        if (_formMoveMouseDown && !MousePosition.Equals(_mouseOffset))
-            return;
-
         for (int i = 0; i < pageRect.Count; i++)
         {
             if (pageRect[i].Contains(e.Location))
@@ -793,6 +803,7 @@ public class UIWindow : UIWindowBase
         if (e.Button == MouseButtons.Left && Movable)
         {
             _formMoveMouseDown = true;
+            _dragStartPoint = e.Location;
             _location = Location;
             _mouseOffset = MousePosition;
         }
@@ -852,46 +863,25 @@ public class UIWindow : UIWindowBase
         IsStayAtTopBorder = false;
         Cursor.Clip = new Rectangle();
         _formMoveMouseDown = false;
+        _isDragging = false;
 
         animationSource = e.Location;
     }
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
-        if (_formMoveMouseDown && !MousePosition.Equals(_mouseOffset))
+        if (_formMoveMouseDown)
         {
-            if (WindowState == FormWindowState.Maximized)
+            if (!_isDragging)
             {
-                int maximizedWidth = Width;
-                int locationX = Left;
-                ShowMaximize();
-
-                float offsetXRatio = 1 - (float)Width / maximizedWidth;
-                _mouseOffset.X -= (int)((_mouseOffset.X - locationX) * offsetXRatio);
-            }
-
-            var offsetX = _mouseOffset.X - MousePosition.X;
-            var offsetY = _mouseOffset.Y - MousePosition.Y;
-            var _workingArea = Screen.GetWorkingArea(this);
-
-            // If the current mouse stays on the upper edge of the container, it will trigger an edge wait for MaximumBorderInterval(ms),
-            // If the movement ends at this time, the window will be automatically maximized, this function is provided for multiple monitors arranged up and down
-            // The advantage of setting the judgment to a specific value here is that it is difficult to trigger the stay event if the form is quickly moved across the monitor
-            if (MousePosition.Y - _workingArea.Top == 0)
-            {
-                if (!IsStayAtTopBorder)
+                var dragRect = new Rectangle(_dragStartPoint, Size.Empty);
+                dragRect.Inflate(SystemInformation.DragSize);
+                if (!dragRect.Contains(e.Location))
                 {
-                    Cursor.Clip = _workingArea;
-                    TopBorderStayTicks = DateTime.Now.Ticks;
-                    IsStayAtTopBorder = true;
-                }
-                else if (DateTime.Now.Ticks - TopBorderStayTicks > _stickyBorderTime)
-                {
-                    Cursor.Clip = new Rectangle();
+                    _isDragging = true;
+                    PostDragForm(Handle);
                 }
             }
-
-            Location = new Point(_location.X - offsetX, _location.Y - offsetY);
         }
         else
         {
@@ -983,6 +973,17 @@ public class UIWindow : UIWindowBase
         }
 
         base.OnMouseMove(e);
+    }
+
+    protected override void WndProc(ref Message m)
+    {
+        base.WndProc(ref m);
+
+        if (m.Msg == NativeMethods.WM_EXITSIZEMOVE)
+        {
+            _formMoveMouseDown = false;
+            _isDragging = false;
+        }
     }
 
     protected override void OnMouseLeave(EventArgs e)
@@ -1401,7 +1402,7 @@ public class UIWindow : UIWindowBase
     {
         // Cache hover colors
         var closeHoverColor = Color.FromArgb(222, 179, 30, 30);
-        
+
         if (_inCloseBox)
         {
             var alpha = (int)(closeBoxHoverAnimationManager.GetProgress() * closeHoverColor.A);
