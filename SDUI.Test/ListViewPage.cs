@@ -3,7 +3,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Demo
 {
-    public partial class ListViewPage : SDUI.Controls.Panel
+    public partial class ListViewPage : SDUI.Controls.UIElementBase
     {
         public ListViewPage()
         {

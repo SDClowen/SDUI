@@ -1383,16 +1383,47 @@ public class UIWindow : UIWindowBase, IUIElement
     {
         base.OnMouseWheel(e);
         
-        // Z-order'a göre tersten kontrol et
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        // Mouse pozisyonunu window client koordinatlarına çevir
+        var mousePos = PointToClient(MousePosition);
+        
+        // Recursive olarak doğru child'ı bul ve wheel olayını ilet
+        if (PropagateMouseWheel(Controls.OfType<UIElementBase>(), mousePos, e))
+            return; // Event işlendi
+    }
+    
+    /// <summary>
+    /// Recursive olarak child elementlere mouse wheel olayını iletir
+    /// </summary>
+    private bool PropagateMouseWheel(IEnumerable<UIElementBase> elements, Point windowMousePos, MouseEventArgs e)
+    {
+        // Z-order'a göre tersten kontrol et - en üstteki element önce
+        foreach (var element in elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
-            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
+            var elementBounds = GetWindowRelativeBoundsStatic(element);
+            if (!elementBounds.Contains(windowMousePos))
+                continue;
+            
+            // Önce bu elementin child'larını kontrol et (daha spesifik -> daha genel)
+            if (element.Controls != null && element.Controls.Count > 0)
             {
-                var localEvent = CreateChildMouseEvent(e, element);
-                element.OnMouseWheel(localEvent);
-                break; // İlk hover edilen elementten sonra diğerlerini kontrol etmeye gerek yok
+                var childElements = element.Controls.OfType<UIElementBase>();
+                if (PropagateMouseWheel(childElements, windowMousePos, e))
+                    return true; // Child işledi
             }
+            
+            // Child işlemediyse bu elemente gönder
+            var localEvent = new MouseEventArgs(
+                e.Button,
+                e.Clicks,
+                windowMousePos.X - elementBounds.X,
+                windowMousePos.Y - elementBounds.Y,
+                e.Delta);
+            
+            element.OnMouseWheel(localEvent);
+            return true; // Event işlendi
         }
+        
+        return false; // Hiçbir element işlemedi
     }
 
     private void ShowMaximize(bool IsOnMoving = false)
@@ -2143,6 +2174,7 @@ public class UIWindow : UIWindowBase, IUIElement
         if (element == null || !element.Enabled || !element.Visible)
         {
             _currentCursor = Cursors.Default;
+            base.Cursor = Cursors.Default;
             return;
         }
 
@@ -2150,10 +2182,7 @@ public class UIWindow : UIWindowBase, IUIElement
         if (_currentCursor != newCursor)
         {
             _currentCursor = newCursor;
-            if (Handle != IntPtr.Zero)
-            {
-                SetCursor(_currentCursor.Handle);
-            }
+            base.Cursor = newCursor;
         }
     }
 

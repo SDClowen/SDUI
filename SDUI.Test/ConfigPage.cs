@@ -5,7 +5,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Demo
 {
-    public partial class ConfigPage : SDUI.Controls.Panel
+    public partial class ConfigPage : SDUI.Controls.UIElementBase
     {
         public ConfigPage()
         {

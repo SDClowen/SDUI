@@ -440,7 +440,7 @@ namespace SDUI.Controls
                 {
                     using var borderPaint = new SKPaint 
                     { 
-                        Color = Color.FromArgb((int)(255 * animAlpha), ColorScheme.BorderColor.R, ColorScheme.BorderColor.G, ColorScheme.BorderColor.B).ToSKColor(), 
+                        Color = ColorScheme.BorderColor.Alpha((int)(animAlpha * 32)).ToSKColor(), 
                         Style = SKPaintStyle.Stroke, 
                         StrokeWidth = 1f, 
                         IsAntialias = true 

@@ -1,4 +1,5 @@
-﻿using SDUI.Collections;
+﻿using SDUI.Animation;
+using SDUI.Collections;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -27,6 +28,14 @@ public class ListView : UIElementBase
     public IndexedList<System.Windows.Forms.ListViewItem> SelectedItems { get; } = [];
     public SDUI.Collections.ListViewGroupCollection Groups { get; }
 
+    public System.Windows.Forms.ImageList SmallImageList { get; set; }
+    public System.Windows.Forms.ImageList LargeImageList { get; set; }
+    public System.Windows.Forms.ImageList? GroupImageList { get; internal set; }
+    public bool VirtualMode { get; internal set; }
+
+    public event EventHandler SelectedIndexChanged;
+    public event System.Windows.Forms.ItemCheckedEventHandler ItemChecked;
+
     private float _horizontalScrollOffset = 0;
     private float _verticalScrollOffset = 0;
     private bool _isResizingColumn = false;
@@ -54,37 +63,33 @@ public class ListView : UIElementBase
     private float _dragStartHOffset;
     private float _dragStartVOffset;
 
-    public ListViewItem SelectedItem 
-    { 
-        get => _selectedIndex >= 0 && _selectedIndex < (_listViewItems?.Count ?? 0) ? _listViewItems[_selectedIndex] : null; 
-        set 
-        { 
+    public ListViewItem SelectedItem
+    {
+        get => _selectedIndex >= 0 && _selectedIndex < (_listViewItems?.Count ?? 0) ? _listViewItems[_selectedIndex] : null;
+        set
+        {
             if (_listViewItems != null)
             {
-                var index = _listViewItems.IndexOf(value); 
-                if(index != -1) 
+                var index = _listViewItems.IndexOf(value);
+                if (index != -1)
                     _selectedIndex = index;
             }
-        } 
-    }
-    
-    public int SelectedIndex 
-    { 
-        get => _selectedIndex; 
-        set 
-        { 
-            _selectedIndex = value;  
-            SelectedIndexChanged?.Invoke(this, EventArgs.Empty);  
-        } 
+        }
     }
 
-    public System.Windows.Forms.ImageList SmallImageList { get; set; }
-    public System.Windows.Forms.ImageList LargeImageList { get; set; }
-    public System.Windows.Forms.ImageList? GroupImageList { get; internal set; }
-    public bool VirtualMode { get; internal set; }
+    public int SelectedIndex
+    {
+        get => _selectedIndex;
+        set
+        {
+            _selectedIndex = value;
+            SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
 
-    public event EventHandler SelectedIndexChanged;
-    public event System.Windows.Forms.ItemCheckedEventHandler ItemChecked;
+    // Group expand/collapse animation için
+    private readonly Dictionary<ListViewGroup, Animation.AnimationManager> _groupAnimations = new();
+    private readonly HashSet<ListViewGroup> _pendingCollapse = new(); // OUT animasyonu bitince gerçekten collapse edilecekler
 
     public ListView()
     {
@@ -257,44 +262,38 @@ public class ListView : UIElementBase
 
     private void DrawGroups(SKCanvas canvas)
     {
-        var y = 30 - _verticalScrollOffset;
-        using var groupPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
-        using var groupTextPaint = new SKPaint { IsAntialias = true, Color = SKColors.DarkSlateGray, Style = SKPaintStyle.Fill };
-        using var groupFont = CreateFont(Font);
-
+        const float HEADER_HEIGHT = 30f;
+        float y = HEADER_HEIGHT - _verticalScrollOffset;
         foreach (ListViewGroup group in Groups)
         {
-            if (y + RowHeight >= 0 && y <= Height)
-            {
-                var rect = new SKRect();
-                rect.Location = new SKPoint(5, y + 8);
-                rect.Size = new SKSize(16, 16);
-
-                groupPaint.Style = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? SKPaintStyle.Fill : SKPaintStyle.Stroke;
-                groupPaint.Color = group.CollapsedState == ListViewGroupCollapsedState.Expanded ? SKColors.DarkSlateGray : SKColors.LightSlateGray;
-
-                canvas.DrawRoundRect(rect, 4, 4, groupPaint);
-                DrawTextCompat(canvas, group.Header ?? string.Empty, 25, y + 20, groupFont, groupTextPaint);
-            }
-
             y += RowHeight;
-
-            if (group.CollapsedState != ListViewGroupCollapsedState.Collapsed)
+            bool isExpanded = group.CollapsedState == ListViewGroupCollapsedState.Expanded;
+            bool isAnimatingCollapse = _pendingCollapse.Contains(group);
+            double progress = _groupAnimations.TryGetValue(group, out var anim) ? anim.GetProgress() : (isExpanded ? 1.0 : 0.0);
+            bool drawItems = isExpanded || isAnimatingCollapse;
+            if (drawItems && group.Items.Count > 0)
             {
-                foreach (ListViewItem item in group.Items)
+                int itemCount = group.Items.Count;
+                int visible = (int)Math.Ceiling(itemCount * progress);
+                for (int i = 0; i < visible && i < itemCount; i++)
                 {
-                    if (y > Height) break;
-                    if (y + RowHeight >= 0)
+                    var item = group.Items[i];
+                    float slide = (float)(1.0 - progress) * (RowHeight * 0.3f);
+                    float itemY = y - slide;
+                    if (itemY + RowHeight >= HEADER_HEIGHT && itemY <= Height)
                     {
-                        DrawRow(canvas, item, y);
+                        byte alpha = (byte)(Math.Clamp(progress, 0, 1) * 255);
+                        using var layer = new SKPaint { IsAntialias = true, Color = new SKColor(255, 255, 255, alpha) };
+                        canvas.SaveLayer(layer);
+                        DrawRow(canvas, item, itemY);
+                        canvas.Restore();
                     }
                     y += RowHeight;
+                    if (y > Height) break;
                 }
             }
-
             if (y > Height) break;
         }
-
         if (y <= Height && _listViewItems != null)
         {
             foreach (var item in _listViewItems)
@@ -302,13 +301,89 @@ public class ListView : UIElementBase
                 if (item._group == null)
                 {
                     if (y > Height) break;
-                    if (y + RowHeight >= 0)
-                    {
-                        DrawRow(canvas, item, y);
-                    }
+                    if (y + RowHeight >= HEADER_HEIGHT) DrawRow(canvas, item, y);
                     y += RowHeight;
                 }
             }
+        }
+    }
+
+    private void DrawStickyGroupHeaders(SKCanvas canvas)
+    {
+        const float HEADER_HEIGHT = 30f;
+        using var font = CreateFont(Font);
+        using var textPaint = new SKPaint { IsAntialias = true, Color = SKColors.DarkSlateGray, Style = SKPaintStyle.Fill };
+
+        // Scrollbar var mı? Header arka planını scrollbar alanına taşırma
+        int contentHeightAll = GetContentHeight();
+        int viewportHeight = Math.Max(0, Height - 30);
+        bool hasVerticalScrollbar = contentHeightAll > viewportHeight;
+        float headerUsableWidth = hasVerticalScrollbar ? Width - 15f : Width;
+
+        float y = HEADER_HEIGHT - _verticalScrollOffset;
+        ListViewGroup sticky = null; float stickyY = HEADER_HEIGHT;
+        foreach (ListViewGroup group in Groups)
+        {
+            double prog = _groupAnimations.TryGetValue(group, out var anim) ? anim.GetProgress() : (group.CollapsedState == ListViewGroupCollapsedState.Expanded ? 1.0 : 0.0);
+            bool animCollapse = _pendingCollapse.Contains(group);
+            int itemCount = group.Items.Count;
+            float contentH = (group.CollapsedState == ListViewGroupCollapsedState.Collapsed && !animCollapse) ? 0f : (float)(itemCount * RowHeight * prog);
+            float startY = y; float endY = startY + RowHeight + contentH;
+            if (sticky == null && startY <= HEADER_HEIGHT && endY > HEADER_HEIGHT)
+            {
+                sticky = group; stickyY = HEADER_HEIGHT;
+                int nextIdx = Groups.IndexOf(group) + 1;
+                if (nextIdx < Groups.Count)
+                {
+                    var ng = (ListViewGroup)Groups[nextIdx];
+                    double nProg = _groupAnimations.TryGetValue(ng, out var na) ? na.GetProgress() : (ng.CollapsedState == ListViewGroupCollapsedState.Expanded ? 1.0 : 0.0);
+                    bool nAnimCollapse = _pendingCollapse.Contains(ng);
+                    float nContent = (ng.CollapsedState == ListViewGroupCollapsedState.Collapsed && !nAnimCollapse) ? 0f : (float)(ng.Items.Count * RowHeight * nProg);
+                    float nStart = endY;
+                    if (nStart < HEADER_HEIGHT + RowHeight) stickyY = nStart - RowHeight;
+                }
+            }
+            y = endY; if (y > Height) break;
+        }
+        y = HEADER_HEIGHT - _verticalScrollOffset;
+        foreach (ListViewGroup group in Groups)
+        {
+            double prog = _groupAnimations.TryGetValue(group, out var anim) ? anim.GetProgress() : (group.CollapsedState == ListViewGroupCollapsedState.Expanded ? 1.0 : 0.0);
+            bool animCollapse = _pendingCollapse.Contains(group);
+            int itemCount = group.Items.Count;
+            float contentH = (group.CollapsedState == ListViewGroupCollapsedState.Collapsed && !animCollapse) ? 0f : (float)(itemCount * RowHeight * prog);
+            float headerY = y; if (group == sticky) headerY = stickyY;
+            if (headerY >= HEADER_HEIGHT && headerY <= Height)
+            {
+                using var bg = new SKPaint { IsAntialias = true, Color = ColorScheme.BackColor.ToSKColor(), Style = SKPaintStyle.Fill };
+                canvas.DrawRect(0, headerY, headerUsableWidth, RowHeight, bg);
+                using var border = new SKPaint { IsAntialias = true, Color = SKColors.LightGray, Style = SKPaintStyle.Stroke, StrokeWidth = group == sticky ? 1.5f : 1f };
+                canvas.DrawLine(0, headerY + RowHeight, headerUsableWidth, headerY + RowHeight, border);
+
+                // Chevron: collapsed => sağ ok (>), expanded => aşağı V
+                // Temel path: aşağı bakan V. Collapsed iken -90° döndürülür (sağa bakar).
+                float cX = 12f; float cY = headerY + RowHeight / 2f; float s = 4.5f;
+                float rotation = (float)((1.0 - prog) * -90.0f); // prog=1 -> 0° (down V), prog=0 -> -90° (right arrow)
+                using var chevPaint = new SKPaint { IsAntialias = true, Color = SKColors.DarkSlateGray, Style = SKPaintStyle.Stroke, StrokeWidth = 1.75f, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round };
+                using var path = new SKPath();
+                // Aşağı bakan V
+                path.MoveTo(cX - s, cY - s * 0.5f);
+                path.LineTo(cX, cY + s * 0.7f);
+                path.LineTo(cX + s, cY - s * 0.5f);
+                canvas.Save();
+                canvas.Translate(cX, cY);
+                canvas.RotateDegrees(rotation);
+                canvas.Translate(-cX, -cY);
+                canvas.DrawPath(path, chevPaint);
+                canvas.Restore();
+
+                // Metni dikey ortala (font metrics)
+                var fm = font.Metrics;
+                float textHeight = fm.Descent - fm.Ascent;
+                float baseline = headerY + (RowHeight - textHeight) / 2f - fm.Ascent;
+                DrawTextCompat(canvas, group.Header ?? string.Empty, 25, baseline, font, textPaint);
+            }
+            y += RowHeight + contentH; if (y > Height) break;
         }
     }
 
@@ -382,7 +457,7 @@ public class ListView : UIElementBase
     internal override void OnMouseWheel(MouseEventArgs e)
     {
         base.OnMouseWheel(e);
-        
+
         if (e == null)
             return;
 
@@ -428,16 +503,27 @@ public class ListView : UIElementBase
         int rows = 0;
         foreach (ListViewGroup group in Groups)
         {
-            rows += 1;
+            rows += 1; // Group header
+
             if (group.CollapsedState != ListViewGroupCollapsedState.Collapsed)
             {
-                rows += group.Items.Count;
+                // Animasyon progress'ini dikkate al
+                double animProgress = 1.0;
+                if (_groupAnimations.TryGetValue(group, out var animation))
+                {
+                    animProgress = animation.GetProgress();
+                }
+
+                // Animasyonlu row count
+                rows += (int)Math.Ceiling(group.Items.Count * animProgress);
             }
         }
+
         if (_listViewItems != null)
         {
             rows += _listViewItems.Count(item => item._group == null);
         }
+
         return rows;
     }
 
@@ -510,12 +596,29 @@ public class ListView : UIElementBase
 
     public void InsertGroupInListView(int index, ListViewGroup group)
     {
-        if (group is null)
-            throw new ArgumentNullException(nameof(group));
-        if (Groups.Contains(group))
-            return;
+        if (group is null) throw new ArgumentNullException(nameof(group));
+        if (Groups.Contains(group)) return;
         group.ListView = this;
         Groups.Insert(index, group);
+        var anim = new Animation.AnimationManager(singular: true)
+        {
+            Increment = 0.15,
+            AnimationType = Animation.AnimationType.EaseInOut,
+            InterruptAnimation = true
+        };
+        anim.OnAnimationProgress += _ => Invalidate();
+        anim.OnAnimationFinished += _ =>
+        {
+            if (_pendingCollapse.Contains(group))
+            {
+                group.CollapsedState = ListViewGroupCollapsedState.Collapsed;
+                _pendingCollapse.Remove(group);
+                Invalidate();
+            }
+        };
+        anim.SetProgress(group.CollapsedState == ListViewGroupCollapsedState.Expanded ? 1.0 : 0.0);
+        _groupAnimations[group] = anim;
+        Invalidate();
     }
 
     public void RemoveGroupFromListView(ListViewGroup group)
@@ -526,6 +629,13 @@ public class ListView : UIElementBase
             return;
         group.ListView = null;
         Groups.Remove(group);
+
+        // Animation'ı temizle
+        if (_groupAnimations.ContainsKey(group))
+        {
+            _groupAnimations[group]?.Dispose();
+            _groupAnimations.Remove(group);
+        }
     }
 
     internal void SetItemIndentCount(int index, int indentCount)
@@ -536,19 +646,19 @@ public class ListView : UIElementBase
     {
         if (items is null)
             throw new ArgumentNullException(nameof(items));
-        
+
         _listViewItems ??= [];
-        
+
         if (index < 0 || index > _listViewItems.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
-        
+
         foreach (var item in items)
         {
             _listViewItems.Insert(index, item);
             item._listView = this;
             index++;
         }
-        
+
         Invalidate();
     }
 
@@ -640,11 +750,12 @@ public class ListView : UIElementBase
     // Add missing mouse handlers for interactions
     internal override void OnMouseDown(MouseEventArgs e)
     {
-        // Scrollbar hit test
+        base.OnMouseDown(e);
+        if (e.Button != MouseButtons.Left) return;
+        // 1) Scrollbar hit test
         int contentHeight = GetContentHeight();
         int viewportHeight = Math.Max(0, Height - 30);
         int totalColumnsWidth = Columns.Sum(c => c.Width);
-
         if (e.X >= Width - 15 && e.X <= Width - 5 && contentHeight > viewportHeight && e.Y >= 30 && e.Y <= Height)
         {
             _isDraggingScrollbar = true;
@@ -661,65 +772,86 @@ public class ListView : UIElementBase
             _dragStartHOffset = _horizontalScrollOffset;
             return;
         }
-
-        // Column resize only in header area
+        // 2) Column resize only in header area
         if (e.Y <= 30)
         {
-            int sep = HitTestHeaderSeparator(e.X);
+            int sep = HitTestHeaderSeparatorEnhanced(e.X);
             if (sep >= 0)
             {
                 _isResizingColumn = true;
                 _resizingColumnIndex = sep;
                 _dragStartX = e.X;
                 _dragInitialWidth = Columns[sep].Width;
+                Cursor = Cursors.SizeWE;
+                if (Parent is UIWindow pw) pw.UpdateCursor(this);
                 return;
             }
         }
 
-        // Group and item selection
-        var y = 30 - _verticalScrollOffset;
+        // 3) Group header toggle + item selection (animation-aware)
+        float y = 30 - _verticalScrollOffset;
         foreach (ListViewGroup group in Groups)
         {
-            var groupRect = new SKRect(0, y, Width, y + RowHeight);
-            if (groupRect.Contains(e.X, e.Y))
+            // Header rect
+            var headerRect = new SKRect(0, y, Width, y + RowHeight);
+            if (headerRect.Contains(e.X, e.Y))
             {
-                group.CollapsedState = group.CollapsedState == ListViewGroupCollapsedState.Expanded
-                    ? ListViewGroupCollapsedState.Collapsed
-                    : ListViewGroupCollapsedState.Expanded;
+                bool isExpanded = group.CollapsedState == ListViewGroupCollapsedState.Expanded;
+                if (isExpanded)
+                {
+                    if (_groupAnimations.TryGetValue(group, out var anim))
+                    {
+                        _pendingCollapse.Add(group);
+                        anim.StartNewAnimation(Animation.AnimationDirection.Out);
+                    }
+                }
+                else
+                {
+                    group.CollapsedState = ListViewGroupCollapsedState.Expanded;
+                    if (_groupAnimations.TryGetValue(group, out var anim))
+                        anim.StartNewAnimation(Animation.AnimationDirection.In);
+                }
                 Invalidate();
                 return;
             }
 
+            // advance into items area for this group
             y += RowHeight;
 
-            if (group.CollapsedState != ListViewGroupCollapsedState.Collapsed)
+            // Items hit-test
+            bool expandedOrAnimatingOut = group.CollapsedState == ListViewGroupCollapsedState.Expanded || _pendingCollapse.Contains(group);
+            if (expandedOrAnimatingOut && group.Items.Count > 0)
             {
-                foreach (ListViewItem item in group.Items)
+                double prog = _groupAnimations.TryGetValue(group, out var anim) ? anim.GetProgress() : 1.0;
+                int visible = (int)Math.Ceiling(group.Items.Count * Math.Clamp(prog, 0.0, 1.0));
+                for (int i = 0; i < visible && i < group.Items.Count; i++)
                 {
-                    var itemRect = new SKRect(0, y, Width, y + RowHeight);
+                    var item = group.Items[i];
+                    float slide = (float)(1.0 - prog) * (RowHeight * 0.3f);
+                    float itemY = y - slide;
+                    var itemRect = new SKRect(0, itemY, Width, itemY + RowHeight);
                     if (itemRect.Contains(e.X, e.Y))
                     {
+                        // Clear previous selection
                         if (_listViewItems != null)
                         {
-                            foreach (var r in _listViewItems)
-                            {
-                                r.StateSelected = false;
-                            }
+                            foreach (var r in _listViewItems) r.StateSelected = false;
                         }
-
                         item.StateSelected = true;
-                        _selectedIndex = _listViewItems?.IndexOf(item) ?? -1;
+                        _selectedIndex = _listViewItems != null ? _listViewItems.IndexOf(item) : -1;
                         SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
                         Invalidate();
                         return;
                     }
                     y += RowHeight;
+                    if (y > Height) break;
                 }
             }
 
             if (y > Height) break;
         }
 
+        // 4) Ungrouped items selection
         if (_listViewItems != null)
         {
             foreach (var item in _listViewItems)
@@ -729,11 +861,7 @@ public class ListView : UIElementBase
                     var itemRect = new SKRect(0, y, Width, y + RowHeight);
                     if (itemRect.Contains(e.X, e.Y))
                     {
-                        foreach (var r in _listViewItems)
-                        {
-                            r.StateSelected = false;
-                        }
-
+                        foreach (var r in _listViewItems) r.StateSelected = false;
                         item.StateSelected = true;
                         _selectedIndex = _listViewItems.IndexOf(item);
                         SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
@@ -747,42 +875,104 @@ public class ListView : UIElementBase
         }
     }
 
+    internal override void OnMouseUp(MouseEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (_isResizingColumn)
+        {
+            _isResizingColumn = false;
+            _resizingColumnIndex = -1;
+            Cursor = Cursors.Default;
+            if (Parent is UIWindow pw) pw.UpdateCursor(this);
+        }
+        if (_isDraggingScrollbar)
+        {
+            _isDraggingScrollbar = false;
+            _isVerticalScrollbar = false;
+        }
+    }
+
+    internal override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        if (!_isResizingColumn)
+        {
+            _hoverSeparatorIndex = -1;
+            Cursor = Cursors.Default;
+            if (Parent is UIWindow pw) pw.UpdateCursor(this);
+        }
+    }
+
+    private void EnsureGroupAnimations()
+    {
+        foreach (ListViewGroup group in Groups)
+        {
+            if (_groupAnimations.ContainsKey(group))
+                continue;
+            var anim = new Animation.AnimationManager(singular: true)
+            {
+                Increment = 0.15,
+                AnimationType = Animation.AnimationType.EaseInOut,
+                InterruptAnimation = true
+            };
+            anim.OnAnimationProgress += _ => Invalidate();
+            anim.OnAnimationFinished += _ =>
+            {
+                if (_pendingCollapse.Contains(group))
+                {
+                    group.CollapsedState = ListViewGroupCollapsedState.Collapsed;
+                    _pendingCollapse.Remove(group);
+                    Invalidate();
+                }
+            };
+            anim.SetProgress(group.CollapsedState == ListViewGroupCollapsedState.Expanded ? 1.0 : 0.0);
+            _groupAnimations[group] = anim;
+        }
+    }
+
+    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    {
+        base.OnPaint(e);
+        var canvas = e.Surface.Canvas;
+        canvas.Clear(SKColors.Transparent);
+        EnsureGroupAnimations();
+        DrawGroups(canvas);
+        DrawStickyGroupHeaders(canvas); // header'lar içerik üstünde
+        DrawColumns(canvas);            // kolon header en üstte
+        DrawScrollBars(canvas);         // scrollbarlar en üstte kalsın
+    }
+
     internal override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
         bool needInvalidate = false;
 
-        if (_isResizingColumn && _resizingColumnIndex >= 0)
+        // Helper: update hover over column separators even while dragging scrollbar
+        void UpdateColumnResizeHover()
         {
-            int delta = e.X - _dragStartX;
-            int newWidth = Math.Max(30, _dragInitialWidth + delta);
-            if (newWidth != Columns[_resizingColumnIndex].Width)
+            if (_isResizingColumn) return; // keep current cursor during resize
+            if (e.Y > 30) // header height
             {
-                Columns[_resizingColumnIndex].Width = newWidth;
-                needInvalidate = true;
+                if (_hoverSeparatorIndex != -1)
+                {
+                    _hoverSeparatorIndex = -1;
+                    if (Cursor != Cursors.Default)
+                    {
+                        Cursor = Cursors.Default;
+                        if (Parent is UIWindow pwDef) pwDef.UpdateCursor(this);
+                    }
+                }
+                return;
             }
-        }
-        else
-        {
-            int newHover = (e.Y <= 30) ? HitTestHeaderSeparator(e.X) : -1;
+            int newHover = HitTestHeaderSeparatorEnhanced(e.X);
             if (newHover != _hoverSeparatorIndex)
             {
                 _hoverSeparatorIndex = newHover;
-                
-                // Cursor'u değiştir ve parent window'a bildir
-                if (_hoverSeparatorIndex >= 0)
+                var desired = (newHover >= 0) ? Cursors.SizeWE : Cursors.Default;
+                if (Cursor != desired)
                 {
-                    Cursor = Cursors.SizeWE;
-                }
-                else
-                {
-                    Cursor = Cursors.Default;
-                }
-                
-                // Parent window'a cursor değişikliğini bildir
-                if (Parent is UIWindow parentWindow)
-                {
-                    parentWindow.UpdateCursor(this);
+                    Cursor = desired;
+                    if (Parent is UIWindow pw) pw.UpdateCursor(this);
                 }
             }
         }
@@ -794,15 +984,14 @@ public class ListView : UIElementBase
             {
                 int contentHeight = GetContentHeight();
                 int viewportHeight = Math.Max(0, Height - 30);
-                if (contentHeight > viewportHeight)
+                if (contentHeight > viewportHeight && viewportHeight > 0)
                 {
-                    float sh = viewportHeight * (viewportHeight / (float)contentHeight);
-                    float track = Math.Max(1f, viewportHeight - sh);
-                    int delta = e.Y - _scrollbarDragStart.Y;
-                    float contentDelta = delta * (contentHeight - viewportHeight) / track;
-                    float newOffset = _dragStartVOffset + contentDelta;
-                    float maxOffset = Math.Max(0, contentHeight - viewportHeight);
-                    newOffset = Math.Max(-Height / 4f, Math.Min(newOffset, maxOffset + Height / 4f));
+                    float scrollbarHeight = viewportHeight * (viewportHeight / (float)contentHeight);
+                    float trackLength = Math.Max(1f, viewportHeight - scrollbarHeight);
+                    int deltaY = e.Y - _scrollbarDragStart.Y;
+                    float contentRange = Math.Max(0, contentHeight - viewportHeight);
+                    float scrollDelta = (deltaY / trackLength) * contentRange;
+                    float newOffset = Math.Max(0, Math.Min(_dragStartVOffset + scrollDelta, contentRange));
                     if (Math.Abs(newOffset - _verticalScrollOffset) > 0.5f)
                     {
                         _verticalScrollOffset = newOffset;
@@ -812,98 +1001,59 @@ public class ListView : UIElementBase
             }
             else if (totalColumnsWidth > Width)
             {
-                float sw = Width * (Width / (float)totalColumnsWidth);
-                float track = Math.Max(1f, Width - sw);
-                int delta = e.X - _scrollbarDragStart.X;
-                float contentDelta = delta * (totalColumnsWidth - Width) / track;
-                float newOffset = _dragStartHOffset + contentDelta;
-                float maxOffset = totalColumnsWidth - Width;
-                newOffset = Math.Max(-Width / 4f, Math.Min(newOffset, maxOffset + Width / 4f));
+                float scrollbarWidth = Width * (Width / (float)totalColumnsWidth);
+                float trackLength = Math.Max(1f, Width - scrollbarWidth);
+                int deltaX = e.X - _scrollbarDragStart.X;
+                float contentRange = Math.Max(0, totalColumnsWidth - Width);
+                float scrollDelta = (deltaX / trackLength) * contentRange;
+                float newOffset = Math.Max(0, Math.Min(_dragStartHOffset + scrollDelta, contentRange));
                 if (Math.Abs(newOffset - _horizontalScrollOffset) > 0.5f)
                 {
                     _horizontalScrollOffset = newOffset;
                     needInvalidate = true;
                 }
             }
+            UpdateColumnResizeHover();
+        }
+        else if (_isResizingColumn && _resizingColumnIndex >= 0)
+        {
+            int delta = e.X - _dragStartX;
+            int newWidth = Math.Max(30, _dragInitialWidth + delta);
+            if (newWidth != Columns[_resizingColumnIndex].Width)
+            {
+                Columns[_resizingColumnIndex].Width = newWidth;
+                needInvalidate = true;
+            }
+            if (Cursor != Cursors.SizeWE)
+            {
+                Cursor = Cursors.SizeWE;
+                if (Parent is UIWindow pw) pw.UpdateCursor(this);
+            }
+        }
+        else
+        {
+            UpdateColumnResizeHover();
         }
 
-        _scrollbarDragStart = e.Location;
         if (needInvalidate) Invalidate();
     }
 
-    internal override void OnMouseUp(MouseEventArgs e)
+    // Enhanced hit test with smaller padding and respect to horizontal scroll offset
+    private int HitTestHeaderSeparatorEnhanced(int mouseX)
     {
-        _isResizingColumn = false;
-        _isDraggingScrollbar = false;
-        
-        // Resize bittiğinde cursor'u sıfırla
-        if (_hoverSeparatorIndex < 0)
-        {
-            Cursor = Cursors.Default;
-            if (Parent is UIWindow parentWindow)
-            {
-                parentWindow.UpdateCursor(this);
-            }
-        }
-    }
-
-    internal override void OnMouseLeave(EventArgs e)
-    {
-        base.OnMouseLeave(e);
-        _hoverSeparatorIndex = -1;
-        
-        if (!_isResizingColumn)
-        {
-            Cursor = Cursors.Default;
-            if (Parent is UIWindow parentWindow)
-            {
-                parentWindow.UpdateCursor(null);
-            }
-        }
-    }
-
-    internal override void OnMouseDoubleClick(MouseEventArgs e)
-    {
-        base.OnMouseDoubleClick(e);
-
-        // Auto-size column when double-clicking separator in header
-        var x = -_horizontalScrollOffset;
+        const int padding = 4; // smaller sensitive region
+        float xAccum = -_horizontalScrollOffset;
         for (int i = 0; i < Columns.Count; i++)
         {
-            if (Math.Abs(e.X - (x + Columns[i].Width)) < 6 && e.Y <= 30)
+            float edge = xAccum + Columns[i].Width;
+            // Ignore if edge outside viewport entirely
+            if (edge >= -padding && edge <= Width + padding)
             {
-                int maxWidth = 30;
-                using (var font = CreateFont(Font))
-                {
-                    for (int r = 0; r < Items.Count; r++)
-                    {
-                        var item = Items[r] as ListViewItem;
-                        if (item != null && i < item.SubItems.Count)
-                        {
-                            SKRect bounds;
-                            var text = item.SubItems[i].Text ?? string.Empty;
-                            font.MeasureText(text, out bounds);
-                            int textWidth = (int)Math.Ceiling(bounds.Width);
-                            maxWidth = Math.Max(maxWidth, textWidth + 16);
-                        }
-                    }
-                }
-                Columns[i].Width = maxWidth;
-                Invalidate();
-                return;
+                if (mouseX >= edge - padding && mouseX <= edge + padding)
+                    return i;
             }
-            x += Columns[i].Width;
+            xAccum = edge;
         }
-    }
-
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
-    {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
-
-        DrawColumns(canvas);
-        DrawGroups(canvas);
-        DrawScrollBars(canvas);
+        return -1;
     }
 }

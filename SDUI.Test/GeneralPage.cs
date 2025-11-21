@@ -7,7 +7,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Demo
 {
-    public partial class GeneralPage : SDUI.Controls.Panel
+    public partial class GeneralPage : SDUI.Controls.UIElementBase
     {
         public GeneralPage()
         {
