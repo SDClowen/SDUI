@@ -17,8 +17,7 @@ namespace SDUI.AnimationEngine
         /// <param name="startValue">The start value.</param>
         /// <param name="valueFactory">The value factory.</param>
         public ValueProvider(T startValue, ValueFactory<T> valueFactory)
-            : this(startValue, valueFactory, EasingMethods.DefaultEase)
-        { }
+            : this(startValue, valueFactory, EasingMethods.DefaultEase) { }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ValueProvider{T}"/> class.
@@ -75,7 +74,7 @@ namespace SDUI.AnimationEngine
         /// <value>
         /// The target value.
         /// </value>
-        public bool Completed => CurrentProgress >= 1; 
+        public bool Completed => CurrentProgress >= 1;
 
         /// <summary>
         /// Gets or sets the start time.
@@ -104,7 +103,8 @@ namespace SDUI.AnimationEngine
             get
             {
                 double progress = this.CurrentProgress;
-                if (progress >= 1) return this.TargetValue;
+                if (progress >= 1)
+                    return this.TargetValue;
                 return this.ValueFactory(this.StartValue, this.TargetValue, this.EasingMethod(progress));
             }
         }
@@ -122,7 +122,7 @@ namespace SDUI.AnimationEngine
                 var currentDuration = DateTime.Now - this.StartTime;
                 if (currentDuration >= this.Duration)
                     return 1;
-                return currentDuration.TotalMilliseconds/ this.Duration.TotalMilliseconds;
+                return currentDuration.TotalMilliseconds / this.Duration.TotalMilliseconds;
             }
         }
 

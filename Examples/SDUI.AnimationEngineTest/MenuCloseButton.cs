@@ -1,10 +1,9 @@
-﻿using SDUI.AnimationEngine;
-using System.Drawing.Drawing2D;
+﻿using System.Drawing.Drawing2D;
+using SDUI.AnimationEngine;
 
 namespace SDUI.AnimationEngineTest
 {
-    public class MenuCloseButton
-        : Control
+    public class MenuCloseButton : Control
     {
         public MenuCloseButton()
             : base()
@@ -15,24 +14,38 @@ namespace SDUI.AnimationEngineTest
             //Every Point is between (-1|-1) and (1|1)
             this.NormalState = new PointF[]
             {
-                new PointF(-1, .8f), new PointF(1, .8f), //Topmost line
-                new PointF(-1, 0), new PointF(1, 0), //Middle line
-                new PointF(-1, -.8f), new PointF(1, -.8f) //Lowest line
+                new PointF(-1, .8f),
+                new PointF(1, .8f), //Topmost line
+                new PointF(-1, 0),
+                new PointF(1, 0), //Middle line
+                new PointF(-1, -.8f),
+                new PointF(1, -.8f), //Lowest line
             };
 
             this.ExtendedState = new PointF[]
             {
-                new PointF(1, -1), new PointF(-1, 1), //Bottom right to top left
-                new PointF(1, 0), new PointF(-1, 0), //Collapsed
-                new PointF(1, 1), new PointF(-1, -1) //Top right to bottom left
+                new PointF(1, -1),
+                new PointF(-1, 1), //Bottom right to top left
+                new PointF(1, 0),
+                new PointF(-1, 0), //Collapsed
+                new PointF(1, 1),
+                new PointF(-1, -1), //Top right to bottom left
             };
 
-            this.PointProvider = new ValueProvider<PointF[]>(this.NormalState, ValueFactoryCreator.CreateArrayFactory<PointF>(ValueFactories.PointFFactory), EasingMethods.ExponentialEaseOut);
-            this.MiddleLineOpacityProvider = new ValueProvider<byte>(255, ValueFactories.ByteFactory, EasingMethods.ExponentialEaseInOut);
+            this.PointProvider = new ValueProvider<PointF[]>(
+                this.NormalState,
+                ValueFactoryCreator.CreateArrayFactory<PointF>(ValueFactories.PointFFactory),
+                EasingMethods.ExponentialEaseOut
+            );
+            this.MiddleLineOpacityProvider = new ValueProvider<byte>(
+                255,
+                ValueFactories.ByteFactory,
+                EasingMethods.ExponentialEaseInOut
+            );
 
             this.DoubleBuffered = true;
             //For updates.
-            new System.Windows.Forms.Timer() { Enabled = true, Interval = 1000/60 }.Tick += (s, e) =>
+            new System.Windows.Forms.Timer() { Enabled = true, Interval = 1000 / 60 }.Tick += (s, e) =>
             {
                 this.Invalidate();
             };
@@ -40,7 +53,6 @@ namespace SDUI.AnimationEngineTest
 
         protected PointF[] NormalState;
         protected PointF[] ExtendedState;
-
 
         protected double durationFactor = 1;
         private bool extended = false;
@@ -51,8 +63,14 @@ namespace SDUI.AnimationEngineTest
             {
                 if (value != this.extended)
                 {
-                    this.PointProvider.StartTransition(value ? this.ExtendedState : this.NormalState, TimeSpan.FromSeconds(1 * durationFactor));
-                    this.MiddleLineOpacityProvider.StartTransition(value ? (byte)0 : (byte)255, TimeSpan.FromSeconds(.25 * durationFactor));
+                    this.PointProvider.StartTransition(
+                        value ? this.ExtendedState : this.NormalState,
+                        TimeSpan.FromSeconds(1 * durationFactor)
+                    );
+                    this.MiddleLineOpacityProvider.StartTransition(
+                        value ? (byte)0 : (byte)255,
+                        TimeSpan.FromSeconds(.25 * durationFactor)
+                    );
                     this.extended = value;
                 }
             }
@@ -70,9 +88,18 @@ namespace SDUI.AnimationEngineTest
                 pevent.Graphics.DrawLine(linePen, this.Project(currentState[0]), this.Project(currentState[1]));
                 pevent.Graphics.DrawLine(linePen, this.Project(currentState[4]), this.Project(currentState[5]));
 
-                using (Pen middleLinePen = new Pen(Color.FromArgb(this.MiddleLineOpacityProvider.CurrentValue, this.ForeColor), linePen.Width))
+                using (
+                    Pen middleLinePen = new Pen(
+                        Color.FromArgb(this.MiddleLineOpacityProvider.CurrentValue, this.ForeColor),
+                        linePen.Width
+                    )
+                )
                 {
-                    pevent.Graphics.DrawLine(middleLinePen, this.Project(currentState[2]), this.Project(currentState[3]));
+                    pevent.Graphics.DrawLine(
+                        middleLinePen,
+                        this.Project(currentState[2]),
+                        this.Project(currentState[3])
+                    );
                 }
             }
 
@@ -82,7 +109,10 @@ namespace SDUI.AnimationEngineTest
         protected PointF Project(PointF relativePoint, float spacing = .1f)
         {
             PointF center = new PointF(this.Width / 2f, this.Height / 2f);
-            return new PointF(center.X + (center.X * relativePoint.X) - ((center.X * spacing) * relativePoint.X), center.Y + (center.Y * relativePoint.Y) - ((center.Y * spacing) * relativePoint.Y));
+            return new PointF(
+                center.X + (center.X * relativePoint.X) - ((center.X * spacing) * relativePoint.X),
+                center.Y + (center.Y * relativePoint.Y) - ((center.Y * spacing) * relativePoint.Y)
+            );
         }
 
         protected override void OnClick(EventArgs e)

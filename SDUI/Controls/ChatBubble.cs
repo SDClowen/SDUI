@@ -55,7 +55,14 @@ public class ChatBubble : Control
 
     public ChatBubble()
     {
-        SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.ResizeRedraw | ControlStyles.SupportsTransparentBackColor | ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.SupportsTransparentBackColor
+                | ControlStyles.UserPaint,
+            true
+        );
 
         _arrowPosition = AnchorStyles.Left;
         Size = new Size(152, 38);
@@ -126,18 +133,20 @@ public class ChatBubble : Control
                     switch (_arrowPosition)
                     {
                         case AnchorStyles.Left:
-                            p = new Point[] {
-                            new Point(9, Height - 19),
-                            new Point(0, Height - 25),
-                            new Point(9, Height - 30)
-                        };
+                            p = new Point[]
+                            {
+                                new Point(9, Height - 19),
+                                new Point(0, Height - 25),
+                                new Point(9, Height - 30),
+                            };
                             break;
                         case AnchorStyles.Right:
-                            p = new Point[] {
-                            new Point(Width - 8, Height - 19),
-                            new Point(Width, Height - 25),
-                            new Point(Width - 8, Height - 30)
-                        };
+                            p = new Point[]
+                            {
+                                new Point(Width - 8, Height - 19),
+                                new Point(Width, Height - 25),
+                                new Point(Width - 8, Height - 30),
+                            };
                             break;
                         default:
                             return;

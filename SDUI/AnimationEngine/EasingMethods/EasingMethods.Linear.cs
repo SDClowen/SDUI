@@ -17,7 +17,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double Linear(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : progress;
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : progress;
         }
     }
 }

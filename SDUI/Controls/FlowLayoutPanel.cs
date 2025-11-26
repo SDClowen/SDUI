@@ -1,8 +1,8 @@
-using SDUI.Helpers;
 using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SDUI.Helpers;
 
 namespace SDUI.Controls;
 
@@ -64,10 +64,13 @@ public class FlowLayoutPanel : System.Windows.Forms.FlowLayoutPanel
 
     public FlowLayoutPanel()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-                  ControlStyles.OptimizedDoubleBuffer |
-                    ControlStyles.AllPaintingInWmPaint |
-                  ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.SupportsTransparentBackColor
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.UserPaint,
+            true
+        );
 
         BackColor = Color.Transparent;
         DoubleBuffered = true;
@@ -116,7 +119,13 @@ public class FlowLayoutPanel : System.Windows.Forms.FlowLayoutPanel
                 e.Graphics.FillPath(brush, path);
 
             //e.Graphics.DrawShadow(rect, _shadowDepth, _radius);
-            ShadowUtils.DrawShadow(graphics, ColorScheme.ShadowColor, rect.ToRectangle(), (int)(_shadowDepth + 1) + 40, DockStyle.Right);
+            ShadowUtils.DrawShadow(
+                graphics,
+                ColorScheme.ShadowColor,
+                rect.ToRectangle(),
+                (int)(_shadowDepth + 1) + 40,
+                DockStyle.Right
+            );
             using var pen = new Pen(borderColor, _border.All);
             e.Graphics.DrawPath(pen, path);
 
@@ -128,10 +137,21 @@ public class FlowLayoutPanel : System.Windows.Forms.FlowLayoutPanel
 
         e.Graphics.DrawShadow(rect, _shadowDepth, _radius == 0 ? 1 : _radius);
 
-        ControlPaint.DrawBorder(e.Graphics, ClientRectangle,
-                              borderColor, _border.Left, ButtonBorderStyle.Solid,
-                              borderColor, _border.Top, ButtonBorderStyle.Solid,
-                              borderColor, _border.Right, ButtonBorderStyle.Solid,
-                              borderColor, _border.Bottom, ButtonBorderStyle.Solid);
+        ControlPaint.DrawBorder(
+            e.Graphics,
+            ClientRectangle,
+            borderColor,
+            _border.Left,
+            ButtonBorderStyle.Solid,
+            borderColor,
+            _border.Top,
+            ButtonBorderStyle.Solid,
+            borderColor,
+            _border.Right,
+            ButtonBorderStyle.Solid,
+            borderColor,
+            _border.Bottom,
+            ButtonBorderStyle.Solid
+        );
     }
 }

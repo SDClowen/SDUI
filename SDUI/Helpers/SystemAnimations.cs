@@ -16,7 +16,12 @@ namespace SDUI.Helpers
 
         [DllImport("user32.dll", SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool SystemParametersInfo(uint uiAction, uint uiParam, ref ANIMATIONINFO pvParam, uint fWinIni);
+        private static extern bool SystemParametersInfo(
+            uint uiAction,
+            uint uiParam,
+            ref ANIMATIONINFO pvParam,
+            uint fWinIni
+        );
 
         private static readonly bool _areAnimationsEnabled = GetAreAnimationsEnabled();
 

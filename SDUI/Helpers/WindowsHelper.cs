@@ -1,8 +1,8 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms.VisualStyles;
+using Microsoft.Win32;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Helpers;
@@ -22,16 +22,19 @@ public static class WindowsHelper
     /// </summary>
     static WindowsHelper()
     {
-        var version = new OSVERSIONINFOEX 
-        { 
-            OSVersionInfoSize = Marshal.SizeOf(typeof(OSVERSIONINFOEX)) 
-        };
+        var version = new OSVERSIONINFOEX { OSVersionInfoSize = Marshal.SizeOf(typeof(OSVERSIONINFOEX)) };
 
         if (RtlGetVersion(ref version) != NTSTATUS.STATUS_SUCCESS)
             return;
 
-        IsSeven = version.MajorVersion == 6 && version.MinorVersion == 1 && (version.BuildNumber >= 7600 && version.BuildNumber <= 7601);
-        IsEight = version.MajorVersion == 6 && version.MinorVersion >= 2 && (version.BuildNumber >= 9200 && version.BuildNumber <= 9999);
+        IsSeven =
+            version.MajorVersion == 6
+            && version.MinorVersion == 1
+            && (version.BuildNumber >= 7600 && version.BuildNumber <= 7601);
+        IsEight =
+            version.MajorVersion == 6
+            && version.MinorVersion >= 2
+            && (version.BuildNumber >= 9200 && version.BuildNumber <= 9999);
         IsTen = version.MajorVersion == 10 && (version.BuildNumber >= 10240 && version.BuildNumber <= 20000);
         IsEleven = version.BuildNumber >= 22000;
         IsModern = IsTen || IsEleven;
@@ -108,7 +111,8 @@ public static class WindowsHelper
         {
             try
             {
-                var personalize = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
+                var personalize =
+                    "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
                 value = (int)Registry.GetValue(personalize, "AppsUseLightTheme", 1);
             }
             catch

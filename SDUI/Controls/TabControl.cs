@@ -16,13 +16,17 @@ public class TabControl : System.Windows.Forms.TabControl
             Invalidate();
         }
     }
+
     public TabControl()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-                 ControlStyles.OptimizedDoubleBuffer |
-                 ControlStyles.ResizeRedraw |
-                 ControlStyles.AllPaintingInWmPaint |
-                 ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.SupportsTransparentBackColor
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.UserPaint,
+            true
+        );
 
         UpdateStyles();
     }
@@ -37,7 +41,7 @@ public class TabControl : System.Windows.Forms.TabControl
     {
         base.CreateHandle();
 
-        if(SizeMode != TabSizeMode.Fixed)
+        if (SizeMode != TabSizeMode.Fixed)
             ItemSize = new Size(80, 24);
 
         Alignment = TabAlignment.Top;
@@ -54,11 +58,20 @@ public class TabControl : System.Windows.Forms.TabControl
 
         graphics.SetHighQuality();
         using var borderBrush = new Pen(Color.FromArgb(70, 0, 0, 0));
-        using var backBrush = new SolidBrush(ColorScheme.BackColor.IsDark() ? Color.FromArgb(10, 255, 255, 255) : Color.FromArgb(50, 0, 0, 0));
+        using var backBrush = new SolidBrush(
+            ColorScheme.BackColor.IsDark() ? Color.FromArgb(10, 255, 255, 255) : Color.FromArgb(50, 0, 0, 0)
+        );
 
         // Draw container rectangle
         var r = new RectangleF(0, ItemSize.Height, Width - 1, Height - ItemSize.Height - 1);
-        using (var path = r.Radius(SelectedIndex == 0 ? 2 : _borderRadius.Left, _borderRadius.Top, _borderRadius.Right, _borderRadius.Bottom))
+        using (
+            var path = r.Radius(
+                SelectedIndex == 0 ? 2 : _borderRadius.Left,
+                _borderRadius.Top,
+                _borderRadius.Right,
+                _borderRadius.Bottom
+            )
+        )
         {
             //graphics.FillPath(backBrush, path);
             graphics.DrawPath(borderBrush, path);
@@ -91,7 +104,7 @@ public class TabControl : System.Windows.Forms.TabControl
         get
         {
             var parms = base.CreateParams;
-            parms.Style &= ~0x02000000;  // Turn off WS_CLIPCHILDREN
+            parms.Style &= ~0x02000000; // Turn off WS_CLIPCHILDREN
             return parms;
         }
     }

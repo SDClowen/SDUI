@@ -16,7 +16,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double CubicEaseIn(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(progress, 3);
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Pow(progress, 3);
         }
 
         /// <summary>
@@ -28,10 +30,16 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double CubicEaseOut(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(progress - 1, 3) + 1;
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Pow(progress - 1, 3) + 1;
         }
 
-        private static EasingMethod cubicEaseInOut = EasingMethods.Chain(EasingMethods.CubicEaseIn, EasingMethods.CubicEaseOut);
+        private static EasingMethod cubicEaseInOut = EasingMethods.Chain(
+            EasingMethods.CubicEaseIn,
+            EasingMethods.CubicEaseOut
+        );
+
         /// <summary>
         ///     <para>A combination of the <see cref="EasingMethods.CubicEaseIn"/> and <see cref="EasingMethods.CubicEaseOut"/> methods.</para>
         ///     <para>It accelerates from 0 to a velocity of 3 and then decelerates back to a velocity of 0.</para>

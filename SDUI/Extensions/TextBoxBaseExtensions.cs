@@ -16,7 +16,13 @@ public static class TextBoxBaseExtensions
     /// <param name="value">The TextBoxBase</param>
     /// <param name="str">The string to type in the <seealso cref="TextBoxBase"/></param>
     /// <param name="time">The time</param>
-    public static void Write(this TextBoxBase value, string str, bool time = true, bool writeToFile = false, string filePath = "")
+    public static void Write(
+        this TextBoxBase value,
+        string str,
+        bool time = true,
+        bool writeToFile = false,
+        string filePath = ""
+    )
     {
         var stringBuilder = new StringBuilder();
         if (time)

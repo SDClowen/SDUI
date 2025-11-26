@@ -1,9 +1,9 @@
-﻿using SDUI.Animation;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SDUI.Animation;
 
 namespace SDUI.Controls;
 
@@ -22,11 +22,14 @@ public class ToggleButton : System.Windows.Forms.CheckBox
 
     public ToggleButton()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-                 ControlStyles.OptimizedDoubleBuffer |
-                 ControlStyles.ResizeRedraw |
-                 ControlStyles.AllPaintingInWmPaint |
-                 ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.SupportsTransparentBackColor
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.UserPaint,
+            true
+        );
 
         this.DoubleBuffered = true;
         this.MinimumSize = new Size(46, 22);
@@ -35,15 +38,15 @@ public class ToggleButton : System.Windows.Forms.CheckBox
         {
             AnimationType = AnimationType.EaseInOut,
             Increment = 0.10,
-            SecondaryIncrement = 0.07
+            SecondaryIncrement = 0.07,
         };
     }
-
 
     protected override void OnCreateControl()
     {
         base.OnCreateControl();
-        if (DesignMode) return;
+        if (DesignMode)
+            return;
 
         _mouseState = 0;
         MouseEnter += (sender, args) =>
@@ -107,8 +110,11 @@ public class ToggleButton : System.Windows.Forms.CheckBox
         using var solidBrush = new SolidBrush(ColorScheme.BorderColor.Alpha(50));
         var progress = (float)animationManager.GetProgress();
 
-          if (this.Checked)
-            e.Graphics.FillEllipse(solidBrush, new RectangleF(this.Width - this.Height + 1 * progress, 2, toggleSize, toggleSize));
+        if (this.Checked)
+            e.Graphics.FillEllipse(
+                solidBrush,
+                new RectangleF(this.Width - this.Height + 1 * progress, 2, toggleSize, toggleSize)
+            );
         else
             e.Graphics.FillEllipse(solidBrush, new Rectangle(2, 2, toggleSize, toggleSize));
     }

@@ -4,7 +4,8 @@ namespace SDUI.Controls
 {
     public class DoubleBufferedControl : UserControl
     {
-        public DoubleBufferedControl() { 
+        public DoubleBufferedControl()
+        {
             SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
             SetStyle(ControlStyles.AllPaintingInWmPaint, true);
             SetStyle(ControlStyles.DoubleBuffer, true);

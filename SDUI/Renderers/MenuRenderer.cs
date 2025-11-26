@@ -13,7 +13,8 @@ public class MenuRenderer : ToolStripRenderer
         g.DrawLine(
             new Pen(ColorScheme.BorderColor),
             new Point(e.Item.Bounds.Left, e.Item.Bounds.Height / 2),
-            new Point(e.Item.Bounds.Right, e.Item.Bounds.Height / 2));
+            new Point(e.Item.Bounds.Right, e.Item.Bounds.Height / 2)
+        );
     }
 
     protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
@@ -21,7 +22,10 @@ public class MenuRenderer : ToolStripRenderer
         Graphics g = e.Graphics;
         Rectangle dropDownRect = e.ArrowRectangle;
         using Brush brush = new SolidBrush(ColorScheme.ForeColor);
-        Point middle = new Point(dropDownRect.Left + dropDownRect.Width / 2, dropDownRect.Top + dropDownRect.Height / 2);
+        Point middle = new Point(
+            dropDownRect.Left + dropDownRect.Width / 2,
+            dropDownRect.Top + dropDownRect.Height / 2
+        );
 
         Point[] arrow;
 
@@ -32,35 +36,43 @@ public class MenuRenderer : ToolStripRenderer
         {
             case ArrowDirection.Up:
 
-                arrow = new Point[] {
-                                 new Point(middle.X - hor, middle.Y + 1),
-                                 new Point(middle.X + hor + 1, middle.Y + 1),
-                                 new Point(middle.X, middle.Y - ver)};
+                arrow = new Point[]
+                {
+                    new Point(middle.X - hor, middle.Y + 1),
+                    new Point(middle.X + hor + 1, middle.Y + 1),
+                    new Point(middle.X, middle.Y - ver),
+                };
 
                 break;
 
             case ArrowDirection.Left:
-                arrow = new Point[] {
-                                 new Point(middle.X + hor, middle.Y - 2 * ver),
-                                 new Point(middle.X + hor, middle.Y + 2 * ver),
-                                 new Point(middle.X - hor, middle.Y)};
+                arrow = new Point[]
+                {
+                    new Point(middle.X + hor, middle.Y - 2 * ver),
+                    new Point(middle.X + hor, middle.Y + 2 * ver),
+                    new Point(middle.X - hor, middle.Y),
+                };
 
                 break;
 
             case ArrowDirection.Right:
-                arrow = new Point[] {
-                                 new Point(middle.X - hor, middle.Y - 2 * ver),
-                                 new Point(middle.X - hor, middle.Y + 2 * ver),
-                                 new Point(middle.X + hor, middle.Y)};
+                arrow = new Point[]
+                {
+                    new Point(middle.X - hor, middle.Y - 2 * ver),
+                    new Point(middle.X - hor, middle.Y + 2 * ver),
+                    new Point(middle.X + hor, middle.Y),
+                };
 
                 break;
 
             case ArrowDirection.Down:
             default:
-                arrow = new Point[] {
-                             new Point(middle.X - hor, middle.Y - 1),
-                             new Point(middle.X + hor + 1, middle.Y - 1),
-                             new Point(middle.X, middle.Y + ver) };
+                arrow = new Point[]
+                {
+                    new Point(middle.X - hor, middle.Y - 1),
+                    new Point(middle.X + hor + 1, middle.Y - 1),
+                    new Point(middle.X, middle.Y + ver),
+                };
                 break;
         }
         g.FillPolygon(brush, arrow);
@@ -106,9 +118,7 @@ public class MenuRenderer : ToolStripRenderer
     {
         //base.OnRenderToolStripBorder(e);
         var rectangle = e.ToolStrip.ClientRectangle;
-        if (e.ToolStrip is ContextMenuStrip ||
-            e.ToolStrip is ToolStripDropDownMenu ||
-            e.ToolStrip is StatusStrip)
+        if (e.ToolStrip is ContextMenuStrip || e.ToolStrip is ToolStripDropDownMenu || e.ToolStrip is StatusStrip)
         {
             e.Graphics.DrawPath(new Pen(ColorScheme.BorderColor, 1), rectangle.Radius(16));
         }
@@ -142,7 +152,6 @@ public class MenuRenderer : ToolStripRenderer
         if (!backColor.IsDark())
             backColor = ColorScheme.BackColor.Brightness(-.1f);
 
-
         using var brush = new SolidBrush(backColor);
 
         e.Graphics.FillPath(brush, rectangle.Radius(6));
@@ -153,7 +162,10 @@ public class MenuRenderer : ToolStripRenderer
         base.OnRenderToolStripBackground(e);
         var rectangle = e.ToolStrip.ClientRectangle;
 
-        e.Graphics.FillRectangle(new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2), rectangle);
+        e.Graphics.FillRectangle(
+            new SolidBrush(e.ToolStrip is ToolStripDropDown ? ColorScheme.BackColor : ColorScheme.BackColor2),
+            rectangle
+        );
     }
 
     protected override void OnRenderImageMargin(ToolStripRenderEventArgs e)

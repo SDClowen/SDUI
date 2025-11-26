@@ -7,7 +7,10 @@ public class Separator : UserControl
 {
     public Separator()
     {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+        SetStyle(
+            ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint,
+            true
+        );
 
         UpdateStyles();
 

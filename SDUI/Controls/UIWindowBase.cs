@@ -1,8 +1,8 @@
-﻿using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using SDUI.Helpers;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
@@ -13,7 +13,6 @@ public class UIWindowBase : Form
     private int dwmMargin = 1;
     private bool right = false;
     private Point location;
-
 
     public int DwmMargin
     {
@@ -141,6 +140,7 @@ public class UIWindowBase : Form
     private const int htBottom = 15;
     private const int htBottomLeft = 16;
     private const int htBottomRight = 17;
+
     protected override void WndProc(ref Message m)
     {
         if (DesignMode)
@@ -152,69 +152,73 @@ public class UIWindowBase : Form
         switch (m.Msg)
         {
             case WM_NCHITTEST:
+            {
+                if (WindowState != FormWindowState.Maximized)
                 {
-                    if (WindowState != FormWindowState.Maximized)
+                    int gripDist = 10;
+
+                    var pt = PointToClient(Cursor.Position);
+
+                    Size clientSize = ClientSize;
+                    ///allow resize on the lower right corner
+                    if (
+                        pt.X >= clientSize.Width - gripDist
+                        && pt.Y >= clientSize.Height - gripDist
+                        && clientSize.Height >= gripDist
+                    )
                     {
-                        int gripDist = 10;
-
-                        var pt = PointToClient(Cursor.Position);
-
-                        Size clientSize = ClientSize;
-                        ///allow resize on the lower right corner
-                        if (pt.X >= clientSize.Width - gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htBottomLeft : htBottomRight);
-                            return;
-                        }
-                        ///allow resize on the lower left corner
-                        if (pt.X <= gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htBottomRight : htBottomLeft);
-                            return;
-                        }
-                        ///allow resize on the upper right corner
-                        if (pt.X <= gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htTopRight : htTopLeft);
-                            return;
-                        }
-                        ///allow resize on the upper left corner
-                        if (pt.X >= clientSize.Width - gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htTopLeft : htTopRight);
-                            return;
-                        }
-                        ///allow resize on the top border
-                        if (pt.Y <= 2 && clientSize.Height >= 2)
-                        {
-                            m.Result = (IntPtr)htTop;
-                            return;
-                        }
-                        ///allow resize on the bottom border
-                        if (pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)htBottom;
-                            return;
-                        }
-                        ///allow resize on the left border
-                        if (pt.X <= gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)htLeft;
-                            return;
-                        }
-                        ///allow resize on the right border
-                        if (pt.X >= clientSize.Width - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)htRight;
-                            return;
-                        }
+                        m.Result = (IntPtr)(IsMirrored ? htBottomLeft : htBottomRight);
+                        return;
                     }
-
-                    if ((int)m.Result == HTCLIENT)     // drag the form
-                        m.Result = (IntPtr)HTCAPTION;
-
-                    break;
+                    ///allow resize on the lower left corner
+                    if (pt.X <= gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = (IntPtr)(IsMirrored ? htBottomRight : htBottomLeft);
+                        return;
+                    }
+                    ///allow resize on the upper right corner
+                    if (pt.X <= gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = (IntPtr)(IsMirrored ? htTopRight : htTopLeft);
+                        return;
+                    }
+                    ///allow resize on the upper left corner
+                    if (pt.X >= clientSize.Width - gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = (IntPtr)(IsMirrored ? htTopLeft : htTopRight);
+                        return;
+                    }
+                    ///allow resize on the top border
+                    if (pt.Y <= 2 && clientSize.Height >= 2)
+                    {
+                        m.Result = (IntPtr)htTop;
+                        return;
+                    }
+                    ///allow resize on the bottom border
+                    if (pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = (IntPtr)htBottom;
+                        return;
+                    }
+                    ///allow resize on the left border
+                    if (pt.X <= gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = (IntPtr)htLeft;
+                        return;
+                    }
+                    ///allow resize on the right border
+                    if (pt.X >= clientSize.Width - gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = (IntPtr)htRight;
+                        return;
+                    }
                 }
+
+                if ((int)m.Result == HTCLIENT) // drag the form
+                    m.Result = (IntPtr)HTCAPTION;
+
+                break;
+            }
             case WM_NCCALCSIZE:
 
                 var handle = Handle;
@@ -254,7 +258,8 @@ public class UIWindowBase : Form
                 }
                 var inset = new Rect();
                 SendMessage(handle, TCM_ADJUSTRECT, 0, ref inset);
-                int marginX = -inset.Right, marginY = -inset.Bottom;
+                int marginX = -inset.Right,
+                    marginY = -inset.Bottom;
                 if (newWidth != oldWidth)
                 {
                     int left = oldWidth;
@@ -272,7 +277,6 @@ public class UIWindowBase : Form
                         oldWidth -= marginX;
                     SetRect(rect, 0, bottom - marginY, oldWidth, newHeight);
                     InvalidateRect(handle, rect, true);
-
                 }
                 return;
         }
@@ -302,9 +306,7 @@ public class UIWindowBase : Form
                 control.BackColor = ColorScheme.BackColor;
                 control.ForeColor = ColorScheme.ForeColor;
             }
-            catch (Exception)
-            {
-            }
+            catch (Exception) { }
         }
 
         WindowsHelper.UseImmersiveDarkMode(control.Handle, isDark);
@@ -335,13 +337,26 @@ public class UIWindowBase : Form
                 Bottom = dwmMargin,
                 Left = dwmMargin,
                 Right = dwmMargin,
-                Top = dwmMargin
+                Top = dwmMargin,
             };
 
             DwmExtendFrameIntoClientArea(this.Handle, ref margins);
         }
 
-        SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOOWNERZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
+        SetWindowPos(
+            Handle,
+            IntPtr.Zero,
+            0,
+            0,
+            0,
+            0,
+            SetWindowPosFlags.SWP_FRAMECHANGED
+                | SetWindowPosFlags.SWP_NOSIZE
+                | SetWindowPosFlags.SWP_NOMOVE
+                | SetWindowPosFlags.SWP_NOZORDER
+                | SetWindowPosFlags.SWP_NOOWNERZORDER
+                | SetWindowPosFlags.SWP_NOACTIVATE
+        );
     }
 
     protected override void OnBackColorChanged(EventArgs e)
@@ -364,8 +379,8 @@ public class UIWindowBase : Form
                 Handle,
                 DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
                 ref flag,
-                 Marshal.SizeOf<int>());
+                Marshal.SizeOf<int>()
+            );
         }
-
     }
 }

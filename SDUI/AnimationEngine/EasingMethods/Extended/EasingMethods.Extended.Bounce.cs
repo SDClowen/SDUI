@@ -10,11 +10,17 @@ namespace SDUI.AnimationEngine
         public static partial class Extended
         {
             //Some Constants for the bounce easing methods ^^
-            private const double b = 7.5625, bF = 2.75;
+            private const double b = 7.5625,
+                bF = 2.75;
             private const double bF1 = 1 / bF;
-            private const double b2 = .75, bF2 = 2 / bF, bP2 = 1.5 / bF;
-            private const double b3 = .9375, bF3 = 2.5 / bF, bP3 = 2.25 / bF;
-            private const double b4 = .984375, bP4 = 2.625 / bF;
+            private const double b2 = .75,
+                bF2 = 2 / bF,
+                bP2 = 1.5 / bF;
+            private const double b3 = .9375,
+                bF3 = 2.5 / bF,
+                bP3 = 2.25 / bF;
+            private const double b4 = .984375,
+                bP4 = 2.625 / bF;
 
             /// <summary>
             ///     <para>An easing method that starts by bouncing up a little bit until it goes up to 1.0 with a big bounce.</para>
@@ -24,7 +30,9 @@ namespace SDUI.AnimationEngine
             /// <returns>The value progress of the animation.</returns>
             public static double BounceEaseIn(double progress)
             {
-                return (progress <= 0) ? 0 : (progress >= 1) ? 1 : 1 - EasingMethods.Extended.BounceEaseOut(1 - progress);
+                return (progress <= 0) ? 0
+                    : (progress >= 1) ? 1
+                    : 1 - EasingMethods.Extended.BounceEaseOut(1 - progress);
             }
 
             /// <summary>
@@ -36,7 +44,12 @@ namespace SDUI.AnimationEngine
             /// <returns>The value progress of the animation.</returns>
             public static double BounceEaseOut(double progress)
             {
-                return (progress <= 0) ? 0 : (progress >= 1) ? 1 : progress < bF1 ? b * Math.Pow(progress, 2) : progress < bF2 ? b * Math.Pow(progress - bP2, 2) + b2 : progress < bF3 ? b * Math.Pow(progress - bP3, 2) + b3 : b * Math.Pow(progress - bP4, 2) + b4;
+                return (progress <= 0) ? 0
+                    : (progress >= 1) ? 1
+                    : progress < bF1 ? b * Math.Pow(progress, 2)
+                    : progress < bF2 ? b * Math.Pow(progress - bP2, 2) + b2
+                    : progress < bF3 ? b * Math.Pow(progress - bP3, 2) + b3
+                    : b * Math.Pow(progress - bP4, 2) + b4;
             }
         }
     }

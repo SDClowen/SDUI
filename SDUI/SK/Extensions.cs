@@ -1,5 +1,5 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
+using SkiaSharp;
 
 public static class SkiaExtensions
 {
@@ -83,8 +83,16 @@ public static class SkiaExtensions
     {
         // TODO: maybe keep the same color types where we can, instead of just going to the platform default
 
-        var bitmap = new System.Drawing.Bitmap(skiaImage.Width, skiaImage.Height, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-        var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, bitmap.PixelFormat);
+        var bitmap = new System.Drawing.Bitmap(
+            skiaImage.Width,
+            skiaImage.Height,
+            System.Drawing.Imaging.PixelFormat.Format32bppPArgb
+        );
+        var data = bitmap.LockBits(
+            new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height),
+            System.Drawing.Imaging.ImageLockMode.WriteOnly,
+            bitmap.PixelFormat
+        );
 
         // copy
         using (var pixmap = new SKPixmap(new SKImageInfo(data.Width, data.Height), data.Scan0, data.Stride))
@@ -148,10 +156,18 @@ public static class SkiaExtensions
         if (pixmap.ColorType == SKImageInfo.PlatformColorType)
         {
             var info = pixmap.Info;
-            using (var tempBitmap = new System.Drawing.Bitmap(info.Width, info.Height, info.RowBytes, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, pixmap.GetPixels()))
+            using (
+                var tempBitmap = new System.Drawing.Bitmap(
+                    info.Width,
+                    info.Height,
+                    info.RowBytes,
+                    System.Drawing.Imaging.PixelFormat.Format32bppPArgb,
+                    pixmap.GetPixels()
+                )
+            )
             using (var gr = System.Drawing.Graphics.FromImage(tempBitmap))
             {
-                // Clear graphic to prevent display artifacts with transparent bitmaps					
+                // Clear graphic to prevent display artifacts with transparent bitmaps
                 gr.Clear(System.Drawing.Color.Transparent);
 
                 gr.DrawImageUnscaled(bitmap, 0, 0);
@@ -206,5 +222,4 @@ public static class SkiaExtensions
 
         return skFont;
     }
-
 }

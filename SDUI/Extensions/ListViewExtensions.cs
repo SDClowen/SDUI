@@ -11,9 +11,14 @@ public static class ListViewExtensions
     /// <param name="direction">The move direction</param>
     public static void MoveSelectedItems(this ListView sender, MoveDirection direction)
     {
-        var valid = sender.SelectedItems.Count > 0 &&
-                    ((direction == MoveDirection.Down && (sender.SelectedItems[sender.SelectedItems.Count - 1].Index < sender.Items.Count - 1))
-                    || (direction == MoveDirection.Up && (sender.SelectedItems[0].Index > 0)));
+        var valid =
+            sender.SelectedItems.Count > 0
+            && (
+                (
+                    direction == MoveDirection.Down
+                    && (sender.SelectedItems[sender.SelectedItems.Count - 1].Index < sender.Items.Count - 1)
+                ) || (direction == MoveDirection.Up && (sender.SelectedItems[0].Index > 0))
+            );
 
         if (valid)
         {

@@ -18,7 +18,9 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double SinusEaseIn(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : -Math.Cos(progress * radianFactor) + 1;
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : -Math.Cos(progress * radianFactor) + 1;
         }
 
         /// <summary>
@@ -30,10 +32,16 @@ namespace SDUI.AnimationEngine
         /// <returns>The value progress of the animation.</returns>
         public static double SinusEaseOut(double progress)
         {
-            return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Sin(progress * radianFactor);
+            return (progress <= 0) ? 0
+                : (progress >= 1) ? 1
+                : Math.Sin(progress * radianFactor);
         }
 
-        private static readonly EasingMethod sinusEaseInOut = EasingMethods.Chain(EasingMethods.SinusEaseIn, EasingMethods.SinusEaseOut);
+        private static readonly EasingMethod sinusEaseInOut = EasingMethods.Chain(
+            EasingMethods.SinusEaseIn,
+            EasingMethods.SinusEaseOut
+        );
+
         /// <summary>
         ///     <para>A combination of the <see cref="EasingMethods.SinusEaseIn"/> and <see cref="EasingMethods.SinusEaseOut"/> methods.</para>
         ///     <para>It accelerates from 0 to a velocity of 1 and then decelerates back to a velocity of 0.</para>

@@ -20,7 +20,9 @@ namespace SDUI.AnimationEngine
             /// <returns>The value progress of the animation.</returns>
             public static double ElasticEaseIn(double progress)
             {
-                return (progress <= 0) ? 0 : (progress >= 1) ? 1 : -Math.Pow(2, 10 * (progress - 1)) * Math.Sin((progress - 1.075) * elast);
+                return (progress <= 0) ? 0
+                    : (progress >= 1) ? 1
+                    : -Math.Pow(2, 10 * (progress - 1)) * Math.Sin((progress - 1.075) * elast);
             }
 
             /// <summary>
@@ -32,10 +34,16 @@ namespace SDUI.AnimationEngine
             /// <returns>The value progress of the animation.</returns>
             public static double ElasticEaseOut(double progress)
             {
-                return (progress <= 0) ? 0 : (progress >= 1) ? 1 : Math.Pow(2, -10 * progress) * Math.Sin((progress - .075) * elast) + 1;
+                return (progress <= 0) ? 0
+                    : (progress >= 1) ? 1
+                    : Math.Pow(2, -10 * progress) * Math.Sin((progress - .075) * elast) + 1;
             }
 
-            private static readonly EasingMethod elasticEaseInOut = EasingMethods.Chain(EasingMethods.Extended.ElasticEaseIn, EasingMethods.Extended.ElasticEaseOut);
+            private static readonly EasingMethod elasticEaseInOut = EasingMethods.Chain(
+                EasingMethods.Extended.ElasticEaseIn,
+                EasingMethods.Extended.ElasticEaseOut
+            );
+
             /// <summary>
             ///     <para>A combination of the <see cref="EasingMethods.Extended.ElasticEaseIn"/> and <see cref="EasingMethods.Extended.ElasticEaseOut"/> methods.</para>
             ///     <para>Do not use this method if you do not have a proper method for handling progress values greater than 1.0 and lower than 0.0.</para>

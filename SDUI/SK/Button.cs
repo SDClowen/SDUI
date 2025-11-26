@@ -1,15 +1,16 @@
-﻿using SDUI.Animation;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Windows.Forms;
+using SDUI.Animation;
+using SkiaSharp;
 
 namespace SDUI.SK;
 
 public class Button : SKControl
 {
     public DialogResult DialogResult { get; set; } = DialogResult.None;
-    public System.Windows.Forms.AutoSizeMode AutoSizeMode { get; set; } = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+    public System.Windows.Forms.AutoSizeMode AutoSizeMode { get; set; } =
+        System.Windows.Forms.AutoSizeMode.GrowAndShrink;
     public bool UseVisualStyleBackColor { get; set; } = true;
     public Color Color { get; set; } = Color.Transparent;
     public Bitmap Image { get; set; }
@@ -70,7 +71,7 @@ public class Button : SKControl
         animationManager = new Animation.AnimationEngine(false)
         {
             Increment = 0.03,
-            AnimationType = AnimationType.EaseOut
+            AnimationType = AnimationType.EaseOut,
         };
 
         hoverAnimationManager = new Animation.AnimationEngine
@@ -134,14 +135,15 @@ public class Button : SKControl
 
             canvas.DrawPath(path, brush);
 
-            var animationColor = Color.ToSKColor() != SKColors.Transparent
-                ? Color.ToSKColor().WithAlpha((byte)(hoverAnimationManager.GetProgress() * 65)) : color.WithAlpha((byte)(hoverAnimationManager.GetProgress() * color.Alpha));
+            var animationColor =
+                Color.ToSKColor() != SKColors.Transparent
+                    ? Color.ToSKColor().WithAlpha((byte)(hoverAnimationManager.GetProgress() * 65))
+                    : color.WithAlpha((byte)(hoverAnimationManager.GetProgress() * color.Alpha));
 
             using var b = new SKPaint { Color = animationColor, IsAntialias = true };
             canvas.DrawPath(path, b);
 
             DrawShadow(canvas, rectf, _shadowDepth, _radius);
-
 
             // Ripple
             if (animationManager.IsAnimating())
@@ -150,17 +152,27 @@ public class Button : SKControl
                 {
                     var animationValue = animationManager.GetProgress(i);
                     var animationSource = animationManager.GetSource(i);
-                    using var rippleBrush = new SKPaint { Color = new SKColor(255, 255, 255, (byte)(101 - (animationValue * 100))), IsAntialias = true };
+                    using var rippleBrush = new SKPaint
+                    {
+                        Color = new SKColor(255, 255, 255, (byte)(101 - (animationValue * 100))),
+                        IsAntialias = true,
+                    };
                     var rippleSize = (float)(animationValue * Width * 2.0);
 
-                    var rippleRect = new SKRect(animationSource.X - rippleSize / 2, animationSource.Y - rippleSize / 2, rippleSize, rippleSize);
+                    var rippleRect = new SKRect(
+                        animationSource.X - rippleSize / 2,
+                        animationSource.Y - rippleSize / 2,
+                        rippleSize,
+                        rippleSize
+                    );
                     path.AddOval(rippleRect);
                     canvas.DrawPath(path, rippleBrush);
                 }
             }
         }
 
-        var foreColor = Color.ToSKColor() == SKColors.Transparent ? ColorScheme.ForeColor.ToSKColor() : ForeColor.ToSKColor();
+        var foreColor =
+            Color.ToSKColor() == SKColors.Transparent ? ColorScheme.ForeColor.ToSKColor() : ForeColor.ToSKColor();
         if (!Enabled)
             foreColor = ColorScheme.ForeColor.ToSKColor().WithAlpha(200);
 
@@ -182,7 +194,15 @@ public class Button : SKControl
             textRect.Offset(8 + 24 + 4, 0);
         }
 
-        using var textPaint = new SKPaint { Color = foreColor, IsAntialias = true, TextSize = 13.333f, HintingLevel = SKPaintHinting.Full, IsLinearText = true, TextAlign = SKTextAlign.Center };
+        using var textPaint = new SKPaint
+        {
+            Color = foreColor,
+            IsAntialias = true,
+            TextSize = 13.333f,
+            HintingLevel = SKPaintHinting.Full,
+            IsLinearText = true,
+            TextAlign = SKTextAlign.Center,
+        };
         DrawText(canvas, _text, textRect, textPaint);
     }
 
@@ -201,7 +221,7 @@ public class Button : SKControl
         {
             Color = new SKColor(0, 0, 0, 50),
             IsAntialias = true,
-            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Outer, shadowDepth)
+            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Outer, shadowDepth),
         };
 
         rect.Offset(0, shadowDepth);

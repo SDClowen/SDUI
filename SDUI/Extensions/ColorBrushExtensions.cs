@@ -22,7 +22,7 @@ public static class ColorExtentions
     /// Creates color with corrected brightness.
     /// </summary>
     /// <param name="color">Color to correct.</param>
-    /// <param name="correctionFactor">The brightness correction factor. Must be between -1 and 1. 
+    /// <param name="correctionFactor">The brightness correction factor. Must be between -1 and 1.
     /// Negative values produce darker colors.</param>
     /// <returns>
     /// Corrected <see cref="Color"/> structure.
@@ -106,18 +106,50 @@ public static class ColorExtentions
         return new SolidBrush(Color.FromArgb(alpha > 255 ? 255 : alpha, ColorTranslator.FromHtml(htmlColor)));
     }
 
-    public static Pen Pen(this string htmlColor, int alpha = 255, float size = 1, LineCap startCap = LineCap.Custom, LineCap endCap = LineCap.Custom)
+    public static Pen Pen(
+        this string htmlColor,
+        int alpha = 255,
+        float size = 1,
+        LineCap startCap = LineCap.Custom,
+        LineCap endCap = LineCap.Custom
+    )
     {
-        return new Pen(Color.FromArgb(alpha > 255 ? 255 : alpha, ColorTranslator.FromHtml(htmlColor)), size) { StartCap = startCap, EndCap = endCap };
+        return new Pen(Color.FromArgb(alpha > 255 ? 255 : alpha, ColorTranslator.FromHtml(htmlColor)), size)
+        {
+            StartCap = startCap,
+            EndCap = endCap,
+        };
     }
 
-    public static Brush GlowBrush(Color centerColor, Color[] surroundColor, PointF point, GraphicsPath gp, WrapMode wrapMode = WrapMode.Clamp)
+    public static Brush GlowBrush(
+        Color centerColor,
+        Color[] surroundColor,
+        PointF point,
+        GraphicsPath gp,
+        WrapMode wrapMode = WrapMode.Clamp
+    )
     {
-        return new PathGradientBrush(gp) { CenterColor = centerColor, SurroundColors = surroundColor, FocusScales = point, WrapMode = wrapMode };
+        return new PathGradientBrush(gp)
+        {
+            CenterColor = centerColor,
+            SurroundColors = surroundColor,
+            FocusScales = point,
+            WrapMode = wrapMode,
+        };
     }
 
-    public static Brush GlowBrush(Color centerColor, Color[] surroundColor, PointF[] point, WrapMode wrapMode = WrapMode.Clamp)
+    public static Brush GlowBrush(
+        Color centerColor,
+        Color[] surroundColor,
+        PointF[] point,
+        WrapMode wrapMode = WrapMode.Clamp
+    )
     {
-        return new PathGradientBrush(point) { CenterColor = centerColor, SurroundColors = surroundColor, WrapMode = wrapMode };
+        return new PathGradientBrush(point)
+        {
+            CenterColor = centerColor,
+            SurroundColors = surroundColor,
+            WrapMode = wrapMode,
+        };
     }
 }

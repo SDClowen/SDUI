@@ -1,8 +1,8 @@
-﻿using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SDUI.Helpers;
 
 namespace SDUI.Controls;
 
@@ -36,13 +36,16 @@ public class GroupBox : System.Windows.Forms.GroupBox
 
     public GroupBox()
     {
-        SetStyle(ControlStyles.SupportsTransparentBackColor |
-            ControlStyles.AllPaintingInWmPaint |
-                  ControlStyles.OptimizedDoubleBuffer |
-                  ControlStyles.DoubleBuffer |
-                  ControlStyles.ResizeRedraw |
-                  ControlStyles.Opaque |
-                  ControlStyles.UserPaint, true);
+        SetStyle(
+            ControlStyles.SupportsTransparentBackColor
+                | ControlStyles.AllPaintingInWmPaint
+                | ControlStyles.OptimizedDoubleBuffer
+                | ControlStyles.DoubleBuffer
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.Opaque
+                | ControlStyles.UserPaint,
+            true
+        );
 
         UpdateStyles();
         this.DoubleBuffered = true;

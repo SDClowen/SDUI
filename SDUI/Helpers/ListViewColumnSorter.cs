@@ -40,15 +40,16 @@ public class ListViewColumnSorter : IComparer
     {
         var listviewX = (ListViewItem)x;
         var listviewY = (ListViewItem)y;
-        if (listviewX == null ||
-           listviewY == null)
+        if (listviewX == null || listviewY == null)
             return 0;
 
         if (listviewX.SubItems[0].Text == ".." || listviewY.SubItems[0].Text == "..")
             return 0;
 
-        var compareResult = _objectCompare.Compare(listviewX.SubItems[_columnToSort].Text,
-            listviewY.SubItems[_columnToSort].Text);
+        var compareResult = _objectCompare.Compare(
+            listviewX.SubItems[_columnToSort].Text,
+            listviewY.SubItems[_columnToSort].Text
+        );
 
         if (_orderOfSort == SortOrder.Ascending)
             return compareResult;

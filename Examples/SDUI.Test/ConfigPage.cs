@@ -1,8 +1,8 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
+using SDUI.Controls;
 
 namespace SDUI.Test
 {

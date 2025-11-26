@@ -6,7 +6,6 @@ namespace SDUI.Controls;
 
 public class FormControlBox : Control
 {
-
     int _mouseState = 0;
     int _mousePos;
     Rectangle _closeButtonRect = new(3, 3, 16, 16);
@@ -17,10 +16,10 @@ public class FormControlBox : Control
     public bool IsVertical
     {
         get => _isVertical;
-        set 
+        set
         {
             _isVertical = value;
-            if(value)
+            if (value)
             {
                 _closeButtonRect = new(3, 3, 16, 16);
                 _minimizeButtonRect = new(3, 23, 16, 16);
@@ -46,6 +45,7 @@ public class FormControlBox : Control
         _mouseState = 2;
         Invalidate();
     }
+
     protected override void OnMouseUp(System.Windows.Forms.MouseEventArgs e)
     {
         base.OnMouseUp(e);
@@ -80,22 +80,25 @@ public class FormControlBox : Control
         _mouseState = 1;
         Invalidate();
     }
+
     protected override void OnMouseEnter(System.EventArgs e)
     {
         base.OnMouseEnter(e);
         _mouseState = 1;
         Invalidate();
     }
+
     protected override void OnMouseLeave(System.EventArgs e)
     {
         base.OnMouseLeave(e);
         _mouseState = 0;
         Invalidate();
     }
+
     protected override void OnMouseMove(System.Windows.Forms.MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        if(_isVertical)
+        if (_isVertical)
             _mousePos = e.Location.Y;
         else
             _mousePos = e.Location.X;
@@ -107,10 +110,7 @@ public class FormControlBox : Control
     bool _maximize = true;
     public bool EnableMaximize
     {
-        get
-        {
-            return _maximize;
-        }
+        get { return _maximize; }
         set
         {
             _maximize = value;
@@ -122,7 +122,13 @@ public class FormControlBox : Control
 
     public FormControlBox()
     {
-        SetStyle(ControlStyles.UserPaint | ControlStyles.SupportsTransparentBackColor | ControlStyles.ResizeRedraw | ControlStyles.DoubleBuffer, true);
+        SetStyle(
+            ControlStyles.UserPaint
+                | ControlStyles.SupportsTransparentBackColor
+                | ControlStyles.ResizeRedraw
+                | ControlStyles.DoubleBuffer,
+            true
+        );
         DoubleBuffered = true;
         BackColor = Color.Transparent;
         Font = new Font("Webdings", 9);
@@ -144,7 +150,6 @@ public class FormControlBox : Control
         using var brushMin = new SolidBrush(Color.FromArgb(254, 189, 47));
 
         using var brushMax = new SolidBrush(Color.YellowGreen);
-
 
         switch (_mouseState)
         {
@@ -177,7 +182,7 @@ public class FormControlBox : Control
             graphics.FillEllipse(brushMax, _maximizeButtonRect);
             graphics.DrawEllipse(new Pen(brushMax.Color.Alpha(200)), _maximizeButtonRect);
 
-            if(_isVertical)
+            if (_isVertical)
                 graphics.DrawString("@", Font, new SolidBrush(ColorScheme.ForeColor), new RectangleF(4, 42, 0, 0));
             else
                 graphics.DrawString("@", Font, new SolidBrush(ColorScheme.ForeColor), new RectangleF(43, 2, 0, 0));

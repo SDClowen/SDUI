@@ -85,9 +85,9 @@ public class NativeMethods
     public const int LVGA_FOOTER_CENTER = 0x10;
     public const int LVGA_FOOTER_RIGHT = 0x20; // Don't forget to validate exclusivity
     public const int LVGGR_GROUP = 0; // Entire expanded group
-    public const int LVGGR_HEADER = 1;  // Header only (collapsed group)
-    public const int LVGGR_LABEL = 2;  // Label only
-    public const int LVGGR_SUBSETLINK = 3;  // subset link only
+    public const int LVGGR_HEADER = 1; // Header only (collapsed group)
+    public const int LVGGR_LABEL = 2; // Label only
+    public const int LVGGR_SUBSETLINK = 3; // subset link only
     public const int LVS_EX_DOUBLEBUFFER = 0x10000;
     public const int LVM_SETEXTENDEDLISTVIEWSTYLE = 4150;
 
@@ -107,7 +107,7 @@ public class NativeMethods
     public const int TCM_ADJUSTRECT = TCM_FIRST + 40;
     public const int TCS_MULTILINE = 0x0200;
 
-    public struct MARGINS                           // struct for box shadow
+    public struct MARGINS // struct for box shadow
     {
         public int Left;
         public int Right;
@@ -123,7 +123,12 @@ public class NativeMethods
     [DllImport("kernel32", EntryPoint = "RtlMoveMemory", SetLastError = false)]
     public static extern void MoveMemory(IntPtr Destination, IntPtr Source, IntPtr Length);
 
-    [DllImport("gdi32.dll", SetLastError = true, ExactSpelling = true, CharSet = System.Runtime.InteropServices.CharSet.Auto)]
+    [DllImport(
+        "gdi32.dll",
+        SetLastError = true,
+        ExactSpelling = true,
+        CharSet = System.Runtime.InteropServices.CharSet.Auto
+    )]
     [ResourceExposure(ResourceScope.None)]
     public static extern int CombineRgn(IntPtr hRgn, IntPtr hRgn1, IntPtr hRgn2, int nCombineMode);
 
@@ -139,7 +144,6 @@ public class NativeMethods
     [DllImport("gdi32.dll")]
     public static extern IntPtr CreateSolidBrush(uint crColor);
 
-
     [DllImport("user32.dll")]
     public static extern IntPtr GetDCEx(IntPtr hwnd, IntPtr hrgnclip, uint fdwOptions);
 
@@ -154,10 +158,16 @@ public class NativeMethods
     public static extern IntPtr OpenThemeData(IntPtr hWnd, string classList);
 
     [DllImport(uxtheme, EntryPoint = "CloseThemeData")]
-    public extern static Int32 CloseThemeData(IntPtr hTheme);
+    public static extern Int32 CloseThemeData(IntPtr hTheme);
 
     [DllImport(uxtheme, EntryPoint = "GetThemeColor")]
-    public extern static Int32 GetThemeColor(IntPtr hTheme, int iPartId, int iStateId, int iPropId, out COLORREF pColor);
+    public static extern Int32 GetThemeColor(
+        IntPtr hTheme,
+        int iPartId,
+        int iStateId,
+        int iPropId,
+        out COLORREF pColor
+    );
 
     [DllImport(gdi32)]
     public static extern uint SetTextColor(IntPtr hdc, COLORREF crColor);
@@ -187,10 +197,20 @@ public class NativeMethods
     public static extern int DwmExtendFrameIntoClientArea(IntPtr hWnd, ref MARGINS pMarInset);
 
     [DllImport(dwmapi, CharSet = CharSet.Unicode, PreserveSig = false)]
-    public static extern int DwmSetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref DWM_WINDOW_CORNER_PREFERENCE pvAttribute, int cbAttribute);
+    public static extern int DwmSetWindowAttribute(
+        IntPtr hwnd,
+        DWMWINDOWATTRIBUTE dwAttribute,
+        ref DWM_WINDOW_CORNER_PREFERENCE pvAttribute,
+        int cbAttribute
+    );
 
     [DllImport(dwmapi)]
-    public static extern int DwmSetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref int pvAttribute, int cbAttribute);
+    public static extern int DwmSetWindowAttribute(
+        IntPtr hwnd,
+        DWMWINDOWATTRIBUTE dwAttribute,
+        ref int pvAttribute,
+        int cbAttribute
+    );
 
     [DllImport(dwmapi)]
     public static extern int DwmIsCompositionEnabled(ref int pfEnabled);
@@ -202,9 +222,8 @@ public class NativeMethods
     [DllImport("user32.dll")]
     public static extern bool GetClientRect(IntPtr hWnd, ref Rect rect);
 
-
     [DllImport(uxtheme, ExactSpelling = true)]
-    public extern static int DrawThemeParentBackground(IntPtr hWnd, IntPtr hdc, ref System.Drawing.Rectangle pRect);
+    public static extern int DrawThemeParentBackground(IntPtr hWnd, IntPtr hdc, ref System.Drawing.Rectangle pRect);
 
     [DllImport(user32, EntryPoint = "SendMessageW", SetLastError = true)]
     public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, ref LVGROUP lParam);
@@ -219,7 +238,7 @@ public class NativeMethods
     public static extern int PostMessage(IntPtr hWnd, int Msg, int wParam, ref IntPtr lParam);
 
     [DllImport(uxtheme, CharSet = CharSet.Unicode, SetLastError = true)]
-    public extern static int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
+    public static extern int SetWindowTheme(IntPtr hWnd, string pszSubAppName, string pszSubIdList);
 
     [DllImport(uxtheme, EntryPoint = "#133", SetLastError = true)]
     internal static extern bool AllowDarkModeForWindow(IntPtr window, bool isDarkModeAllowed);
@@ -237,10 +256,25 @@ public class NativeMethods
     public static extern IntPtr SetCursor(IntPtr hCursor);
 
     [DllImport(user32, SetLastError = true)]
-    public static extern IntPtr LoadImage(IntPtr hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
+    public static extern IntPtr LoadImage(
+        IntPtr hinst,
+        string lpszName,
+        uint uType,
+        int cxDesired,
+        int cyDesired,
+        uint fuLoad
+    );
 
     [DllImport(user32, SetLastError = true)]
-    public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, SetWindowPosFlags uFlags);
+    public static extern bool SetWindowPos(
+        IntPtr hWnd,
+        IntPtr hWndInsertAfter,
+        int X,
+        int Y,
+        int cx,
+        int cy,
+        SetWindowPosFlags uFlags
+    );
 
     [DllImport(user32, EntryPoint = "SetWindowLong", SetLastError = true)]
     public static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
@@ -270,18 +304,19 @@ public class NativeMethods
     public static extern IntPtr ReleaseDC(IntPtr hwnd, IntPtr hdc);
 
     private delegate bool EnumWindowProc(IntPtr hWnd, IntPtr parameter);
+
     [DllImport(user32)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool EnumChildWindows(IntPtr window, EnumWindowProc callback, IntPtr i);
 
     public delegate IntPtr SUBCLASSPROC(
-            IntPtr hWnd,
-            int msg,
-            IntPtr wParam,
-            IntPtr lParam,
-            UIntPtr uIdSubclass,
-            UIntPtr dwRefData
-        );
+        IntPtr hWnd,
+        int msg,
+        IntPtr wParam,
+        IntPtr lParam,
+        UIntPtr uIdSubclass,
+        UIntPtr dwRefData
+    );
 
     [DllImport("comctl32.dll", ExactSpelling = true)]
     public static extern bool SetWindowSubclass(
@@ -292,19 +327,10 @@ public class NativeMethods
     );
 
     [DllImport("comctl32.dll", ExactSpelling = true)]
-    public static extern bool RemoveWindowSubclass(
-        IntPtr hWnd,
-        IntPtr pfnSubclass,
-        UIntPtr uIdSubclass
-    );
+    public static extern bool RemoveWindowSubclass(IntPtr hWnd, IntPtr pfnSubclass, UIntPtr uIdSubclass);
 
     [DllImport("comctl32.dll", ExactSpelling = true)]
-    public static extern IntPtr DefSubclassProc(
-        IntPtr hWnd,
-        int msg,
-        IntPtr wParam,
-        IntPtr lParam
-    );
+    public static extern IntPtr DefSubclassProc(IntPtr hWnd, int msg, IntPtr wParam, IntPtr lParam);
 
     /// <summary>
     /// The CreateDIBSection function creates a DIB that applications can write to directly.
@@ -317,7 +343,14 @@ public class NativeMethods
     /// <param name="dwOffset"></param>
     /// <returns></returns>
     [DllImport("gdi32.dll")]
-    private static extern IntPtr CreateDIBSection(IntPtr hdc, ref BITMAPINFO pbmi, uint iUsage, IntPtr ppvBits, IntPtr hSection, uint dwOffset);
+    private static extern IntPtr CreateDIBSection(
+        IntPtr hdc,
+        ref BITMAPINFO pbmi,
+        uint iUsage,
+        IntPtr ppvBits,
+        IntPtr hSection,
+        uint dwOffset
+    );
 
     /// <summary>
     /// This function transfers pixels from a specified source rectangle to a specified destination rectangle, altering the pixels according to the selected raster operation (ROP) code.
@@ -333,7 +366,17 @@ public class NativeMethods
     /// <param name="dwRop"></param>
     /// <returns></returns>
     [DllImport("gdi32.dll")]
-    internal static extern bool BitBlt(IntPtr hdc, int nXDest, int nYDest, int nWidth, int nHeight, IntPtr hdcSrc, int nXSrc, int nYSrc, uint dwRop);
+    internal static extern bool BitBlt(
+        IntPtr hdc,
+        int nXDest,
+        int nYDest,
+        int nWidth,
+        int nHeight,
+        IntPtr hdcSrc,
+        int nXSrc,
+        int nYSrc,
+        uint dwRop
+    );
 
     /// <summary>
     /// This function selects an object into a specified device context. The new object replaces the previous object of the same type.
@@ -378,7 +421,7 @@ public class NativeMethods
         PRF_CLIENT = 0x04,
         PRF_ERASEBKGND = 0x08,
         PRF_CHILDREN = 0x10,
-        PRF_OWNED = 0x20
+        PRF_OWNED = 0x20,
     }
 
     public static void TakeScreenshot(IntPtr hwnd, Graphics g)
@@ -388,14 +431,19 @@ public class NativeMethods
         {
             hdc = g.GetHdc();
 
-            SendMessage(hwnd, WM_PRINT, hdc,
-                new IntPtr((int)(
-                    DrawingOptions.PRF_CHILDREN |
-                    DrawingOptions.PRF_CLIENT |
-                    DrawingOptions.PRF_NONCLIENT |
-                    DrawingOptions.PRF_OWNED
-                    ))
-                );
+            SendMessage(
+                hwnd,
+                WM_PRINT,
+                hdc,
+                new IntPtr(
+                    (int)(
+                        DrawingOptions.PRF_CHILDREN
+                        | DrawingOptions.PRF_CLIENT
+                        | DrawingOptions.PRF_NONCLIENT
+                        | DrawingOptions.PRF_OWNED
+                    )
+                )
+            );
         }
         finally
         {
@@ -434,12 +482,13 @@ public class NativeMethods
 
     public static void EnableAcrylic(IWin32Window window, Color blurColor)
     {
-        if (window is null) throw new ArgumentNullException(nameof(window));
+        if (window is null)
+            throw new ArgumentNullException(nameof(window));
 
         var accentPolicy = new AccentPolicy
         {
             AccentState = ACCENT.ENABLE_ACRYLICBLURBEHIND,
-            GradientColor = blurColor.ToArgb()
+            GradientColor = blurColor.ToArgb(),
         };
         var accentSize = Marshal.SizeOf(accentPolicy);
         var accentPolicyPtr = Marshal.AllocHGlobal(accentSize);
@@ -449,12 +498,10 @@ public class NativeMethods
         {
             Attribute = WindowCompositionAttribute.WCA_ACCENT_POLICY,
             Data = accentPolicyPtr,
-            SizeOfData = Marshal.SizeOf<AccentPolicy>()
+            SizeOfData = Marshal.SizeOf<AccentPolicy>(),
         };
 
-        SetWindowCompositionAttribute(
-            window.Handle,
-            ref data);
+        SetWindowCompositionAttribute(window.Handle, ref data);
     }
 
     /// <summary>
@@ -469,10 +516,10 @@ public class NativeMethods
             Left = r.Left,
             Right = r.Right,
             Top = r.Top,
-            Bottom = r.Bottom
+            Bottom = r.Bottom,
         };
 
-        IntPtr destdc = g.GetHdc();    //hwnd must be the handle of form,not control
+        IntPtr destdc = g.GetHdc(); //hwnd must be the handle of form,not control
         IntPtr Memdc = CreateCompatibleDC(destdc);
         IntPtr bitmap;
         IntPtr bitmapOld = IntPtr.Zero;
@@ -491,7 +538,6 @@ public class NativeMethods
             {
                 bitmapOld = SelectObject(Memdc, bitmap);
                 BitBlt(destdc, rc.Left, rc.Top, rc.Right - rc.Left, rc.Bottom - rc.Top, Memdc, 0, 0, SRCCOPY);
-
             }
 
             //Remember to clean up
@@ -501,11 +547,8 @@ public class NativeMethods
 
             ReleaseDC(Memdc, (IntPtr)(-1));
             DeleteDC(Memdc);
-
-
         }
         g.ReleaseHdc();
-
     }
 
     [Flags]
@@ -667,7 +710,6 @@ public class NativeMethods
         WS_EX_NOACTIVATE = 0x08000000,
     }
 
-
     [StructLayout(LayoutKind.Sequential)]
     public struct COLORREF
     {
@@ -683,9 +725,8 @@ public class NativeMethods
         ENABLE_TRANSPARENTGRADIENT = 2,
         ENABLE_BLURBEHIND = 3,
         ENABLE_ACRYLICBLURBEHIND = 4,
-        INVALID_STATE = 5
+        INVALID_STATE = 5,
     }
-
 
     public struct AccentPolicy
     {
@@ -698,9 +739,9 @@ public class NativeMethods
     public enum NTSTATUS : uint
     {
         /// <summary>
-        /// The operation completed successfully. 
+        /// The operation completed successfully.
         /// </summary>
-        STATUS_SUCCESS = 0x00000000
+        STATUS_SUCCESS = 0x00000000,
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -712,6 +753,7 @@ public class NativeMethods
         public int MinorVersion;
         public int BuildNumber;
         public int PlatformId;
+
         [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
         public string CSDVersion;
         public ushort ServicePackMajor;
@@ -736,6 +778,7 @@ public class NativeMethods
         public int iSubItem;
         public int state;
         public int stateMask;
+
         [MarshalAs(UnmanagedType.LPTStr)]
         public string pszText;
         public int cchTextMax;
@@ -802,7 +845,6 @@ public class NativeMethods
             get => Right - Left;
             set => Right = value + Left;
         }
-
     }
 
     // The DWM_WINDOW_CORNER_PREFERENCE enum for DwmSetWindowAttribute's third parameter, which tells the function
@@ -813,7 +855,7 @@ public class NativeMethods
         DWMWCP_DEFAULT = 0,
         DWMWCP_DONOTROUND = 1,
         DWMWCP_ROUND = 2,
-        DWMWCP_ROUNDSMALL = 3
+        DWMWCP_ROUNDSMALL = 3,
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -891,34 +933,38 @@ public class NativeMethods
     {
         public Mask mask;
         public int cxy;
-        [MarshalAs(UnmanagedType.LPTStr)] public string pszText;
+
+        [MarshalAs(UnmanagedType.LPTStr)]
+        public string pszText;
         public IntPtr hbm;
         public int cchTextMax;
         public Format fmt;
         public IntPtr lParam;
-        // _WIN32_IE >= 0x0300 
+
+        // _WIN32_IE >= 0x0300
         public int iImage;
         public int iOrder;
+
         // _WIN32_IE >= 0x0500
         public uint type;
         public IntPtr pvFilter;
+
         // _WIN32_WINNT >= 0x0600
         public uint state;
 
         [Flags]
         public enum Mask
         {
-            Format = 0x4,       // HDI_FORMAT
+            Format = 0x4, // HDI_FORMAT
         };
 
         [Flags]
         public enum Format
         {
-            SortDown = 0x200,   // HDF_SORTDOWN
-            SortUp = 0x400,     // HDF_SORTUP
+            SortDown = 0x200, // HDF_SORTDOWN
+            SortUp = 0x400, // HDF_SORTUP
         };
     };
-
 
     [Flags]
     public enum CDRF
@@ -931,7 +977,7 @@ public class NativeMethods
         CDRF_NOTIFYPOSTPAINT = 0x10,
         CDRF_NOTIFYITEMDRAW = 0x20,
         CDRF_NOTIFYSUBITEMDRAW = 0x20,
-        CDRF_NOTIFYPOSTERASE = 0x40
+        CDRF_NOTIFYPOSTERASE = 0x40,
     }
 
     [Flags]
@@ -946,7 +992,7 @@ public class NativeMethods
         CDDS_ITEMPOSTPAINT = CDDS_ITEM | CDDS_POSTPAINT,
         CDDS_ITEMPREERASE = CDDS_ITEM | CDDS_PREERASE,
         CDDS_ITEMPOSTERASE = CDDS_ITEM | CDDS_POSTERASE,
-        CDDS_SUBITEMField = 0x20000
+        CDDS_SUBITEMField = 0x20000,
     }
 
     public enum WindowCompositionAttribute
@@ -978,7 +1024,7 @@ public class NativeMethods
         WCA_EXCLUDED_FROM_DDA = 24,
         WCA_PASSIVEUPDATEMODE = 25,
         WCA_USEDARKMODECOLORS = 26,
-        WCA_LAST = 27
+        WCA_LAST = 27,
     };
 
     [Flags]
@@ -1150,6 +1196,7 @@ public class NativeMethods
         public readonly byte rgbRed;
         public readonly byte rgbReserved;
     }
+
     /// <summary>
     /// This structure defines the dimensions and color information of a Windows-based device-independent bitmap (DIB).
     /// </summary>
