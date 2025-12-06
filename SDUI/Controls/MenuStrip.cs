@@ -186,28 +186,25 @@ public class MenuStrip : UIElementBase
         // Text with high quality
         var textColor = hover ? MenuForeColor.BlendWith(_hoverForeColor, 0.6f) : MenuForeColor;
 
+        using (var font = new SKFont
+        {
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Subpixel = true,
+            Edging = SKFontEdging.SubpixelAntialias
+        })
         using (var paint = new SKPaint
         {
             Color = textColor.ToSKColor(),
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-            IsAntialias = true,
-            SubpixelText = true,
-            LcdRenderText = true
+            IsAntialias = true
         })
         {
-            var fm = paint.FontMetrics;
-            float textHeight = fm.Descent - fm.Ascent;
-            float ty = bounds.Top + (bounds.Height - textHeight) / 2f - fm.Ascent;
-
-            if (item.Text.Contains("&"))
-                c.DrawTextWithMnemonic(item.Text, paint, tx, ty);
-            else
-                c.DrawText(item.Text, tx, ty, paint);
+            var drawBounds = SKRect.Create(tx, bounds.Top, bounds.Right - tx, bounds.Height);
+            c.DrawControlText(item.Text, drawBounds, paint, font, ContentAlignment.MiddleLeft, false, true);
 
             // Measure text width for arrow positioning
             var textBounds = new SKRect();
-            paint.MeasureText(item.Text.Replace("&", ""), ref textBounds);
+            font.MeasureText(item.Text.Replace("&", ""), out textBounds);
             
             // WinUI3 style chevron arrow with high quality
             if (ShowSubmenuArrow && item.HasDropDown)
@@ -328,14 +325,14 @@ public class MenuStrip : UIElementBase
     {
         if (item is MenuItemSeparator) return 20f;
         
-        using var p = new SKPaint
+        using var font = new SKFont
         {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         };
         
         var tb = new SKRect();
-        p.MeasureText(item.Text, ref tb);
+        font.MeasureText(item.Text, out tb);
         float w = tb.Width;
         
         if (ShowIcons && item.Icon != null)

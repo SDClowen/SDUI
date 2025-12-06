@@ -268,7 +268,7 @@ public class MenuItem
         using var paint = new SKPaint
         {
             TextSize = (Font ?? Parent.Font).Size.PtToPx(Parent),
-            Typeface = SKTypeface.FromFamilyName((Font ?? Parent.Font).FontFamily.Name)
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font ?? Parent.Font)
         };
 
         var textBounds = new SKRect();

@@ -72,7 +72,7 @@ public class ChatBubble : UIElementBase
         using (var paint = new SKPaint())
         {
             paint.TextSize = Font.Size.PtToPx(this);
-            paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal);
+            paint.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
             var metrics = paint.FontMetrics;
             _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
         }

@@ -111,7 +111,7 @@ public class Button : UIElementBase, IButtonControl
         using (var paint = new SKPaint())
         {
             paint.TextSize = Font.Size.PtToPx(this);
-            paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal);
+            paint.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
             var metrics = paint.FontMetrics;
             _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
         }
@@ -316,39 +316,22 @@ public class Button : UIElementBase, IButtonControl
 
             using var textPaint = new SKPaint
             {
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal),
                 Color = textColor,
-                IsAntialias = true,
-                SubpixelText = true,
-                LcdRenderText = true,
-                FilterQuality = SKFilterQuality.High,
-                TextAlign = TextAlign == ContentAlignment.MiddleCenter ? SKTextAlign.Center :
-                           TextAlign == ContentAlignment.MiddleRight ? SKTextAlign.Right :
-                           SKTextAlign.Left
+                IsAntialias = true
             };
 
-            float availableWidth = bodyRect.Width - (contentStartX - bodyRect.Left) - 8f;
-            float x = TextAlign switch
+            using var font = new SKFont
             {
-                ContentAlignment.MiddleCenter => bodyRect.MidX,
-                ContentAlignment.MiddleRight => bodyRect.Right - 8f,
-                _ => contentStartX
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
             };
-            float y = bodyRect.MidY + textPaint.TextSize / 3f;
 
-            if (AutoEllipsis)
-            {
-                canvas.DrawTextWithEllipsis(Text, textPaint, x, y, availableWidth);
-            }
-            else if (UseMnemonic)
-            {
-                canvas.DrawTextWithMnemonic(Text, textPaint, x, y);
-            }
-            else
-            {
-                canvas.DrawText(Text, x, y, textPaint);
-            }
+            var availableWidth = bodyRect.Width - (contentStartX - bodyRect.Left) - 8f;
+            var textBounds = SKRect.Create(contentStartX, bodyRect.Top, availableWidth, bodyRect.Height);
+
+            canvas.DrawControlText(Text, textBounds, textPaint, font, TextAlign, AutoEllipsis, UseMnemonic);
         }
 
         // Validasyon mesajı çizimi
@@ -357,15 +340,20 @@ public class Button : UIElementBase, IButtonControl
             using var validationPaint = new SKPaint
             {
                 Color = Color.Red.ToSKColor(),
-                IsAntialias = true,
-                TextSize = Font.Size,
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+                IsAntialias = true
+            };
+
+            using var validationFont = new SKFont
+            {
+                Size = Font.Size,
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
             };
 
             canvas.DrawText(
                 ValidationText,
                 bodyRect.Left + 5f,
                 bodyRect.Bottom + 15f,
+                validationFont,
                 validationPaint);
         }
     }
@@ -450,11 +438,11 @@ public class Button : UIElementBase, IButtonControl
         if (Image != null)
             extra += 24 + 4;
 
-        using (var paint = new SKPaint())
+        using (var font = new SKFont())
         {
-            paint.TextSize = Font.Size * 1.5f;
-            paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
-            _textSize = new SizeF(paint.MeasureText(Text), paint.FontMetrics.Descent - paint.FontMetrics.Ascent);
+            font.Size = Font.Size * 1.5f;
+            font.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
+            _textSize = new SizeF(font.MeasureText(Text), font.Metrics.Descent - font.Metrics.Ascent);
         }
 
         return new Size((int)Math.Ceiling(_textSize.Width) + extra, 32);

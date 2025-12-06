@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Text;
 using System.Linq;
 using System.Runtime.InteropServices;
+using SkiaSharp;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Helpers
@@ -12,6 +13,14 @@ namespace SDUI.Helpers
         private static readonly PrivateFontCollection privateFontCollection = new();
         public static Font Inter = GetFont(Resources.InterFont, 9f, FontStyle.Regular);
         public static Font Segoe = new("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
+
+        public static SKTypeface InterTypeface { get; private set; }
+
+        static FontManager()
+        {
+            using var data = SKData.CreateCopy(Resources.InterFont);
+            InterTypeface = SKTypeface.FromData(data);
+        }
 
         private static Font GetFont(byte[] fontResource, float size, FontStyle style)
         {
@@ -26,6 +35,19 @@ namespace SDUI.Helpers
             var family = privateFontCollection.Families.FirstOrDefault(p => p.IsStyleAvailable(style));
 
             return new(family, size, style, GraphicsUnit.Point);
+        }
+
+        public static SKTypeface GetSKTypeface(Font font)
+        {
+            if (font.Name == Inter.Name && InterTypeface != null)
+            {
+                return InterTypeface;
+            }
+
+            SKFontStyleWeight weight = font.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
+            SKFontStyleSlant slant = font.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
+
+            return SKTypeface.FromFamilyName(font.Name, weight, SKFontStyleWidth.Normal, slant);
         }
     }
 }

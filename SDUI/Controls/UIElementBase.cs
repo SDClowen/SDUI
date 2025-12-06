@@ -130,6 +130,10 @@ namespace SDUI.Controls
                 {
                     parentWindow.PerformLayout();
                 }
+                else if (Parent is UIElementBase parentElement)
+                {
+                    parentElement.PerformLayout();
+                }
             }
         }
 
@@ -144,7 +148,7 @@ namespace SDUI.Controls
             }
         }
 
-        public Rectangle ClientRectangle => new(Location, Size);
+        public Rectangle ClientRectangle => new(0, 0, Size.Width, Size.Height);
 
         public Size ClientSize
         {
@@ -1148,6 +1152,8 @@ namespace SDUI.Controls
         {
             VisibleChanged?.Invoke(this, e);
             Invalidate();
+            if (Parent is UIWindowBase parentWindow) parentWindow.PerformLayout();
+            else if (Parent is UIElementBase parentElement) parentElement.PerformLayout();
         }
 
         internal virtual void OnEnabledChanged(EventArgs e)
@@ -1177,9 +1183,19 @@ namespace SDUI.Controls
 
         internal virtual void OnTabIndexChanged(EventArgs e) => TabIndexChanged?.Invoke(this, e);
 
-        internal virtual void OnAnchorChanged(EventArgs e) => AnchorChanged?.Invoke(this, e);
+        internal virtual void OnAnchorChanged(EventArgs e)
+        {
+            AnchorChanged?.Invoke(this, e);
+            if (Parent is UIWindowBase parentWindow) parentWindow.PerformLayout();
+            else if (Parent is UIElementBase parentElement) parentElement.PerformLayout();
+        }
 
-        internal virtual void OnDockChanged(EventArgs e) => DockChanged?.Invoke(this, e);
+        internal virtual void OnDockChanged(EventArgs e)
+        {
+            DockChanged?.Invoke(this, e);
+            if (Parent is UIWindowBase parentWindow) parentWindow.PerformLayout();
+            else if (Parent is UIElementBase parentElement) parentElement.PerformLayout();
+        }
 
         internal virtual void OnAutoSizeChanged(EventArgs e) => AutoSizeChanged?.Invoke(this, e);
 
@@ -1419,17 +1435,35 @@ namespace SDUI.Controls
 
         public void BringToFront()
         {
-            if (Parent is UIWindow window)
+            switch (Parent)
             {
-                window.BringToFront(this);
+                case UIWindow window:
+                    window.BringToFront(this);
+                    break;
+                case UIElementBase parentElement:
+                    var siblings = parentElement.Controls.OfType<UIElementBase>().ToList();
+                    if (siblings.Count == 0) return;
+                    var max = siblings.Max(s => s.ZOrder);
+                    ZOrder = max + 1;
+                    parentElement.InvalidateRenderTree();
+                    break;
             }
         }
 
         public void SendToBack()
         {
-            if (Parent is UIWindow window)
+            switch (Parent)
             {
-                window.SendToBack(this);
+                case UIWindow window:
+                    window.SendToBack(this);
+                    break;
+                case UIElementBase parentElement:
+                    var siblings = parentElement.Controls.OfType<UIElementBase>().ToList();
+                    if (siblings.Count == 0) return;
+                    var min = siblings.Min(s => s.ZOrder);
+                    ZOrder = min - 1;
+                    parentElement.InvalidateRenderTree();
+                    break;
             }
         }
 
@@ -1633,30 +1667,17 @@ namespace SDUI.Controls
             Rectangle clientArea = ClientRectangle;
             Padding clientPadding = Padding;
 
-            if (Parent is UIWindow window)
-            {
-                clientArea = window.ClientRectangle;
-                clientPadding = window.Padding;
-            }
-            else if (Parent is UIElementBase parentElement)
-            {
-                clientPadding = parentElement.Padding;
-                clientArea = parentElement.ClientRectangle;
-            }
-
-            //clientArea.Inflate(clientPadding.Size);
-
             clientArea.X += clientPadding.Left;
             clientArea.Y += clientPadding.Top;
             clientArea.Width -= clientPadding.Horizontal;
             clientArea.Height -= clientPadding.Vertical;
 
-            LayoutEngine.Perform(this, clientArea, clientPadding);
+            Rectangle remainingArea = clientArea;
 
             // Dock işlemleri
             foreach (UIElementBase control in _controls)
             {
-                LayoutEngine.Perform(control, clientArea, clientPadding);
+                LayoutEngine.Perform(control, clientArea, ref remainingArea);
                 //control.PerformLayout();
             }
 

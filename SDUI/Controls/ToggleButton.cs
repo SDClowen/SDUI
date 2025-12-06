@@ -109,20 +109,23 @@ public class ToggleButton : UIElementBase
 
         if (!string.IsNullOrEmpty(Text))
         {
+            using var font = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
+            };
             using var textPaint = new SKPaint
             {
                 Color = ColorScheme.ForeColor.ToSKColor(),
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                IsAntialias = true,
-                SubpixelText = true,
-                LcdRenderText = true
+                IsAntialias = true
             };
 
             var textBounds = new SKRect();
-            textPaint.MeasureText(Text, ref textBounds);
+            font.MeasureText(Text, out textBounds);
             textWidth = textBounds.Width;
-            canvas.DrawText(Text, 0, Height / 2f + textBounds.Height / 2f, textPaint);
+            canvas.DrawText(Text, 0, Height / 2f + textBounds.Height / 2f, font, textPaint);
 
             canvas.Translate(textWidth + 10, 0);
         }

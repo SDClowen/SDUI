@@ -114,10 +114,10 @@ public class Label : UIElementBase
     {
         if (string.IsNullOrEmpty(Text)) return;
 
-        using var paint = new SKPaint
+        using var font = new SKFont
         {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         };
 
         var lines = Text.Split('\n');
@@ -126,8 +126,8 @@ public class Label : UIElementBase
 
         foreach (var line in lines)
         {
-            var bounds = new SKRect();
-            paint.MeasureText(line, ref bounds);
+            SKRect bounds = new SKRect();
+            font.MeasureText(line, out bounds);
             maxWidth = Math.Max(maxWidth, bounds.Width);
             totalHeight += bounds.Height;
         }
@@ -204,15 +204,17 @@ public class Label : UIElementBase
         if (string.IsNullOrEmpty(Text)) return;
 
         // Metin çizimi için paint
+        using var font = new SKFont
+        {
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Subpixel = true,
+            Edging = SKFontEdging.SubpixelAntialias
+        };
+
         using var textPaint = new SKPaint
         {
-            IsAntialias = true,
-            SubpixelText = true,
-            LcdRenderText = true,
-            FilterQuality = SKFilterQuality.High,
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyle.Normal),
-            TextAlign = GetSKTextAlign()
+            IsAntialias = true
         };
 
         if (ApplyGradient)
@@ -233,7 +235,7 @@ public class Label : UIElementBase
         }
 
         var availableWidth = Width - Padding.Horizontal;
-        var lineHeight = textPaint.FontSpacing;
+        var lineHeight = font.Spacing;
         var text = Text;
         var lines = new List<string>();
 
@@ -241,20 +243,19 @@ public class Label : UIElementBase
         while (!string.IsNullOrEmpty(text))
         {
             float measuredWidth;
-            int count;
-            textPaint.BreakText(text, availableWidth, out measuredWidth, out var m);
-            count = m.Length;
+            long count = font.BreakText(text, availableWidth, out measuredWidth);
+            
             if (count == 0) break;
 
-            var line = text.Substring(0, count);
+            var line = text.Substring(0, (int)count);
             if (AutoEllipsis && text.Length > count)
             {
-                line = CreateEllipsisText(line, availableWidth, textPaint);
+                line = CreateEllipsisText(line, availableWidth, font);
                 text = "";
             }
             else
             {
-                text = text.Substring(count).TrimStart();
+                text = text.Substring((int)count).TrimStart();
             }
             lines.Add(line);
         }
@@ -269,8 +270,9 @@ public class Label : UIElementBase
             _ => Padding.Top
         };
 
+        var skTextAlign = GetSKTextAlign();
         // Yatay pozisyon hesapla
-        float xPos = textPaint.TextAlign switch
+        float xPos = skTextAlign switch
         {
             SKTextAlign.Center => Width / 2,
             SKTextAlign.Right => Width - Padding.Right,
@@ -278,25 +280,26 @@ public class Label : UIElementBase
         };
 
         // Her satırı çiz
+        float baselineOffset = -font.Metrics.Ascent;
         for (int i = 0; i < lines.Count; i++)
         {
-            canvas.DrawText(lines[i], xPos, yOffset + ((i + 1) * lineHeight), textPaint);
+            canvas.DrawText(lines[i], xPos, yOffset + baselineOffset + (i * lineHeight), skTextAlign, font, textPaint);
         }
     }
 
-    private string CreateEllipsisText(string text, float maxWidth, SKPaint paint)
+    private string CreateEllipsisText(string text, float maxWidth, SKFont font)
     {
         const string ellipsis = "...";
         if (string.IsNullOrEmpty(text)) return text;
 
-        var ellipsisWidth = paint.MeasureText(ellipsis);
-        if (paint.MeasureText(text) <= maxWidth) return text;
+        var ellipsisWidth = font.MeasureText(ellipsis);
+        if (font.MeasureText(text) <= maxWidth) return text;
 
         var length = text.Length;
         while (length > 0)
         {
             var truncated = text.Substring(0, length) + ellipsis;
-            if (paint.MeasureText(truncated) <= maxWidth)
+            if (font.MeasureText(truncated) <= maxWidth)
                 return truncated;
             length--;
         }

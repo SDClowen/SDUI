@@ -249,16 +249,18 @@ public class ShapeProgressBar : UIElementBase
         using (var paint = new SKPaint
         {
             Color = ColorScheme.ForeColor.ToSKColor(),
-            TextSize = Math.Min(Width, Height) * 0.2f,
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-            IsAntialias = true,
-            TextAlign = SKTextAlign.Center,
-            SubpixelText = true
+            IsAntialias = true
+        })
+        using (var font = new SKFont
+        {
+            Size = Math.Min(Width, Height) * 0.2f,
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Subpixel = true
         })
         {
             var textBounds = new SKRect();
-            paint.MeasureText(percentString, ref textBounds);
-            canvas.DrawText(percentString, centerX, centerY + textBounds.Height / 3f, paint);
+            font.MeasureText(percentString, out textBounds);
+            canvas.DrawText(percentString, centerX, centerY + textBounds.Height / 3f, SKTextAlign.Center, font, paint);
         }
     }
 

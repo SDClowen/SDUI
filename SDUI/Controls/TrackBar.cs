@@ -391,7 +391,7 @@ public class TrackBar : UIElementBase
         _tooltip = new();
 
         // Varsayılan renkler
-        _trackColor = ColorScheme.BackColor;
+        _trackColor = ColorScheme.BorderColor;
         _thumbColor = ColorScheme.AccentColor;
         _tickColor = ColorScheme.ForeColor;
     }
@@ -412,7 +412,10 @@ public class TrackBar : UIElementBase
 
     private void UpdateTooltip()
     {
-        _tooltip.SetToolTip(this, ValueToSet.ToString());
+        if (_isDragging)
+            _tooltip.Show(this, ValueToSet.ToString());
+        else
+            _tooltip.SetToolTip(this, ValueToSet.ToString());
     }
 
     protected virtual void OnValueChanged()
@@ -466,11 +469,13 @@ public class TrackBar : UIElementBase
         if (e.Button != MouseButtons.Left) return;
 
         var thumbRect = GetThumbRect();
-        _isDragging = thumbRect.Contains(e.Location);
+        var trackRect = GetTrackRect();
+        var hitRect = GetInteractionTrackRect();
+        var onTrack = hitRect.Contains(e.Location);
+        _isDragging = thumbRect.Contains(e.Location) || onTrack;
 
         if (_jumpToMouse || _isDragging)
         {
-            var trackRect = GetTrackRect();
             var position = _orientation == SDUI.Orientation.Horizontal ?
                 e.X - trackRect.X :
                 e.Y - trackRect.Y;
@@ -511,9 +516,8 @@ public class TrackBar : UIElementBase
         else
         {
             var thumbRect = GetThumbRect();
-            var trackRect = GetTrackRect();
             var wasHovered = _isHovered;
-            _isHovered = thumbRect.Contains(e.Location) || trackRect.Contains(e.Location);
+            _isHovered = thumbRect.Contains(e.Location) || GetInteractionTrackRect().Contains(e.Location);
 
             if (wasHovered != _isHovered)
             {
@@ -552,6 +556,17 @@ public class TrackBar : UIElementBase
         else
             return new RectangleF(Width / 2f - base.ScaleFactor, 10 * base.ScaleFactor, 2 * base.ScaleFactor, Height - 20 * base.ScaleFactor);
     }
+    private RectangleF GetInteractionTrackRect()
+    {
+        var rect = GetTrackRect();
+
+        if (_orientation == SDUI.Orientation.Horizontal)
+            rect.Inflate(0, Math.Max(_thumbSize.Height / 2f, 6 * ScaleFactor));
+        else
+            rect.Inflate(Math.Max(_thumbSize.Width / 2f, 6 * ScaleFactor), 0);
+
+        return rect;
+    }
 
     private RectangleF GetThumbRect()
     {
@@ -574,8 +589,8 @@ public class TrackBar : UIElementBase
 
     private void DrawThumb(SKCanvas canvas, RectangleF thumbRect, SKPaint paint)
     {
-        var centerX = thumbRect.X;
-        var centerY = thumbRect.Y;
+        var centerX = thumbRect.X + thumbRect.Width / 2f;
+        var centerY = thumbRect.Y + thumbRect.Height / 2f;
         var halfWidth = thumbRect.Width / 2;
 
         switch (_thumbShape)
@@ -629,6 +644,36 @@ public class TrackBar : UIElementBase
                 break;
         }
     }
+    private void DrawThumbIndicator(SKCanvas canvas, RectangleF thumbRect, RectangleF trackRect, SKPaint paint)
+    {
+        var thickness = 6 * ScaleFactor;
+
+        using var path = new SKPath();
+
+        if (_orientation == SDUI.Orientation.Horizontal)
+        {
+            var tipY = trackRect.Top + trackRect.Height / 2f; // point into the track
+            var baseY = thumbRect.Bottom - 1 * ScaleFactor;   // anchor under the thumb
+            var centerX = thumbRect.Left + thumbRect.Width / 2f;
+
+            path.MoveTo(centerX, tipY);
+            path.LineTo(centerX - thickness, baseY);
+            path.LineTo(centerX + thickness, baseY);
+        }
+        else
+        {
+            var tipX = trackRect.Left + trackRect.Width / 2f;
+            var baseX = thumbRect.Right - 1 * ScaleFactor;
+            var centerY = thumbRect.Top + thumbRect.Height / 2f;
+
+            path.MoveTo(tipX, centerY);
+            path.LineTo(baseX, centerY - thickness);
+            path.LineTo(baseX, centerY + thickness);
+        }
+
+        path.Close();
+        canvas.DrawPath(path, paint);
+    }
 
     private void DrawTicks(SKCanvas canvas, RectangleF trackRect)
     {
@@ -669,19 +714,25 @@ public class TrackBar : UIElementBase
                 var value = _minimum + i * _tickFrequency;
                 var text = (value / (float)_dividedValue).ToString();
 
+                using var font = new SKFont
+                {
+                    Size = 8f.PtToPx(this),
+                    Typeface = SKTypeface.FromFamilyName("Segoe UI"),
+                    Subpixel = true,
+                    Edging = SKFontEdging.SubpixelAntialias
+                };
                 using var textPaint = new SKPaint
                 {
                     Color = paint.Color,
-                    TextSize = 8f.PtToPx(this),
-                    TextAlign = isHorizontal ? SKTextAlign.Center : SKTextAlign.Left,
-                    IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Segoe UI")
+                    IsAntialias = true
                 };
 
+                var textAlign = isHorizontal ? SKTextAlign.Center : SKTextAlign.Left;
+
                 if (isHorizontal)
-                    canvas.DrawText(text, x, y + 15 * ScaleFactor, textPaint);
+                    canvas.DrawText(text, x, y + 15 * ScaleFactor, textAlign, font, textPaint);
                 else
-                    canvas.DrawText(text, x + 8 * ScaleFactor, y + 4 * ScaleFactor, textPaint);
+                    canvas.DrawText(text, x + 8 * ScaleFactor, y + 4 * ScaleFactor, textAlign, font, textPaint);
             }
         }
     }
@@ -770,104 +821,106 @@ public class TrackBar : UIElementBase
 
         var trackRect = GetTrackRect();
         var thumbRect = GetThumbRect();
+        var accentColor = (_thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor);
+        var lightAccent = Color.FromArgb(accentColor.A,
+            Math.Min(255, accentColor.R + 35),
+            Math.Min(255, accentColor.G + 35),
+            Math.Min(255, accentColor.B + 35));
 
-        // Track arka planı
-        using (var paint = CreateGradientPaint(
-            trackRect,
-            _trackGradientStart,
-            _trackGradientEnd,
-            _trackColor == Color.Empty ? ColorScheme.BackColor : _trackColor,
-            40))
+        // Visual adjustments for track
+        var trackThickness = 4 * ScaleFactor;
+        var visualTrackRect = trackRect;
+
+        if (_orientation == SDUI.Orientation.Horizontal)
+            visualTrackRect.Inflate(0, (trackThickness - trackRect.Height) / 2);
+        else
+            visualTrackRect.Inflate((trackThickness - trackRect.Width) / 2, 0);
+
+        // Draw Empty Track
+        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
         {
-            DrawTrack(canvas, trackRect, paint);
+            paint.Color = (_trackColor == Color.Empty ? ColorScheme.BorderColor : _trackColor).ToSKColor();
+            canvas.DrawRoundRect(visualTrackRect.ToSKRect(), trackThickness / 2, trackThickness / 2, paint);
         }
 
-        // Doldurulmuş track kısmı
-        using (var paint = CreateGradientPaint(
-            trackRect,
-            _trackGradientStart,
-            _trackGradientEnd,
-            _thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor,
-            (byte)(150 + _trackHoverAnimation.GetProgress() * 105)))
+        // Draw Filled Track
+        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
         {
-            var filledRect = _orientation == SDUI.Orientation.Horizontal ?
-                new SKRect(
-                    trackRect.Left,
-                    trackRect.Top,
-                    thumbRect.Left + thumbRect.Width / 2,
-                    trackRect.Bottom
-                ) :
-                new SKRect(
-                    trackRect.Left,
+            paint.Color = (_thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor).ToSKColor();
+
+            SKRect filledRect;
+            if (_orientation == SDUI.Orientation.Horizontal)
+            {
+                var minFilled = trackThickness; // ensure visible fill at minimum
+                filledRect = new SKRect(
+                    visualTrackRect.Left,
+                    visualTrackRect.Top,
+                    Math.Max(visualTrackRect.Left + minFilled, thumbRect.Left + thumbRect.Width / 2),
+                    visualTrackRect.Bottom);
+            }
+            else
+            {
+                var minFilled = trackThickness;
+                filledRect = new SKRect(
+                    visualTrackRect.Left,
                     thumbRect.Top + thumbRect.Height / 2,
-                    trackRect.Right,
-                    trackRect.Bottom
-                );
+                    visualTrackRect.Right,
+                    Math.Max(visualTrackRect.Top + minFilled, visualTrackRect.Bottom));
+            }
 
-            DrawTrack(canvas, filledRect.ToDrawingRect(), paint);
+            canvas.DrawRoundRect(filledRect, trackThickness / 2, trackThickness / 2, paint);
         }
 
-        // Tick'leri çiz
+        // Draw Ticks
         DrawTicks(canvas, trackRect);
 
-        // Thumb çizimi
-        var thumbHoverProgress = _thumbHoverAnimation.GetProgress();
-        var thumbPressProgress = _thumbPressAnimation.GetProgress();
-        var thumbAlpha = 180 + (byte)(thumbHoverProgress * 75);
-
-        // Thumb gölgesi
-        if (thumbHoverProgress > 0 || thumbPressProgress > 0)
+        // Draw Thumb Shadow
+        using (var shadowPaint = new SKPaint
         {
-            using var shadowPaint = new SKPaint
-            {
-                Color = SKColors.Black.WithAlpha(20),
-                ImageFilter = SKImageFilter.CreateDropShadow(
-                    0,
-                    1 * ScaleFactor,
-                    2 * ScaleFactor,
-                    2 * ScaleFactor,
-                    SKColors.Black.WithAlpha(30)
-                ),
-                IsAntialias = true
-            };
-
+            Color = SKColors.Black.WithAlpha(40),
+            IsAntialias = true,
+            ImageFilter = SKImageFilter.CreateDropShadow(0, 1 * ScaleFactor, 3 * ScaleFactor, 3 * ScaleFactor, SKColors.Black.WithAlpha(40))
+        })
+        {
             DrawThumb(canvas, thumbRect, shadowPaint);
         }
 
-        // Thumb arka planı
-        using (var paint = CreateGradientPaint(
-            thumbRect,
-            _thumbGradientStart,
-            _thumbGradientEnd,
-            ColorScheme.BackColor))
+        // Draw Thumb Fill
+        using (var paint = CreateGradientPaint(thumbRect, lightAccent, accentColor, accentColor))
         {
+            paint.Style = SKPaintStyle.Fill;
+            paint.IsAntialias = true;
             DrawThumb(canvas, thumbRect, paint);
         }
 
-        // Thumb kenarlığı
-        using (var paint = new SKPaint
+        // Draw Thumb Border
+        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 2 * ScaleFactor })
         {
-            Color = (_thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor)
-                .Alpha(thumbAlpha)
-                .ToSKColor(),
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1.5f * ScaleFactor,
-            IsAntialias = true
-        })
-        {
+            paint.Color = accentColor.ToSKColor();
             DrawThumb(canvas, thumbRect, paint);
+        }
+        
+        // Draw indicator (arrow) to anchor the thumb visually to the track
+        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
+        {
+            paint.Color = accentColor.ToSKColor().WithAlpha(200);
+            DrawThumbIndicator(canvas, thumbRect, trackRect, paint);
         }
 
         // Değer metni
         if (_drawValueString)
         {
+            using var font = new SKFont
+            {
+                Size = 9f.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
+            };
             using var paint = new SKPaint
             {
                 Color = ColorScheme.ForeColor.ToSKColor(),
-                TextSize = 9f.PtToPx(this),
-                TextAlign = SKTextAlign.Left,
-                IsAntialias = true,
-                Typeface = SKTypeface.FromFamilyName("Segoe UI")
+                IsAntialias = true
             };
 
             var formattedValue = string.Format(_valueFormat, ValueToSet);
@@ -878,6 +931,8 @@ public class TrackBar : UIElementBase
                     formattedValue,
                     5 * base.ScaleFactor,
                     Height - 8 * base.ScaleFactor,
+                    SKTextAlign.Left,
+                    font,
                     paint
                 );
             }
@@ -889,6 +944,8 @@ public class TrackBar : UIElementBase
                     formattedValue,
                     5 * base.ScaleFactor,
                     -Width + 8 * base.ScaleFactor,
+                    SKTextAlign.Left,
+                    font,
                     paint
                 );
                 canvas.Restore();

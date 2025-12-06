@@ -1496,6 +1496,26 @@ public class UIWindow : UIWindowBase, IUIElement
         }
     }
 
+    protected override void OnLayout(LayoutEventArgs levent)
+    {
+        base.OnLayout(levent);
+
+        Rectangle clientArea = ClientRectangle;
+        Padding clientPadding = Padding;
+
+        clientArea.X += clientPadding.Left;
+        clientArea.Y += clientPadding.Top;
+        clientArea.Width -= clientPadding.Horizontal;
+        clientArea.Height -= clientPadding.Vertical;
+
+        Rectangle remainingArea = clientArea;
+
+        foreach (var control in Controls.OfType<UIElementBase>())
+        {
+             SDUI.LayoutEngine.Perform(control, clientArea, ref remainingArea);
+        }
+    }
+
     protected override void OnPaint(PaintEventArgs e)
     {
         if (Width <= 0 || Height <= 0)
@@ -1841,22 +1861,25 @@ public class UIWindow : UIWindowBase, IUIElement
         // Form başlığı çizimi
         if (_windowPageControl == null || _windowPageControl.Count == 0)
         {
+            using var font = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
+            };
             using var textPaint = new SKPaint
             {
                 Color = foreColor,
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                IsAntialias = true,
-                SubpixelText = true,
-                TextAlign = SKTextAlign.Left
+                IsAntialias = true
             };
 
             var bounds = new SKRect();
-            textPaint.MeasureText(Text, ref bounds);
+            font.MeasureText(Text, out bounds);
             var textX = showMenuInsteadOfIcon ? _formMenuRect.X + _formMenuRect.Width + (8 * DPI) : faviconSize + (14 * DPI);
-            var textY = (_titleHeightDPI / 2) + (Math.Abs(textPaint.FontMetrics.Ascent + textPaint.FontMetrics.Descent) / 2);
+            var textY = (_titleHeightDPI / 2) + (Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2);
 
-            canvas.DrawText(Text, textX, textY, textPaint);
+            canvas.DrawText(Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
         // Tab kontrollerinin çizimi
@@ -1970,49 +1993,55 @@ public class UIWindow : UIWindowBase, IUIElement
 
                 if (_drawTabIcons)
                 {
+                    using var font = new SKFont
+                    {
+                        Size = 12f.PtToPx(this),
+                        Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                        Subpixel = true,
+                        Edging = SKFontEdging.SubpixelAntialias
+                    };
                     using var textPaint = new SKPaint
                     {
                         Color = foreColor,
-                        TextSize = 12f.PtToPx(this),
-                        Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                        IsAntialias = true,
-                        SubpixelText = true,
-                        TextAlign = SKTextAlign.Center
+                        IsAntialias = true
                     };
 
                     var startingIconBounds = new SKRect();
-                    textPaint.MeasureText("", ref startingIconBounds);
+                    font.MeasureText("", out startingIconBounds);
                     var iconX = rect.X + (TAB_HEADER_PADDING * DPI);
 
                     var inlinePaddingX = startingIconBounds.Width + (TAB_HEADER_PADDING * DPI);
                     rect.X += inlinePaddingX;
                     rect.Width -= inlinePaddingX + closeIconSize;
 
-                    var textY = (_titleHeightDPI / 2) + (Math.Abs(textPaint.FontMetrics.Ascent + textPaint.FontMetrics.Descent) / 2);
-                    canvas.DrawText("", iconX, textY, textPaint);
+                    var textY = (_titleHeightDPI / 2) + (Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2);
+                    canvas.DrawText("", iconX, textY, SKTextAlign.Center, font, textPaint);
 
                     var bounds = new SKRect();
-                    textPaint.MeasureText(page.Text, ref bounds);
+                    font.MeasureText(page.Text, out bounds);
                     var textX = rect.X + (rect.Width / 2);
-                    canvas.DrawText(page.Text, textX, textY, textPaint);
+                    canvas.DrawText(page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
                 }
                 else
                 {
+                    using var font = new SKFont
+                    {
+                        Size = 9f.PtToPx(this),
+                        Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                        Subpixel = true,
+                        Edging = SKFontEdging.SubpixelAntialias
+                    };
                     using var textPaint = new SKPaint
                     {
                         Color = foreColor,
-                        TextSize = 9f.PtToPx(this),
-                        Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                        IsAntialias = true,
-                        SubpixelText = true,
-                        TextAlign = SKTextAlign.Center
+                        IsAntialias = true
                     };
 
                     var bounds = new SKRect();
-                    textPaint.MeasureText(page.Text, ref bounds);
+                    font.MeasureText(page.Text, out bounds);
                     var textX = rect.X + (rect.Width / 2);
-                    var textY = (_titleHeightDPI / 2) + (Math.Abs(textPaint.FontMetrics.Ascent + textPaint.FontMetrics.Descent) / 2);
-                    canvas.DrawText(page.Text, textX, textY, textPaint);
+                    var textY = (_titleHeightDPI / 2) + (Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2);
+                    canvas.DrawText(page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
                 }
             }
 

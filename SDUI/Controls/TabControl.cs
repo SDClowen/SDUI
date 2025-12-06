@@ -23,7 +23,7 @@ namespace SDUI.Controls
         private float _borderWidth = 1.0f;
         private float _cornerRadius = 8.0f;
         private int _headerHeight = 40;
-        private int _tabGap = 0; // Chrome'da gap yok, tab'lar bitiþik
+        private int _tabGap = 0; // Chrome'da gap yok, tab'lar bitiï¿½ik
         private int _indicatorHeight = 3;
         private Size _headerControlSize = new Size(20, 20);
         private bool _renderNewPageButton = true;
@@ -65,7 +65,7 @@ namespace SDUI.Controls
             Size = new Size(500, 320);
             BackColor = ColorScheme.BackColor;
 
-            // Modern, kontrastlý renkler - tema uyumlu
+            // Modern, kontrastlï¿½ renkler - tema uyumlu
             _headerBackColor = ColorScheme.BackColor;
             _headerForeColor = ColorScheme.ForeColor;
             _selectedTabColor = ColorScheme.BackColor;
@@ -133,7 +133,7 @@ namespace SDUI.Controls
             page.Visible = false;
             EnsureHoverAnim(_pages.Count - 1);
             
-            // === DÜZGÜN AÇILIÞ ANÝMASYONU ===
+            // === Dï¿½ZGï¿½N Aï¿½ILIï¿½ ANï¿½MASYONU ===
             var addAnim = new AnimationManager(singular: true)
             {
                 Increment = 0.12,
@@ -167,7 +167,7 @@ namespace SDUI.Controls
             var index = _pages.IndexOf(page);
             if (index >= 0)
             {
-                // === SMOOTH KAPANIÞ - KASMA YOK ===
+                // === SMOOTH KAPANIï¿½ - KASMA YOK ===
                 var removeAnim = new AnimationManager(singular: true)
                 {
                     Increment = 0.08,
@@ -218,7 +218,7 @@ namespace SDUI.Controls
             }
         }
 
-        private void UpdateTabRects(SKPaint measurePaint)
+        private void UpdateTabRects()
         {
             _tabRects.Clear();
 
@@ -241,7 +241,7 @@ namespace SDUI.Controls
             for (int i = 0; i < _pages.Count; i++)
             {
                 _tabRects.Add(new RectangleF(x, 0, tabWidth, HeaderHeight));
-                x += tabWidth;  // SIFIR MARGIN - bitiþik
+                x += tabWidth;  // SIFIR MARGIN - bitiï¿½ik
                 totalWidth += tabWidth;
             }
 
@@ -283,15 +283,9 @@ namespace SDUI.Controls
 
             canvas.Clear(BackColor.ToSKColor());
 
-            using var fontPaint = new SKPaint 
-            { 
-                TextSize = Font.Size.PtToPx(this), 
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name), 
-                IsAntialias = true, 
-                SubpixelText = true 
-            };
+
             
-            UpdateTabRects(fontPaint);
+            UpdateTabRects();
 
             // === HEADER - Modern uyumlu ===
             var isDarkTheme = ColorScheme.BackColor.IsDark();
@@ -313,18 +307,18 @@ namespace SDUI.Controls
             canvas.Save();
             float clipStart = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
             
-            // + BUTTON VARSA VE SABÝTSE, onun soluna kadar clip et
+            // + BUTTON VARSA VE SABï¿½TSE, onun soluna kadar clip et
             float clipEnd;
             if (_showRightChevron && RenderNewPageButton)
             {
                 // Chevron varsa + button sabit, onun soluna kadar clip
                 float buttonSize = 24f;
                 float buttonX = Width - CHEVRON_WIDTH - buttonSize - 12;
-                clipEnd = buttonX - 4;  // + button'dan 4px önce kes
+                clipEnd = buttonX - 4;  // + button'dan 4px ï¿½nce kes
             }
             else
             {
-                // Normal: sað chevron veya kenara kadar
+                // Normal: saï¿½ chevron veya kenara kadar
                 clipEnd = Width - (_showRightChevron ? CHEVRON_WIDTH + 4 : 4);
             }
             
@@ -395,7 +389,7 @@ namespace SDUI.Controls
                     
                     if (isSelected || (i == _prevSelectedIndex && _selectionAnim.IsAnimating()))
                     {
-                        // Seçili tab: BackColor (belirgin)
+                        // Seï¿½ili tab: BackColor (belirgin)
                         var selectedColor = ColorScheme.BackColor;
                         var headerBg = headerColor;
                         
@@ -409,7 +403,7 @@ namespace SDUI.Controls
                     }
                     else
                     {
-                        // Seçili olmayan: header rengi + hover efekti
+                        // Seï¿½ili olmayan: header rengi + hover efekti
                         var baseBg = headerColor;
                         
                         var hoverBg = isDarkTheme
@@ -480,20 +474,23 @@ namespace SDUI.Controls
                     textColor = unselectedTextColor;
                 }
                     
+                using (var font = new SKFont
+                {
+                    Size = 13f * ScaleFactor,
+                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                    Subpixel = true,
+                    Edging = SKFontEdging.SubpixelAntialias
+                })
                 using (var textPaint = new SKPaint 
                 { 
                     Color = Color.FromArgb((int)(255 * animAlpha), textColor.R, textColor.G, textColor.B).ToSKColor(), 
-                    TextSize = 13f * ScaleFactor, 
-                    Typeface = SKTypeface.FromFamilyName("Segoe UI", SKFontStyleWeight.Normal, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright), 
-                    IsAntialias = true, 
-                    SubpixelText = true,
-                    LcdRenderText = true
+                    IsAntialias = true
                 })
                 {
                     float textX = tabRect.Left + 16;
-                    float textY = tabRect.MidY + textPaint.FontMetrics.CapHeight / 2f;
+                    float textY = tabRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                     float maxTextWidth = tabRect.Width - 32 - (RenderPageClose ? 24 : 0);
-                    canvas.DrawTextWithEllipsis(_pages[i].Text, textPaint, textX, textY, maxTextWidth);
+                    canvas.DrawTextWithEllipsis(_pages[i].Text, textX, textY, maxTextWidth, textPaint, font);
                 }
 
                 // === CLOSE BUTTON ===

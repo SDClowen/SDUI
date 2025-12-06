@@ -130,18 +130,22 @@ public class GroupBox : UIElementBase
         // Başlık metni çizimi
         if (!string.IsNullOrEmpty(Text))
         {
+            using var font = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Edging = SKFontEdging.SubpixelAntialias
+            };
+
             using var textPaint = new SKPaint
             {
                 Color = ColorScheme.ForeColor.ToSKColor(),
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
                 IsAntialias = true
             };
 
-            var textWidth = textPaint.MeasureText(Text);
-            var textHeight = textPaint.FontMetrics.XHeight;
+            var textWidth = font.MeasureText(Text);
+            float textY = titleRect.Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
             float textX;
-            float textY = titleRect.Height / 2f + textHeight / 2f;
 
             switch (TextAlign)
             {
@@ -157,7 +161,7 @@ public class GroupBox : UIElementBase
                     break;
             }
 
-            canvas.DrawText(Text, textX, textY, textPaint);
+            canvas.DrawText(Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
         // Çerçeve çizimi

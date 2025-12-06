@@ -426,17 +426,19 @@ namespace SDUI.Controls
             }
 
             // Buton simgeleri
+            using (var font = new SKFont
+            {
+                Size = 9f.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName("Segoe UI Symbol"),
+                Subpixel = true
+            })
             using (var textPaint = new SKPaint
             {
                 Color = ColorScheme.ForeColor.ToSKColor(),
-                TextSize = 9f.PtToPx(this),
-                TextAlign = SKTextAlign.Center,
-                IsAntialias = true,
-                SubpixelText = true,
-                Typeface = SKTypeface.FromFamilyName("Segoe UI Symbol")
+                IsAntialias = true
             })
             {
-                var metrics = textPaint.FontMetrics;
+                var metrics = font.Metrics;
                 var textHeight = Math.Abs(metrics.Ascent + metrics.Descent);
 
                 // Up button
@@ -452,7 +454,7 @@ namespace SDUI.Controls
                 canvas.DrawText("▲",
                     _upButtonRect.X + _upButtonRect.Width / 2,
                     _upButtonRect.Height / 2 + textHeight / 3,
-                    textPaint);
+                    SKTextAlign.Center, font, textPaint);
 
                 // Down button
                 var downColor = ColorScheme.ForeColor;
@@ -467,27 +469,28 @@ namespace SDUI.Controls
                 canvas.DrawText("▼",
                     _downButtonRect.X + _downButtonRect.Width / 2,
                     _downButtonRect.Height * 1.5f + textHeight / 3,
-                    textPaint);
+                    SKTextAlign.Center, font, textPaint);
             }
 
             // Değer metni
+            using (var font = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Subpixel = true
+            })
             using (var textPaint = new SKPaint
             {
                 Color = ColorScheme.ForeColor.ToSKColor(),
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName("Segoe UI"),
-                TextAlign = SKTextAlign.Left,
-                IsAntialias = true,
-                SubpixelText = true
+                IsAntialias = true
             })
             {
-                var metrics = textPaint.FontMetrics;
-                var textHeight = Math.Abs(metrics.Ascent + metrics.Descent);
+                float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
 
                 canvas.DrawText(Value.ToString(),
                     10 * ScaleFactor,
-                    Height / 2 + textHeight / 3,
-                    textPaint);
+                    textY,
+                    SKTextAlign.Left, font, textPaint);
             }
         }
     }

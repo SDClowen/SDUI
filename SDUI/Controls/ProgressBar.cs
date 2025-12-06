@@ -218,30 +218,32 @@ public class ProgressBar : UIElementBase
             using (var paint = new SKPaint
             {
                 Color = shadowColor,
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                TextAlign = SKTextAlign.Center,
                 IsAntialias = true
             })
+            using (var font = new SKFont
             {
-                var textBounds = new SKRect();
-                paint.MeasureText(text, ref textBounds);
-                canvas.DrawText(text, Width / 2f + 1, (Height + textBounds.Height) / 2f + 1, paint);
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            })
+            {
+                float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
+                canvas.DrawText(text, Width / 2f + 1, textY + 1, SKTextAlign.Center, font, paint);
             }
 
             // Ana metin
             using (var paint = new SKPaint
             {
                 Color = textColor,
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                TextAlign = SKTextAlign.Center,
                 IsAntialias = true
             })
+            using (var font = new SKFont
             {
-                var textBounds = new SKRect();
-                paint.MeasureText(text, ref textBounds);
-                canvas.DrawText(text, Width / 2f, (Height + textBounds.Height) / 2f, paint);
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            })
+            {
+                float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
+                canvas.DrawText(text, Width / 2f, textY, SKTextAlign.Center, font, paint);
             }
         }
     }

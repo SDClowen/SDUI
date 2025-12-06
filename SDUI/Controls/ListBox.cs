@@ -137,16 +137,17 @@ namespace SDUI.Controls
         private void UpdateMaxItemWidth()
         {
             _maxItemWidth = 0;
-            using var paint = new SKPaint
+            using var font = new SKFont
             {
-                TextSize = ItemHeight - 10,
-                TextAlign = SKTextAlign.Left
+                Size = ItemHeight - 10,
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Edging = SKFontEdging.SubpixelAntialias
             };
 
             foreach (var item in _items)
             {
                 var text = item?.ToString() ?? string.Empty;
-                var width = (int)paint.MeasureText(text);
+                var width = (int)font.MeasureText(text);
                 _maxItemWidth = Math.Max(_maxItemWidth, width + 10); // 10 pixel padding
             }
         }
@@ -235,12 +236,17 @@ namespace SDUI.Controls
             };
             canvas.DrawRect(0, 0, Width, Height, bgPaint);
 
+            using var font = new SKFont
+            {
+                Size = ItemHeight - 10,
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Edging = SKFontEdging.SubpixelAntialias
+            };
+
             using var paint = new SKPaint
             {
                 Color = ColorScheme.ForeColor.ToSKColor(),
-                IsAntialias = true,
-                TextSize = ItemHeight - 10,
-                TextAlign = SKTextAlign.Left
+                IsAntialias = true
             };
 
             var clientRect = new Rectangle(
@@ -276,8 +282,8 @@ namespace SDUI.Controls
                 }
 
                 var text = _items[i]?.ToString() ?? string.Empty;
-                var y = itemRect.Top + (ItemHeight + paint.TextSize) / 2;
-                canvas.DrawText(text, itemRect.Left + 5, y, paint);
+                var y = itemRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2;
+                canvas.DrawText(text, itemRect.Left + 5, y, SKTextAlign.Left, font, paint);
             }
         }
 

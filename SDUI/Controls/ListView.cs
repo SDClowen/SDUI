@@ -198,10 +198,7 @@ public class ListView : UIElementBase
 
     private static SKTypeface CreateTypeface(Font font)
     {
-        return SKTypeface.FromFamilyName(font.FontFamily.Name,
-            font.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
-            SKFontStyleWidth.Normal,
-            font.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright);
+        return SDUI.Helpers.FontManager.GetSKTypeface(font);
     }
 
     private SKFont CreateFont(Font font)
@@ -222,12 +219,9 @@ public class ListView : UIElementBase
         {
             IsAntialias = true,
             Color = colorSource.Color,
-            Style = SKPaintStyle.Fill,
-            TextSize = font.Size,
-            Typeface = font.Typeface,
-            SubpixelText = true
+            Style = SKPaintStyle.Fill
         };
-        canvas.DrawText(text, x, y, p);
+        canvas.DrawText(text, x, y, SKTextAlign.Left, font, p);
     }
 
     // Adjust header drawing to always fill full width
@@ -252,7 +246,9 @@ public class ListView : UIElementBase
         for (; colIndex < Columns.Count && colX < Width; colIndex++)
         {
             var column = Columns[colIndex];
-            DrawTextCompat(canvas, column.Text ?? string.Empty, colX + 5, 20, headerFont, textPaint);
+            var fm = headerFont.Metrics;
+            float textY = 15f - (fm.Ascent + fm.Descent) / 2f;
+            DrawTextCompat(canvas, column.Text ?? string.Empty, colX + 5, textY, headerFont, textPaint);
             colX += column.Width;
             canvas.DrawLine(colX, 0, colX, Height, gridPaint);
         }

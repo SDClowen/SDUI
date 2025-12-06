@@ -185,6 +185,15 @@ namespace SDUI.Controls
             _hideTimer.Stop();
         }
 
+        public void Show(UIElementBase control, string text)
+        {
+            if (control == null) return;
+
+            _currentControl = control;
+            Text = text;
+            Show();
+        }
+
         public void Show()
         {
             if (_currentControl == null) return;
@@ -334,7 +343,7 @@ namespace SDUI.Controls
             return new Rectangle(windowPoint, element.Size);
         }
 
-        private (List<string> Lines, float MaxWidth) WrapTextIntoLines(string text, SKPaint paint, float maxWidth)
+        private (List<string> Lines, float MaxWidth) WrapTextIntoLines(string text, SKFont font, float maxWidth)
         {
             List<string> lines = new();
             float maxLineWidth = 0f;
@@ -359,19 +368,19 @@ namespace SDUI.Controls
                         ? word
                         : $"{currentLine} {word}";
 
-                    float candidateWidth = paint.MeasureText(candidate);
+                    float candidateWidth = font.MeasureText(candidate);
 
                     if (candidateWidth > maxWidth && !string.IsNullOrEmpty(currentLine))
                     {
-                        maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(currentLine));
+                        maxLineWidth = Math.Max(maxLineWidth, font.MeasureText(currentLine));
                         lines.Add(currentLine);
                         currentLine = word;
                     }
                     else if (candidateWidth > maxWidth)
                     {
-                        foreach (var wrapped in BreakLongWord(word, paint, maxWidth))
+                        foreach (var wrapped in BreakLongWord(word, font, maxWidth))
                         {
-                            maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(wrapped));
+                            maxLineWidth = Math.Max(maxLineWidth, font.MeasureText(wrapped));
                             lines.Add(wrapped);
                         }
                         currentLine = string.Empty;
@@ -384,7 +393,7 @@ namespace SDUI.Controls
 
                 if (!string.IsNullOrEmpty(currentLine))
                 {
-                    maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(currentLine));
+                    maxLineWidth = Math.Max(maxLineWidth, font.MeasureText(currentLine));
                     lines.Add(currentLine);
                 }
             }
@@ -392,13 +401,13 @@ namespace SDUI.Controls
             if (lines.Count == 0)
             {
                 lines.Add(text);
-                maxLineWidth = Math.Max(maxLineWidth, paint.MeasureText(text));
+                maxLineWidth = Math.Max(maxLineWidth, font.MeasureText(text));
             }
 
             return (lines, Math.Max(maxLineWidth, 0));
         }
 
-        private static IEnumerable<string> BreakLongWord(string word, SKPaint paint, float maxWidth)
+        private static IEnumerable<string> BreakLongWord(string word, SKFont font, float maxWidth)
         {
             List<string> segments = new();
             string current = string.Empty;
@@ -406,7 +415,7 @@ namespace SDUI.Controls
             foreach (char c in word)
             {
                 string candidate = current + c;
-                if (paint.MeasureText(candidate) > maxWidth && current.Length > 0)
+                if (font.MeasureText(candidate) > maxWidth && current.Length > 0)
                 {
                     segments.Add(current);
                     current = c.ToString();
@@ -434,17 +443,16 @@ namespace SDUI.Controls
                 return;
             }
 
-            using var paint = new SKPaint
+            using var font = new SKFont
             {
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.Name),
-                IsAntialias = true
+                Size = Font.Size.PtToPx(this),
+                Typeface = SKTypeface.FromFamilyName(Font.Name)
             };
 
             float maxContentWidth = Math.Max(1, _maxWidth - (_padding * 2));
-            var (lines, maxLineWidth) = WrapTextIntoLines(Text, paint, maxContentWidth);
+            var (lines, maxLineWidth) = WrapTextIntoLines(Text, font, maxContentWidth);
 
-            var metrics = paint.FontMetrics;
+            var metrics = font.Metrics;
             float lineHeight = metrics.Descent - metrics.Ascent;
             int lineCount = Math.Max(1, lines.Count);
 
@@ -512,23 +520,26 @@ namespace SDUI.Controls
             // Metin çizimi
             if (!string.IsNullOrEmpty(Text))
             {
+                using (var font = new SKFont
+                {
+                    Size = Font.Size.PtToPx(this),
+                    Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+                })
                 using (var paint = new SKPaint
                 {
                     Color = new SKColor((byte)(ForeColor.R), (byte)(ForeColor.G), (byte)(ForeColor.B), (byte)(ForeColor.A)),
-                    TextSize = Font.Size.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName(Font.Name),
                     IsAntialias = true
                 })
                 {
-                    var metrics = paint.FontMetrics;
+                    var metrics = font.Metrics;
                     float lineHeight = metrics.Descent - metrics.Ascent;
-                    var (lines, _) = WrapTextIntoLines(Text, paint, Math.Max(1, Width - (_padding * 2)));
+                    var (lines, _) = WrapTextIntoLines(Text, font, Math.Max(1, Width - (_padding * 2)));
                     float x = _padding;
                     float y = _padding - metrics.Ascent;
 
                     foreach (var line in lines)
                     {
-                        canvas.DrawText(line, x, y, paint);
+                        canvas.DrawText(line, x, y, font, paint);
                         y += lineHeight;
                     }
                 }

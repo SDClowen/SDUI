@@ -306,16 +306,17 @@ public class ContextMenuStrip : MenuStrip
 
             var textColor = isHovered ? MenuForeColor.BlendWith(HoverForeColor, 0.6f) : MenuForeColor;
 
-            using (var textPaint = new SKPaint { Color = textColor.ToSKColor().WithAlpha(fadeAlpha), TextSize = Font.Size.PtToPx(this), Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name), IsAntialias = true, SubpixelText = true, LcdRenderText = true })
+            using (var font = new SKFont
             {
-                var metrics = textPaint.FontMetrics;
-                float textHeight = metrics.Descent - metrics.Ascent;
-                float textY = itemRect.Top + (itemRect.Height - textHeight) / 2f - metrics.Ascent;
-
-                if (item.Text.Contains("&"))
-                    canvas.DrawTextWithMnemonic(item.Text, textPaint, textX, textY);
-                else
-                    canvas.DrawText(item.Text, textX, textY, textPaint);
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
+            })
+            using (var textPaint = new SKPaint { Color = textColor.ToSKColor().WithAlpha(fadeAlpha), IsAntialias = true })
+            {
+                var textBounds = SKRect.Create(textX, itemRect.Top, itemRect.Right - textX, itemRect.Height);
+                canvas.DrawControlText(item.Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, false, true);
             }
 
             if (ShowSubmenuArrow && item.HasDropDown)

@@ -131,13 +131,14 @@ public class Radio : UIElementBase
 
     public override Size GetPreferredSize(Size proposedSize)
     {
-        using var paint = new SKPaint
+        using var font = new SKFont
         {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            Size = Font.Size.PtToPx(this),
+            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+            Edging = SKFontEdging.SubpixelAntialias
         };
 
-        float textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
+        float textWidth = string.IsNullOrEmpty(Text) ? 0 : font.MeasureText(Text);
         int width = RADIOBUTTON_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth);
         int height = Ripple ? 30 : 20;
 
@@ -269,24 +270,23 @@ public class Radio : UIElementBase
 
     private void DrawText(SKCanvas canvas)
     {
-        using var textPaint = canvas.CreateTextPaint(Font, Enabled ? ColorScheme.ForeColor : Color.Gray, this, ContentAlignment.MiddleLeft);
+        using var font = new SKFont
+        {
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Edging = SKFontEdging.SubpixelAntialias
+        };
 
-        float textY = Height / 2f + (textPaint.FontMetrics.XHeight / 2f);
+        using var textPaint = new SKPaint
+        {
+            Color = (Enabled ? ColorScheme.ForeColor : Color.Gray).ToSKColor(),
+            IsAntialias = true
+        };
+
         float textX = boxOffset + RADIOBUTTON_SIZE + TEXT_PADDING;
+        var textBounds = SKRect.Create(textX, 0, Width - textX - Padding.Right, Height);
 
-        if (AutoEllipsis)
-        {
-            float maxWidth = Width - textX - Padding.Right;
-            canvas.DrawTextWithEllipsis(Text, textPaint, textX, textY, maxWidth);
-        }
-        else if (UseMnemonic)
-        {
-            canvas.DrawTextWithMnemonic(Text, textPaint, textX, textY);
-        }
-        else
-        {
-            canvas.DrawText(Text, textX, textY, textPaint);
-        }
+        canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis, UseMnemonic);
     }
 
     internal override void OnSizeChanged(EventArgs e)

@@ -899,52 +899,56 @@ public class TextBox : UIElementBase
 
         if (string.IsNullOrEmpty(displayText) && !string.IsNullOrEmpty(PlaceholderText) && !Focused)
         {
+            using (var font = new SKFont
+            {
+                Size = Font.Size * 96.0f / 72.0f,
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            })
             using (var paint = new SKPaint
             {
                 Color = Color.Gray.ToSKColor(),
-                TextSize = Font.Size * 96.0f / 72.0f,
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                IsAntialias = true,
-                TextAlign = GetSkiaTextAlign()
+                IsAntialias = true
             })
             {
                 var textBounds = new SKRect();
-                paint.MeasureText(PlaceholderText, ref textBounds);
+                font.MeasureText(PlaceholderText, out textBounds);
                 var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
                 var x = GetTextX(bounds.Width, textBounds.Width);
-                canvas.DrawText(PlaceholderText, x, y, paint);
+                canvas.DrawText(PlaceholderText, x, y, SKTextAlign.Left, font, paint);
             }
         }
         else if (!string.IsNullOrEmpty(displayText))
         {
+            using (var font = new SKFont
+            {
+                Size = Font.Size * 96.0f / 72.0f,
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            })
             using (var paint = new SKPaint
             {
                 Color = Enabled ? ForeColor.ToSKColor() : Color.Gray.ToSKColor(),
-                TextSize = Font.Size * 96.0f / 72.0f,
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-                IsAntialias = true,
-                TextAlign = GetSkiaTextAlign()
+                IsAntialias = true
             })
             {
                 var textBounds = new SKRect();
-                paint.MeasureText(displayText, ref textBounds);
+                font.MeasureText(displayText, out textBounds);
                 var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
                 var x = GetTextX(bounds.Width, textBounds.Width);
-                canvas.DrawText(displayText, x, y, paint);
+                canvas.DrawText(displayText, x, y, SKTextAlign.Left, font, paint);
 
                 // Seçim çizimi
                 if (Focused && _selectionLength > 0)
                 {
                     var selectedText = displayText.Substring(_selectionStart, _selectionLength);
                     var selectedBounds = new SKRect();
-                    paint.MeasureText(selectedText, ref selectedBounds);
+                    font.MeasureText(selectedText, out selectedBounds);
 
                     var startX = x;
                     if (_selectionStart > 0)
                     {
                         var preText = displayText.Substring(0, _selectionStart);
                         var preBounds = new SKRect();
-                        paint.MeasureText(preText, ref preBounds);
+                        font.MeasureText(preText, out preBounds);
                         startX += preBounds.Width;
                     }
 
@@ -967,6 +971,11 @@ public class TextBox : UIElementBase
         // İmleç çizimi
         if (Focused && _showCursor && _selectionLength == 0)
         {
+            using var font = new SKFont
+            {
+                Size = Font.Size * 96.0f / 72.0f,
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            };
             using var paint = new SKPaint
             {
                 Color = ForeColor.ToSKColor(),
@@ -975,13 +984,20 @@ public class TextBox : UIElementBase
             };
 
             displayText = UseSystemPasswordChar ? new string(PasswordChar, Text.Length) : Text;
+            
+            var fullBounds = new SKRect();
+            font.MeasureText(displayText, out fullBounds);
+            var startX = GetTextX(bounds.Width, fullBounds.Width);
+
             var preText = displayText.Substring(0, _selectionStart);
             var textBounds = new SKRect();
-            paint.MeasureText(preText, ref textBounds);
+            font.MeasureText(preText, out textBounds);
+
+            var cursorX = startX + textBounds.Width;
 
             canvas.DrawLine(
-                new SKPoint(textBounds.Width, 2),
-                new SKPoint(textBounds.Width, bounds.Height - 2),
+                new SKPoint(cursorX, 2),
+                new SKPoint(cursorX, bounds.Height - 2),
                 paint);
         }
 
@@ -995,20 +1011,23 @@ public class TextBox : UIElementBase
         if (ShowCharCount)
         {
             var countText = MaxLength > 0 ? $"{Text.Length}/{MaxLength}" : Text.Length.ToString();
+            using (var font = new SKFont
+            {
+                Size = (Font.Size - 2) * 96.0f / 72.0f,
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            })
             using (var paint = new SKPaint
             {
                 Color = CharCountColor.ToSKColor(),
-                TextSize = (Font.Size - 2) * 96.0f / 72.0f,
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
                 IsAntialias = true
             })
             {
                 var textBounds = new SKRect();
-                paint.MeasureText(countText, ref textBounds);
+                font.MeasureText(countText, out textBounds);
                 canvas.DrawText(countText,
                     bounds.Width - textBounds.Width - 5,
                     bounds.Height - 5,
-                    paint);
+                    font, paint);
             }
         }
 
@@ -1034,16 +1053,19 @@ public class TextBox : UIElementBase
         // Rich text çizimi
         if (IsRich && !string.IsNullOrEmpty(Text))
         {
+            using (var font = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            })
             using (var paint = new SKPaint
             {
-                TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
                 IsAntialias = true
             })
             {
-                var lines = GetTextLines(paint);
+                var lines = GetTextLines(font);
                 var y = Padding.Top - _scrollPosition;
-                var lineHeight = paint.TextSize + LineSpacing;
+                var lineHeight = font.Size + LineSpacing;
 
                 foreach (var line in lines)
                 {
@@ -1064,17 +1086,18 @@ public class TextBox : UIElementBase
                             paint.Color = style.Color.ToSKColor();
                             if (style.IsBold)
                             {
-                                paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name, SKFontStyleWeight.Bold, SKFontStyleWidth.Normal, SKFontStyleSlant.Upright);
+                                using var boldFont = new Font(Font, FontStyle.Bold);
+                                font.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(boldFont);
                             }
                         }
                     }
 
-                    canvas.DrawText(line, Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0), y + paint.TextSize, paint);
+                    canvas.DrawText(line, Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0), y + font.Size, font, paint);
                     y += lineHeight;
 
                     // Stili sıfırla
                     paint.Color = ForeColor.ToSKColor();
-                    paint.Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name);
+                    font.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
                 }
             }
         }
@@ -1132,10 +1155,10 @@ public class TextBox : UIElementBase
 
     private void UpdateSelectionFromMousePosition(Point location)
     {
-        using (var paint = new SKPaint
+        using (var font = new SKFont
         {
-            TextSize = Font.Size * 96.0f / 72.0f,
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            Size = Font.Size * 96.0f / 72.0f,
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         })
         {
             var displayText = UseSystemPasswordChar ? new string(PasswordChar, Text.Length) : Text;
@@ -1145,7 +1168,7 @@ public class TextBox : UIElementBase
             {
                 var textPart = displayText.Substring(0, i);
                 var bounds = new SKRect();
-                paint.MeasureText(textPart, ref bounds);
+                font.MeasureText(textPart, out bounds);
 
                 if (bounds.Width >= clickX || i == displayText.Length)
                 {
@@ -1184,14 +1207,14 @@ public class TextBox : UIElementBase
     {
         if (!AutoHeight || !MultiLine) return;
 
-        using (var paint = new SKPaint
+        using (var font = new SKFont
         {
-            TextSize = Font.Size * 96.0f / 72.0f,
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            Size = Font.Size * 96.0f / 72.0f,
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         })
         {
-            var lines = GetTextLines(paint);
-            var lineHeight = paint.TextSize + LineSpacing;
+            var lines = GetTextLines(font);
+            var lineHeight = font.Size + LineSpacing;
             var newHeight = (int)(lines.Count * lineHeight) + Padding.Vertical + 4;
 
             if (Height != newHeight)
@@ -1201,7 +1224,7 @@ public class TextBox : UIElementBase
         }
     }
 
-    private List<string> GetTextLines(SKPaint paint)
+    private List<string> GetTextLines(SKFont font)
     {
         var lines = new List<string>();
         if (string.IsNullOrEmpty(Text))
@@ -1225,7 +1248,7 @@ public class TextBox : UIElementBase
         {
             var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
             var bounds = new SKRect();
-            paint.MeasureText(testLine, ref bounds);
+            font.MeasureText(testLine, out bounds);
 
             if (bounds.Width > availableWidth && currentLine.Length > 0)
             {
@@ -1306,20 +1329,20 @@ public class TextBox : UIElementBase
         var showVertical = false;
         var showHorizontal = false;
 
-        using (var paint = new SKPaint
+        using (var font = new SKFont
         {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         })
         {
-            var lines = GetTextLines(paint);
-            var totalHeight = lines.Count * (paint.TextSize + LineSpacing);
+            var lines = GetTextLines(font);
+            var totalHeight = lines.Count * (font.Size + LineSpacing);
             var maxWidth = 0f;
 
             foreach (var line in lines)
             {
                 var tbounds = new SKRect();
-                paint.MeasureText(line, ref tbounds);
+                font.MeasureText(line, out tbounds);
                 maxWidth = Math.Max(maxWidth, bounds.Width);
             }
 
@@ -1332,7 +1355,7 @@ public class TextBox : UIElementBase
                 _verticalScrollBar.Height = showHorizontal ? Height - 12 : Height;
                 _verticalScrollBar.Minimum = 0;
                 _verticalScrollBar.Maximum = (int)(totalHeight - Height);
-                _verticalScrollBar.SmallChange = (int)paint.TextSize;
+                _verticalScrollBar.SmallChange = (int)font.Size;
                 _verticalScrollBar.LargeChange = Height;
             }
 

@@ -199,7 +199,7 @@ public static class SkiaExtensions
             slant = SKFontStyleSlant.Italic;
 
         // Create the SKTypeface
-        SKTypeface typeface = SKTypeface.FromFamilyName(fontFamily, weight, width, slant);
+        SKTypeface typeface = SDUI.Helpers.FontManager.GetSKTypeface(drawingFont);
 
         // Create the SKFont
         SKFont skFont = new SKFont(typeface, (float)drawingFont.Size);

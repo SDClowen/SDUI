@@ -12,6 +12,9 @@ namespace SDUI.Controls;
 
 public class ComboBox : UIElementBase
 {
+    private const int DropDownVerticalPadding = 6;
+    private const int DefaultMinVisibleItems = 4;
+
     #region Inner Classes
 
     private class DropDownPanel : UIElementBase
@@ -31,13 +34,13 @@ public class ComboBox : UIElementBase
         private bool _isClosing;
         private bool _openingUpwards;
 
-        // Per-item hover animasyonlarý
+        // Per-item hover animasyonlarï¿½
         private readonly Dictionary<int, AnimationManager> _itemHoverAnims = new();
 
-        // Windows 11 WinUI3 benzeri modern boþluklar
-        private const int VERTICAL_PADDING = 4;
-        private const int ITEM_MARGIN = 6; // Dropdown kenarýndan item arkaplan kenarýna kadar margin
-        private const float CORNER_RADIUS = 8f;
+        // Windows 11 WinUI3 benzeri modern boï¿½luklar
+        private const int VERTICAL_PADDING = DropDownVerticalPadding;
+        private const int ITEM_MARGIN = 10; // Dropdown kenarï¿½ndan item arkaplan kenarï¿½na kadar margin
+        private const float CORNER_RADIUS = 10f;
         private const int SCROLL_BAR_WIDTH = 14;
 
         public DropDownPanel(ComboBox owner)
@@ -128,7 +131,7 @@ public class ComboBox : UIElementBase
             _isClosing = false;
             ShowItems();
             Visible = true;
-            _openAnimation.SetProgress(0); // Her açýlýþta 0'dan baþla
+            _openAnimation.SetProgress(0); // Her aï¿½ï¿½lï¿½ï¿½ta 0'dan baï¿½la
             _openAnimation.StartNewAnimation(AnimationDirection.In);
         }
 
@@ -262,9 +265,10 @@ public class ComboBox : UIElementBase
                 canvas.Restore();
                 
                 // High-quality solid background
+                var surfaceColor = ColorScheme.BackColor.ToSKColor().InterpolateColor(SKColors.White, 0.06f);
                 using (var bgPaint = new SKPaint 
                 { 
-                    Color = ColorScheme.BackColor.ToSKColor(),
+                    Color = surfaceColor,
                     IsAntialias = true,
                     FilterQuality = SKFilterQuality.High
                 })
@@ -280,7 +284,7 @@ public class ComboBox : UIElementBase
                     canvas.ClipPath(clipPath, antialias: true);
                 }
 
-                // Minimal üst highlight
+                // Minimal ï¿½st highlight
                 using (var highlightPaint = new SKPaint
                 {
                     Shader = SKShader.CreateLinearGradient(
@@ -316,13 +320,17 @@ public class ComboBox : UIElementBase
                 }
 
                 // High-quality text paint
+                using var font = new SKFont
+                {
+                    Size = _owner.Font.Size.PtToPx(this),
+                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface(_owner.Font),
+                    Subpixel = true,
+                    Edging = SKFontEdging.SubpixelAntialias
+                };
+
                 using var textPaint = new SKPaint
                 {
-                    TextSize = _owner.Font.Size.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName(_owner.Font.FontFamily.Name, SKFontStyle.Normal),
                     IsAntialias = true,
-                    SubpixelText = true,
-                    LcdRenderText = true,
                     FilterQuality = SKFilterQuality.High
                 };
 
@@ -353,7 +361,7 @@ public class ComboBox : UIElementBase
                     {
                         using var selPaint = new SKPaint
                         {
-                            Color = ColorScheme.AccentColor.Alpha(45).ToSKColor(),
+                            Color = ColorScheme.AccentColor.Alpha(70).ToSKColor(),
                             IsAntialias = true,
                             FilterQuality = SKFilterQuality.High
                         };
@@ -363,7 +371,7 @@ public class ComboBox : UIElementBase
                     // High-quality hover effect
                     else if (hProg > 0.001f)
                     {
-                        byte hoverAlpha = (byte)(25 + 35 * hProg);
+                        byte hoverAlpha = (byte)(30 + 45 * hProg);
                         using var hoverPaint = new SKPaint 
                         { 
                             Color = ColorScheme.AccentColor.Alpha(hoverAlpha).ToSKColor(),
@@ -378,10 +386,10 @@ public class ComboBox : UIElementBase
                     string text = _owner.GetItemText(_owner.Items[i]);
                     textPaint.Color = ColorScheme.ForeColor.ToSKColor();
 
-                    float baseTextY = currentY + ItemHeight / 2f + textPaint.FontMetrics.XHeight / 2f;
+                    float baseTextY = currentY + ItemHeight / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                     float textX = ITEM_MARGIN + 8;
                     
-                    canvas.DrawText(text, textX, baseTextY, textPaint);
+                    canvas.DrawText(text, textX, baseTextY, font, textPaint);
 
                     currentY += ItemHeight;
                 }
@@ -393,7 +401,7 @@ public class ComboBox : UIElementBase
     }
 
     /// <summary>
-    /// ComboBox öðeleri koleksiyonu
+    /// ComboBox ï¿½ï¿½eleri koleksiyonu
     /// </summary>
     public class ObjectCollection : IList
     {
@@ -511,7 +519,7 @@ public class ComboBox : UIElementBase
             {
                 _selectedIndex = value;
                 _selectedItem = value >= 0 ? Items[value] : null;
-                // DropDown stilinde kullanýcý listeden bir seçim yapýnca metni güncelle
+                // DropDown stilinde kullanï¿½cï¿½ listeden bir seï¿½im yapï¿½nca metni gï¿½ncelle
                 if (_dropDownStyle == ComboBoxStyle.DropDown && _selectedItem != null)
                 {
                     _text = GetItemText(_selectedItem);
@@ -607,12 +615,28 @@ public class ComboBox : UIElementBase
         set => _itemHeight = value;
     }
 
-    private int _dropDownHeight = 150;
+    private int _dropDownHeight = 0;
     [Browsable(true)]
     public int DropDownHeight
     {
         get => _dropDownHeight;
         set => _dropDownHeight = value;
+    }
+
+    private bool _autoDropDownHeight = true;
+    [Browsable(true)]
+    public bool AutoDropDownHeight
+    {
+        get => _autoDropDownHeight;
+        set => _autoDropDownHeight = value;
+    }
+
+    private int _minDropDownItems = DefaultMinVisibleItems;
+    [Browsable(true)]
+    public int MinDropDownItems
+    {
+        get => _minDropDownItems;
+        set => _minDropDownItems = Math.Max(1, value);
     }
 
     private ComboBoxStyle _dropDownStyle = ComboBoxStyle.DropDown;
@@ -649,7 +673,7 @@ public class ComboBox : UIElementBase
                 _text = value;
                 Invalidate();
             }
-            // DropDownList'te text düzenlenemez
+            // DropDownList'te text dï¿½zenlenemez
         }
     }
 
@@ -725,7 +749,7 @@ public class ComboBox : UIElementBase
             AnimationType = AnimationType.EaseInOut
         };
         _arrowAnimation.OnAnimationProgress += _ => Invalidate();
-        // Baþlangýçta ok aþaðý bakmalý (0 rotation)
+        // Baï¿½langï¿½ï¿½ta ok aï¿½aï¿½ï¿½ bakmalï¿½ (0 rotation)
         _arrowAnimation.SetProgress(0);
 
         _dropDownPanel = new DropDownPanel(this);
@@ -761,10 +785,10 @@ public class ComboBox : UIElementBase
         {
             _pressAnimation.StartNewAnimation(AnimationDirection.In);
 
-            // DropDownStyle'a göre davranýþ
+            // DropDownStyle'a gï¿½re davranï¿½ï¿½
             if (DropDownStyle == ComboBoxStyle.Simple)
             {
-                // Simple modda dropdown açýlmaz
+                // Simple modda dropdown aï¿½ï¿½lmaz
                 return;
             }
 
@@ -804,18 +828,17 @@ public class ComboBox : UIElementBase
     private int MeasureDropDownAutoWidth()
     {
         if (Items.Count == 0) return Width;
-        using var paint = new SKPaint
+        using var font = new SKFont
         {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-            IsAntialias = true
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         };
         float maxText = 0f;
         for (int i = 0; i < Items.Count; i++)
         {
             var txt = GetItemText(Items[i]) ?? string.Empty;
             var bounds = new SKRect();
-            paint.MeasureText(txt, ref bounds);
+            font.MeasureText(txt, out bounds);
             maxText = Math.Max(maxText, bounds.Width);
         }
         // padding + potential scrollbar + borders
@@ -847,43 +870,58 @@ public class ComboBox : UIElementBase
         var client = _parentWindow.ClientRectangle;
 
         const int MARGIN = 8;
-        int totalItemsHeight = Items.Count * ItemHeight + (2 * 4); // VERTICAL_PADDING
-        int preferredHeight = Math.Min(totalItemsHeight, MaxDropDownItems * ItemHeight + (2 * 4));
+        int padding = DropDownVerticalPadding * 2;
+        int totalItemsHeight = Items.Count * ItemHeight + padding;
+        int minVisibleItems = Math.Min(Math.Max(_minDropDownItems, 1), Math.Max(Items.Count, 1));
+        int minHeight = Math.Max(ItemHeight + padding, minVisibleItems * ItemHeight + padding);
 
-        int maxAvailableHeight = _parentWindow.Height - comboLocation.Y - Height - MARGIN;
-        int actualHeight = Math.Min(preferredHeight, maxAvailableHeight);
-        actualHeight = Math.Max(actualHeight, ItemHeight + (2 * 4));
+        int spaceBelow = _parentWindow.Height - comboLocation.Y - Height - MARGIN;
+        int spaceAbove = comboLocation.Y - MARGIN;
+        int availableSpace = Math.Max(spaceBelow, spaceAbove);
 
-        int dropdownHeight = Math.Min(DropDownHeight, actualHeight);
+        int dropdownHeight;
+        if (_autoDropDownHeight)
+        {
+            dropdownHeight = Math.Min(totalItemsHeight, availableSpace);
+            dropdownHeight = Math.Max(minHeight, dropdownHeight);
+        }
+        else
+        {
+            int bestVisibleItems = Math.Min(MaxDropDownItems, Items.Count);
+            int preferredHeight = Math.Min(totalItemsHeight, bestVisibleItems * ItemHeight + padding);
+            int target = _dropDownHeight > 0 ? _dropDownHeight : preferredHeight;
+            dropdownHeight = Math.Max(minHeight, Math.Min(target, totalItemsHeight));
+        }
+
+        dropdownHeight = Math.Min(dropdownHeight, client.Height - MARGIN * 2);
         int dropdownWidth = _dropDownWidth == 0 ? MeasureDropDownAutoWidth() : DropDownWidth;
 
         // Smart positioning with flip support (ContextMenuStrip gibi)
-        bool canOpenDown = comboLocation.Y + Height + dropdownHeight <= client.Bottom - MARGIN;
-        bool canOpenUp = comboLocation.Y - dropdownHeight >= client.Top + MARGIN;
+        bool canOpenDown = dropdownHeight <= spaceBelow;
+        bool canOpenUp = dropdownHeight <= spaceAbove;
 
         Point dropdownLocation;
         if (canOpenDown)
         {
+            dropdownHeight = Math.Min(dropdownHeight, Math.Max(minHeight, spaceBelow));
             dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height + 2);
         }
         else if (canOpenUp)
         {
+            dropdownHeight = Math.Min(dropdownHeight, Math.Max(minHeight, spaceAbove));
             dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
         }
         else
         {
             // Neither fits perfectly - pick the side with more space
-            int spaceBelow = client.Bottom - (comboLocation.Y + Height);
-            int spaceAbove = comboLocation.Y;
-            
-            if (spaceBelow > spaceAbove)
+            if (spaceBelow >= spaceAbove)
             {
                 dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height + 2);
-                dropdownHeight = Math.Max(ItemHeight + 8, spaceBelow - MARGIN);
+                dropdownHeight = Math.Max(minHeight, Math.Min(dropdownHeight, spaceBelow));
             }
             else
             {
-                dropdownHeight = Math.Max(ItemHeight + 8, spaceAbove - MARGIN);
+                dropdownHeight = Math.Max(minHeight, Math.Min(dropdownHeight, spaceAbove));
                 dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
             }
         }
@@ -1002,7 +1040,7 @@ public class ComboBox : UIElementBase
             return;
         }
 
-        // ComboBox'ýn kendi alaný içinde mi kontrol et
+        // ComboBox'ï¿½n kendi alanï¿½ iï¿½inde mi kontrol et
         var comboBounds = new Rectangle(GetLocationRelativeToWindow(), Size);
         System.Diagnostics.Debug.WriteLine($"OnWindowMouseDown: ComboBox bounds=({comboBounds.X},{comboBounds.Y},{comboBounds.Width},{comboBounds.Height})");
         if (comboBounds.Contains(e.Location))
@@ -1011,7 +1049,7 @@ public class ComboBox : UIElementBase
             return;
         }
 
-        // Dropdown panel içinde mi kontrol et
+        // Dropdown panel iï¿½inde mi kontrol et
         var panelBounds = new Rectangle(_dropDownPanel.Location, _dropDownPanel.Size);
         System.Diagnostics.Debug.WriteLine($"OnWindowMouseDown: Panel bounds=({panelBounds.X},{panelBounds.Y},{panelBounds.Width},{panelBounds.Height})");
         if (panelBounds.Contains(e.Location))
@@ -1068,11 +1106,11 @@ public class ComboBox : UIElementBase
         var accentColor = ColorScheme.AccentColor.ToSKColor();
         var baseColor = ColorScheme.BackColor.ToSKColor();
 
-        // Arka plan rengi hesapla (daha yumuþak blend)
+        // Arka plan rengi hesapla (daha yumuï¿½ak blend)
         float blendFactor = Math.Clamp(hoverProgress * 0.15f + pressProgress * 0.1f + (DroppedDown ? 0.2f : 0f), 0f, 0.4f);
         var backgroundColor = baseColor.InterpolateColor(accentColor, blendFactor);
 
-        // Modern gölge efekti (hover ile dinamik - daha subtle)
+        // Modern gï¿½lge efekti (hover ile dinamik - daha subtle)
         if (ShadowDepth > 0)
         {
             float shadowAlpha = 12 + (hoverProgress * 8) + (pressProgress * 5);
@@ -1112,7 +1150,7 @@ public class ComboBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius, _radius, glowPaint);
         }
 
-        // Üstte ince aydýnlýk highlight (acrylic effect)
+        // ï¿½stte ince aydï¿½nlï¿½k highlight (acrylic effect)
         using (var highlightPaint = new SKPaint
         {
             Shader = SKShader.CreateLinearGradient(
@@ -1131,7 +1169,7 @@ public class ComboBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius, _radius, highlightPaint);
         }
 
-        // Modern kenarlýk (ince ve zarif)
+        // Modern kenarlï¿½k (ince ve zarif)
         float borderAlpha = 0.4f + (hoverProgress * 0.2f) + (pressProgress * 0.1f);
         using (var borderPaint = new SKPaint
         {
@@ -1145,42 +1183,46 @@ public class ComboBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius - 0.5f, _radius - 0.5f, borderPaint);
         }
 
-        // Metin çizimi
+        // Metin ï¿½izimi
         string displayText = Text;
         if (string.IsNullOrEmpty(displayText))
         {
-            displayText = "Seçiniz...";
+            displayText = "Seï¿½iniz...";
         }
         var textColor = ColorScheme.ForeColor.ToSKColor();
+
+        using var font = new SKFont
+        {
+            Size = Font.Size.PtToPx(this),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Subpixel = true
+        };
 
         using var textPaint = new SKPaint
         {
             Color = textColor,
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
-            IsAntialias = true,
-            SubpixelText = true
+            IsAntialias = true
         };
 
         var textBounds = new SKRect();
-        textPaint.MeasureText(displayText, ref textBounds);
-        float textY = Height / 2f + textPaint.FontMetrics.XHeight / 2f;
+        font.MeasureText(displayText, out textBounds);
+        float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
         float textX = 16;
 
-        canvas.DrawText(displayText, textX, textY, textPaint);
+        canvas.DrawText(displayText, textX, textY, font, textPaint);
 
-        // Modern Chevron ikonu - DropDown ve DropDownList stillerinde göster
+        // Modern Chevron ikonu - DropDown ve DropDownList stillerinde gï¿½ster
         if (DropDownStyle != ComboBoxStyle.Simple)
         {
             float chevronSize = 10;
             float chevronX = Width - 22;
             float chevronY = Height / 2f;
 
-            // Arrow rotation animasyonu: 0° kapalý, 180° açýk
+            // Arrow rotation animasyonu: 0ï¿½ kapalï¿½, 180ï¿½ aï¿½ï¿½k
             float arrowProgress = (float)_arrowAnimation.GetProgress();
             float rotation = 180f * arrowProgress;
 
-            // Chevron rengi (hover ve press durumuna göre)
+            // Chevron rengi (hover ve press durumuna gï¿½re)
             float chevronBlend = Math.Clamp(hoverProgress * 0.35f + pressProgress * 0.5f, 0f, 1f);
             var chevronColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentColor, chevronBlend);
 
@@ -1196,12 +1238,12 @@ public class ComboBox : UIElementBase
                 canvas.DrawCircle(chevronX, chevronY, circleRadius, bgPaint);
             }
 
-            // Rotasyon için canvas'ý kaydet
+            // Rotasyon iï¿½in canvas'ï¿½ kaydet
             canvas.Save();
             canvas.Translate(chevronX, chevronY);
             canvas.RotateDegrees(rotation);
 
-            // Modern chevron (V þekli) - ince ve zarif
+            // Modern chevron (V ï¿½ekli) - ince ve zarif
             using (var chevronPaint = new SKPaint
             {
                 Color = chevronColor,
@@ -1236,7 +1278,7 @@ public class ComboBox : UIElementBase
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
-        Height = 28; // Sabit yükseklik
+        Height = 28; // Sabit yï¿½kseklik
     }
 
     protected override void Dispose(bool disposing)

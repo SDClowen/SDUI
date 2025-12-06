@@ -135,7 +135,7 @@ namespace SDUI.Controls
             using var paint = new SKPaint
             {
                 TextSize = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
             };
 
             float textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
@@ -311,24 +311,23 @@ namespace SDUI.Controls
 
         private void DrawText(SKCanvas canvas)
         {
-            using var textPaint = canvas.CreateTextPaint(Font, Enabled ? ColorScheme.ForeColor : Color.Gray, this, ContentAlignment.MiddleLeft);
+            using var font = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Edging = SKFontEdging.SubpixelAntialias
+            };
 
-            float textY = Height / 2f + (textPaint.FontMetrics.XHeight / 2f);
+            using var textPaint = new SKPaint
+            {
+                Color = (Enabled ? ColorScheme.ForeColor : Color.Gray).ToSKColor(),
+                IsAntialias = true
+            };
+
             float textX = boxOffset + CHECKBOX_SIZE + TEXT_PADDING;
+            var textBounds = SKRect.Create(textX, 0, Width - textX - Padding.Right, Height);
 
-            if (AutoEllipsis)
-            {
-                float maxWidth = Width - textX - Padding.Right;
-                canvas.DrawTextWithEllipsis(Text, textPaint, textX, textY, maxWidth);
-            }
-            else if (UseMnemonic)
-            {
-                canvas.DrawTextWithMnemonic(Text, textPaint, textX, textY);
-            }
-            else
-            {
-                canvas.DrawText(Text, textX, textY, textPaint);
-            }
+            canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis, UseMnemonic);
         }
 
     private void AttachInputHandlers()

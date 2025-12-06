@@ -399,8 +399,7 @@ namespace SDUI.Controls
             using (var thumbPaint = new SKPaint
             {
                 Color = thumbColor,
-                IsAntialias = true,
-                FilterQuality = SKFilterQuality.High
+                IsAntialias = true
             })
             {
                 var r = new SKRect(_thumbRect.X, _thumbRect.Y, _thumbRect.Right, _thumbRect.Bottom);
