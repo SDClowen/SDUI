@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -283,7 +284,7 @@ public class Label : UIElementBase
         float baselineOffset = -font.Metrics.Ascent;
         for (int i = 0; i < lines.Count; i++)
         {
-            canvas.DrawText(lines[i], xPos, yOffset + baselineOffset + (i * lineHeight), skTextAlign, font, textPaint);
+            TextRenderingHelper.DrawText(canvas, lines[i], xPos, yOffset + baselineOffset + (i * lineHeight), skTextAlign, font, textPaint);
         }
     }
 

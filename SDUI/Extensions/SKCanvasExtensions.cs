@@ -1,4 +1,5 @@
 using SDUI.Controls;
+using SDUI.Helpers;
 using SkiaSharp;
 using System.Drawing;
 using System.Windows.Forms;
@@ -82,8 +83,6 @@ public static class SKCanvasExtensions
         else if (alignment == ContentAlignment.BottomLeft || alignment == ContentAlignment.BottomCenter || alignment == ContentAlignment.BottomRight)
             y = bounds.Bottom - font.Metrics.Descent - 4;
 
-        paint.TextAlign = skAlignment;
-
         if (autoEllipsis)
         {
             canvas.DrawTextWithEllipsis(text, x, y, bounds.Width, paint, font, skAlignment);
@@ -94,7 +93,7 @@ public static class SKCanvasExtensions
         }
         else
         {
-            canvas.DrawText(text, x, y, font, paint);
+            TextRenderingHelper.DrawText(canvas, text, x, y, skAlignment, font, paint);
         }
     }
 
@@ -108,7 +107,7 @@ public static class SKCanvasExtensions
                 displayText = displayText[..^4] + "...";
             }
         }
-        canvas.DrawText(displayText, x, y, textAlign, font, paint);
+        TextRenderingHelper.DrawText(canvas, displayText, x, y, textAlign, font, paint);
     }
 
     public static void DrawTextWithEllipsis(this SKCanvas canvas, string text, SKPaint paint, float x, float y, float maxWidth)
@@ -122,7 +121,7 @@ public static class SKCanvasExtensions
                 displayText = displayText[..^4] + "...";
             }
         }
-        canvas.DrawText(displayText, x, y, paint);
+        TextRenderingHelper.DrawText(canvas, displayText, x, y, paint);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
@@ -130,7 +129,7 @@ public static class SKCanvasExtensions
     {
         if (!text.Contains('&'))
         {
-            canvas.DrawText(text, x, y, alignment, font, paint);
+            TextRenderingHelper.DrawText(canvas, text, x, y, alignment, font, paint);
             return;
         }
 
@@ -146,9 +145,6 @@ public static class SKCanvasExtensions
         var parts = text.Split('&');
         float currentX = startX;
         
-        var originalAlign = paint.TextAlign;
-        paint.TextAlign = SKTextAlign.Left;
-
         for (int i = 0; i < parts.Length; i++)
         {
             if (i > 0 && parts[i].Length > 0)
@@ -165,11 +161,10 @@ public static class SKCanvasExtensions
             }
             if (parts[i].Length > 0)
             {
-                canvas.DrawText(parts[i], currentX, y, SKTextAlign.Left, font, paint);
+                TextRenderingHelper.DrawText(canvas, parts[i], currentX, y, SKTextAlign.Left, font, paint);
                 currentX += font.MeasureText(parts[i]);
             }
         }
-        paint.TextAlign = originalAlign;
     }
 
     public static void DrawTextWithMnemonic(this SKCanvas canvas, string text, SKPaint paint, float x, float y)
@@ -177,14 +172,12 @@ public static class SKCanvasExtensions
 #pragma warning disable CS0618 // Type or member is obsolete
         if (!text.Contains('&'))
         {
-            canvas.DrawText(text, x, y, paint);
+            TextRenderingHelper.DrawText(canvas, text, x, y, paint);
             return;
         }
 
         var parts = text.Split('&');
         float currentX = x;
-        var originalAlign = paint.TextAlign;
-        paint.TextAlign = SKTextAlign.Left;
 
         for (int i = 0; i < parts.Length; i++)
         {
@@ -202,12 +195,10 @@ public static class SKCanvasExtensions
             }
             if (parts[i].Length > 0)
             {
-                canvas.DrawText(parts[i], currentX, y, paint);
+                TextRenderingHelper.DrawText(canvas, parts[i], currentX, y, paint);
                 currentX += paint.MeasureText(parts[i]);
             }
         }
-
-        paint.TextAlign = originalAlign;
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 

@@ -1,5 +1,7 @@
 ﻿using SDUI.Animation;
 using SDUI.Collections;
+using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -221,7 +223,7 @@ public class ListView : UIElementBase
             Color = colorSource.Color,
             Style = SKPaintStyle.Fill
         };
-        canvas.DrawText(text, x, y, SKTextAlign.Left, font, p);
+        TextRenderingHelper.DrawText(canvas, text, x, y, SKTextAlign.Left, font, p);
     }
 
     // Adjust header drawing to always fill full width

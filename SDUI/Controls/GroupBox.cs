@@ -1,6 +1,7 @@
 ﻿using SDUI.Extensions;
 using SkiaSharp;
 using System.Drawing;
+using SDUI.Helpers;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
@@ -161,7 +162,7 @@ public class GroupBox : UIElementBase
                     break;
             }
 
-            canvas.DrawText(Text, textX, textY, SKTextAlign.Left, font, textPaint);
+                TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
         // Çerçeve çizimi

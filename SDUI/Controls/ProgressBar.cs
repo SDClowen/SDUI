@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -227,7 +228,7 @@ public class ProgressBar : UIElementBase
             })
             {
                 float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
-                canvas.DrawText(text, Width / 2f + 1, textY + 1, SKTextAlign.Center, font, paint);
+                TextRenderingHelper.DrawText(canvas, text, Width / 2f + 1, textY + 1, SKTextAlign.Center, font, paint);
             }
 
             // Ana metin
@@ -243,7 +244,7 @@ public class ProgressBar : UIElementBase
             })
             {
                 float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
-                canvas.DrawText(text, Width / 2f, textY, SKTextAlign.Center, font, paint);
+                TextRenderingHelper.DrawText(canvas, text, Width / 2f, textY, SKTextAlign.Center, font, paint);
             }
         }
     }

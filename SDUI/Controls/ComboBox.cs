@@ -1,5 +1,6 @@
 using SDUI.Animation;
 using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Collections;
@@ -389,7 +390,7 @@ public class ComboBox : UIElementBase
                     float baseTextY = currentY + ItemHeight / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                     float textX = ITEM_MARGIN + 8;
                     
-                    canvas.DrawText(text, textX, baseTextY, font, textPaint);
+                    TextRenderingHelper.DrawText(canvas, text, textX, baseTextY, font, textPaint);
 
                     currentY += ItemHeight;
                 }
@@ -1182,13 +1183,7 @@ public class ComboBox : UIElementBase
             rect.Inflate(-0.5f, -0.5f);
             canvas.DrawRoundRect(rect, _radius - 0.5f, _radius - 0.5f, borderPaint);
         }
-
-        // Metin �izimi
-        string displayText = Text;
-        if (string.IsNullOrEmpty(displayText))
-        {
-            displayText = "Se�iniz...";
-        }
+        
         var textColor = ColorScheme.ForeColor.ToSKColor();
 
         using var font = new SKFont
@@ -1209,7 +1204,7 @@ public class ComboBox : UIElementBase
         float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
         float textX = 16;
 
-        canvas.DrawText(displayText, textX, textY, font, textPaint);
+        TextRenderingHelper.DrawText(canvas, displayText, textX, textY, font, textPaint);
 
         // Modern Chevron ikonu - DropDown ve DropDownList stillerinde g�ster
         if (DropDownStyle != ComboBoxStyle.Simple)

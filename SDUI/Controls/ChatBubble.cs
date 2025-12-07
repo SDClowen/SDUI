@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.ComponentModel;
@@ -147,7 +148,7 @@ public class ChatBubble : UIElementBase
             }
             else
             {
-                canvas.DrawText(Text, x, y, textPaint);
+                TextRenderingHelper.DrawText(canvas, Text, x, y, textPaint);
             }
         }
     }

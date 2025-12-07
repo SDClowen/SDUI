@@ -868,7 +868,10 @@ namespace SDUI.Controls
 
         private void RenderChildren(SKCanvas canvas)
         {
-            foreach (var child in Controls.OfType<UIElementBase>().OrderBy(el => el.ZOrder))
+            foreach (var child in Controls
+                .OfType<UIElementBase>()
+                .OrderBy(el => el.ZOrder)
+                .ThenBy(el => el.TabIndex))
             {
                 var snapshot = child.RenderSnapshot();
                 if (snapshot == null)

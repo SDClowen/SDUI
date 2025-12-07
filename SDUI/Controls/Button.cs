@@ -1,5 +1,6 @@
 ﻿using SDUI.Animation;
 using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.ComponentModel;
@@ -349,7 +350,8 @@ public class Button : UIElementBase, IButtonControl
                 Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
             };
 
-            canvas.DrawText(
+            TextRenderingHelper.DrawText(
+                canvas,
                 ValidationText,
                 bodyRect.Left + 5f,
                 bodyRect.Bottom + 15f,

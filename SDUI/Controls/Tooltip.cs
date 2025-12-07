@@ -539,7 +539,7 @@ namespace SDUI.Controls
 
                     foreach (var line in lines)
                     {
-                        canvas.DrawText(line, x, y, font, paint);
+                        TextRenderingHelper.DrawText(canvas, line, x, y, font, paint);
                         y += lineHeight;
                     }
                 }

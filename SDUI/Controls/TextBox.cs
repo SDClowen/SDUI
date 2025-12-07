@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -914,7 +915,7 @@ public class TextBox : UIElementBase
                 font.MeasureText(PlaceholderText, out textBounds);
                 var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
                 var x = GetTextX(bounds.Width, textBounds.Width);
-                canvas.DrawText(PlaceholderText, x, y, SKTextAlign.Left, font, paint);
+                TextRenderingHelper.DrawText(canvas, PlaceholderText, x, y, SKTextAlign.Left, font, paint);
             }
         }
         else if (!string.IsNullOrEmpty(displayText))
@@ -934,7 +935,7 @@ public class TextBox : UIElementBase
                 font.MeasureText(displayText, out textBounds);
                 var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
                 var x = GetTextX(bounds.Width, textBounds.Width);
-                canvas.DrawText(displayText, x, y, SKTextAlign.Left, font, paint);
+                TextRenderingHelper.DrawText(canvas, displayText, x, y, SKTextAlign.Left, font, paint);
 
                 // Seçim çizimi
                 if (Focused && _selectionLength > 0)
@@ -1024,10 +1025,13 @@ public class TextBox : UIElementBase
             {
                 var textBounds = new SKRect();
                 font.MeasureText(countText, out textBounds);
-                canvas.DrawText(countText,
-                    bounds.Width - textBounds.Width - 5,
-                    bounds.Height - 5,
-                    font, paint);
+                    TextRenderingHelper.DrawText(
+                        canvas,
+                        countText,
+                        bounds.Width - textBounds.Width - 5,
+                        bounds.Height - 5,
+                        font,
+                        paint);
             }
         }
 
@@ -1092,7 +1096,13 @@ public class TextBox : UIElementBase
                         }
                     }
 
-                    canvas.DrawText(line, Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0), y + font.Size, font, paint);
+                        TextRenderingHelper.DrawText(
+                            canvas,
+                            line,
+                            Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0),
+                            y + font.Size,
+                            font,
+                            paint);
                     y += lineHeight;
 
                     // Stili sıfırla

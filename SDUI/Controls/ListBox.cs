@@ -4,6 +4,8 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
 using SDUI.Collections;
+using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 
 namespace SDUI.Controls
@@ -283,7 +285,7 @@ namespace SDUI.Controls
 
                 var text = _items[i]?.ToString() ?? string.Empty;
                 var y = itemRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2;
-                canvas.DrawText(text, itemRect.Left + 5, y, SKTextAlign.Left, font, paint);
+                TextRenderingHelper.DrawText(canvas, text, itemRect.Left + 5, y, SKTextAlign.Left, font, paint);
             }
         }
 

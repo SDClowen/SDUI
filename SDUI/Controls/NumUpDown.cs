@@ -1,5 +1,6 @@
 ﻿using SDUI.Animation;
 using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Drawing;
@@ -451,10 +452,13 @@ namespace SDUI.Controls
                     upColor = upColor.Alpha(180);
 
                 textPaint.Color = upColor.ToSKColor();
-                canvas.DrawText("▲",
+                TextRenderingHelper.DrawText(canvas,
+                    "▲",
                     _upButtonRect.X + _upButtonRect.Width / 2,
                     _upButtonRect.Height / 2 + textHeight / 3,
-                    SKTextAlign.Center, font, textPaint);
+                    SKTextAlign.Center,
+                    font,
+                    textPaint);
 
                 // Down button
                 var downColor = ColorScheme.ForeColor;
@@ -466,7 +470,8 @@ namespace SDUI.Controls
                     downColor = downColor.Alpha(180);
 
                 textPaint.Color = downColor.ToSKColor();
-                canvas.DrawText("▼",
+                TextRenderingHelper.DrawText(canvas,
+                    "▼",
                     _downButtonRect.X + _downButtonRect.Width / 2,
                     _downButtonRect.Height * 1.5f + textHeight / 3,
                     SKTextAlign.Center, font, textPaint);
@@ -487,10 +492,13 @@ namespace SDUI.Controls
             {
                 float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
 
-                canvas.DrawText(Value.ToString(),
+                TextRenderingHelper.DrawText(canvas,
+                    Value.ToString(),
                     10 * ScaleFactor,
                     textY,
-                    SKTextAlign.Left, font, textPaint);
+                    SKTextAlign.Left,
+                    font,
+                    textPaint);
             }
         }
     }

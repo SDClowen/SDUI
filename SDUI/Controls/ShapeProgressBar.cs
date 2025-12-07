@@ -1,4 +1,5 @@
 ﻿using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Drawing;
@@ -260,7 +261,7 @@ public class ShapeProgressBar : UIElementBase
         {
             var textBounds = new SKRect();
             font.MeasureText(percentString, out textBounds);
-            canvas.DrawText(percentString, centerX, centerY + textBounds.Height / 3f, SKTextAlign.Center, font, paint);
+            TextRenderingHelper.DrawText(canvas, percentString, centerX, centerY + textBounds.Height / 3f, SKTextAlign.Center, font, paint);
         }
     }
 

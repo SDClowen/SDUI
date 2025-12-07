@@ -1,5 +1,6 @@
 ﻿using SDUI.Animation;
 using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.ComponentModel;
@@ -730,9 +731,9 @@ public class TrackBar : UIElementBase
                 var textAlign = isHorizontal ? SKTextAlign.Center : SKTextAlign.Left;
 
                 if (isHorizontal)
-                    canvas.DrawText(text, x, y + 15 * ScaleFactor, textAlign, font, textPaint);
+                    TextRenderingHelper.DrawText(canvas, text, x, y + 15 * ScaleFactor, textAlign, font, textPaint);
                 else
-                    canvas.DrawText(text, x + 8 * ScaleFactor, y + 4 * ScaleFactor, textAlign, font, textPaint);
+                    TextRenderingHelper.DrawText(canvas, text, x + 8 * ScaleFactor, y + 4 * ScaleFactor, textAlign, font, textPaint);
             }
         }
     }
@@ -927,7 +928,8 @@ public class TrackBar : UIElementBase
 
             if (_orientation == SDUI.Orientation.Horizontal)
             {
-                canvas.DrawText(
+                TextRenderingHelper.DrawText(
+                    canvas,
                     formattedValue,
                     5 * base.ScaleFactor,
                     Height - 8 * base.ScaleFactor,
@@ -940,7 +942,8 @@ public class TrackBar : UIElementBase
             {
                 canvas.Save();
                 canvas.RotateDegrees(90);
-                canvas.DrawText(
+                TextRenderingHelper.DrawText(
+                    canvas,
                     formattedValue,
                     5 * base.ScaleFactor,
                     -Width + 8 * base.ScaleFactor,

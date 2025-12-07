@@ -1879,7 +1879,7 @@ public class UIWindow : UIWindowBase, IUIElement
             var textX = showMenuInsteadOfIcon ? _formMenuRect.X + _formMenuRect.Width + (8 * DPI) : faviconSize + (14 * DPI);
             var textY = (_titleHeightDPI / 2) + (Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2);
 
-            canvas.DrawText(Text, textX, textY, SKTextAlign.Left, font, textPaint);
+            TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
         // Tab kontrollerinin çizimi
@@ -2015,12 +2015,12 @@ public class UIWindow : UIWindowBase, IUIElement
                     rect.Width -= inlinePaddingX + closeIconSize;
 
                     var textY = (_titleHeightDPI / 2) + (Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2);
-                    canvas.DrawText("", iconX, textY, SKTextAlign.Center, font, textPaint);
+                    TextRenderingHelper.DrawText(canvas, "", iconX, textY, SKTextAlign.Center, font, textPaint);
 
                     var bounds = new SKRect();
                     font.MeasureText(page.Text, out bounds);
                     var textX = rect.X + (rect.Width / 2);
-                    canvas.DrawText(page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
+                    TextRenderingHelper.DrawText(canvas, page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
                 }
                 else
                 {
@@ -2041,7 +2041,7 @@ public class UIWindow : UIWindowBase, IUIElement
                     font.MeasureText(page.Text, out bounds);
                     var textX = rect.X + (rect.Width / 2);
                     var textY = (_titleHeightDPI / 2) + (Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2);
-                    canvas.DrawText(page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
+                        TextRenderingHelper.DrawText(canvas, page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
                 }
             }
 

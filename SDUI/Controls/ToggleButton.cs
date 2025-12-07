@@ -1,5 +1,6 @@
 ﻿using SDUI.Animation;
 using SDUI.Extensions;
+using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.ComponentModel;
@@ -125,7 +126,7 @@ public class ToggleButton : UIElementBase
             var textBounds = new SKRect();
             font.MeasureText(Text, out textBounds);
             textWidth = textBounds.Width;
-            canvas.DrawText(Text, 0, Height / 2f + textBounds.Height / 2f, font, textPaint);
+            TextRenderingHelper.DrawText(canvas, Text, 0, Height / 2f + textBounds.Height / 2f, font, textPaint);
 
             canvas.Translate(textWidth + 10, 0);
         }
