@@ -29,7 +29,7 @@ namespace SDUI.Controls
         public void Show() { Visible = true; }
         public void Hide() { Visible = false; }
         public object Tag;
-        public bool AutoScroll {  get; set; }
+        public bool AutoScroll { get; set; }
         public Size AutoScrollMargin { get; set; }
 
         public Image Image { get; set; }
@@ -57,7 +57,7 @@ namespace SDUI.Controls
 
         private SKSurface? _renderSurface;
         private SKImageInfo _renderInfo;
-    private SKImage? _renderSnapshot;
+        private SKImage? _renderSnapshot;
 
         private Size _minimumSize;
         [Category("Layout")]
@@ -489,7 +489,7 @@ namespace SDUI.Controls
         }
 
         [Browsable(false)]
-        public bool Focused { get; private set; }
+        public bool Focused { get; internal set; }
 
         private string _name = string.Empty;
         [Category("Design")]
@@ -586,12 +586,14 @@ namespace SDUI.Controls
 
                 if (oldFocus != null)
                 {
+                    oldFocus.Focused = false;
                     oldFocus.OnLostFocus(EventArgs.Empty);
                     oldFocus.OnLeave(EventArgs.Empty);
                 }
 
                 if (_focusedElement != null)
                 {
+                    _focusedElement.Focused = true;
                     _focusedElement.OnGotFocus(EventArgs.Empty);
                     _focusedElement.OnEnter(EventArgs.Empty);
                 }
@@ -897,7 +899,7 @@ namespace SDUI.Controls
             {
                 var canvas = _renderSurface.Canvas;
                 canvas.Save();
-                
+
                 // Yüksek kaliteli render ayarları
                 canvas.Clear(ResolveBackgroundColor());
 
@@ -929,10 +931,23 @@ namespace SDUI.Controls
 
         public virtual void Focus()
         {
-            if (Parent is UIWindowBase window)
+            switch (Parent)
             {
-                Focused = true;
-                OnGotFocus(EventArgs.Empty);
+                case UIElementBase element:
+                    element.FocusedElement = this;
+                    break;
+                case UIWindow window:
+                    window.FocusedElement = this;
+                    break;
+                case UIWindowBase windowBase:
+                    Focused = true;
+                    windowBase.Invalidate();
+                    OnGotFocus(EventArgs.Empty);
+                    break;
+                default:
+                    Focused = true;
+                    OnGotFocus(EventArgs.Empty);
+                    break;
             }
         }
 
@@ -950,8 +965,7 @@ namespace SDUI.Controls
             }
 
             // MinimumSize ve MaximumSize kontrolü
-            if (MinimumSize.Width > 0)
-                proposedSize.Width = Math.Max(proposedSize.Width, MinimumSize.Width);
+            proposedSize.Width = Math.Max(proposedSize.Width, MinimumSize.Width);
             if (MinimumSize.Height > 0)
                 proposedSize.Height = Math.Max(proposedSize.Height, MinimumSize.Height);
 
@@ -1024,12 +1038,6 @@ namespace SDUI.Controls
 
         internal virtual void OnMouseDown(MouseEventArgs e)
         {
-            if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
-            {
-                var point = PointToScreen(e.Location);
-                ContextMenuStrip.Show(this, point);
-            }
-
             MouseDown?.Invoke(this, e);
 
             bool elementClicked = false;
@@ -1041,14 +1049,52 @@ namespace SDUI.Controls
                     elementClicked = true;
                     var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
                     control.OnMouseDown(childEventArgs);
-                    if (_focusedElement != control)
+                    
+                    // Use FocusManager if available
+                    var window = GetParentWindow();
+                    if (window != null)
+                    {
+                        window.FocusManager.SetFocus(control);
+                    }
+                    else if (_focusedElement != control)
+                    {
                         _focusedElement = control;
+                    }
+                    
                     break; // İlk eşleşenden sonra dur
                 }
             }
 
             if (!elementClicked)
-                _focusedElement = null;
+            {
+                var window = GetParentWindow();
+                if (window != null)
+                {
+                    window.FocusManager.SetFocus(null);
+                }
+                // No else needed - FocusedElement is not nullable
+
+                if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
+                {
+                    var point = PointToScreen(e.Location);
+                    ContextMenuStrip.Show(this, point);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Gets the parent UIWindowBase for this element
+        /// </summary>
+        private UIWindowBase? GetParentWindow()
+        {
+            IUIElement? current = this;
+            while (current != null)
+            {
+                if (current is UIWindowBase window)
+                    return window;
+                current = current.Parent;
+            }
+            return null;
         }
 
         internal virtual void OnMouseUp(MouseEventArgs e)
@@ -1733,8 +1779,8 @@ namespace SDUI.Controls
         {
             _isLayoutSuspended = false;
 
-            if(performLayout)
-            PerformLayout();
+            if (performLayout)
+                PerformLayout();
         }
 
         public void UpdateZOrder() { }

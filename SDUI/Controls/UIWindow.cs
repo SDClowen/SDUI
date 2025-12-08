@@ -587,12 +587,14 @@ public class UIWindow : UIWindowBase, IUIElement
 
             if (oldFocus != null)
             {
+                    oldFocus.Focused = false;
                 oldFocus.OnLostFocus(EventArgs.Empty);
                 oldFocus.OnLeave(EventArgs.Empty);
             }
 
             if (_focusedElement != null)
             {
+                    _focusedElement.Focused = true;
                 _focusedElement.OnGotFocus(EventArgs.Empty);
                 _focusedElement.OnEnter(EventArgs.Empty);
             }

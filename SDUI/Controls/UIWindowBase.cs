@@ -14,6 +14,24 @@ public class UIWindowBase : Form
     private bool right = false;
     private Point location;
     private bool _mouseInClient;
+    
+    private FocusManager? _focusManager;
+
+    /// <summary>
+    /// Modern focus manager for keyboard navigation
+    /// </summary>
+    public FocusManager FocusManager
+    {
+        get
+        {
+            if (_focusManager == null)
+            {
+                _focusManager = new FocusManager(this);
+                _focusManager.RefreshFocusableElements();
+            }
+            return _focusManager;
+        }
+    }
 
     // Z-order için yeni özellikler
 
@@ -53,9 +71,16 @@ public class UIWindowBase : Form
 
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
-        if (msg.Msg == 256 | msg.Msg == 260)
+        // Handle keyboard navigation with focus manager
+        if (msg.Msg == 256 || msg.Msg == 260)
+        {
+            var keyArgs = new KeyEventArgs(keyData);
+            if (FocusManager.ProcessKeyNavigation(keyArgs))
+                return true;
+                
             if (keyData == Keys.Escape)
                 Close();
+        }
 
         return base.ProcessCmdKey(ref msg, keyData);
     }

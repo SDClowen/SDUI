@@ -98,8 +98,8 @@ namespace SDUI.Demo
             var parent = form as UIWindow;
             if (parent != null)
             {
-                ColorScheme.BackColor = Color.FromArgb(r, g, b);
-                parent.BackColor = ColorScheme.BackColor;
+                // Custom color: set both theme and window background
+                parent.BackColor = Color.FromArgb(r, g, b);
             }
         }
 
@@ -110,8 +110,9 @@ namespace SDUI.Demo
                 return;
 
             var parent = form as UIWindow;
-            ColorScheme.BackColor = Color.Black;
-            parent.BackColor = ColorScheme.BackColor;
+            // Switch to dark mode
+            ColorScheme.IsDarkMode = true;
+            parent.BackColor = ColorScheme.Surface;
         }
 
         private void buttonLight_Click(object sender, EventArgs e)
@@ -121,8 +122,9 @@ namespace SDUI.Demo
                 return;
 
             var parent = form as UIWindow;
-            ColorScheme.BackColor = Color.White;
-            parent.BackColor = ColorScheme.BackColor;
+            // Switch to light mode
+            ColorScheme.IsDarkMode = false;
+            parent.BackColor = ColorScheme.Surface;
         }
     }
 }
