@@ -5,10 +5,121 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
+
+internal static class NativeTextBoxMenu
+{
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr GetSystemMenu(IntPtr hWnd, bool bRevert);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern int TrackPopupMenuEx(IntPtr hMenu, uint uFlags, int x, int y, IntPtr hWnd, IntPtr lptpm);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr CreatePopupMenu();
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool AppendMenu(IntPtr hMenu, uint uFlags, uint uIDNewItem, string? lpNewItem);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern bool DestroyMenu(IntPtr hMenu);
+
+    [DllImport("user32.dll", CharSet = CharSet.Auto)]
+    private static extern IntPtr GetFocus();
+
+    private const uint TPM_RETURNCMD = 0x0100;
+    private const uint TPM_LEFTALIGN = 0x0000;
+    private const uint MF_STRING = 0x0000;
+    private const uint MF_SEPARATOR = 0x0800;
+    private const uint MF_GRAYED = 0x0001;
+
+    private const uint CMD_UNDO = 1;
+    private const uint CMD_CUT = 2;
+    private const uint CMD_COPY = 3;
+    private const uint CMD_PASTE = 4;
+    private const uint CMD_DELETE = 5;
+    private const uint CMD_SELECTALL = 6;
+
+    public static void ShowContextMenu(TextBox textBox, Point screenLocation)
+    {
+        var hMenu = CreatePopupMenu();
+        if (hMenu == IntPtr.Zero) return;
+
+        try
+        {
+            bool hasSelection = textBox.SelectionLength > 0;
+            bool canPaste = Clipboard.ContainsText();
+            bool isReadOnly = textBox.ReadOnly;
+
+            // Geri Al
+            AppendMenu(hMenu, MF_STRING | MF_GRAYED, CMD_UNDO, "&Geri Al");
+            AppendMenu(hMenu, MF_SEPARATOR, 0, null);
+
+            // Kes
+            uint cutFlags = MF_STRING;
+            if (!hasSelection || isReadOnly) cutFlags |= MF_GRAYED;
+            AppendMenu(hMenu, cutFlags, CMD_CUT, "Ke&s\tCtrl+X");
+
+            // Kopyala
+            uint copyFlags = MF_STRING;
+            if (!hasSelection) copyFlags |= MF_GRAYED;
+            AppendMenu(hMenu, copyFlags, CMD_COPY, "&Kopyala\tCtrl+C");
+
+            // Yapıştır
+            uint pasteFlags = MF_STRING;
+            if (!canPaste || isReadOnly) pasteFlags |= MF_GRAYED;
+            AppendMenu(hMenu, pasteFlags, CMD_PASTE, "&Yapıştır\tCtrl+V");
+
+            // Sil
+            uint deleteFlags = MF_STRING;
+            if (!hasSelection || isReadOnly) deleteFlags |= MF_GRAYED;
+            AppendMenu(hMenu, deleteFlags, CMD_DELETE, "Si&l\tDel");
+
+            AppendMenu(hMenu, MF_SEPARATOR, 0, null);
+
+            // Tümünü Seç
+            AppendMenu(hMenu, MF_STRING, CMD_SELECTALL, "&Tümünü Seç\tCtrl+A");
+
+            // Ana form'un handle'ını al
+            var form = textBox.FindForm();
+            var hWnd = form?.Handle ?? IntPtr.Zero;
+            if (hWnd == IntPtr.Zero) return;
+
+            var cmd = (uint)TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN, 
+                screenLocation.X, screenLocation.Y, hWnd, IntPtr.Zero);
+
+            if (cmd > 0)
+            {
+                switch (cmd)
+                {
+                    case CMD_CUT:
+                        textBox.Cut();
+                        break;
+                    case CMD_COPY:
+                        textBox.Copy();
+                        break;
+                    case CMD_PASTE:
+                        textBox.Paste();
+                        break;
+                    case CMD_DELETE:
+                        textBox.DeleteSelection();
+                        break;
+                    case CMD_SELECTALL:
+                        textBox.SelectAll();
+                        break;
+                }
+            }
+        }
+        finally
+        {
+            DestroyMenu(hMenu);
+        }
+    }
+}
 
 public class RichTextBox : TextBox
 {
@@ -33,15 +144,14 @@ public class TextBox : UIElementBase
     private int _selectionStart;
     private int _selectionLength;
     private bool _readOnly;
-    private Color _borderColor = Color.FromArgb(171, 173, 179);
-    private Color _focusedBorderColor = Color.FromArgb(0, 120, 212);
+    private Color _borderColor = Color.FromArgb(200, 200, 200);
+    private Color _focusedBorderColor = Color.FromArgb(0, 120, 215);
     private float _borderWidth = 1.0f;
-    private float _cornerRadius = 4.0f;
-    private Timer _cursorBlinkTimer;
+    private float _cornerRadius = 2.0f;
+    private Timer _cursorBlinkTimer = null!;
     private bool _showCursor;
     private bool _isDragging;
     private HorizontalAlignment _textAlignment = HorizontalAlignment.Left;
-    private ContextMenuStrip _contextMenu;
     private bool _acceptsTab;
     private bool _acceptsReturn;
     private bool _hideSelection;
@@ -61,8 +171,8 @@ public class TextBox : UIElementBase
     private bool _showCharCount;
     private Color _charCountColor = Color.Gray;
     private bool _isRich;
-    private ScrollBar _verticalScrollBar;
-    private ScrollBar _horizontalScrollBar;
+    private ScrollBar _verticalScrollBar = null!;
+    private ScrollBar _horizontalScrollBar = null!;
     private bool _autoScroll = true;
     private List<TextStyle> _styles = new();
     private float _scrollSpeed = 1.0f;
@@ -75,53 +185,15 @@ public class TextBox : UIElementBase
 
     public TextBox()
     {
-        Size = new Size(100, 23);
+        Size = new Size(200, 32);
         BackColor = Color.White;
-        ForeColor = Color.Black;
+        ForeColor = Color.FromArgb(32, 32, 32);
         Cursor = Cursors.IBeam;
         TabStop = true;
+        Padding = new Padding(10, 6, 10, 6);
 
-        InitializeContextMenu();
         InitializeCursorBlink();
         InitializeScrollBars();
-    }
-
-    private void InitializeContextMenu()
-    {
-        _contextMenu = new();
-
-        var kesItem = new MenuItem("Kes", null);
-        kesItem.Click += (s, e) => Cut();
-
-        var kopyalaItem = new MenuItem("Kopyala", null);
-        kopyalaItem.Click += (s, e) => Copy();
-
-        var yapistirItem = new MenuItem("Yapıştır", null);
-        yapistirItem.Click += (s, e) => Paste();
-
-        var silItem = new MenuItem("Sil", null);
-        silItem.Click += (s, e) => DeleteSelection();
-
-        var tumunuSecItem = new MenuItem("Tümünü Seç", null);
-        tumunuSecItem.Click += (s, e) => Cut();
-
-        _contextMenu.Items.AddRange(
-        [
-            kesItem, kopyalaItem, yapistirItem,
-            new MenuItemSeparator(),
-            silItem,
-            new MenuItemSeparator(),
-            tumunuSecItem
-        ]);
-
-        _contextMenu.Opening += (s, e) =>
-        {
-            bool hasSelection = _selectionLength > 0;
-            kesItem.Enabled = hasSelection && !ReadOnly;
-            kopyalaItem.Enabled = hasSelection;
-            silItem.Enabled = hasSelection && !ReadOnly;
-            yapistirItem.Enabled = !ReadOnly && Clipboard.ContainsText();
-        };
     }
 
     private void InitializeCursorBlink()
@@ -535,7 +607,7 @@ public class TextBox : UIElementBase
 
     [Category("Behavior")]
     [DefaultValue(true)]
-    public bool AutoScroll
+    public new bool AutoScroll
     {
         get => _autoScroll;
         set
@@ -563,6 +635,15 @@ public class TextBox : UIElementBase
         {
             Copy();
             DeleteSelection();
+        }
+    }
+
+    internal void DeleteSelection()
+    {
+        if (_selectionLength > 0 && !ReadOnly)
+        {
+            Text = Text.Remove(_selectionStart, _selectionLength);
+            _selectionLength = 0;
         }
     }
 
@@ -611,15 +692,6 @@ public class TextBox : UIElementBase
         Invalidate();
     }
 
-    private void DeleteSelection()
-    {
-        if (_selectionLength > 0 && !ReadOnly)
-        {
-            Text = Text.Remove(_selectionStart, _selectionLength);
-            _selectionLength = 0;
-        }
-    }
-
     internal override void OnGotFocus(EventArgs e)
     {
         base.OnGotFocus(e);
@@ -653,7 +725,7 @@ public class TextBox : UIElementBase
 
         if (e.Button == MouseButtons.Right)
         {
-            _contextMenu.Show(this, e.Location);
+            NativeTextBoxMenu.ShowContextMenu(this, PointToScreen(e.Location));
         }
     }
 
@@ -865,180 +937,155 @@ public class TextBox : UIElementBase
         var canvas = e.Surface.Canvas;
         var bounds = ClientRectangle;
 
-        // Arka plan çizimi
-        using (var paint = new SKPaint
+        // 1. Draw Background (flat, no gradient)
+        using (var bgPaint = new SKPaint())
         {
-            Color = BackColor.ToSKColor(),
-            IsAntialias = true
-        })
-        {
-            canvas.DrawRoundRect(
-                new SKRect(0, 0, bounds.Width, bounds.Height),
-                Radius, Radius, paint);
+            bgPaint.Color = Enabled ? BackColor.ToSKColor() : Color.FromArgb(250, 250, 250).ToSKColor();
+            bgPaint.IsAntialias = true;
+            canvas.DrawRoundRect(new SKRect(0, 0, bounds.Width, bounds.Height), CornerRadius, CornerRadius, bgPaint);
         }
 
-        // Kenarlık çizimi
-        using (var paint = new SKPaint
+        // 2. Draw Border (simple, flat)
+        using (var borderPaint = new SKPaint())
         {
-            Color = Focused ? FocusedBorderColor.ToSKColor() : BorderColor.ToSKColor(),
-            IsAntialias = true,
-            IsStroke = true,
-            StrokeWidth = BorderWidth
-        })
-        {
-            canvas.DrawRoundRect(
-                new SKRect(BorderWidth / 2, BorderWidth / 2,
-                    bounds.Width - BorderWidth / 2,
-                    bounds.Height - BorderWidth / 2),
-                Radius, Radius, paint);
+            var borderColor = Focused ? FocusedBorderColor : BorderColor;
+            borderPaint.Color = Enabled ? borderColor.ToSKColor() : Color.FromArgb(220, 220, 220).ToSKColor();
+            borderPaint.IsAntialias = true;
+            borderPaint.IsStroke = true;
+            borderPaint.StrokeWidth = Focused ? 2.0f : BorderWidth;
+            
+            var inset = borderPaint.StrokeWidth / 2;
+            var borderRect = new SKRect(inset, inset, bounds.Width - inset, bounds.Height - inset);
+            canvas.DrawRoundRect(borderRect, CornerRadius, CornerRadius, borderPaint);
         }
 
-        // Metin çizimi
+        // 4. Prepare Font
+        using var font = new SKFont
+        {
+            Size = Font.Size * 96.0f / 72.0f,
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+        };
+
+        // 5. Determine Text to Draw
         var displayText = UseSystemPasswordChar && !string.IsNullOrEmpty(Text)
             ? new string(PasswordChar, Text.Length)
             : Text;
-
-        if (string.IsNullOrEmpty(displayText) && !string.IsNullOrEmpty(PlaceholderText) && !Focused)
+            
+        bool isPlaceholder = string.IsNullOrEmpty(displayText) && !string.IsNullOrEmpty(PlaceholderText) && !Focused;
+        string textToDraw = isPlaceholder ? PlaceholderText : displayText;
+        
+        // 6. Calculate Text Position
+        var textBounds = new SKRect();
+        if (!string.IsNullOrEmpty(textToDraw))
         {
-            using (var font = new SKFont
+            font.MeasureText(textToDraw, out textBounds);
+        }
+        
+        var metrics = font.Metrics;
+        var y = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2);
+        var x = GetTextX(bounds.Width, textBounds.Width);
+
+        // 7. Draw Text
+        if (!string.IsNullOrEmpty(textToDraw) && !IsRich)
+        {
+            using var textPaint = new SKPaint
             {
-                Size = Font.Size * 96.0f / 72.0f,
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            })
-            using (var paint = new SKPaint
+                Color = isPlaceholder ? Color.Gray.ToSKColor() : (Enabled ? ForeColor.ToSKColor() : Color.Gray.ToSKColor()),
+                IsAntialias = true
+            };
+            
+            TextRenderingHelper.DrawText(canvas, textToDraw, x, y, SKTextAlign.Left, font, textPaint);
+        }
+
+        // 8. Draw Selection (if not placeholder and not Rich)
+        if (!isPlaceholder && Focused && _selectionLength > 0 && !IsRich)
+        {
+            var selectedText = displayText.Substring(_selectionStart, _selectionLength);
+            var selectedBounds = new SKRect();
+            font.MeasureText(selectedText, out selectedBounds);
+
+            var selectionStartX = x;
+            if (_selectionStart > 0)
             {
-                Color = Color.Gray.ToSKColor(),
+                var preText = displayText.Substring(0, _selectionStart);
+                var preBounds = new SKRect();
+                font.MeasureText(preText, out preBounds);
+                selectionStartX += preBounds.Width;
+            }
+
+            using (var selectionPaint = new SKPaint
+            {
+                Color = SKColors.LightBlue.WithAlpha(128),
                 IsAntialias = true
             })
             {
-                var textBounds = new SKRect();
-                font.MeasureText(PlaceholderText, out textBounds);
-                var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
-                var x = GetTextX(bounds.Width, textBounds.Width);
-                TextRenderingHelper.DrawText(canvas, PlaceholderText, x, y, SKTextAlign.Left, font, paint);
-            }
-        }
-        else if (!string.IsNullOrEmpty(displayText))
-        {
-            using (var font = new SKFont
-            {
-                Size = Font.Size * 96.0f / 72.0f,
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            })
-            using (var paint = new SKPaint
-            {
-                Color = Enabled ? ForeColor.ToSKColor() : Color.Gray.ToSKColor(),
-                IsAntialias = true
-            })
-            {
-                var textBounds = new SKRect();
-                font.MeasureText(displayText, out textBounds);
-                var y = (bounds.Height - textBounds.Height) / 2 - textBounds.Top;
-                var x = GetTextX(bounds.Width, textBounds.Width);
-                TextRenderingHelper.DrawText(canvas, displayText, x, y, SKTextAlign.Left, font, paint);
-
-                // Seçim çizimi
-                if (Focused && _selectionLength > 0)
-                {
-                    var selectedText = displayText.Substring(_selectionStart, _selectionLength);
-                    var selectedBounds = new SKRect();
-                    font.MeasureText(selectedText, out selectedBounds);
-
-                    var startX = x;
-                    if (_selectionStart > 0)
-                    {
-                        var preText = displayText.Substring(0, _selectionStart);
-                        var preBounds = new SKRect();
-                        font.MeasureText(preText, out preBounds);
-                        startX += preBounds.Width;
-                    }
-
-                    using (var selectionPaint = new SKPaint
-                    {
-                        Color = SKColors.LightBlue.WithAlpha(128),
-                        IsAntialias = true
-                    })
-                    {
-                        canvas.DrawRect(
-                            new SKRect(startX, 2,
-                                startX + selectedBounds.Width,
-                                bounds.Height - 2),
-                            selectionPaint);
-                    }
-                }
+                var selectionTop = y + metrics.Ascent;
+                var selectionBottom = y + metrics.Descent;
+                
+                canvas.DrawRect(
+                    new SKRect(selectionStartX, selectionTop,
+                        selectionStartX + selectedBounds.Width,
+                        selectionBottom),
+                    selectionPaint);
             }
         }
 
-        // İmleç çizimi
+        // 9. Draw Cursor
         if (Focused && _showCursor && _selectionLength == 0)
         {
-            using var font = new SKFont
-            {
-                Size = Font.Size * 96.0f / 72.0f,
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            };
-            using var paint = new SKPaint
-            {
-                Color = ForeColor.ToSKColor(),
-                IsAntialias = true,
-                StrokeWidth = _caretWidth
-            };
-
-            displayText = UseSystemPasswordChar ? new string(PasswordChar, Text.Length) : Text;
-            
-            var fullBounds = new SKRect();
-            font.MeasureText(displayText, out fullBounds);
-            var startX = GetTextX(bounds.Width, fullBounds.Width);
-
-            var preText = displayText.Substring(0, _selectionStart);
-            var textBounds = new SKRect();
-            font.MeasureText(preText, out textBounds);
-
-            var cursorX = startX + textBounds.Width;
-
-            canvas.DrawLine(
-                new SKPoint(cursorX, 2),
-                new SKPoint(cursorX, bounds.Height - 2),
-                paint);
+             using var cursorPaint = new SKPaint
+             {
+                 Color = ForeColor.ToSKColor(),
+                 IsAntialias = true,
+                 StrokeWidth = _caretWidth
+             };
+             
+             var cursorX = x;
+             if (!string.IsNullOrEmpty(displayText))
+             {
+                 var preText = displayText.Substring(0, Math.Min(_selectionStart, displayText.Length));
+                 var preBounds = new SKRect();
+                 font.MeasureText(preText, out preBounds);
+                 cursorX += preBounds.Width;
+             }
+             
+             var cursorTop = y + metrics.Ascent;
+             var cursorBottom = y + metrics.Descent;
+             
+             canvas.DrawLine(new SKPoint(cursorX, cursorTop), new SKPoint(cursorX, cursorBottom), cursorPaint);
         }
-
-        // Seçim çizimi
-        if (_selectionLength > 0 && (!HideSelection || Focused))
-        {
-            // ... mevcut seçim çizimi ...
-        }
-
-        // Karakter sayacı çizimi
+        
+        // 10. CharCount
         if (ShowCharCount)
         {
             var countText = MaxLength > 0 ? $"{Text.Length}/{MaxLength}" : Text.Length.ToString();
-            using (var font = new SKFont
+            using (var countFont = new SKFont
             {
                 Size = (Font.Size - 2) * 96.0f / 72.0f,
                 Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
             })
-            using (var paint = new SKPaint
+            using (var countPaint = new SKPaint
             {
                 Color = CharCountColor.ToSKColor(),
                 IsAntialias = true
             })
             {
-                var textBounds = new SKRect();
-                font.MeasureText(countText, out textBounds);
-                    TextRenderingHelper.DrawText(
-                        canvas,
-                        countText,
-                        bounds.Width - textBounds.Width - 5,
-                        bounds.Height - 5,
-                        font,
-                        paint);
+                var countBounds = new SKRect();
+                countFont.MeasureText(countText, out countBounds);
+                TextRenderingHelper.DrawText(
+                    canvas,
+                    countText,
+                    bounds.Width - countBounds.Width - 5,
+                    bounds.Height - 5,
+                    countFont,
+                    countPaint);
             }
         }
 
-        // Kaydırma çubuğu çizimi
+        // 11. Scrollbars
         if (ShowScrollbar && MultiLine)
         {
-            var scrollBarBounds = new SKRect(
+             var scrollBarBounds = new SKRect(
                 bounds.Width - 12,
                 2,
                 bounds.Width - 4,
@@ -1054,35 +1101,29 @@ public class TextBox : UIElementBase
             }
         }
 
-        // Rich text çizimi
+        // 12. Rich Text
         if (IsRich && !string.IsNullOrEmpty(Text))
         {
-            using (var font = new SKFont
-            {
-                Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            })
             using (var paint = new SKPaint
             {
                 IsAntialias = true
             })
             {
                 var lines = GetTextLines(font);
-                var y = Padding.Top - _scrollPosition;
+                var richY = Padding.Top - _scrollPosition;
                 var lineHeight = font.Size + LineSpacing;
 
                 foreach (var line in lines)
                 {
-                    if (y + lineHeight < 0)
+                    if (richY + lineHeight < 0)
                     {
-                        y += lineHeight;
+                        richY += lineHeight;
                         continue;
                     }
 
-                    if (y > bounds.Height)
+                    if (richY > bounds.Height)
                         break;
 
-                    // Stil uygulaması
                     foreach (var style in _styles)
                     {
                         if (line.Contains(style.Pattern))
@@ -1096,16 +1137,15 @@ public class TextBox : UIElementBase
                         }
                     }
 
-                        TextRenderingHelper.DrawText(
-                            canvas,
-                            line,
-                            Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0),
-                            y + font.Size,
-                            font,
-                            paint);
-                    y += lineHeight;
+                    TextRenderingHelper.DrawText(
+                        canvas,
+                        line,
+                        Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0),
+                        richY + font.Size,
+                        font,
+                        paint);
+                    richY += lineHeight;
 
-                    // Stili sıfırla
                     paint.Color = ForeColor.ToSKColor();
                     font.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
                 }
@@ -1118,7 +1158,6 @@ public class TextBox : UIElementBase
         if (disposing)
         {
             _cursorBlinkTimer?.Dispose();
-            _contextMenu?.Dispose();
         }
         base.Dispose(disposing);
     }
