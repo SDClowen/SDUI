@@ -1,4 +1,5 @@
-﻿using SDUI.Extensions;
+﻿using SDUI;
+using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
 using System;
@@ -144,10 +145,10 @@ public class TextBox : UIElementBase
     private int _selectionStart;
     private int _selectionLength;
     private bool _readOnly;
-    private Color _borderColor = Color.FromArgb(200, 200, 200);
-    private Color _focusedBorderColor = Color.FromArgb(0, 120, 215);
+    private Color _borderColor = ColorScheme.BorderColor;
+    private Color _focusedBorderColor = ColorScheme.AccentColor;
     private float _borderWidth = 1.0f;
-    private float _cornerRadius = 2.0f;
+    private float _cornerRadius = 8.0f;
     private Timer _cursorBlinkTimer = null!;
     private bool _showCursor;
     private bool _isDragging;
@@ -155,7 +156,7 @@ public class TextBox : UIElementBase
     private bool _acceptsTab;
     private bool _acceptsReturn;
     private bool _hideSelection;
-    private Color _selectionColor = Color.FromArgb(128, 144, 206, 251);
+    private Color _selectionColor = ColorScheme.AccentColor.Alpha(90);
     private int _caretWidth = 1;
     private int _radius = 2;
     private bool _autoHeight;
@@ -186,21 +187,33 @@ public class TextBox : UIElementBase
     public TextBox()
     {
         Size = new Size(200, 32);
-        BackColor = Color.White;
-        ForeColor = Color.FromArgb(32, 32, 32);
+        BackColor = Color.Transparent; // Transparent olmalı ki UIElementBase canvas.Clear ile beyaz çizmesin
+        ForeColor = ColorScheme.ForeColor;
+        BorderColor = ColorScheme.BorderColor;
+        FocusedBorderColor = ColorScheme.AccentColor;
         Cursor = Cursors.IBeam;
         TabStop = true;
         Padding = new Padding(10, 6, 10, 6);
 
         InitializeCursorBlink();
         InitializeScrollBars();
+        
+        NeedsRedraw = true;
+        Invalidate();
+        System.Diagnostics.Debug.WriteLine("TextBox.Constructor: SDUI Custom TextBox created!");
     }
 
     private void InitializeCursorBlink()
     {
+        var blinkTime = SystemInformation.CaretBlinkTime;
+        // Eğer blink time -1 ise (blink disabled), default 530ms kullan
+        if (blinkTime <= 0)
+            blinkTime = 530;
+            
         _cursorBlinkTimer = new Timer
         {
-            Interval = SystemInformation.CaretBlinkTime
+            Interval = blinkTime,
+            Enabled = false
         };
         _cursorBlinkTimer.Tick += (s, e) =>
         {
@@ -387,7 +400,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    [DefaultValue(4.0f)]
+    [DefaultValue(8.0f)]
     public float CornerRadius
     {
         get => _cornerRadius;
@@ -700,8 +713,8 @@ public class TextBox : UIElementBase
             _useSystemPasswordChar = false;
             Invalidate();
         }
-        _cursorBlinkTimer.Start();
         _showCursor = true;
+        _cursorBlinkTimer?.Start();
         Invalidate();
     }
 
@@ -713,7 +726,7 @@ public class TextBox : UIElementBase
             _useSystemPasswordChar = true;
             Invalidate();
         }
-        _cursorBlinkTimer.Stop();
+        _cursorBlinkTimer?.Stop();
         _showCursor = false;
         Invalidate();
     }
@@ -725,7 +738,10 @@ public class TextBox : UIElementBase
 
         if (e.Button == MouseButtons.Right)
         {
+            // Native context menu göster ve event'i handle et
             NativeTextBoxMenu.ShowContextMenu(this, PointToScreen(e.Location));
+            // Event'in parent'a gitmesini engelle
+            return;
         }
     }
 
@@ -766,6 +782,14 @@ public class TextBox : UIElementBase
 
     internal override void OnMouseDown(MouseEventArgs e)
     {
+        if (e.Button == MouseButtons.Right)
+        {
+            Focus();
+            _isDragging = false;
+            _isDraggingScrollBar = false;
+            return;
+        }
+
         base.OnMouseDown(e);
 
         if (e.Button == MouseButtons.Left)
@@ -937,23 +961,48 @@ public class TextBox : UIElementBase
         var canvas = e.Surface.Canvas;
         var bounds = ClientRectangle;
 
-        // 1. Draw Background (flat, no gradient)
-        using (var bgPaint = new SKPaint())
+        System.Diagnostics.Debug.WriteLine($"TextBox.OnPaint: bounds={bounds.Width}x{bounds.Height}, Visible={Visible}, BackColor={BackColor}");
+
+        // 1. Draw Background with theme-aware surface color
+        var surfaceColor = ResolveSurfaceColor(Enabled);
+        using (var bgPaint = new SKPaint
         {
-            bgPaint.Color = Enabled ? BackColor.ToSKColor() : Color.FromArgb(250, 250, 250).ToSKColor();
-            bgPaint.IsAntialias = true;
-            canvas.DrawRoundRect(new SKRect(0, 0, bounds.Width, bounds.Height), CornerRadius, CornerRadius, bgPaint);
+            Color = surfaceColor.ToSKColor(),
+            IsAntialias = true
+        })
+        {
+            var backgroundRect = new SKRect(0, 0, bounds.Width, bounds.Height);
+            canvas.DrawRoundRect(backgroundRect, CornerRadius, CornerRadius, bgPaint);
+        }
+
+        if (Focused)
+        {
+            using var focusGlow = new SKPaint
+            {
+                Color = FocusedBorderColor.Alpha(35).ToSKColor(),
+                IsAntialias = true
+            };
+
+            var glowRect = new SKRect(0, 0, bounds.Width, bounds.Height);
+            canvas.DrawRoundRect(glowRect, CornerRadius, CornerRadius, focusGlow);
         }
 
         // 2. Draw Border (simple, flat)
-        using (var borderPaint = new SKPaint())
+        using (var borderPaint = new SKPaint
+        {
+            IsAntialias = true,
+            IsStroke = true
+        })
         {
             var borderColor = Focused ? FocusedBorderColor : BorderColor;
-            borderPaint.Color = Enabled ? borderColor.ToSKColor() : Color.FromArgb(220, 220, 220).ToSKColor();
-            borderPaint.IsAntialias = true;
-            borderPaint.IsStroke = true;
-            borderPaint.StrokeWidth = Focused ? 2.0f : BorderWidth;
-            
+            if (!Enabled)
+            {
+                borderColor = borderColor.Brightness(ColorScheme.BackColor.IsDark() ? -0.05f : -0.1f);
+            }
+
+            borderPaint.Color = borderColor.ToSKColor();
+            borderPaint.StrokeWidth = Focused ? Math.Max(2.0f, BorderWidth + 0.5f) : BorderWidth;
+
             var inset = borderPaint.StrokeWidth / 2;
             var borderRect = new SKRect(inset, inset, bounds.Width - inset, bounds.Height - inset);
             canvas.DrawRoundRect(borderRect, CornerRadius, CornerRadius, borderPaint);
@@ -963,7 +1012,9 @@ public class TextBox : UIElementBase
         using var font = new SKFont
         {
             Size = Font.Size * 96.0f / 72.0f,
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Edging = SKFontEdging.SubpixelAntialias,
+            Subpixel = true
         };
 
         // 5. Determine Text to Draw
@@ -986,11 +1037,14 @@ public class TextBox : UIElementBase
         var x = GetTextX(bounds.Width, textBounds.Width);
 
         // 7. Draw Text
+        var activeTextColor = (Enabled ? ForeColor : ForeColor.Alpha(120)).ToSKColor();
+        var placeholderColor = ColorScheme.ForeColor.Alpha(140).ToSKColor();
+
         if (!string.IsNullOrEmpty(textToDraw) && !IsRich)
         {
             using var textPaint = new SKPaint
             {
-                Color = isPlaceholder ? Color.Gray.ToSKColor() : (Enabled ? ForeColor.ToSKColor() : Color.Gray.ToSKColor()),
+                Color = isPlaceholder ? placeholderColor : activeTextColor,
                 IsAntialias = true
             };
             
@@ -1015,7 +1069,7 @@ public class TextBox : UIElementBase
 
             using (var selectionPaint = new SKPaint
             {
-                Color = SKColors.LightBlue.WithAlpha(128),
+                Color = SelectionColor.ToSKColor(),
                 IsAntialias = true
             })
             {
@@ -1151,6 +1205,24 @@ public class TextBox : UIElementBase
                 }
             }
         }
+    }
+
+    private Color ResolveSurfaceColor(bool enabled)
+    {
+        var baseColor = BackColor == Color.Transparent ? GetThemedSurfaceColor() : BackColor;
+        if (enabled)
+            return baseColor;
+
+        var adjustment = ColorScheme.BackColor.IsDark() ? -0.04f : -0.08f;
+        return baseColor.Brightness(adjustment);
+    }
+
+    private Color GetThemedSurfaceColor()
+    {
+        var themeBack = ColorScheme.BackColor;
+        return themeBack.IsDark()
+            ? themeBack.Brightness(0.08f)
+            : themeBack.Brightness(-0.05f);
     }
 
     protected override void Dispose(bool disposing)

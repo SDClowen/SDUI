@@ -153,14 +153,13 @@ public class Radio : UIElementBase
 
         var RADIOBUTTON_CENTER = boxOffset + RADIOBUTTON_SIZE_HALF;
         var animationProgress = (float)animationManager.GetProgress();
-        var disabledOffColor = Color.LightGray;
 
-        int colorAlpha = Enabled ? (int)(animationProgress * 255.0) : disabledOffColor.A;
-        int backgroundAlpha = Enabled ? (int)(ColorScheme.BorderColor.A * (1.0 - animationProgress)) : disabledOffColor.A;
+        int colorAlpha = Enabled ? (int)(animationProgress * 255.0) : 128;
+        int backgroundAlpha = Enabled ? (int)(ColorScheme.Outline.A * (1.0 - animationProgress)) : 128;
         float animationSize = (float)(animationProgress * 7f);
         float animationSizeHalf = animationSize / 2;
 
-        var accentColor = Enabled ? ColorScheme.AccentColor : disabledOffColor;
+        var accentColor = Enabled ? ColorScheme.Primary : ColorScheme.OnSurface.Alpha(50);
 
         // Ripple efekti
         if (Ripple && rippleAnimationManager.IsAnimating())
@@ -168,26 +167,31 @@ public class Radio : UIElementBase
             DrawRippleEffect(canvas, accentColor, RADIOBUTTON_CENTER);
         }
 
-        // Dış çerçeve
+        // Modern circular outline with Primary color when checked
+        var outlineColor = Checked 
+            ? ColorScheme.Primary.ToSKColor()
+            : (Enabled ? ColorScheme.Outline.ToSKColor() : ColorScheme.OnSurface.Alpha(50).ToSKColor());
+        
         using (var paint = new SKPaint
         {
-            Color = ColorScheme.BorderColor.ToSKColor(),
+            Color = outlineColor,
             IsAntialias = true,
-            Style = SKPaintStyle.Fill
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 2f
         })
         {
             canvas.DrawCircle(
                 RADIOBUTTON_CENTER,
                 RADIOBUTTON_CENTER,
-                RADIOBUTTON_SIZE / 2f,
+                RADIOBUTTON_SIZE / 2f - 1,
                 paint
             );
         }
 
-        // İç dolgu
+        // İç dolgu (background)
         using (var paint = new SKPaint
         {
-            Color = ColorScheme.BackColor.BlendWith(Enabled ? ColorScheme.BorderColor : disabledOffColor, backgroundAlpha).ToSKColor(),
+            Color = ColorScheme.Surface.ToSKColor(),
             IsAntialias = true,
             Style = SKPaintStyle.Fill
         })
@@ -200,12 +204,16 @@ public class Radio : UIElementBase
             );
         }
 
-        // Seçili durumda iç nokta
+        // Seçili durumda iç nokta - Primary color
         if (Checked)
         {
+            var primaryColor = ColorScheme.Primary.ToSKColor();
+            var surfaceColor = ColorScheme.Surface.ToSKColor();
+            var interpolatedColor = primaryColor.InterpolateColor(surfaceColor, 1f - animationProgress);
+            
             using var paint = new SKPaint
             {
-                Color = accentColor.ToSKColor().WithAlpha((byte)colorAlpha),
+                Color = Enabled ? interpolatedColor : ColorScheme.OnSurface.Alpha(50).ToSKColor(),
                 IsAntialias = true,
                 Style = SKPaintStyle.Fill
             };

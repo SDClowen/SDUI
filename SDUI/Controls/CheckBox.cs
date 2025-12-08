@@ -156,18 +156,13 @@ namespace SDUI.Controls
             base.OnPaint(e);
             var canvas = e.Surface.Canvas;
 
-
             var animationProgress = (float)animationManager.GetProgress();
-            var disabledOffColor = ColorScheme.BorderColor;
-            var accentColor = Enabled ? ColorScheme.AccentColor : disabledOffColor;
-
-            int colorAlpha = Enabled ? (int)(animationProgress * 255.0) : disabledOffColor.A;
-            int backgroundAlpha = Enabled ? (int)(ColorScheme.BorderColor.A * (1.0 - animationProgress)) : disabledOffColor.A;
+            var checkboxRadius = 4f;
 
             // Ripple efekti
             if (Ripple && rippleAnimationManager.IsAnimating())
             {
-                DrawRippleEffect(canvas, accentColor);
+                DrawRippleEffect(canvas, ColorScheme.Primary);
             }
 
             // Checkbox çerçeve ve arka plan
@@ -178,33 +173,44 @@ namespace SDUI.Controls
                 boxOffset + CHECKBOX_SIZE - 1
             );
 
-            // Arka plan
-            using (var paint = new SKPaint
-            {
-                Color = ColorScheme.BackColor.BlendWith(Enabled ? ColorScheme.BorderColor : disabledOffColor, backgroundAlpha).ToSKColor(),
-                IsAntialias = true,
-                Style = SKPaintStyle.Fill
-            })
-            {
-                canvas.DrawRoundRect(boxRect, 2, 2, paint);
-            }
-
-            // Çerçeve
-            using (var paint = new SKPaint
-            {
-                Color = ColorScheme.BorderColor.ToSKColor(),
-                IsAntialias = true,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = 1
-            })
-            {
-                canvas.DrawRoundRect(boxRect, 2, 2, paint);
-            }
-
-            // Checkbox dolgu ve işaret
+            // Modern checkbox rendering
             if (Checked || CheckState == CheckState.Indeterminate)
             {
-                DrawCheckboxFill(canvas, boxRect, accentColor, colorAlpha, animationProgress);
+                // Filled state with color interpolation
+                var primaryColor = ColorScheme.Primary.ToSKColor();
+                var containerColor = ColorScheme.PrimaryContainer.ToSKColor();
+                var interpolatedColor = primaryColor.InterpolateColor(containerColor, 1f - animationProgress);
+                
+                using (var paint = new SKPaint
+                {
+                    Color = Enabled 
+                        ? interpolatedColor
+                        : ColorScheme.OnSurface.Alpha(50).ToSKColor(),
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Fill
+                })
+                {
+                    canvas.DrawRoundRect(boxRect, checkboxRadius, checkboxRadius, paint);
+                }
+                
+                // Checkmark
+                DrawCheckboxFill(canvas, boxRect, ColorScheme.OnPrimary, 255, animationProgress);
+            }
+            else
+            {
+                // Unchecked outline
+                using (var paint = new SKPaint
+                {
+                    Color = Enabled 
+                        ? ColorScheme.Outline.ToSKColor()
+                        : ColorScheme.OnSurface.Alpha(50).ToSKColor(),
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 2f
+                })
+                {
+                    canvas.DrawRoundRect(boxRect, checkboxRadius, checkboxRadius, paint);
+                }
             }
 
             // Text
@@ -257,17 +263,9 @@ namespace SDUI.Controls
 
         private void DrawCheckboxFill(SKCanvas canvas, SKRect boxRect, Color accentColor, int colorAlpha, float animationProgress)
         {
-            using var paint = new SKPaint
-            {
-                Color = accentColor.ToSKColor().WithAlpha((byte)colorAlpha),
-                IsAntialias = true,
-                Style = SKPaintStyle.Fill
-            };
-            canvas.DrawRoundRect(boxRect, 2, 2, paint);
-
             using var checkPaint = new SKPaint
             {
-                Color = SKColors.White,
+                Color = accentColor.ToSKColor().WithAlpha((byte)colorAlpha),
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = 2,

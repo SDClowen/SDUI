@@ -921,16 +921,21 @@ public class UIWindow : UIWindowBase, IUIElement
         _focusedElement = tabbableElements[currentIndex];
     }
 
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        if (keyData == Keys.Tab || keyData == (Keys.Tab | Keys.Shift))
+        {
+            if (FocusManager.ProcessKeyNavigation(new KeyEventArgs(keyData)))
+            {
+                return true;
+            }
+        }
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-
-        if (e.KeyCode == Keys.Tab && !e.Control && !e.Alt)
-        {
-            HandleTabKey(e.Shift);
-            e.Handled = true;
-            return;
-        }
 
         if (_focusedElement != null)
         {

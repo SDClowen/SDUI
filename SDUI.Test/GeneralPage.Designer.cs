@@ -1046,7 +1046,7 @@
             textBox1.Name = "textBox1";
             textBox1.PassFocusShow = false;
             textBox1.Radius = 2;
-            textBox1.Size = new System.Drawing.Size(153, 25);
+            textBox1.Size = new System.Drawing.Size(250, 32);
             textBox1.TabIndex = 47;
             textBox1.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             textBox1.UseSystemPasswordChar = false;

@@ -462,9 +462,9 @@ public partial class MainWindow
         BackColor = System.Drawing.Color.Transparent;
         ClientSize = new System.Drawing.Size(1241, 768);
         ContextMenuStrip = contextMenuStrip1;
-        Controls.Add(windowPageControl);
-        Controls.Add(separator1);
         Controls.Add(menuStrip1);
+        Controls.Add(separator1);
+        Controls.Add(windowPageControl);
         DwmMargin = -1;
         ExtendBox = true;
         ExtendMenu = contextMenuStrip1;

@@ -80,6 +80,18 @@ public class Panel : UIElementBase
         canvas.Clear(SKColors.Transparent);
 
         var rect = new SKRect(0, 0, Width, Height);
+        if (_shadowDepth > 0)
+        {
+            // Shadow needs space. 
+            // dx=_shadowDepth, dy=_shadowDepth, sigma=3 (approx 9px blur spread)
+            // We need to shrink the content rect so the shadow fits.
+            float blur = 3f;
+            float margin = 2f; // minimal margin
+            float rightBottomMargin = _shadowDepth + blur + margin;
+            
+            rect = new SKRect(margin, margin, Width - rightBottomMargin, Height - rightBottomMargin);
+        }
+
         var color = BackColor == Color.Transparent ? ColorScheme.BackColor : BackColor;
         var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
 

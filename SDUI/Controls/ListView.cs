@@ -881,7 +881,7 @@ public class ListView : UIElementBase
             _isResizingColumn = false;
             _resizingColumnIndex = -1;
             Cursor = Cursors.Default;
-            if (Parent is UIWindow pw) pw.UpdateCursor(this);
+            if (ParentWindow is UIWindow pw) pw.UpdateCursor(this);
         }
         if (_isDraggingScrollbar)
         {
@@ -897,7 +897,7 @@ public class ListView : UIElementBase
         {
             _hoverSeparatorIndex = -1;
             Cursor = Cursors.Default;
-            if (Parent is UIWindow pw) pw.UpdateCursor(this);
+            if (ParentWindow is UIWindow pw) pw.UpdateCursor(this);
         }
     }
 
@@ -957,7 +957,7 @@ public class ListView : UIElementBase
                     if (Cursor != Cursors.Default)
                     {
                         Cursor = Cursors.Default;
-                        if (Parent is UIWindow pwDef) pwDef.UpdateCursor(this);
+                        if (ParentWindow is UIWindow pwDef) pwDef.UpdateCursor(this);
                     }
                 }
                 return;
@@ -970,7 +970,7 @@ public class ListView : UIElementBase
                 if (Cursor != desired)
                 {
                     Cursor = desired;
-                    if (Parent is UIWindow pw) pw.UpdateCursor(this);
+                    if (ParentWindow is UIWindow pw) pw.UpdateCursor(this);
                 }
             }
         }
@@ -1025,7 +1025,7 @@ public class ListView : UIElementBase
             if (Cursor != Cursors.SizeWE)
             {
                 Cursor = Cursors.SizeWE;
-                if (Parent is UIWindow pw) pw.UpdateCursor(this);
+                if (ParentWindow is UIWindow pw) pw.UpdateCursor(this);
             }
         }
         else

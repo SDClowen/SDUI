@@ -121,6 +121,8 @@ public class ProgressBar : UIElementBase
     public ProgressBar()
     {
         BackColor = Color.Transparent;
+        // Modern gradient with Primary color
+        _gradient = new[] { ColorScheme.Primary, ColorScheme.PrimaryContainer };
     }
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)
@@ -134,10 +136,10 @@ public class ProgressBar : UIElementBase
 
         var rect = new SKRect(0, 0, Width, Height);
 
-        // Arka plan çizimi
+        // Modern background with SurfaceContainerHigh
         using (var paint = new SKPaint
         {
-            Color = ColorScheme.BorderColor.ToSKColor(),
+            Color = ColorScheme.SurfaceContainerHigh.ToSKColor(),
             IsAntialias = true,
             Style = SKPaintStyle.Fill
         })
@@ -184,10 +186,10 @@ public class ProgressBar : UIElementBase
             }
         }
 
-        // Çerçeve çizimi
+        // Modern subtle border with Outline color
         using (var paint = new SKPaint
         {
-            Color = ColorScheme.BorderColor.ToSKColor(),
+            Color = ColorScheme.OutlineVariant.ToSKColor(),
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 1

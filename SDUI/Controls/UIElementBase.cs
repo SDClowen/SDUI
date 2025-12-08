@@ -1006,6 +1006,7 @@ namespace SDUI.Controls
         internal virtual void OnSizeChanged(EventArgs e)
         {
             SizeChanged?.Invoke(this, e);
+            PerformLayout();
             Invalidate();
         }
 
@@ -1074,10 +1075,19 @@ namespace SDUI.Controls
                 }
                 // No else needed - FocusedElement is not nullable
 
-                if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
+                if (e.Button == MouseButtons.Right)
                 {
                     var point = PointToScreen(e.Location);
-                    ContextMenuStrip.Show(this, point);
+                    var current = this;
+                    while (current != null)
+                    {
+                        if (current.ContextMenuStrip != null)
+                        {
+                            current.ContextMenuStrip.Show(this, point);
+                            break;
+                        }
+                        current = current.Parent as UIElementBase;
+                    }
                 }
             }
         }
@@ -1250,14 +1260,14 @@ namespace SDUI.Controls
 
         internal virtual void OnAutoSizeModeChanged(EventArgs e) =>
             AutoSizeModeChanged?.Invoke(this, e);
-        private void HandleTabKey(bool isShift)
+        private bool HandleTabKey(bool isShift)
         {
             var tabbableElements = Controls.OfType<UIElementBase>()
                 .Where(e => e.Visible && e.Enabled && e.TabStop)
                 .OrderBy(e => e.TabIndex)
                 .ToList();
 
-            if (tabbableElements.Count == 0) return;
+            if (tabbableElements.Count == 0) return false;
 
             int currentIndex = _focusedElement != null ? tabbableElements.IndexOf(_focusedElement) : -1;
 
@@ -1273,6 +1283,7 @@ namespace SDUI.Controls
             }
 
             _focusedElement = tabbableElements[currentIndex];
+            return true;
         }
 
 
@@ -1281,9 +1292,11 @@ namespace SDUI.Controls
             KeyDown?.Invoke(this, e);
             if (e.KeyCode == Keys.Tab && !e.Control && !e.Alt)
             {
-                HandleTabKey(e.Shift);
-                e.Handled = true;
-                return;
+                if (HandleTabKey(e.Shift))
+                {
+                    e.Handled = true;
+                    return;
+                }
             }
 
             if (_focusedElement != null)
@@ -1425,7 +1438,7 @@ namespace SDUI.Controls
             }
         }
 
-        public UIWindowBase ParentWindow
+        public UIWindowBase? ParentWindow
         {
             get
             {
@@ -1438,7 +1451,7 @@ namespace SDUI.Controls
             }
         }
 
-        public UIElementBase ParentElement => _parent as UIElementBase;
+        public UIElementBase? ParentElement => _parent as UIElementBase;
 
         public bool HasParent => _parent != null;
 
@@ -1568,7 +1581,7 @@ namespace SDUI.Controls
         #endregion
 
         #region Methods
-        public Form FindForm()
+        public Form? FindForm()
         {
             if (Parent is Form form)
                 return form;
@@ -1699,7 +1712,7 @@ namespace SDUI.Controls
             if (_isLayoutSuspended)
                 return;
 
-            OnLayout(new UILayoutEventArgs(null));
+            OnLayout(new UILayoutEventArgs(null!));
         }
 
         public virtual void PerformLayout(UIElementBase affectedElement)

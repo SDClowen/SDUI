@@ -44,7 +44,7 @@ public class Button : UIElementBase, IButtonControl
         }
     }
 
-    private int _radius = 6;
+    private int _radius = 12;
     [Category("Appearance")]
     public int Radius
     {
@@ -59,12 +59,28 @@ public class Button : UIElementBase, IButtonControl
         }
     }
 
+    private int _elevation = 1;
+    [Category("Appearance")]
+    public int Elevation
+    {
+        get => _elevation;
+        set
+        {
+            if (_elevation == value)
+                return;
+
+            _elevation = Math.Clamp(value, 0, 5);
+            Invalidate();
+        }
+    }
+
     private readonly AnimationManager animationManager;
     private readonly AnimationManager hoverAnimationManager;
     private readonly AnimationManager pressAnimationManager;
 
     private SKImage _cachedImage;
     private bool _needsRedraw = true;
+    private Point? _rippleCenter;
 
     private void InvalidateCache()
     {
@@ -156,6 +172,7 @@ public class Button : UIElementBase, IButtonControl
     {
         base.OnMouseDown(e);
         _mouseState = 2;
+        _rippleCenter = e.Location;
         RestartAnimation(animationManager, AnimationDirection.In, e.Location);
         RestartAnimation(pressAnimationManager, AnimationDirection.In);
         Invalidate();
@@ -189,114 +206,146 @@ public class Button : UIElementBase, IButtonControl
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
-        // Tema arkaplanını her frame temizle (siyah görünümleri engeller)
-        canvas.Clear(ColorScheme.BackColor.ToSKColor());
+        canvas.Clear(SKColors.Transparent);
 
         var hoverProgress = (float)hoverAnimationManager.GetProgress();
         var pressProgress = (float)pressAnimationManager.GetProgress();
+        var rippleProgress = (float)animationManager.GetProgress();
 
         var baseRect = new SKRect(0, 0, Width, Height);
-        var bodyRect = new SKRect(baseRect.Left, baseRect.Top, baseRect.Right, baseRect.Bottom);
-        bodyRect.Inflate(-_shadowDepth / 4f, -_shadowDepth / 4f);
+        
+        // Add padding for elevation shadow
+        // We use the base elevation for padding to prevent the button from being too small.
+        var elevationOffset = ColorScheme.GetElevationOffset(_elevation);
+        var elevationBlur = ColorScheme.GetElevationBlur(_elevation);
+        
+        // Calculate padding needed for the shadow
+        // We add a small buffer (1px) to avoid hard clipping
+        var hPadding = Math.Max(elevationOffset, elevationBlur / 2) + 1;
+        var vPaddingTop = Math.Max(elevationOffset / 2, elevationBlur / 2) + 1;
+        var vPaddingBottom = elevationOffset + elevationBlur / 2 + 1;
+
+        var bodyRect = new SKRect(
+            baseRect.Left + hPadding,
+            baseRect.Top + vPaddingTop,
+            baseRect.Right - hPadding,
+            baseRect.Bottom - vPaddingBottom);
 
         canvas.Save();
 
+        // Calculate dynamic elevation based on state
+        var currentElevation = _elevation;
+        if (Enabled)
+        {
+            if (pressProgress > 0) currentElevation += 1;
+            else if (hoverProgress > 0) currentElevation += 1;
+        }
+        currentElevation = Math.Min(currentElevation, 5);
+
+        // Draw elevation shadow
+        if (Enabled && currentElevation > 0)
+        {
+            ElevationHelper.DrawElevation(canvas, bodyRect, _radius, currentElevation);
+        }
+
         DrawButton(canvas, bodyRect, hoverProgress, pressProgress);
-        DrawAnimations(canvas, bodyRect, hoverProgress, pressProgress);
+        
+        // Draw ripple effect
+        if (rippleProgress > 0 && rippleProgress < 1 && _rippleCenter.HasValue)
+        {
+            canvas.Save();
+            using (var path = new SKPath())
+            {
+                path.AddRoundRect(bodyRect, _radius, _radius);
+                canvas.ClipPath(path, SKClipOperation.Intersect, true);
+
+                ElevationHelper.DrawRipple(
+                    canvas,
+                    new SKPoint(_rippleCenter.Value.X, _rippleCenter.Value.Y),
+                    Math.Max(bodyRect.Width, bodyRect.Height) * rippleProgress,
+                    rippleProgress,
+                    ColorScheme.Primary.Alpha(100));
+            }
+            canvas.Restore();
+        }
 
         canvas.Restore();
     }
 
     private void DrawButton(SKCanvas canvas, SKRect bodyRect, float hoverProgress, float pressProgress)
     {
-        var accentSk = ColorScheme.AccentColor.ToSKColor();
-        // Sade tasarım: temel dolgu her zaman tema arkaplan rengi
-        var baseSk = Color != Color.Transparent
-            ? (Enabled ? Color.ToSKColor() : Color.FromArgb(160, Color).ToSKColor())
-            : ColorScheme.BackColor.ToSKColor();
-
-        // Sadelik: dolgu rengi doğrudan temel renk (tema arkaplanı veya kullanıcı rengi)
-        var highlightBlend = Math.Clamp(hoverProgress * 0.15f + pressProgress * 0.30f, 0f, 0.4f);
-        var fillColor = baseSk;
+        // Determine base color - use Primary for filled buttons
+        var fillColor = Color != Color.Transparent
+            ? Color.ToSKColor()
+            : ColorScheme.Primary.ToSKColor();
 
         if (!Enabled)
         {
-            fillColor = fillColor.WithAlpha((byte)(fillColor.Alpha * 0.6f));
+            // Material Design 3 Disabled State: OnSurface 12%
+            fillColor = ColorScheme.OnSurface.Alpha(30).ToSKColor();
         }
 
-        // Kenarlık (gölge yerine sade kenarlık)
-        using (var borderPaint = new SKPaint
-        {
-            Color = ColorScheme.BorderColor.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1f
-        })
-        {
-            canvas.DrawRoundRect(bodyRect, _radius, _radius, borderPaint);
-        }
-
+        // Draw base fill
         using (var fillPaint = new SKPaint
         {
             Color = fillColor,
             IsAntialias = true,
-            FilterQuality = SKFilterQuality.High,
             Style = SKPaintStyle.Fill
         })
         {
             canvas.DrawRoundRect(bodyRect, _radius, _radius, fillPaint);
         }
 
-        // Hover/press parıltısı
-        var glowIntensity = Math.Clamp(hoverProgress * 0.4f + pressProgress * 0.3f, 0f, 1f);
-        if (glowIntensity > 0)
+        // Draw state layer (hover/press)
+        if (Enabled)
         {
-            using var glowPaint = new SKPaint
+            Color stateLayerColor = Color.Transparent;
+            if (pressProgress > 0)
+                stateLayerColor = ColorScheme.StateLayerPressed;
+            else if (hoverProgress > 0)
+                stateLayerColor = ColorScheme.StateLayerHover;
+
+            if (stateLayerColor.A > 0)
             {
-                Color = accentSk.WithAlpha((byte)(80 * glowIntensity)),
-                IsAntialias = true
-            };
-            canvas.DrawRoundRect(bodyRect, _radius, _radius, glowPaint);
+                using var statePaint = new SKPaint
+                {
+                    Color = stateLayerColor.ToSKColor(),
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Fill
+                };
+                canvas.DrawRoundRect(bodyRect, _radius, _radius, statePaint);
+            }
         }
 
-        // Focus halkası
+        // Draw focus indicator
         if (Focused)
         {
             using var focusPaint = new SKPaint
             {
-                Color = accentSk.WithAlpha(180),
+                Color = ColorScheme.Primary.ToSKColor(),
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
-                StrokeWidth = 2f
+                StrokeWidth = 2f,
+                PathEffect = SKPathEffect.CreateDash(new[] { 4f, 2f }, 0)
             };
-            canvas.DrawRoundRect(bodyRect, _radius, _radius, focusPaint);
+            var focusRect = bodyRect;
+            focusRect.Inflate(3, 3);
+            canvas.DrawRoundRect(focusRect, _radius + 2, _radius + 2, focusPaint);
         }
 
-        // Geçersiz durum kenarlığı
-        if (!IsValid)
-        {
-            using var invalidPaint = new SKPaint
-            {
-                Color = Color.Red.ToSKColor(),
-                IsAntialias = true,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = 2f
-            };
-            canvas.DrawRoundRect(bodyRect, _radius, _radius, invalidPaint);
-        }
-
-        // İkon çizimi
-        float contentStartX = bodyRect.Left + 8f;
+        // Icon drawing
+        float contentStartX = bodyRect.Left + 16f;
         if (Image != null)
         {
+            var imageSize = 20;
             var imageRect = new Rectangle(
                 (int)contentStartX,
-                (int)(bodyRect.Top + (bodyRect.Height - 24) / 2f),
-                24,
-                24);
+                (int)(bodyRect.Top + (bodyRect.Height - imageSize) / 2f),
+                imageSize,
+                imageSize);
 
             if (string.IsNullOrEmpty(Text))
-                imageRect.X += 2;
+                imageRect.X = (int)(bodyRect.Left + (bodyRect.Width - imageSize) / 2f);
 
             using (var stream = new System.IO.MemoryStream())
             {
@@ -305,15 +354,18 @@ public class Button : UIElementBase, IButtonControl
                 using var skImage = SKImage.FromEncodedData(SKData.Create(stream));
                 canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y, imageRect.Width, imageRect.Height));
             }
-            contentStartX += 24 + 6f;
+            contentStartX += imageSize + 8f;
         }
 
-        // Metin çizimi
+        // Text drawing with OnPrimary color
         if (!string.IsNullOrEmpty(Text))
         {
-            var textColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentSk, Math.Clamp(highlightBlend * 0.4f + hoverProgress * 0.1f, 0f, 0.6f));
+            var textColor = Color != Color.Transparent
+                ? ColorScheme.OnPrimary.ToSKColor()
+                : ColorScheme.OnPrimary.ToSKColor();
+                
             if (!Enabled)
-                textColor = textColor.WithAlpha((byte)(textColor.Alpha * 0.6f));
+                textColor = ColorScheme.OnSurface.Alpha(80).ToSKColor();
 
             using var textPaint = new SKPaint
             {
@@ -329,34 +381,13 @@ public class Button : UIElementBase, IButtonControl
                 Edging = SKFontEdging.SubpixelAntialias
             };
 
-            var availableWidth = bodyRect.Width - (contentStartX - bodyRect.Left) - 8f;
-            var textBounds = SKRect.Create(contentStartX, bodyRect.Top, availableWidth, bodyRect.Height);
+            var textWidth = font.MeasureText(Text);
+            var textX = Image == null 
+                ? bodyRect.Left + (bodyRect.Width - textWidth) / 2f
+                : contentStartX;
+            var textY = bodyRect.Top + (bodyRect.Height + font.Metrics.CapHeight) / 2f;
 
-            canvas.DrawControlText(Text, textBounds, textPaint, font, TextAlign, AutoEllipsis, UseMnemonic);
-        }
-
-        // Validasyon mesajı çizimi
-        if (!IsValid && !string.IsNullOrEmpty(ValidationText))
-        {
-            using var validationPaint = new SKPaint
-            {
-                Color = Color.Red.ToSKColor(),
-                IsAntialias = true
-            };
-
-            using var validationFont = new SKFont
-            {
-                Size = Font.Size,
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            };
-
-            TextRenderingHelper.DrawText(
-                canvas,
-                ValidationText,
-                bodyRect.Left + 5f,
-                bodyRect.Bottom + 15f,
-                validationFont,
-                validationPaint);
+            canvas.DrawText(Text, textX, textY, font, textPaint);
         }
     }
 

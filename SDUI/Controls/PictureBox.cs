@@ -109,6 +109,14 @@ namespace SDUI.Controls
             canvas.Clear(SKColors.Transparent);
 
             var rect = new SKRect(0, 0, Width, Height);
+            if (_shadowDepth > 0)
+            {
+                float blur = 3f;
+                float margin = 2f;
+                float rightBottomMargin = _shadowDepth + blur + margin;
+                rect = new SKRect(margin, margin, Width - rightBottomMargin, Height - rightBottomMargin);
+            }
+
             var color = BackColor == Color.Transparent ? ColorScheme.BackColor2 : BackColor;
             var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
 
