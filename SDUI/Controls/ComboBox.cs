@@ -1185,6 +1185,8 @@ public class ComboBox : UIElementBase
         }
         
         var textColor = ColorScheme.ForeColor.ToSKColor();
+        var displayText = Text;
+
         using var font = new SKFont
         {
             Size = Font.Size.PtToPx(this),
