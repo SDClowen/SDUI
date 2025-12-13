@@ -12,6 +12,8 @@ namespace SDUI.Controls;
 
 public class ContextMenuStrip : MenuStrip
 {
+    internal const float ShadowMargin = 7f; // Shadow için ekstra alan (daha subtle)
+
     private UIElementBase _sourceElement;
     private bool _isOpen;
     private UIWindow _ownerWindow;
@@ -33,6 +35,11 @@ public class ContextMenuStrip : MenuStrip
         AutoSize = false;
         TabStop = false;
         Orientation = SDUI.Orientation.Vertical;
+
+        // Dikey (dropdown) menü öğeleri için biraz daha yüksek satır
+        // ve daha ferah padding.
+        ItemHeight = 28f;
+        ItemPadding = 6f;
 
         _fadeInAnimation = new AnimationManager
         {
@@ -63,9 +70,14 @@ public class ContextMenuStrip : MenuStrip
         if (!_ownerWindow.Controls.Contains(this))
             _ownerWindow.Controls.Add(this);
 
-        Visible = true;
-        BringToFront();
+        // Konumu ve boyutu belirle, sonra z-order'ı en üste çek.
         PositionDropDown(location);
+        Visible = true;
+
+        // WinForms z-order + SDUI'nin kendi ZOrder sistemini güncelle.
+        BringToFront();
+        if (_ownerWindow is UIWindow uiw)
+            uiw.BringToFront(this);
         AttachHandlers();
 
         _fadeInAnimation.SetProgress(0);
@@ -173,31 +185,53 @@ public class ContextMenuStrip : MenuStrip
 
     private Size GetPrefSize()
     {
-        float width = ItemPadding * 2;
-        float height = ItemPadding;
+        const float MinContentWidth = 180f; // Minimum içerik genişliği
+        
+        // İçerik genişlik/yükseklik hesabı (shadow hariç)
+        float contentWidth = ItemPadding * 2;
+        float contentHeight = ItemPadding; // Üst padding
+        
         foreach (var item in Items)
         {
             if (item.IsSeparator)
-                height += SeparatorMargin * 2 + 1;
+            {
+                contentHeight += SeparatorMargin * 2 + 1 + ItemPadding;
+            }
             else
             {
-                width = Math.Max(width, MeasureItemWidth(item) + ItemPadding * 2);
-                height += ItemHeight + ItemPadding;
+                contentWidth = Math.Max(contentWidth, MeasureItemWidth(item) + ItemPadding * 2);
+                contentHeight += ItemHeight + ItemPadding;
             }
         }
-        return new Size((int)width, (int)height);
+
+        // Minimum genişlik garantisi
+        contentWidth = Math.Max(contentWidth, MinContentWidth);
+
+        // En alttaki öğenin border ile kesilmemesi için ekstra alan yok,
+        // çünkü son item'dan sonra zaten ItemPadding var.
+        
+        // Shadow için her yönden ekstra alan ekle
+        float totalWidth = contentWidth + ShadowMargin * 2;
+        float totalHeight = contentHeight + ShadowMargin * 2;
+
+        return new Size((int)Math.Ceiling(totalWidth), (int)Math.Ceiling(totalHeight));
     }
 
     internal override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        float y = ItemPadding;
+        float y = ShadowMargin + ItemPadding;
         _hoveredItem = null;
         foreach (var item in Items)
         {
-            if (item.IsSeparator) { y += SeparatorMargin * 2 + 1 + ItemPadding; continue; }
-            var w = Width - ItemPadding * 2;
-            var r = new RectangleF(ItemPadding, y, w, ItemHeight);
+            if (item.IsSeparator)
+            {
+                y += SeparatorMargin * 2 + 1 + ItemPadding;
+                continue;
+            }
+
+            var w = Width - ShadowMargin * 2 - ItemPadding * 2;
+            var r = new RectangleF(ShadowMargin + ItemPadding, y, w, ItemHeight);
             if (r.Contains(e.Location)) { _hoveredItem = item; break; }
             y += ItemHeight + ItemPadding;
         }
@@ -228,13 +262,20 @@ public class ContextMenuStrip : MenuStrip
         byte fadeAlpha = (byte)(fadeProgress * 255);
         const float CORNER_RADIUS = 10f;
 
-        // Multi-layer shadow system
+        // İçerik alanı (shadow margin kadar içeride)
+        var contentRect = new SKRect(
+            ShadowMargin,
+            ShadowMargin,
+            bounds.Width - ShadowMargin,
+            bounds.Height - ShadowMargin);
+
+        // Multi-layer shadow system (extra subtle)
         canvas.Save();
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < 2; i++)
         {
-            float offsetY = 2 + i * 2;
-            float blurRadius = 6 + i * 4;
-            byte shadowAlpha = (byte)((25 - i * 5) * fadeProgress);
+            float offsetY = 0.75f + i * 0.85f;
+            float blurRadius = 3.0f + i * 2.75f;
+            byte shadowAlpha = (byte)((8 - i * 3) * fadeProgress);
 
             using var shadowPaint = new SKPaint
             {
@@ -245,7 +286,7 @@ public class ContextMenuStrip : MenuStrip
 
             canvas.Save();
             canvas.Translate(0, offsetY);
-            canvas.DrawRoundRect(new SKRect(0, 0, bounds.Width, bounds.Height), CORNER_RADIUS, CORNER_RADIUS, shadowPaint);
+            canvas.DrawRoundRect(contentRect, CORNER_RADIUS, CORNER_RADIUS, shadowPaint);
             canvas.Restore();
         }
         canvas.Restore();
@@ -253,30 +294,43 @@ public class ContextMenuStrip : MenuStrip
         // High-quality background
         using (var bgPaint = new SKPaint { Color = MenuBackColor.ToSKColor().WithAlpha(fadeAlpha), IsAntialias = true, FilterQuality = SKFilterQuality.High })
         {
-            canvas.DrawRoundRect(new SKRect(0, 0, bounds.Width, bounds.Height), CORNER_RADIUS, CORNER_RADIUS, bgPaint);
+            canvas.DrawRoundRect(contentRect, CORNER_RADIUS, CORNER_RADIUS, bgPaint);
         }
 
         // Border
         using (var borderPaint = new SKPaint { Color = SeparatorColor.ToSKColor().WithAlpha((byte)(fadeAlpha * 0.35f)), Style = SKPaintStyle.Stroke, StrokeWidth = 1, IsAntialias = true, FilterQuality = SKFilterQuality.High })
         {
-            var borderRect = new SKRect(0.5f, 0.5f, bounds.Width - 0.5f, bounds.Height - 0.5f);
+            var borderRect = new SKRect(
+                contentRect.Left + 0.5f,
+                contentRect.Top + 0.5f,
+                contentRect.Right - 0.5f,
+                contentRect.Bottom - 0.5f);
             canvas.DrawRoundRect(borderRect, CORNER_RADIUS, CORNER_RADIUS, borderPaint);
         }
 
-        float y = ItemPadding;
+        float y = contentRect.Top + ItemPadding;
 
         foreach (var item in Items)
         {
             if (item.IsSeparator)
             {
                 using var sepPaint = new SKPaint { Color = SeparatorColor.ToSKColor().WithAlpha(fadeAlpha), IsAntialias = true, StrokeWidth = 1 };
-                canvas.DrawLine(ItemPadding + 8, y + SeparatorMargin, bounds.Width - ItemPadding - 8, y + SeparatorMargin, sepPaint);
+                canvas.DrawLine(
+                    contentRect.Left + ItemPadding + 8,
+                    y + SeparatorMargin,
+                    contentRect.Right - ItemPadding - 8,
+                    y + SeparatorMargin,
+                    sepPaint);
                 y += SeparatorMargin * 2 + 1 + ItemPadding;
                 continue;
             }
 
-            var w = bounds.Width - ItemPadding * 2;
-            var itemRect = new SKRect(ItemPadding, y, ItemPadding + w, y + ItemHeight);
+            var w = contentRect.Width - ItemPadding * 2;
+            var itemRect = new SKRect(
+                contentRect.Left + ItemPadding,
+                y,
+                contentRect.Left + ItemPadding + w,
+                y + ItemHeight);
 
             bool isHovered = item == _hoveredItem;
             var anim = EnsureItemHoverAnim(item);

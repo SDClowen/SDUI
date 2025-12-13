@@ -24,8 +24,8 @@ public class MenuStrip : UIElementBase
     private Color _submenuBackColor = Color.FromArgb(37, 37, 37);
     private Color _submenuBorderColor = Color.FromArgb(80, 80, 80);
     private Color _separatorColor = Color.FromArgb(80, 80, 80);
-    private float _itemHeight = 28f;
-    private float _itemPadding = 6f; // 12 -> 6 (daha az margin)
+    private float _itemHeight = 24f;
+    private float _itemPadding = 4f; // temel boşluk, ekstra spacing sınırlanacak
     private float _submenuArrowSize = 8f;
     private float _iconSize = 16f;
     private readonly Dictionary<MenuItem, AnimationManager> _itemHoverAnims = new();
@@ -113,8 +113,16 @@ public class MenuStrip : UIElementBase
                 total += widths[i];
                 if (i < _items.Count - 1) total += ItemPadding;
             }
+
+            // Yatay menüde fazladan boşlukları sınırlı tut.
             float extra = 0;
-            if (Stretch && _items.Count > 0 && total < available) extra = (_items.Count > 1) ? (available - total) / (_items.Count - 1) : 0;
+            if (Stretch && _items.Count > 1 && total < available)
+            {
+                float rawExtra = (available - total) / (_items.Count - 1);
+                // Her boşluk en fazla ItemPadding kadar genişlesin.
+                float maxExtraPerGap = ItemPadding;
+                extra = Math.Min(rawExtra, maxExtraPerGap);
+            }
             for (int i = 0; i < _items.Count; i++)
             {
                 var item = _items[i];
@@ -252,7 +260,71 @@ public class MenuStrip : UIElementBase
         }
     }
 
-    private List<RectangleF> ComputeItemRects(){ var rects=new List<RectangleF>(_items.Count); var b=ClientRectangle; if(Orientation==SDUI.Orientation.Horizontal){ float x=ItemPadding; float available=b.Width-(ItemPadding*2); float total=0; float[] widths=new float[_items.Count]; for(int i=0;i<_items.Count;i++){ widths[i]=MeasureItemWidth(_items[i]); total+=widths[i]; if(i<_items.Count-1) total+=ItemPadding; } float extra=0; if(Stretch && _items.Count>1 && total<available) extra=(available-total)/(_items.Count-1); for(int i=0;i<_items.Count;i++){ float w=widths[i]; rects.Add(new RectangleF(x,0,w,ItemHeight)); x+=w+ItemPadding+(i<_items.Count-1?extra:0); } } else { float y=ItemPadding; float w=b.Width-(ItemPadding*2); for(int i=0;i<_items.Count;i++){ rects.Add(new RectangleF(ItemPadding,y,w,ItemHeight)); y+=ItemHeight+ItemPadding; } } return rects; }
+    private List<RectangleF> ComputeItemRects()
+    {
+        var rects = new List<RectangleF>(_items.Count);
+        var b = ClientRectangle;
+
+        if (Orientation == SDUI.Orientation.Horizontal)
+        {
+            float x = ItemPadding;
+            float available = b.Width - (ItemPadding * 2);
+            float total = 0;
+            float[] widths = new float[_items.Count];
+
+            for (int i = 0; i < _items.Count; i++)
+            {
+                widths[i] = MeasureItemWidth(_items[i]);
+                total += widths[i];
+                if (i < _items.Count - 1)
+                    total += ItemPadding;
+            }
+
+            float extra = 0;
+            if (Stretch && _items.Count > 1 && total < available)
+            {
+                float rawExtra = (available - total) / (_items.Count - 1);
+                float maxExtraPerGap = ItemPadding;
+                extra = Math.Min(rawExtra, maxExtraPerGap);
+            }
+
+            for (int i = 0; i < _items.Count; i++)
+            {
+                float w = widths[i];
+                rects.Add(new RectangleF(x, 0, w, ItemHeight));
+                x += w + ItemPadding + (i < _items.Count - 1 ? extra : 0);
+            }
+        }
+        else
+        {
+            // Dikey menüler ve ContextMenuStrip için; separator'lar da
+            // ContextMenuStrip'teki satır yerleşimi ile aynı mantığı kullanmalı ki
+            // hover alanı ile çizim hizalı olsun.
+            float margin = this is ContextMenuStrip ? ContextMenuStrip.ShadowMargin : 0f;
+            float y = margin + ItemPadding;
+            float w = b.Width - (margin * 2) - (ItemPadding * 2);
+            float x = margin + ItemPadding;
+
+            for (int i = 0; i < _items.Count; i++)
+            {
+                var item = _items[i];
+
+                if (item.IsSeparator)
+                {
+                    // İnce çizgi için küçük bir satır yüksekliği ayırıyoruz.
+                    float sepHeight = SeparatorMargin * 2 + 1;
+                    rects.Add(new RectangleF(x, y, w, sepHeight));
+                    y += sepHeight + ItemPadding;
+                    continue;
+                }
+
+                rects.Add(new RectangleF(x, y, w, ItemHeight));
+                y += ItemHeight + ItemPadding;
+            }
+        }
+
+        return rects;
+    }
 
     private SKRect GetItemBounds(MenuItem item){ var rects=ComputeItemRects(); for(int i=0;i<_items.Count;i++){ if(_items[i]==item){ var r=rects[i]; return new SKRect(r.Left,r.Top,r.Right,r.Bottom); } } return SKRect.Empty; }
 
@@ -282,9 +354,22 @@ public class MenuStrip : UIElementBase
 
         if (vertical)
         {
-            // Right side, top aligned
-            int targetX = (int)(itemBounds.Right + 4);
-            int targetY = (int)(itemBounds.Top);
+            // Cascading submenus must align by the *content* edge, not the shadow bounds.
+            // ContextMenuStrip's background starts at ShadowMargin, so compensate here.
+            float shadow = _activeDropDown is ContextMenuStrip ? ContextMenuStrip.ShadowMargin : 0f;
+
+            // Parent content right edge in local coords.
+            float parentContentRight = this is ContextMenuStrip
+                ? (Width - ContextMenuStrip.ShadowMargin)
+                : itemBounds.Right;
+
+            // Desired child background top-left (local coords), with 1px overlap to avoid seams.
+            float desiredBgLeft = parentContentRight - 1f;
+            float desiredBgTop = itemBounds.Top;
+
+            // Convert desired background origin to dropdown's control origin (includes shadow space).
+            int targetX = (int)Math.Round(desiredBgLeft - shadow);
+            int targetY = (int)Math.Round(desiredBgTop - shadow);
             screenPoint = PointToScreen(new Point(targetX, targetY));
         }
         else
@@ -310,6 +395,11 @@ public class MenuStrip : UIElementBase
         _activeDropDownOwner = item;
         _openedItem = item;
         _activeDropDown.Show(this, screenPoint);
+
+        // İlk açılışta da her zaman en üst z-index'te olsun.
+        if (FindForm() is UIWindow uiw)
+            uiw.BringToFront(_activeDropDown);
+
         Invalidate();
     }
 
@@ -317,7 +407,7 @@ public class MenuStrip : UIElementBase
 
     private void EnsureDropDownHost(){ if(_activeDropDown!=null) return; _activeDropDown=new ContextMenuStrip{ AutoClose=true, Dock=DockStyle.None }; _activeDropDown.Opening+=(_, _)=>SyncDropDownAppearance(); _activeDropDown.Closing+=(_, _)=>{ _openedItem=null; _activeDropDownOwner=null; Invalidate(); }; }
 
-    private void SyncDropDownAppearance(){ if(_activeDropDown==null) return; _activeDropDown.MenuBackColor=SubmenuBackColor; _activeDropDown.MenuForeColor=MenuForeColor; _activeDropDown.HoverBackColor=HoverBackColor; _activeDropDown.HoverForeColor=HoverForeColor; _activeDropDown.SubmenuBackColor=SubmenuBackColor; _activeDropDown.SeparatorColor=SeparatorColor; _activeDropDown.RoundedCorners=RoundedCorners; _activeDropDown.ItemPadding=ItemPadding; _activeDropDown.Orientation=SDUI.Orientation.Vertical; _activeDropDown.ImageScalingSize=ImageScalingSize; _activeDropDown.ShowSubmenuArrow=ShowSubmenuArrow; _activeDropDown.ShowIcons=ShowIcons; }
+    private void SyncDropDownAppearance(){ if(_activeDropDown==null) return; _activeDropDown.MenuBackColor=SubmenuBackColor; _activeDropDown.MenuForeColor=MenuForeColor; _activeDropDown.HoverBackColor=HoverBackColor; _activeDropDown.HoverForeColor=HoverForeColor; _activeDropDown.SubmenuBackColor=SubmenuBackColor; _activeDropDown.SeparatorColor=SeparatorColor; _activeDropDown.RoundedCorners=RoundedCorners; _activeDropDown.ItemPadding=Math.Max(ItemPadding, 6f); _activeDropDown.Orientation=SDUI.Orientation.Vertical; _activeDropDown.ImageScalingSize=ImageScalingSize; _activeDropDown.ShowSubmenuArrow=ShowSubmenuArrow; _activeDropDown.ShowIcons=ShowIcons; }
 
     private MenuItem CloneMenuItem(MenuItem source){ if(source is MenuItemSeparator separator){ var cloneSeparator=new MenuItemSeparator{ Height=separator.Height, Margin=separator.Margin, LineColor=separator.LineColor, ShadowColor=separator.ShadowColor }; return cloneSeparator; } var clone=new MenuItem{ Text=source.Text, Icon=source.Icon, Image=source.Image, ShortcutKeys=source.ShortcutKeys, ShowSubmenuArrow=source.ShowSubmenuArrow, ForeColor=source.ForeColor, BackColor=source.BackColor, Enabled=source.Enabled, Visible=source.Visible, Font=source.Font, AutoSize=source.AutoSize, Padding=source.Padding, Tag=source.Tag, Checked=source.Checked }; foreach(var child in source.DropDownItems) clone.AddDropDownItem(CloneMenuItem(child)); clone.Click+=(_, _)=>{ source.OnClick(); _activeDropDown?.Hide(); }; return clone; }
 

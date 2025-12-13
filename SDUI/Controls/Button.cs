@@ -322,15 +322,14 @@ public class Button : UIElementBase, IButtonControl
         {
             using var focusPaint = new SKPaint
             {
-                Color = ColorScheme.Primary.ToSKColor(),
+                Color = ColorScheme.OnPrimary.Alpha(90).ToSKColor(),
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
-                StrokeWidth = 2f,
-                PathEffect = SKPathEffect.CreateDash(new[] { 4f, 2f }, 0)
+                StrokeWidth = 1.5f
             };
             var focusRect = bodyRect;
-            focusRect.Inflate(3, 3);
-            canvas.DrawRoundRect(focusRect, _radius + 2, _radius + 2, focusPaint);
+            focusRect.Inflate(2, 2);
+            canvas.DrawRoundRect(focusRect, _radius + 1, _radius + 1, focusPaint);
         }
 
         // Icon drawing

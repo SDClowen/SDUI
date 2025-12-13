@@ -204,13 +204,13 @@ public partial class MainWindow
         // menuStrip1
         // 
         menuStrip1.BackColor = System.Drawing.Color.Transparent;
-        menuStrip1.Dock = DockStyle.Bottom;
+        menuStrip1.Dock = DockStyle.Top;
         menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
         menuStrip1.Items.AddRange(new MenuItem[] { fileToolStripMenuItem, editToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
         menuStrip1.Location = new System.Drawing.Point(1, 737);
         menuStrip1.Name = "menuStrip1";
-        menuStrip1.Padding = new Padding(6, 3, 0, 3);
-        menuStrip1.Size = new System.Drawing.Size(1239, 30);
+        menuStrip1.Padding = new Padding(6, 2, 0, 2);
+        menuStrip1.Size = new System.Drawing.Size(1239, 28);
         menuStrip1.Stretch = false;
         menuStrip1.TabIndex = 1;
         menuStrip1.Text = "menuStrip1";

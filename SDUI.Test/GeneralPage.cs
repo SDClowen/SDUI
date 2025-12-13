@@ -9,6 +9,30 @@ namespace SDUI.Demo
 {
     public partial class GeneralPage : SDUI.Controls.UIElementBase
     {
+        private static readonly Random _rng = new();
+
+        private static async Task ApplyThemeAndSyncWindowAsync(UIWindow parent, Action startTransition, int durationMs = 260)
+        {
+            void SyncWindowBackground(object? _, EventArgs __)
+            {
+                if (parent.IsDisposed) return;
+                parent.BackColor = ColorScheme.Surface;
+                parent.Invalidate();
+            }
+
+            ColorScheme.ThemeChanged += SyncWindowBackground;
+            try
+            {
+                startTransition();
+                SyncWindowBackground(null, EventArgs.Empty);
+                await Task.Delay(durationMs);
+            }
+            finally
+            {
+                ColorScheme.ThemeChanged -= SyncWindowBackground;
+            }
+        }
+
         public GeneralPage()
         {
             InitializeComponent();
@@ -84,12 +108,11 @@ namespace SDUI.Demo
             }
         }
 
-        private void buttonRandomColor_Click(object sender, EventArgs e)
+        private async void buttonRandomColor_Click(object sender, EventArgs e)
         {
-            var random = new Random();
-            var r = random.Next(0, 256);
-            var g = random.Next(0, 256);
-            var b = random.Next(0, 256);
+            var r = _rng.Next(0, 256);
+            var g = _rng.Next(0, 256);
+            var b = _rng.Next(0, 256);
 
             var form = FindForm();
             if (form == null)
@@ -98,33 +121,37 @@ namespace SDUI.Demo
             var parent = form as UIWindow;
             if (parent != null)
             {
-                // Custom color: set both theme and window background
-                parent.BackColor = Color.FromArgb(r, g, b);
+                var targetBackground = Color.FromArgb(r, g, b);
+
+                // Random background-driven theme (animated + auto text/derived colors)
+                await ApplyThemeAndSyncWindowAsync(parent, () => ColorScheme.StartThemeTransition(targetBackground));
             }
         }
 
-        private void buttonDark_Click(object sender, EventArgs e)
+        private async void buttonDark_Click(object sender, EventArgs e)
         {
             var form = FindForm();
             if (form == null)
                 return;
 
-            var parent = form as UIWindow;
-            // Switch to dark mode
-            ColorScheme.IsDarkMode = true;
-            parent.BackColor = ColorScheme.Surface;
+            if (form is UIWindow parent)
+            {
+                // Smooth switch to dark mode from any current background
+                await ApplyThemeAndSyncWindowAsync(parent, () => ColorScheme.IsDarkMode = true);
+            }
         }
 
-        private void buttonLight_Click(object sender, EventArgs e)
+        private async void buttonLight_Click(object sender, EventArgs e)
         {
             var form = FindForm();
             if (form == null)
                 return;
 
-            var parent = form as UIWindow;
-            // Switch to light mode
-            ColorScheme.IsDarkMode = false;
-            parent.BackColor = ColorScheme.Surface;
+            if (form is UIWindow parent)
+            {
+                // Smooth switch to light mode from any current background
+                await ApplyThemeAndSyncWindowAsync(parent, () => ColorScheme.IsDarkMode = false);
+            }
         }
     }
 }
