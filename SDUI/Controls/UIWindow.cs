@@ -918,7 +918,7 @@ public class UIWindow : UIWindowBase, IUIElement
             if (currentIndex >= tabbableElements.Count) currentIndex = 0;
         }
 
-        _focusedElement = tabbableElements[currentIndex];
+        FocusedElement = tabbableElements[currentIndex];
     }
 
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -974,9 +974,6 @@ public class UIWindow : UIWindowBase, IUIElement
             {
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseClick(localEvent);
-                if (_focusedElement != element)
-                    _focusedElement = element;
-
                 break;
             }
         }
@@ -1007,7 +1004,7 @@ public class UIWindow : UIWindowBase, IUIElement
             _inExtendBox = false;
             if (ExtendMenu != null)
             {
-                ExtendMenu.Show(new Point(Convert.ToInt32(_extendBoxRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
+                ExtendMenu.Show(PointToScreen(new Point(Convert.ToInt32(_extendBoxRect.Left), Convert.ToInt32(_titleHeightDPI - 1))));
             }
             else
             {
@@ -1020,7 +1017,7 @@ public class UIWindow : UIWindowBase, IUIElement
             _inFormMenuBox = false;
             if (FormMenu != null)
             {
-                FormMenu.Show(new Point(Convert.ToInt32(_formMenuRect.Left), Convert.ToInt32(_titleHeightDPI - 1)));
+                FormMenu.Show(PointToScreen(new Point(Convert.ToInt32(_formMenuRect.Left), Convert.ToInt32(_titleHeightDPI - 1))));
             }
             else
             {
@@ -1066,6 +1063,10 @@ public class UIWindow : UIWindowBase, IUIElement
     {
         base.OnMouseDown(e);
 
+        // Make sure this Form receives keyboard input.
+        if (CanFocus)
+            Focus();
+
         bool elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
@@ -1074,11 +1075,14 @@ public class UIWindow : UIWindowBase, IUIElement
             {
                 elementClicked = true;
 
-                if (_focusedElement != element)
-                    _focusedElement = element;
+                // If the element (or its descendants) doesn't set focus, fall back to focusing this element.
+                var prevFocus = FocusedElement;
 
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseDown(localEvent);
+
+                if (FocusedElement == prevFocus)
+                    FocusedElement = element;
                 // Tıklanan elementi en üste getir
                 BringToFront(element);
                 break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
@@ -1086,7 +1090,10 @@ public class UIWindow : UIWindowBase, IUIElement
         }
 
         if (!elementClicked)
-            _focusedElement = null;
+        {
+            FocusManager.SetFocus(null);
+            FocusedElement = null;
+        }
 
         if (enableFullDraggable && e.Button == MouseButtons.Left)
         {
@@ -1130,9 +1137,6 @@ public class UIWindow : UIWindowBase, IUIElement
             {
                 elementClicked = true;
 
-                if (_focusedElement != element)
-                    _focusedElement = element;
-
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseDown(localEvent);
                 // Tıklanan elementi en üste getir
@@ -1142,7 +1146,10 @@ public class UIWindow : UIWindowBase, IUIElement
         }
 
         if (!elementClicked)
-            _focusedElement = null;
+        {
+            FocusManager.SetFocus(null);
+            FocusedElement = null;
+        }
 
         if (!MaximizeBox)
             return;
@@ -1341,6 +1348,12 @@ public class UIWindow : UIWindowBase, IUIElement
                 break; // İlk hover edilen elementten sonra diğerlerini kontrol etmeye gerek yok
             }
         }
+
+        // Cursor should reflect the deepest hovered child (e.g., TextBox -> IBeam)
+        UIElementBase cursorElement = hoveredElement;
+        while (cursorElement?.LastHoveredElement != null)
+            cursorElement = cursorElement.LastHoveredElement;
+        UpdateCursor(cursorElement);
 
         if (hoveredElement != _lastHoveredElement)
         {

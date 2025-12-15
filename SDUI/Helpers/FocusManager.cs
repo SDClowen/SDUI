@@ -34,21 +34,6 @@ public class FocusManager
 
             var oldFocus = _currentFocus;
             _currentFocus = value;
-
-            // Update visual states
-            if (oldFocus != null)
-            {
-                oldFocus.Focused = false;
-                oldFocus.Invalidate();
-            }
-
-            if (_currentFocus != null)
-            {
-                _currentFocus.Focused = true;
-                _currentFocus.Invalidate();
-                EnsureVisible(_currentFocus);
-            }
-
             FocusChanged?.Invoke(this, new FocusChangedEventArgs(oldFocus, _currentFocus));
         }
     }
@@ -93,16 +78,40 @@ public class FocusManager
     /// </summary>
     public bool SetFocus(UIElementBase? element)
     {
-        if (element == null)
-        {
-            FocusedElement = null;
-            return true;
-        }
+        // Ensure the host window gets WinForms focus so key events flow.
+        if (_window.CanFocus)
+            _window.Focus();
 
-        if (!element.Visible || !element.Enabled || !element.CanSelect)
+        if (element != null && (!element.Visible || !element.Enabled || !element.CanSelect))
             return false;
 
+        // Delegate real focus behavior to the existing focus pipeline so
+        // OnGotFocus/OnLostFocus and related events fire correctly.
+        if (_window is UIWindow uiWindow)
+        {
+            uiWindow.FocusedElement = element;
+        }
+        else
+        {
+            if (element == null)
+            {
+                if (_currentFocus != null)
+                {
+                    _currentFocus.Focused = false;
+                    _currentFocus.OnLostFocus(EventArgs.Empty);
+                    _currentFocus.OnLeave(EventArgs.Empty);
+                    _currentFocus.Invalidate();
+                }
+            }
+            else
+            {
+                element.Focus();
+            }
+        }
+
         FocusedElement = element;
+        if (element != null)
+            EnsureVisible(element);
         return true;
     }
 

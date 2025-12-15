@@ -1048,18 +1048,31 @@ namespace SDUI.Controls
                 if (control.Bounds.Contains(e.Location))
                 {
                     elementClicked = true;
+                    var window = GetParentWindow();
+                    UIElementBase? prevWindowFocus = null;
+                    if (window is UIWindow uiWindow)
+                        prevWindowFocus = uiWindow.FocusedElement;
+
                     var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X, e.Y - control.Location.Y, e.Delta);
                     control.OnMouseDown(childEventArgs);
-                    
-                    // Use FocusManager if available
-                    var window = GetParentWindow();
-                    if (window != null)
+
+                    // Maintain focus without overriding a deeper focus set by the child.
+                    if (window is UIWindow uiWindowAfter)
                     {
+                        // If the child didn't change window focus, focus the direct child.
+                        if (uiWindowAfter.FocusedElement == prevWindowFocus)
+                            uiWindowAfter.FocusedElement = control;
+                    }
+                    else if (window != null)
+                    {
+                        // Fallback for other UIWindowBase implementations
                         window.FocusManager.SetFocus(control);
                     }
-                    else if (_focusedElement != control)
+                    else
                     {
-                        _focusedElement = control;
+                        // No window: manage focus locally
+                        if (FocusedElement != control)
+                            FocusedElement = control;
                     }
                     
                     break; // İlk eşleşenden sonra dur
@@ -1071,9 +1084,17 @@ namespace SDUI.Controls
                 var window = GetParentWindow();
                 if (window != null)
                 {
-                    window.FocusManager.SetFocus(null);
+                    // Clicking on the element itself (no child hit) should focus *this*.
+                    if (CanSelect && Enabled && Visible)
+                        window.FocusManager.SetFocus(this);
+                    else
+                        window.FocusManager.SetFocus(null);
                 }
-                // No else needed - FocusedElement is not nullable
+                else
+                {
+                    if (CanSelect && Enabled && Visible)
+                        Focus();
+                }
 
                 if (e.Button == MouseButtons.Right)
                 {
@@ -1282,7 +1303,7 @@ namespace SDUI.Controls
                 if (currentIndex >= tabbableElements.Count) currentIndex = 0;
             }
 
-            _focusedElement = tabbableElements[currentIndex];
+            FocusedElement = tabbableElements[currentIndex];
             return true;
         }
 

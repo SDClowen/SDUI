@@ -148,7 +148,7 @@ public class TextBox : UIElementBase
     private Color _borderColor = ColorScheme.BorderColor;
     private Color _focusedBorderColor = ColorScheme.AccentColor;
     private float _borderWidth = 1.0f;
-    private float _cornerRadius = 8.0f;
+    private float _cornerRadius = 6.0f;
     private Timer _cursorBlinkTimer = null!;
     private bool _showCursor;
     private bool _isDragging;
@@ -178,6 +178,17 @@ public class TextBox : UIElementBase
     private List<TextStyle> _styles = new();
     private float _scrollSpeed = 1.0f;
 
+    // Theme-driven defaults (only update if user hasn't overridden)
+    private Color _themeForeColorSnapshot;
+    private Color _themeBorderColorSnapshot;
+    private Color _themeFocusedBorderColorSnapshot;
+    private Color _themeSelectionColorSnapshot;
+
+    // Focus animation
+    private Timer _focusAnimTimer = null!;
+    private float _focusAnimProgress;
+    private float _focusAnimTarget;
+
     public int SelectionStart { get => _selectionStart; set { _selectionStart = value; Invalidate(); } }
     public int SelectionLength { get => _selectionLength; set { _selectionLength = value; Invalidate(); } }
     public int TextLength => Text.Length;
@@ -196,11 +207,79 @@ public class TextBox : UIElementBase
         Padding = new Padding(10, 6, 10, 6);
 
         InitializeCursorBlink();
+        InitializeFocusAnimation();
+        InitializeThemeBinding();
         InitializeScrollBars();
         
         NeedsRedraw = true;
         Invalidate();
         System.Diagnostics.Debug.WriteLine("TextBox.Constructor: SDUI Custom TextBox created!");
+    }
+
+    private void InitializeThemeBinding()
+    {
+        _themeForeColorSnapshot = ColorScheme.ForeColor;
+        _themeBorderColorSnapshot = ColorScheme.BorderColor;
+        _themeFocusedBorderColorSnapshot = ColorScheme.AccentColor;
+        _themeSelectionColorSnapshot = ColorScheme.AccentColor.Alpha(90);
+
+        // Ensure our defaults are aligned with the current theme
+        if (ForeColor == default)
+            ForeColor = _themeForeColorSnapshot;
+        if (BorderColor == default)
+            BorderColor = _themeBorderColorSnapshot;
+        if (FocusedBorderColor == default)
+            FocusedBorderColor = _themeFocusedBorderColorSnapshot;
+
+        ColorScheme.ThemeChanged += OnThemeChanged;
+    }
+
+    private void OnThemeChanged(object? sender, EventArgs e)
+    {
+        var newFore = ColorScheme.ForeColor;
+        if (ForeColor == _themeForeColorSnapshot)
+            ForeColor = newFore;
+        _themeForeColorSnapshot = newFore;
+
+        var newBorder = ColorScheme.BorderColor;
+        if (BorderColor == _themeBorderColorSnapshot)
+            BorderColor = newBorder;
+        _themeBorderColorSnapshot = newBorder;
+
+        var newFocusedBorder = ColorScheme.AccentColor;
+        if (FocusedBorderColor == _themeFocusedBorderColorSnapshot)
+            FocusedBorderColor = newFocusedBorder;
+        _themeFocusedBorderColorSnapshot = newFocusedBorder;
+
+        var newSelection = ColorScheme.AccentColor.Alpha(90);
+        if (SelectionColor == _themeSelectionColorSnapshot)
+            SelectionColor = newSelection;
+        _themeSelectionColorSnapshot = newSelection;
+
+        Invalidate();
+    }
+
+    private void InitializeFocusAnimation()
+    {
+        _focusAnimProgress = Focused ? 1f : 0f;
+        _focusAnimTarget = _focusAnimProgress;
+        _focusAnimTimer = new Timer { Interval = 16, Enabled = false };
+        _focusAnimTimer.Tick += (s, e) =>
+        {
+            const float step = 0.14f;
+            if (_focusAnimProgress < _focusAnimTarget)
+                _focusAnimProgress = Math.Min(_focusAnimTarget, _focusAnimProgress + step);
+            else if (_focusAnimProgress > _focusAnimTarget)
+                _focusAnimProgress = Math.Max(_focusAnimTarget, _focusAnimProgress - step);
+
+            if (Math.Abs(_focusAnimProgress - _focusAnimTarget) < 0.001f)
+            {
+                _focusAnimProgress = _focusAnimTarget;
+                _focusAnimTimer.Stop();
+            }
+
+            Invalidate();
+        };
     }
 
     private void InitializeCursorBlink()
@@ -231,7 +310,9 @@ public class TextBox : UIElementBase
         {
             Orientation = Orientation.Vertical,
             Visible = false,
-            Width = 12
+            Width = 12,
+            TabStop = false,
+            CanSelect = false
         };
         _verticalScrollBar.ValueChanged += (s, e) =>
         {
@@ -243,7 +324,9 @@ public class TextBox : UIElementBase
         {
             Orientation = Orientation.Horizontal,
             Visible = false,
-            Height = 12
+            Height = 12,
+            TabStop = false,
+            CanSelect = false
         };
         _horizontalScrollBar.ValueChanged += (s, e) => Invalidate();
 
@@ -400,7 +483,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    [DefaultValue(8.0f)]
+    [DefaultValue(6.0f)]
     public float CornerRadius
     {
         get => _cornerRadius;
@@ -708,6 +791,10 @@ public class TextBox : UIElementBase
     internal override void OnGotFocus(EventArgs e)
     {
         base.OnGotFocus(e);
+
+        _focusAnimTarget = 1f;
+        _focusAnimTimer?.Start();
+
         if (UseSystemPasswordChar && PassFocusShow)
         {
             _useSystemPasswordChar = false;
@@ -721,6 +808,10 @@ public class TextBox : UIElementBase
     internal override void OnLostFocus(EventArgs e)
     {
         base.OnLostFocus(e);
+
+        _focusAnimTarget = 0f;
+        _focusAnimTimer?.Start();
+
         if (UseSystemPasswordChar && PassFocusShow)
         {
             _useSystemPasswordChar = true;
@@ -915,41 +1006,6 @@ public class TextBox : UIElementBase
                     }
                     e.Handled = true;
                     break;
-
-                case Keys.Tab:
-                    if (!AcceptsTab)
-                    {
-                        return;
-                    }
-                    goto case Keys.Space;
-
-                case Keys.Return:
-                case Keys.LineFeed:
-                    if (!AcceptsReturn || !MultiLine)
-                    {
-                        return;
-                    }
-                    goto case Keys.Space;
-
-                case Keys.Space:
-                    if (!ReadOnly)
-                    {
-                        var ch = e.KeyCode == Keys.Space ? ' ' :
-                                e.KeyCode == Keys.Tab ? '\t' : '\n';
-
-                        if (_selectionLength > 0)
-                        {
-                            DeleteSelection();
-                        }
-
-                        if (MaxLength == 0 || Text.Length < MaxLength)
-                        {
-                            Text = Text.Insert(_selectionStart, ch.ToString());
-                            _selectionStart++;
-                        }
-                    }
-                    e.Handled = true;
-                    break;
             }
         }
     }
@@ -960,8 +1016,6 @@ public class TextBox : UIElementBase
 
         var canvas = e.Surface.Canvas;
         var bounds = ClientRectangle;
-
-        System.Diagnostics.Debug.WriteLine($"TextBox.OnPaint: bounds={bounds.Width}x{bounds.Height}, Visible={Visible}, BackColor={BackColor}");
 
         // 1. Draw Background with theme-aware surface color
         var surfaceColor = ResolveSurfaceColor(Enabled);
@@ -975,11 +1029,11 @@ public class TextBox : UIElementBase
             canvas.DrawRoundRect(backgroundRect, CornerRadius, CornerRadius, bgPaint);
         }
 
-        if (Focused)
+        if (_focusAnimProgress > 0.001f)
         {
             using var focusGlow = new SKPaint
             {
-                Color = FocusedBorderColor.Alpha(35).ToSKColor(),
+                Color = FocusedBorderColor.Alpha((int)Math.Round(35 * _focusAnimProgress)).ToSKColor(),
                 IsAntialias = true
             };
 
@@ -994,14 +1048,15 @@ public class TextBox : UIElementBase
             IsStroke = true
         })
         {
-            var borderColor = Focused ? FocusedBorderColor : BorderColor;
+            var borderColor = BorderColor.ToSKColor().InterpolateColor(FocusedBorderColor.ToSKColor(), _focusAnimProgress).ToColor();
             if (!Enabled)
             {
                 borderColor = borderColor.Brightness(ColorScheme.BackColor.IsDark() ? -0.05f : -0.1f);
             }
 
             borderPaint.Color = borderColor.ToSKColor();
-            borderPaint.StrokeWidth = Focused ? Math.Max(2.0f, BorderWidth + 0.5f) : BorderWidth;
+            var focusedStroke = Math.Max(2.0f, BorderWidth + 0.5f);
+            borderPaint.StrokeWidth = BorderWidth + (focusedStroke - BorderWidth) * _focusAnimProgress;
 
             var inset = borderPaint.StrokeWidth / 2;
             var borderRect = new SKRect(inset, inset, bounds.Width - inset, bounds.Height - inset);
@@ -1011,8 +1066,9 @@ public class TextBox : UIElementBase
         // 4. Prepare Font
         using var font = new SKFont
         {
-            Size = Font.Size * 96.0f / 72.0f,
+            Size = Font.Size.PtToPx(this),
             Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Hinting = SKFontHinting.Full,
             Edging = SKFontEdging.SubpixelAntialias,
             Subpixel = true
         };
@@ -1115,7 +1171,7 @@ public class TextBox : UIElementBase
             var countText = MaxLength > 0 ? $"{Text.Length}/{MaxLength}" : Text.Length.ToString();
             using (var countFont = new SKFont
             {
-                Size = (Font.Size - 2) * 96.0f / 72.0f,
+                Size = Math.Max(1f, Font.Size - 2f).PtToPx(this),
                 Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
             })
             using (var countPaint = new SKPaint
@@ -1219,10 +1275,8 @@ public class TextBox : UIElementBase
 
     private Color GetThemedSurfaceColor()
     {
-        var themeBack = ColorScheme.BackColor;
-        return themeBack.IsDark()
-            ? themeBack.Brightness(0.08f)
-            : themeBack.Brightness(-0.05f);
+        // Use the shared theme primitives so the TextBox background tracks theme transitions.
+        return ColorScheme.SurfaceContainerLow;
     }
 
     protected override void Dispose(bool disposing)
@@ -1230,6 +1284,8 @@ public class TextBox : UIElementBase
         if (disposing)
         {
             _cursorBlinkTimer?.Dispose();
+            _focusAnimTimer?.Dispose();
+            ColorScheme.ThemeChanged -= OnThemeChanged;
         }
         base.Dispose(disposing);
     }
@@ -1242,9 +1298,50 @@ public class TextBox : UIElementBase
             return;
         }
 
+        // Backspace should delete selection too (SelectAll -> Backspace)
+        if (e.KeyChar == '\b')
+        {
+            if (_selectionLength > 0)
+            {
+                DeleteSelection();
+            }
+            else if (_selectionStart > 0)
+            {
+                Text = Text.Remove(_selectionStart - 1, 1);
+                _selectionStart--;
+            }
+
+            _selectionLength = 0;
+            e.Handled = true;
+            base.OnKeyPress(e);
+            return;
+        }
+
+        // Honor AcceptsTab / AcceptsReturn at the character level
+        if (e.KeyChar == '\t' && !AcceptsTab)
+        {
+            e.Handled = true;
+            base.OnKeyPress(e);
+            return;
+        }
+
+        if ((e.KeyChar == '\r' || e.KeyChar == '\n') && (!AcceptsReturn || !MultiLine))
+        {
+            e.Handled = true;
+            base.OnKeyPress(e);
+            return;
+        }
+
+        if (e.KeyChar == '\r')
+            e.KeyChar = '\n';
+
         if (!char.IsControl(e.KeyChar))
         {
-            if (MaxLength > 0 && Text.Length >= MaxLength)
+            // Replace selection before inserting a character
+            if (_selectionLength > 0)
+                DeleteSelection();
+
+            if (MaxLength > 0 && (Text.Length + 1) > MaxLength)
             {
                 e.Handled = true;
                 return;
@@ -1256,20 +1353,6 @@ public class TextBox : UIElementBase
             _selectionLength = 0;
             e.Handled = true;
         }
-        else if (e.KeyChar == '\b' && _selectionStart > 0) // Backspace
-        {
-            if (_selectionLength > 0)
-            {
-                Text = Text.Remove(_selectionStart, _selectionLength);
-                _selectionLength = 0;
-            }
-            else
-            {
-                Text = Text.Remove(_selectionStart - 1, 1);
-                _selectionStart--;
-            }
-            e.Handled = true;
-        }
 
         base.OnKeyPress(e);
     }
@@ -1278,7 +1361,7 @@ public class TextBox : UIElementBase
     {
         using (var font = new SKFont
         {
-            Size = Font.Size * 96.0f / 72.0f,
+            Size = Font.Size.PtToPx(this),
             Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         })
         {
@@ -1330,7 +1413,7 @@ public class TextBox : UIElementBase
 
         using (var font = new SKFont
         {
-            Size = Font.Size * 96.0f / 72.0f,
+            Size = Font.Size.PtToPx(this),
             Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
         })
         {

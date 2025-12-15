@@ -192,7 +192,10 @@ public class MenuStrip : UIElementBase
         }
 
         // Text with high quality
-        var textColor = hover ? MenuForeColor.BlendWith(_hoverForeColor, 0.6f) : MenuForeColor;
+    var hoverFore = !HoverForeColor.IsEmpty
+        ? HoverForeColor
+        : (HoverBackColor.IsEmpty ? MenuForeColor : HoverBackColor.Determine());
+    var textColor = hover ? hoverFore : MenuForeColor;
 
         using (var font = new SKFont
         {
@@ -375,18 +378,21 @@ public class MenuStrip : UIElementBase
         else
         {
             // Below, left aligned - check if docked at bottom
-            int targetX = (int)itemBounds.Left;
+            float shadow = _activeDropDown is ContextMenuStrip ? ContextMenuStrip.ShadowMargin : 0f;
+
+            int targetX = (int)Math.Round(itemBounds.Left - shadow);
             int targetY;
             
             // If MenuStrip is docked at bottom, open upwards
             if (Dock == DockStyle.Bottom)
             {
                 var popupSize = _activeDropDown.MeasurePreferredSize();
-                targetY = (int)(itemBounds.Top - popupSize.Height - 4);
+                // Keep background aligned even though popup includes shadow space.
+                targetY = (int)Math.Round(itemBounds.Top - popupSize.Height - 4 + shadow);
             }
             else
             {
-                targetY = (int)(itemBounds.Bottom + 4);
+                targetY = (int)Math.Round(itemBounds.Bottom + 4 - shadow);
             }
             
             screenPoint = PointToScreen(new Point(targetX, targetY));
@@ -429,9 +435,10 @@ public class MenuStrip : UIElementBase
             w += _iconSize + 4;
             
         if (ShowSubmenuArrow && item.HasDropDown)
-            w += _submenuArrowSize + 12; // More space for arrow
+            w += _submenuArrowSize + 8; // Space for chevron
             
-        return w + 20;
+        // Avoid excessive trailing padding; MenuStrip already has ItemPadding spacing.
+        return w + 12;
     }
 
     protected override void Dispose(bool disposing){ if(disposing){ _animationTimer?.Dispose(); _activeDropDown?.Dispose(); } base.Dispose(disposing); }

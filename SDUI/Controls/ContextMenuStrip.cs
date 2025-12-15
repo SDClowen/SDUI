@@ -358,7 +358,10 @@ public class ContextMenuStrip : MenuStrip
                 textX += ImageScalingSize.Width + 8;
             }
 
-            var textColor = isHovered ? MenuForeColor.BlendWith(HoverForeColor, 0.6f) : MenuForeColor;
+            var hoverFore = !HoverForeColor.IsEmpty
+                ? HoverForeColor
+                : (HoverBackColor.IsEmpty ? MenuForeColor : HoverBackColor.Determine());
+            var textColor = isHovered ? hoverFore : MenuForeColor;
 
             using (var font = new SKFont
             {
