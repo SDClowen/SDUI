@@ -53,7 +53,24 @@ public class FocusManager
             CollectFromElement(control);
         }
         
-        _focusableElements.Sort((a, b) => a.TabIndex.CompareTo(b.TabIndex));
+        _focusableElements.Sort((a, b) =>
+        {
+            int tabCompare = a.TabIndex.CompareTo(b.TabIndex);
+            if (tabCompare != 0) return tabCompare;
+
+            // Deterministic tiebreaker when many controls share the default TabIndex (0).
+            // Use window-relative location (top-to-bottom, left-to-right), then ZOrder.
+            var aLoc = _window.PointToClient(a.PointToScreen(Point.Empty));
+            var bLoc = _window.PointToClient(b.PointToScreen(Point.Empty));
+
+            int yCompare = aLoc.Y.CompareTo(bLoc.Y);
+            if (yCompare != 0) return yCompare;
+
+            int xCompare = aLoc.X.CompareTo(bLoc.X);
+            if (xCompare != 0) return xCompare;
+
+            return a.ZOrder.CompareTo(b.ZOrder);
+        });
     }
 
     private void CollectFromElement(UIElementBase element)

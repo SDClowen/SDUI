@@ -923,6 +923,13 @@ public class UIWindow : UIWindowBase, IUIElement
 
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
+        // If the focused element is a TextBox that accepts tabs, treat Tab as input (not navigation).
+        if (keyData == Keys.Tab && _focusedElement is SDUI.Controls.TextBox tb && tb.AcceptsTab)
+        {
+            tb.OnKeyPress(new KeyPressEventArgs('\t'));
+            return true;
+        }
+
         if (keyData == Keys.Tab || keyData == (Keys.Tab | Keys.Shift))
         {
             if (FocusManager.ProcessKeyNavigation(new KeyEventArgs(keyData)))
@@ -1082,7 +1089,24 @@ public class UIWindow : UIWindowBase, IUIElement
                 element.OnMouseDown(localEvent);
 
                 if (FocusedElement == prevFocus)
-                    FocusedElement = element;
+                {
+                    static bool IsDescendantOf(UIElementBase? maybeChild, UIElementBase ancestor)
+                    {
+                        var current = maybeChild;
+                        while (current != null)
+                        {
+                            if (ReferenceEquals(current, ancestor))
+                                return true;
+                            current = current.Parent as UIElementBase;
+                        }
+                        return false;
+                    }
+
+                    // If focus stayed on an existing descendant (common when clicking inside an already-focused TextBox),
+                    // don't steal focus back to the container.
+                    if (prevFocus == null || !IsDescendantOf(prevFocus, element))
+                        FocusedElement = element;
+                }
                 // Tıklanan elementi en üste getir
                 BringToFront(element);
                 break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
@@ -1102,11 +1126,9 @@ public class UIWindow : UIWindowBase, IUIElement
             DragForm(Handle);
         }
 
-        if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
-        {
-            var point = PointToScreen(e.Location);
-            ContextMenuStrip.Show(point);
-        }
+        // NOTE: Window context menus should open on MouseUp (standard behavior).
+        // Showing on MouseDown can lead to double menus when the mouse moves slightly
+        // and an element handles right-click on MouseUp.
 
         if (_inCloseBox || _inMaxBox || _inMinBox || _inExtendBox || _inTabCloseBox || _inNewTabBox || _inFormMenuBox)
             return;
@@ -1138,7 +1160,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 elementClicked = true;
 
                 var localEvent = CreateChildMouseEvent(e, element);
-                element.OnMouseDown(localEvent);
+                element.OnMouseDoubleClick(localEvent);
                 // Tıklanan elementi en üste getir
                 BringToFront(element);
                 break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
@@ -1205,14 +1227,22 @@ public class UIWindow : UIWindowBase, IUIElement
         animationSource = e.Location;
 
         // Z-order'a göre tersten kontrol et
+        bool elementClicked = false;
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
+                elementClicked = true;
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseUp(localEvent); 
                 break;
             }
+        }
+
+        if (!elementClicked && e.Button == MouseButtons.Right && ContextMenuStrip != null)
+        {
+            var point = PointToScreen(e.Location);
+            ContextMenuStrip.Show(point);
         }
     }
 

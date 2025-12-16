@@ -1,4 +1,5 @@
 ﻿using SDUI;
+using SDUI.Animation;
 using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
@@ -168,7 +169,7 @@ public class TextBox : UIElementBase
     private bool _isScrollBarHovered;
     private bool _isDraggingScrollBar;
     private float _scrollPosition;
-    private float _maxScroll;
+    private float _maxScroll = 0f;
     private bool _showCharCount;
     private Color _charCountColor = Color.Gray;
     private bool _isRich;
@@ -185,9 +186,7 @@ public class TextBox : UIElementBase
     private Color _themeSelectionColorSnapshot;
 
     // Focus animation
-    private Timer _focusAnimTimer = null!;
-    private float _focusAnimProgress;
-    private float _focusAnimTarget;
+    private AnimationManager _focusAnimation = null!;
 
     public int SelectionStart { get => _selectionStart; set { _selectionStart = value; Invalidate(); } }
     public int SelectionLength { get => _selectionLength; set { _selectionLength = value; Invalidate(); } }
@@ -261,25 +260,15 @@ public class TextBox : UIElementBase
 
     private void InitializeFocusAnimation()
     {
-        _focusAnimProgress = Focused ? 1f : 0f;
-        _focusAnimTarget = _focusAnimProgress;
-        _focusAnimTimer = new Timer { Interval = 16, Enabled = false };
-        _focusAnimTimer.Tick += (s, e) =>
+        _focusAnimation = new AnimationManager(singular: true)
         {
-            const float step = 0.14f;
-            if (_focusAnimProgress < _focusAnimTarget)
-                _focusAnimProgress = Math.Min(_focusAnimTarget, _focusAnimProgress + step);
-            else if (_focusAnimProgress > _focusAnimTarget)
-                _focusAnimProgress = Math.Max(_focusAnimTarget, _focusAnimProgress - step);
-
-            if (Math.Abs(_focusAnimProgress - _focusAnimTarget) < 0.001f)
-            {
-                _focusAnimProgress = _focusAnimTarget;
-                _focusAnimTimer.Stop();
-            }
-
-            Invalidate();
+            // Keep this snappy; AnimationManager computes duration from Increment.
+            Increment = 0.2,
+            AnimationType = AnimationType.EaseOut,
+            InterruptAnimation = true
         };
+        _focusAnimation.OnAnimationProgress += _ => Invalidate();
+        _focusAnimation.SetProgress(Focused ? 1.0 : 0.0);
     }
 
     private void InitializeCursorBlink()
@@ -792,8 +781,7 @@ public class TextBox : UIElementBase
     {
         base.OnGotFocus(e);
 
-        _focusAnimTarget = 1f;
-        _focusAnimTimer?.Start();
+        _focusAnimation?.StartNewAnimation(AnimationDirection.In);
 
         if (UseSystemPasswordChar && PassFocusShow)
         {
@@ -809,8 +797,7 @@ public class TextBox : UIElementBase
     {
         base.OnLostFocus(e);
 
-        _focusAnimTarget = 0f;
-        _focusAnimTimer?.Start();
+        _focusAnimation?.StartNewAnimation(AnimationDirection.Out);
 
         if (UseSystemPasswordChar && PassFocusShow)
         {
@@ -824,16 +811,32 @@ public class TextBox : UIElementBase
 
     internal override void OnMouseUp(MouseEventArgs e)
     {
-        base.OnMouseUp(e);
         _isDragging = false;
 
         if (e.Button == MouseButtons.Right)
         {
-            // Native context menu göster ve event'i handle et
-            NativeTextBoxMenu.ShowContextMenu(this, PointToScreen(e.Location));
-            // Event'in parent'a gitmesini engelle
+            if (!Focused)
+                Focus();
+
+            // Prefer the standard SDUI ContextMenuStrip if assigned (walk up the parent chain).
+            var point = PointToScreen(e.Location);
+            UIElementBase? current = this;
+            while (current != null)
+            {
+                if (current.ContextMenuStrip != null)
+                {
+                    current.ContextMenuStrip.Show(this, point);
+                    return;
+                }
+                current = current.Parent as UIElementBase;
+            }
+
+            // Fallback to native-like menu when no SDUI context menu is assigned.
+            NativeTextBoxMenu.ShowContextMenu(this, point);
             return;
         }
+
+        base.OnMouseUp(e);
     }
 
     internal override void OnMouseMove(MouseEventArgs e)
@@ -875,7 +878,8 @@ public class TextBox : UIElementBase
     {
         if (e.Button == MouseButtons.Right)
         {
-            Focus();
+            if (!Focused)
+                Focus();
             _isDragging = false;
             _isDraggingScrollBar = false;
             return;
@@ -885,7 +889,13 @@ public class TextBox : UIElementBase
 
         if (e.Button == MouseButtons.Left)
         {
-            Focus();
+            if (!Focused)
+                Focus();
+            else
+            {
+                // Reaffirm focus visuals on repeated clicks.
+                _focusAnimation?.StartNewAnimation(AnimationDirection.In);
+            }
             _isDragging = true;
 
             if (ModifierKeys == Keys.Shift)
@@ -909,6 +919,21 @@ public class TextBox : UIElementBase
         {
             _isDraggingScrollBar = true;
         }
+    }
+
+    internal override void OnMouseDoubleClick(MouseEventArgs e)
+    {
+        // Basic expected TextBox behavior: double-click selects all.
+        if (e.Button == MouseButtons.Left)
+        {
+            if (!Focused)
+                Focus();
+
+            SelectAll();
+            return;
+        }
+
+        base.OnMouseDoubleClick(e);
     }
 
     internal override void OnKeyDown(KeyEventArgs e)
@@ -941,6 +966,27 @@ public class TextBox : UIElementBase
         {
             switch (e.KeyCode)
             {
+                case Keys.Space:
+                    if (!ReadOnly && !e.Alt && !e.Control)
+                    {
+                        if (_selectionLength > 0)
+                            DeleteSelection();
+
+                        if (MaxLength > 0 && (Text.Length + 1) > MaxLength)
+                        {
+                            e.Handled = true;
+                            e.SuppressKeyPress = true;
+                            break;
+                        }
+
+                        Text = Text.Insert(_selectionStart, " ");
+                        _selectionStart++;
+                        _selectionLength = 0;
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                    }
+                    break;
+
                 case Keys.Left when _selectionStart > 0:
                     if (e.Shift)
                     {
@@ -1017,6 +1063,8 @@ public class TextBox : UIElementBase
         var canvas = e.Surface.Canvas;
         var bounds = ClientRectangle;
 
+        var focusProgress = (float)(_focusAnimation?.GetProgress() ?? (Focused ? 1.0 : 0.0));
+
         // 1. Draw Background with theme-aware surface color
         var surfaceColor = ResolveSurfaceColor(Enabled);
         using (var bgPaint = new SKPaint
@@ -1029,11 +1077,11 @@ public class TextBox : UIElementBase
             canvas.DrawRoundRect(backgroundRect, CornerRadius, CornerRadius, bgPaint);
         }
 
-        if (_focusAnimProgress > 0.001f)
+        if (focusProgress > 0.001f)
         {
             using var focusGlow = new SKPaint
             {
-                Color = FocusedBorderColor.Alpha((int)Math.Round(35 * _focusAnimProgress)).ToSKColor(),
+                Color = FocusedBorderColor.Alpha((int)Math.Round(35 * focusProgress)).ToSKColor(),
                 IsAntialias = true
             };
 
@@ -1048,7 +1096,7 @@ public class TextBox : UIElementBase
             IsStroke = true
         })
         {
-            var borderColor = BorderColor.ToSKColor().InterpolateColor(FocusedBorderColor.ToSKColor(), _focusAnimProgress).ToColor();
+            var borderColor = BorderColor.ToSKColor().InterpolateColor(FocusedBorderColor.ToSKColor(), focusProgress).ToColor();
             if (!Enabled)
             {
                 borderColor = borderColor.Brightness(ColorScheme.BackColor.IsDark() ? -0.05f : -0.1f);
@@ -1056,7 +1104,7 @@ public class TextBox : UIElementBase
 
             borderPaint.Color = borderColor.ToSKColor();
             var focusedStroke = Math.Max(2.0f, BorderWidth + 0.5f);
-            borderPaint.StrokeWidth = BorderWidth + (focusedStroke - BorderWidth) * _focusAnimProgress;
+            borderPaint.StrokeWidth = BorderWidth + (focusedStroke - BorderWidth) * focusProgress;
 
             var inset = borderPaint.StrokeWidth / 2;
             var borderRect = new SKRect(inset, inset, bounds.Width - inset, bounds.Height - inset);
@@ -1284,7 +1332,7 @@ public class TextBox : UIElementBase
         if (disposing)
         {
             _cursorBlinkTimer?.Dispose();
-            _focusAnimTimer?.Dispose();
+            _focusAnimation?.Dispose();
             ColorScheme.ThemeChanged -= OnThemeChanged;
         }
         base.Dispose(disposing);
@@ -1335,7 +1383,11 @@ public class TextBox : UIElementBase
         if (e.KeyChar == '\r')
             e.KeyChar = '\n';
 
-        if (!char.IsControl(e.KeyChar))
+        bool isInsertable = !char.IsControl(e.KeyChar)
+            || (e.KeyChar == '\t' && AcceptsTab)
+            || (e.KeyChar == '\n' && AcceptsReturn && MultiLine);
+
+        if (isInsertable)
         {
             // Replace selection before inserting a character
             if (_selectionLength > 0)
@@ -1547,9 +1599,10 @@ public class TextBox : UIElementBase
             {
                 var tbounds = new SKRect();
                 font.MeasureText(line, out tbounds);
-                maxWidth = Math.Max(maxWidth, bounds.Width);
+                maxWidth = Math.Max(maxWidth, tbounds.Width);
             }
 
+            _maxScroll = Math.Max(0f, totalHeight - Height);
             showVertical = totalHeight > Height;
             showHorizontal = maxWidth > Width;
 
