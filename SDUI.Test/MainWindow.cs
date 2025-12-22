@@ -8,6 +8,8 @@ public partial class MainWindow : UIWindow
     public MainWindow()
     {
         InitializeComponent();
+        RenderBackend = Rendering.RenderBackend.OpenGL;
+        ShowPerfOverlay = true;
     }
 
     protected override void OnBackColorChanged(EventArgs e)

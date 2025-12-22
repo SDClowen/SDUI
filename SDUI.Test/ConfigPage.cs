@@ -1,4 +1,5 @@
 ﻿using SDUI.Controls;
+using SDUI.Rendering;
 using System;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
@@ -7,11 +8,23 @@ namespace SDUI.Demo
 {
     public partial class ConfigPage : SDUI.Controls.UIElementBase
     {
+        private bool _syncing;
+
         public ConfigPage()
         {
             InitializeComponent();
             this.Text = "Config";
             comboBoxHatchType.Items.AddRange(Enum.GetNames<HatchStyle>());
+            comboBoxRenderBackend.Items.AddRange(Enum.GetNames<RenderBackend>());
+
+            // UIElementBase WinForms Control olmadığı için HandleCreated yok.
+            // Parent window/handle hazır olduğunda state'i senkronize etmek için CreateControl/VisibleChanged kullanıyoruz.
+            CreateControl += (_, __) => SyncFromParent();
+            VisibleChanged += (_, __) =>
+            {
+                if (Visible)
+                    SyncFromParent();
+            };
 
             // TabControl kullanımı:
             // var tc = new TabControl();
@@ -150,6 +163,56 @@ namespace SDUI.Demo
 
             var parent = form as UIWindow;
             parent.ShowTitle = !parent.ShowTitle;
+        }
+
+        private void comboBoxRenderBackend_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_syncing)
+                return;
+
+            var form = FindForm();
+            if (form is not UIWindow parent)
+                return;
+
+            if (!Enum.TryParse<RenderBackend>(comboBoxRenderBackend.SelectedItem?.ToString(), out var backend))
+                return;
+
+            parent.RenderBackend = backend;
+            parent.Invalidate();
+        }
+
+        private void checkBoxPerfOverlay_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_syncing)
+                return;
+
+            var form = FindForm();
+            if (form is not UIWindow parent)
+                return;
+
+            parent.ShowPerfOverlay = checkBoxPerfOverlay.Checked;
+            parent.Invalidate();
+        }
+
+        private void SyncFromParent()
+        {
+            var form = FindForm();
+            if (form is not UIWindow parent)
+                return;
+
+            _syncing = true;
+            try
+            {
+                checkBoxPerfOverlay.Checked = parent.ShowPerfOverlay;
+
+                var backendText = parent.RenderBackend.ToString();
+                if (!string.Equals(comboBoxRenderBackend.SelectedItem?.ToString(), backendText, StringComparison.Ordinal))
+                    comboBoxRenderBackend.SelectedItem = backendText;
+            }
+            finally
+            {
+                _syncing = false;
+            }
         }
     }
 }

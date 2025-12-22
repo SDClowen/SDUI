@@ -29,6 +29,9 @@
         private void InitializeComponent()
         {
             buttonSelectColor = new SDUI.Controls.Button();
+            labelRenderBackend = new SDUI.Controls.Label();
+            comboBoxRenderBackend = new SDUI.Controls.ComboBox();
+            checkBoxPerfOverlay = new SDUI.Controls.CheckBox();
             comboBoxHatchType = new SDUI.Controls.ComboBox();
             checkBoxDrawFullHatch = new SDUI.Controls.CheckBox();
             numTitleHeight = new SDUI.Controls.NumUpDown();
@@ -48,7 +51,7 @@
             buttonSelectColor.Color = System.Drawing.Color.Navy;
             buttonSelectColor.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
             buttonSelectColor.ForeColor = System.Drawing.Color.White;
-            buttonSelectColor.Location = new System.Drawing.Point(257, 124);
+            buttonSelectColor.Location = new System.Drawing.Point(140, 124);
             buttonSelectColor.Name = "buttonSelectColor";
             buttonSelectColor.Radius = 6;
             buttonSelectColor.ShadowDepth = 0F;
@@ -57,6 +60,58 @@
             buttonSelectColor.Text = "Select Color";
             buttonSelectColor.UseVisualStyleBackColor = true;
             buttonSelectColor.Click += buttonSelectColor_Click;
+                // 
+                // labelRenderBackend
+                // 
+                labelRenderBackend.ApplyGradient = false;
+                labelRenderBackend.AutoSize = true;
+                labelRenderBackend.BackColor = System.Drawing.Color.Transparent;
+                labelRenderBackend.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+                labelRenderBackend.Gradient = new System.Drawing.Color[]
+            {
+            System.Drawing.Color.Gray,
+            System.Drawing.Color.Black
+            };
+                labelRenderBackend.GradientAnimation = false;
+                labelRenderBackend.Location = new System.Drawing.Point(20, 16);
+                labelRenderBackend.Name = "labelRenderBackend";
+                labelRenderBackend.Size = new System.Drawing.Size(73, 20);
+                labelRenderBackend.TabIndex = 50;
+                labelRenderBackend.Text = "Renderer:";
+                // 
+                // comboBoxRenderBackend
+                // 
+                comboBoxRenderBackend.BackColor = System.Drawing.Color.Transparent;
+                comboBoxRenderBackend.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
+                comboBoxRenderBackend.DropDownHeight = 120;
+                comboBoxRenderBackend.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+                comboBoxRenderBackend.ForeColor = System.Drawing.Color.FromArgb(75, 85, 91);
+                comboBoxRenderBackend.FormattingEnabled = true;
+                comboBoxRenderBackend.IntegralHeight = false;
+                comboBoxRenderBackend.ItemHeight = 16;
+                comboBoxRenderBackend.Location = new System.Drawing.Point(100, 12);
+                comboBoxRenderBackend.Name = "comboBoxRenderBackend";
+                comboBoxRenderBackend.Radius = 5;
+                comboBoxRenderBackend.ShadowDepth = 4F;
+                comboBoxRenderBackend.Size = new System.Drawing.Size(160, 22);
+                comboBoxRenderBackend.TabIndex = 51;
+                comboBoxRenderBackend.SelectedIndexChanged += comboBoxRenderBackend_SelectedIndexChanged;
+                // 
+                // checkBoxPerfOverlay
+                // 
+                checkBoxPerfOverlay.AutoSize = true;
+                checkBoxPerfOverlay.BackColor = System.Drawing.Color.Transparent;
+                checkBoxPerfOverlay.Depth = 0;
+                checkBoxPerfOverlay.Location = new System.Drawing.Point(280, 10);
+                checkBoxPerfOverlay.Margin = new System.Windows.Forms.Padding(0);
+                checkBoxPerfOverlay.MouseLocation = new System.Drawing.Point(-1, -1);
+                checkBoxPerfOverlay.Name = "checkBoxPerfOverlay";
+                checkBoxPerfOverlay.Ripple = true;
+                checkBoxPerfOverlay.Size = new System.Drawing.Size(150, 30);
+                checkBoxPerfOverlay.TabIndex = 52;
+                checkBoxPerfOverlay.Text = "Show perf overlay";
+                checkBoxPerfOverlay.UseVisualStyleBackColor = true;
+                checkBoxPerfOverlay.CheckedChanged += checkBoxPerfOverlay_CheckedChanged;
             // 
             // comboBoxHatchType
             // 
@@ -68,11 +123,11 @@
             comboBoxHatchType.FormattingEnabled = true;
             comboBoxHatchType.IntegralHeight = false;
             comboBoxHatchType.ItemHeight = 16;
-            comboBoxHatchType.Location = new System.Drawing.Point(171, 44);
+            comboBoxHatchType.Location = new System.Drawing.Point(20, 52);
             comboBoxHatchType.Name = "comboBoxHatchType";
             comboBoxHatchType.Radius = 5;
             comboBoxHatchType.ShadowDepth = 4F;
-            comboBoxHatchType.Size = new System.Drawing.Size(121, 22);
+            comboBoxHatchType.Size = new System.Drawing.Size(160, 22);
             comboBoxHatchType.TabIndex = 42;
             comboBoxHatchType.SelectedIndexChanged += comboBoxHatchType_SelectedIndexChanged;
             // 
@@ -81,7 +136,7 @@
             checkBoxDrawFullHatch.AutoSize = true;
             checkBoxDrawFullHatch.BackColor = System.Drawing.Color.Transparent;
             checkBoxDrawFullHatch.Depth = 0;
-            checkBoxDrawFullHatch.Location = new System.Drawing.Point(295, 40);
+            checkBoxDrawFullHatch.Location = new System.Drawing.Point(200, 48);
             checkBoxDrawFullHatch.Margin = new System.Windows.Forms.Padding(0);
             checkBoxDrawFullHatch.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxDrawFullHatch.Name = "checkBoxDrawFullHatch";
@@ -97,7 +152,7 @@
             numTitleHeight.BackColor = System.Drawing.Color.Transparent;
             numTitleHeight.Font = new System.Drawing.Font("Segoe UI", 9F);
             numTitleHeight.ForeColor = System.Drawing.Color.FromArgb(76, 76, 76);
-            numTitleHeight.Location = new System.Drawing.Point(462, 84);
+            numTitleHeight.Location = new System.Drawing.Point(320, 84);
             numTitleHeight.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
             numTitleHeight.Minimum = new decimal(new int[] { 31, 0, 0, 0 });
             numTitleHeight.MinimumSize = new System.Drawing.Size(80, 25);
@@ -113,7 +168,7 @@
             numIconWidth.BackColor = System.Drawing.Color.Transparent;
             numIconWidth.Font = new System.Drawing.Font("Segoe UI", 9F);
             numIconWidth.ForeColor = System.Drawing.Color.FromArgb(76, 76, 76);
-            numIconWidth.Location = new System.Drawing.Point(257, 84);
+            numIconWidth.Location = new System.Drawing.Point(100, 84);
             numIconWidth.Maximum = new decimal(new int[] { 100, 0, 0, 0 });
             numIconWidth.Minimum = new decimal(new int[] { 32, 0, 0, 0 });
             numIconWidth.MinimumSize = new System.Drawing.Size(80, 25);
@@ -136,7 +191,7 @@
     System.Drawing.Color.Black
     };
             label5.GradientAnimation = false;
-            label5.Location = new System.Drawing.Point(186, 88);
+            label5.Location = new System.Drawing.Point(20, 88);
             label5.Name = "label5";
             label5.Size = new System.Drawing.Size(80, 20);
             label5.TabIndex = 43;
@@ -154,7 +209,7 @@
     System.Drawing.Color.Black
     };
             label6.GradientAnimation = false;
-            label6.Location = new System.Drawing.Point(385, 88);
+            label6.Location = new System.Drawing.Point(240, 88);
             label6.Name = "label6";
             label6.Size = new System.Drawing.Size(90, 20);
             label6.TabIndex = 44;
@@ -166,7 +221,7 @@
             buttonSelectFont.Color = System.Drawing.Color.RosyBrown;
             buttonSelectFont.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold);
             buttonSelectFont.ForeColor = System.Drawing.Color.White;
-            buttonSelectFont.Location = new System.Drawing.Point(140, 124);
+            buttonSelectFont.Location = new System.Drawing.Point(20, 124);
             buttonSelectFont.Name = "buttonSelectFont";
             buttonSelectFont.Radius = 8;
             buttonSelectFont.ShadowDepth = 0F;
@@ -217,7 +272,7 @@
             checkBoxTitleBorder.AutoSize = true;
             checkBoxTitleBorder.BackColor = System.Drawing.Color.Transparent;
             checkBoxTitleBorder.Depth = 0;
-            checkBoxTitleBorder.Location = new System.Drawing.Point(432, 40);
+            checkBoxTitleBorder.Location = new System.Drawing.Point(360, 48);
             checkBoxTitleBorder.Margin = new System.Windows.Forms.Padding(0);
             checkBoxTitleBorder.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxTitleBorder.Name = "checkBoxTitleBorder";
@@ -233,7 +288,7 @@
             checkBoxToggleTitle.AutoSize = true;
             checkBoxToggleTitle.BackColor = System.Drawing.Color.Transparent;
             checkBoxToggleTitle.Depth = 0;
-            checkBoxToggleTitle.Location = new System.Drawing.Point(584, 40);
+            checkBoxToggleTitle.Location = new System.Drawing.Point(520, 48);
             checkBoxToggleTitle.Margin = new System.Windows.Forms.Padding(0);
             checkBoxToggleTitle.MouseLocation = new System.Drawing.Point(-1, -1);
             checkBoxToggleTitle.Name = "checkBoxToggleTitle";
@@ -247,6 +302,9 @@
             // ConfigPage
             // 
             BackColor = System.Drawing.SystemColors.Control;
+            Controls.Add(checkBoxPerfOverlay);
+            Controls.Add(comboBoxRenderBackend);
+            Controls.Add(labelRenderBackend);
             Controls.Add(buttonBorderColor);
             Controls.Add(label1);
             Controls.Add(buttonSelectFont);
@@ -279,5 +337,8 @@
         private Controls.Button buttonBorderColor;
         private Controls.CheckBox checkBoxTitleBorder;
         private Controls.CheckBox checkBoxToggleTitle;
+        private Controls.Label labelRenderBackend;
+        private Controls.ComboBox comboBoxRenderBackend;
+        private Controls.CheckBox checkBoxPerfOverlay;
     }
 }

@@ -59,6 +59,42 @@ namespace SDUI.Controls
         private SKImageInfo _renderInfo;
         private SKImage? _renderSnapshot;
 
+        private enum RenderTargetKind
+        {
+            Cpu,
+            Gpu
+        }
+
+        private RenderTargetKind _renderTargetKind;
+        private GRContext? _renderGpuContext;
+
+        [ThreadStatic]
+        private static GRContext? s_currentGpuContext;
+
+        internal static IDisposable PushGpuContext(GRContext? context)
+        {
+            var prior = s_currentGpuContext;
+            s_currentGpuContext = context;
+            return new GpuContextScope(prior);
+        }
+
+        private sealed class GpuContextScope : IDisposable
+        {
+            private readonly GRContext? _prior;
+            private bool _disposed;
+
+            public GpuContextScope(GRContext? prior) => _prior = prior;
+
+            public void Dispose()
+            {
+                if (_disposed)
+                    return;
+
+                s_currentGpuContext = _prior;
+                _disposed = true;
+            }
+        }
+
         private Size _minimumSize;
         [Category("Layout")]
         [DefaultValue(typeof(Size), "0, 0")]
@@ -833,6 +869,9 @@ namespace SDUI.Controls
             _renderSurface?.Dispose();
             _renderSurface = null;
             _renderInfo = SKImageInfo.Empty;
+
+            _renderTargetKind = RenderTargetKind.Cpu;
+            _renderGpuContext = null;
         }
 
         private void EnsureRenderTarget()
@@ -846,16 +885,28 @@ namespace SDUI.Controls
             // sRGB color space ile yüksek kaliteli render
             var desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
 
+            var gpuContext = s_currentGpuContext;
+            var desiredKind = gpuContext != null ? RenderTargetKind.Gpu : RenderTargetKind.Cpu;
+
             if (_renderSurface != null &&
                 _renderInfo.Width == desiredInfo.Width &&
                 _renderInfo.Height == desiredInfo.Height &&
-                _renderInfo.ColorType == desiredInfo.ColorType)
+                _renderInfo.ColorType == desiredInfo.ColorType &&
+                _renderTargetKind == desiredKind &&
+                (desiredKind == RenderTargetKind.Cpu || ReferenceEquals(_renderGpuContext, gpuContext)))
             {
                 return;
             }
 
             DisposeRenderResources();
-            _renderSurface = SKSurface.Create(desiredInfo);
+
+            _renderTargetKind = desiredKind;
+            _renderGpuContext = gpuContext;
+
+            _renderSurface = desiredKind == RenderTargetKind.Gpu
+                ? SKSurface.Create(gpuContext!, true, desiredInfo)
+                : SKSurface.Create(desiredInfo);
+
             _renderInfo = desiredInfo;
             MarkDirty();
         }

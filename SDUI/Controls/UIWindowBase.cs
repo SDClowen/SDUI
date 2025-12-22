@@ -336,29 +336,5 @@ public class UIWindowBase : Form
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
         base.OnDpiChanged(e);
-        try
-        {
-            // Apply suggested bounds to prevent oversized/blank window on monitor switch
-            this.Bounds = e.SuggestedRectangle;
-        }
-        catch { }
-
-        // Re-layout and invalidate all child controls
-        try
-        {
-            SuspendLayout();
-            foreach (Control c in Controls)
-            {
-                c.Invalidate();
-                c.PerformLayout();
-            }
-        }
-        finally
-        {
-            ResumeLayout(true);
-        }
-
-        Invalidate();
-        Update();
     }
 }

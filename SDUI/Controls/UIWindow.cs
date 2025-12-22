@@ -2,6 +2,7 @@
 using SDUI.Collections;
 using SDUI.Extensions;
 using SDUI.Helpers;
+using SDUI.Rendering;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
@@ -10,8 +11,8 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Diagnostics;
 using System.Windows.Forms;
-using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
@@ -291,28 +292,28 @@ public class UIWindow : UIWindowBase, IUIElement
 
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
-        base.OnDpiChanged(e);
+        _suppressImmediateUpdateCount++;
+        try
+        {
+            base.OnDpiChanged(e);
 
-        var oldDpi = e.DeviceDpiOld;
-        var newDpi = e.DeviceDpiNew;
-        var scaleFactor = oldDpi <= 0 ? 1f : (float)newDpi / oldDpi;
+            // Prefer WM_DPICHANGED suggested bounds; avoid manual scaling (can cause size oscillation).
+            var suggested = e.SuggestedRectangle;
+            if (Bounds != suggested)
+            {
+                Bounds = suggested;
+            }
 
-        var previousSize = Size;
-        var previousLocation = Location;
+            foreach (UIElementBase element in Controls)
+                element.OnDpiChanged(e.DeviceDpiNew, e.DeviceDpiOld);
 
-        Size = new Size(
-            Math.Max(1, (int)Math.Round(previousSize.Width * scaleFactor)),
-            Math.Max(1, (int)Math.Round(previousSize.Height * scaleFactor)));
-
-        Location = new Point(
-            (int)Math.Round(previousLocation.X * scaleFactor),
-            (int)Math.Round(previousLocation.Y * scaleFactor));
-
-        foreach (UIElementBase element in Controls)
-            element.OnDpiChanged(newDpi, oldDpi);
-
-        _needsFullRedraw = true;
-        Invalidate();
+            _needsFullRedraw = true;
+            Invalidate();
+        }
+        finally
+        {
+            _suppressImmediateUpdateCount--;
+        }
     }
 
     /// <summary>
@@ -652,6 +653,47 @@ public class UIWindow : UIWindowBase, IUIElement
     private SKBitmap _cacheBitmap;
     private SKSurface _cacheSurface;
     private bool _needsFullRedraw = true;
+    private int _suppressImmediateUpdateCount;
+
+    private bool _showPerfOverlay;
+    private long _perfLastTimestamp;
+    private double _perfSmoothedFrameMs;
+
+    [DefaultValue(false)]
+    [Description("Shows a small FPS/frame-time overlay for measuring renderer performance.")]
+    public bool ShowPerfOverlay
+    {
+        get => _showPerfOverlay;
+        set
+        {
+            if (_showPerfOverlay == value)
+                return;
+            _showPerfOverlay = value;
+            _perfLastTimestamp = 0;
+            _perfSmoothedFrameMs = 0;
+            Invalidate();
+        }
+    }
+
+    private RenderBackend _renderBackend = RenderBackend.Software;
+    private IWindowRenderer? _renderer;
+
+    [DefaultValue(RenderBackend.Software)]
+    [Description("Selects how UIWindow presents frames: Software (GDI), OpenGL, or DirectX11 (DXGI/GDI-compatible swapchain).")]
+    public RenderBackend RenderBackend
+    {
+        get => _renderBackend;
+        set
+        {
+            if (_renderBackend == value)
+                return;
+
+            _renderBackend = value;
+            ApplyRenderStyles();
+            RecreateRenderer();
+            Invalidate();
+        }
+    }
 
     /// <summary>
     /// The contructor
@@ -660,14 +702,10 @@ public class UIWindow : UIWindowBase, IUIElement
         : base()
     {
         CheckForIllegalCrossThreadCalls = false;
-        SetStyle(
-            ControlStyles.UserPaint |
-            ControlStyles.DoubleBuffer |
-            ControlStyles.OptimizedDoubleBuffer |
-            ControlStyles.AllPaintingInWmPaint |
-            ControlStyles.SupportsTransparentBackColor, true);
 
-        UpdateStyles();
+        // WinForms double-buffering can cause visible flicker when the window is presented by
+        // a GPU swapchain (OpenGL/DX). Keep it for software, disable it for GPU backends.
+        ApplyRenderStyles();
         Controls = new(this);
         enableFullDraggable = false;
 
@@ -745,6 +783,88 @@ public class UIWindow : UIWindowBase, IUIElement
         formMenuHoverAnimationManager.OnAnimationProgress += sender => Invalidate();
 
         //WindowsHelper.ApplyRoundCorner(this.Handle);
+    }
+
+    protected override void OnHandleCreated(EventArgs e)
+    {
+        base.OnHandleCreated(e);
+        ApplyRenderStyles();
+        RecreateRenderer();
+    }
+
+    protected override void OnHandleDestroyed(EventArgs e)
+    {
+        try
+        {
+            _renderer?.Dispose();
+        }
+        finally
+        {
+            _renderer = null;
+            base.OnHandleDestroyed(e);
+        }
+    }
+
+    protected override void OnPaintBackground(PaintEventArgs e)
+    {
+        if (!DesignMode && _renderBackend != RenderBackend.Software)
+            return;
+
+        base.OnPaintBackground(e);
+    }
+
+    protected override CreateParams CreateParams
+    {
+        get
+        {
+            var cp = base.CreateParams;
+
+            if (!DesignMode && _renderBackend != RenderBackend.Software)
+            {
+                cp.Style |= (int)(NativeMethods.SetWindowLongFlags.WS_CLIPCHILDREN | NativeMethods.SetWindowLongFlags.WS_CLIPSIBLINGS);
+                // WS_EX_NOREDIRECTIONBITMAP helps some WGL/SwapBuffers flicker scenarios,
+                // but can interfere with DXGI swapchains. Apply only for OpenGL.
+                if (_renderBackend == RenderBackend.OpenGL)
+                    cp.ExStyle |= (int)NativeMethods.SetWindowLongFlags.WS_EX_NOREDIRECTIONBITMAP;
+                cp.ExStyle &= ~(int)NativeMethods.SetWindowLongFlags.WS_EX_COMPOSITED;
+            }
+
+            return cp;
+        }
+    }
+
+    private void RecreateRenderer()
+    {
+        if (DesignMode || IsDisposed || Disposing)
+            return;
+
+        _renderer?.Dispose();
+        _renderer = null;
+
+        if (!IsHandleCreated)
+            return;
+
+        if (_renderBackend == RenderBackend.Software)
+            return;
+
+        try
+        {
+            _renderer = _renderBackend switch
+            {
+                RenderBackend.OpenGL => new OpenGlWindowRenderer(),
+                RenderBackend.DirectX11 => new DirectX11WindowRenderer(),
+                _ => null
+            };
+
+            _renderer?.Initialize(Handle);
+            _renderer?.Resize(ClientSize.Width, ClientSize.Height);
+        }
+        catch
+        {
+            _renderer?.Dispose();
+            _renderer = null;
+            _renderBackend = RenderBackend.Software;
+        }
     }
 
     private bool _inCloseBox, _inMaxBox, _inMinBox, _inExtendBox, _inTabCloseBox, _inNewTabBox, _inFormMenuBox;
@@ -1228,21 +1348,50 @@ public class UIWindow : UIWindowBase, IUIElement
 
         // Z-order'a göre tersten kontrol et
         bool elementClicked = false;
+        UIElementBase? hitElement = null;
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
                 elementClicked = true;
+                hitElement = element;
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseUp(localEvent); 
                 break;
             }
         }
 
-        if (!elementClicked && e.Button == MouseButtons.Right && ContextMenuStrip != null)
+        if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
         {
-            var point = PointToScreen(e.Location);
-            ContextMenuStrip.Show(point);
+            static bool HasContextMenuInChain(UIElementBase? start)
+            {
+                var current = start;
+                while (current != null)
+                {
+                    if (current.ContextMenuStrip != null)
+                        return true;
+                    current = current.Parent as UIElementBase;
+                }
+                return false;
+            }
+
+            // If nothing was hit, show the window menu.
+            // If an element was hit but no element/parent has a menu, fall back to the window menu.
+            // Exception: TextBox can show a native menu fallback; don't show window menu on top.
+            var shouldShowWindowMenu = !elementClicked;
+
+            if (!shouldShowWindowMenu && hitElement != null)
+            {
+                var isTextBox = hitElement is TextBox;
+                if (!isTextBox && !HasContextMenuInChain(hitElement))
+                    shouldShowWindowMenu = true;
+            }
+
+            if (shouldShowWindowMenu)
+            {
+                var point = PointToScreen(e.Location);
+                ContextMenuStrip.Show(point);
+            }
         }
     }
 
@@ -1542,8 +1691,29 @@ public class UIWindow : UIWindowBase, IUIElement
         // Force immediate repaint for real-time responsiveness
         if (IsHandleCreated && !IsDisposed && !Disposing)
         {
-            Update();
+            if (_suppressImmediateUpdateCount <= 0)
+            {
+                // In GPU-present modes, forcing synchronous Update() can increase tearing/flicker
+                // and prevents WM_PAINT coalescing.
+                if (_renderBackend == RenderBackend.Software)
+                {
+                    Update();
+                }
+            }
         }
+    }
+
+    private const int WM_ERASEBKGND = 0x0014;
+
+    protected override void WndProc(ref Message m)
+    {
+        if (!DesignMode && _renderBackend != RenderBackend.Software && m.Msg == WM_ERASEBKGND)
+        {
+            m.Result = (IntPtr)1;
+            return;
+        }
+
+        base.WndProc(ref m);
     }
 
     protected override void OnLayout(LayoutEventArgs levent)
@@ -1568,22 +1738,124 @@ public class UIWindow : UIWindowBase, IUIElement
 
     protected override void OnPaint(PaintEventArgs e)
     {
-        if (Width <= 0 || Height <= 0)
+        var w = ClientSize.Width;
+        var h = ClientSize.Height;
+        if (w <= 0 || h <= 0)
+            return;
+
+        if (!DesignMode && _renderBackend != RenderBackend.Software && _renderer != null)
         {
-            base.OnPaint(e);
+            _renderer.Render(w, h, RenderScene);
             return;
         }
 
-        var info = new SKImageInfo(Width, Height, SKColorType.Bgra8888, SKAlphaType.Premul);
-        CreateOrUpdateCache(info);
+        var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
+        var bmp = RenderSoftwareFrameToGdiBitmap(info);
+        if (bmp != null)
+        {
+            e.Graphics.DrawImageUnscaled(bmp, 0, 0);
+        }
 
-        if (_cacheSurface == null || _cacheBitmap == null || _gdiBitmap == null)
+        base.OnPaint(e);
+    }
+
+    private void ApplyRenderStyles()
+    {
+        if (DesignMode)
             return;
+
+        var gpu = _renderBackend != RenderBackend.Software;
+
+        SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
+        SetStyle(ControlStyles.ResizeRedraw, true);
+
+        SetStyle(ControlStyles.DoubleBuffer, !gpu);
+        SetStyle(ControlStyles.OptimizedDoubleBuffer, !gpu);
+        SetStyle(ControlStyles.SupportsTransparentBackColor, !gpu);
+        SetStyle(ControlStyles.Opaque, gpu);
+
+        UpdateStyles();
+
+        ApplyNativeWindowStyles(gpu);
+    }
+
+    private void ApplyNativeWindowStyles(bool gpu)
+    {
+        if (!IsHandleCreated)
+            return;
+
+        var hwnd = Handle;
+
+        // Window styles
+        var stylePtr = NativeMethods.GetWindowLong(hwnd, NativeMethods.WindowLongIndexFlags.GWL_STYLE);
+        var style = (nint)stylePtr;
+        var clipFlags = (nint)(uint)(NativeMethods.SetWindowLongFlags.WS_CLIPCHILDREN | NativeMethods.SetWindowLongFlags.WS_CLIPSIBLINGS);
+        style = gpu ? (style | clipFlags) : (style & ~clipFlags);
+
+        // Extended styles
+        var exStylePtr = NativeMethods.GetWindowLong(hwnd, NativeMethods.WindowLongIndexFlags.GWL_EXSTYLE);
+        var exStyle = (nint)exStylePtr;
+        var noRedirect = (nint)(uint)NativeMethods.SetWindowLongFlags.WS_EX_NOREDIRECTIONBITMAP;
+        var composited = (nint)(uint)NativeMethods.SetWindowLongFlags.WS_EX_COMPOSITED;
+        if (gpu)
+        {
+            if (_renderBackend == RenderBackend.OpenGL)
+                exStyle |= noRedirect;
+            else
+                exStyle &= ~noRedirect;
+            exStyle &= ~composited;
+        }
+        else
+        {
+            exStyle &= ~noRedirect;
+        }
+
+        if (IntPtr.Size == 8)
+        {
+            NativeMethods.SetWindowLongPtr64(hwnd, (int)NativeMethods.WindowLongIndexFlags.GWL_STYLE, (IntPtr)style);
+            NativeMethods.SetWindowLongPtr64(hwnd, (int)NativeMethods.WindowLongIndexFlags.GWL_EXSTYLE, (IntPtr)exStyle);
+        }
+        else
+        {
+            NativeMethods.SetWindowLong32(hwnd, (int)NativeMethods.WindowLongIndexFlags.GWL_STYLE, (int)style);
+            NativeMethods.SetWindowLong32(hwnd, (int)NativeMethods.WindowLongIndexFlags.GWL_EXSTYLE, (int)exStyle);
+        }
+
+        // Re-apply non-client metrics.
+        NativeMethods.SetWindowPos(
+            hwnd,
+            IntPtr.Zero,
+            0,
+            0,
+            0,
+            0,
+            NativeMethods.SetWindowPosFlags.SWP_NOMOVE |
+            NativeMethods.SetWindowPosFlags.SWP_NOSIZE |
+            NativeMethods.SetWindowPosFlags.SWP_NOZORDER |
+            NativeMethods.SetWindowPosFlags.SWP_NOACTIVATE |
+            NativeMethods.SetWindowPosFlags.SWP_FRAMECHANGED);
+    }
+
+    private Bitmap? RenderSoftwareFrameToGdiBitmap(SKImageInfo info)
+    {
+        CreateOrUpdateCache(info);
+        if (_cacheSurface == null)
+            return null;
 
         var canvas = _cacheSurface.Canvas;
-        if (canvas == null)
-            return;
+        RenderScene(canvas, info);
+        canvas.Flush();
+        _cacheSurface.Flush();
 
+        return _gdiBitmap;
+    }
+
+    private void RenderScene(SKCanvas canvas, SKImageInfo info)
+    {
+        var gr = (_renderer as SDUI.Rendering.IGpuWindowRenderer)?.GrContext;
+        var gpuScope = gr != null ? UIElementBase.PushGpuContext(gr) : null;
+        try
+        {
         canvas.Save();
         canvas.ResetMatrix();
         canvas.ClipRect(SKRect.Create(info.Width, info.Height));
@@ -1600,7 +1872,6 @@ public class UIWindow : UIWindowBase, IUIElement
             _needsFullRedraw = false;
         }
 
-        // UI elementlerini Z-order sırasına göre çiz
         foreach (var element in Controls.OfType<UIElementBase>().OrderBy(el => el.ZOrder))
         {
             if (!element.Visible || element.Width <= 0 || element.Height <= 0)
@@ -1609,13 +1880,57 @@ public class UIWindow : UIWindowBase, IUIElement
             element.Render(canvas);
         }
 
-        canvas.Flush();
+        if (_showPerfOverlay)
+        {
+            DrawPerfOverlay(canvas);
+        }
+        }
+        finally
+        {
+            gpuScope?.Dispose();
+        }
+    }
 
-        e.Graphics.CompositingMode = CompositingMode.SourceOver;
-        e.Graphics.CompositingQuality = CompositingQuality.HighQuality;
-        e.Graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-        e.Graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
-        e.Graphics.DrawImageUnscaled(_gdiBitmap, 0, 0);
+    private void DrawPerfOverlay(SKCanvas canvas)
+    {
+        var now = Stopwatch.GetTimestamp();
+        if (_perfLastTimestamp == 0)
+        {
+            _perfLastTimestamp = now;
+            return;
+        }
+
+        var dt = (now - _perfLastTimestamp) / (double)Stopwatch.Frequency;
+        _perfLastTimestamp = now;
+        if (dt <= 0)
+            return;
+
+        var frameMs = dt * 1000.0;
+        _perfSmoothedFrameMs = _perfSmoothedFrameMs <= 0
+            ? frameMs
+            : (_perfSmoothedFrameMs * 0.90) + (frameMs * 0.10);
+
+        var fps = 1000.0 / Math.Max(0.001, _perfSmoothedFrameMs);
+
+        using var paint = new SKPaint
+        {
+            IsAntialias = true,
+            Color = ColorScheme.ForeColor.ToSKColor(),
+            TextSize = 12,
+        };
+
+        var backendLabel = _renderBackend.ToString();
+        if (_renderBackend == SDUI.Rendering.RenderBackend.DirectX11 && _renderer is SDUI.Rendering.DirectX11WindowRenderer dx)
+        {
+            backendLabel = dx.IsSkiaGpuActive ? "DX:GPU" : "DX:CPU";
+        }
+        else if (_renderBackend == SDUI.Rendering.RenderBackend.OpenGL && _renderer is SDUI.Rendering.OpenGlWindowRenderer gl)
+        {
+            backendLabel = gl.IsSkiaGpuActive ? "GL:GPU" : "GL";
+        }
+
+        var text = $"{backendLabel}  {fps:0} FPS  {_perfSmoothedFrameMs:0.0} ms";
+        canvas.DrawText(text, 8, 16, paint);
     }
 
     private void PaintSurface(SKCanvas canvas, SKImageInfo info)
@@ -2208,6 +2523,12 @@ public class UIWindow : UIWindowBase, IUIElement
         base.OnSizeChanged(e);
         CalcSystemBoxPos();
         PerformLayout();
+
+        if (!DesignMode && _renderBackend != RenderBackend.Software)
+        {
+            _renderer?.Resize(ClientSize.Width, ClientSize.Height);
+            Invalidate();
+        }
     }
 
     protected override void OnShown(EventArgs e)

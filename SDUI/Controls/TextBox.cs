@@ -53,6 +53,10 @@ internal static class NativeTextBoxMenu
 
         try
         {
+            // Ensure the textbox is focused before opening the menu (selection visibility / caret state).
+            if (!textBox.Focused)
+                textBox.Focus();
+
             bool hasSelection = textBox.SelectionLength > 0;
             bool canPaste = Clipboard.ContainsText();
             bool isReadOnly = textBox.ReadOnly;
@@ -111,9 +115,17 @@ internal static class NativeTextBoxMenu
                         textBox.DeleteSelection();
                         break;
                     case CMD_SELECTALL:
+                        // TrackPopupMenuEx can steal focus via the host window; restore focus and redraw.
+                        if (!textBox.Focused)
+                            textBox.Focus();
                         textBox.SelectAll();
+                        textBox.Invalidate();
                         break;
                 }
+
+                // Keep UI state consistent after a menu command.
+                if (!textBox.Focused)
+                    textBox.Focus();
             }
         }
         finally

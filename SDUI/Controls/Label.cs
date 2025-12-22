@@ -123,15 +123,16 @@ public class Label : UIElementBase
 
         var lines = Text.Split('\n');
         float maxWidth = 0;
-        float totalHeight = 0;
 
         foreach (var line in lines)
         {
-            SKRect bounds = new SKRect();
-            font.MeasureText(line, out bounds);
-            maxWidth = Math.Max(maxWidth, bounds.Width);
-            totalHeight += bounds.Height;
+            // Measure advance width; more stable than bounds for layout.
+            maxWidth = Math.Max(maxWidth, font.MeasureText(line));
         }
+
+        // Use line spacing (ascent+descent+leading) so the control height won't
+        // under-estimate and clip descenders.
+        var totalHeight = lines.Length * font.Spacing;
 
         Width = (int)Math.Ceiling(maxWidth) + Padding.Horizontal;
         Height = (int)Math.Ceiling(totalHeight) + Padding.Vertical;
@@ -261,13 +262,15 @@ public class Label : UIElementBase
             lines.Add(line);
         }
 
-        // Dikey hizalama için y offset hesapla
+        // Dikey hizalama: padding'li alan içinde hizala.
+        var availableHeight = Height - Padding.Vertical;
+        var textBlockHeight = lines.Count * lineHeight;
         float yOffset = TextAlign switch
         {
             ContentAlignment.MiddleLeft or ContentAlignment.MiddleCenter or ContentAlignment.MiddleRight
-                => (Height - (lines.Count * lineHeight)) / 2,
+                => Padding.Top + Math.Max(0, (availableHeight - textBlockHeight) / 2),
             ContentAlignment.BottomLeft or ContentAlignment.BottomCenter or ContentAlignment.BottomRight
-                => Height - (lines.Count * lineHeight) - Padding.Bottom,
+                => Height - Padding.Bottom - textBlockHeight,
             _ => Padding.Top
         };
 
