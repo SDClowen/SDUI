@@ -15,6 +15,11 @@ public class ComboBox : UIElementBase
 {
     private const int DropDownVerticalPadding = 6;
     private const int DefaultMinVisibleItems = 4;
+    private const int MinDropDownItemHeight = 32;
+
+    // Dropdown rendering enforces a minimum item height for a modern look.
+    // Keep dropdown sizing consistent with what the dropdown actually draws.
+    private int EffectiveDropDownItemHeight => Math.Max(MinDropDownItemHeight, _itemHeight);
 
     #region Inner Classes
 
@@ -872,9 +877,10 @@ public class ComboBox : UIElementBase
 
         const int MARGIN = 8;
         int padding = DropDownVerticalPadding * 2;
-        int totalItemsHeight = Items.Count * ItemHeight + padding;
+        int itemHeight = EffectiveDropDownItemHeight;
+        int totalItemsHeight = Items.Count * itemHeight + padding;
         int minVisibleItems = Math.Min(Math.Max(_minDropDownItems, 1), Math.Max(Items.Count, 1));
-        int minHeight = Math.Max(ItemHeight + padding, minVisibleItems * ItemHeight + padding);
+        int minHeight = Math.Max(itemHeight + padding, minVisibleItems * itemHeight + padding);
 
         int spaceBelow = _parentWindow.Height - comboLocation.Y - Height - MARGIN;
         int spaceAbove = comboLocation.Y - MARGIN;
@@ -889,7 +895,7 @@ public class ComboBox : UIElementBase
         else
         {
             int bestVisibleItems = Math.Min(MaxDropDownItems, Items.Count);
-            int preferredHeight = Math.Min(totalItemsHeight, bestVisibleItems * ItemHeight + padding);
+            int preferredHeight = Math.Min(totalItemsHeight, bestVisibleItems * itemHeight + padding);
             int target = _dropDownHeight > 0 ? _dropDownHeight : preferredHeight;
             dropdownHeight = Math.Max(minHeight, Math.Min(target, totalItemsHeight));
         }
