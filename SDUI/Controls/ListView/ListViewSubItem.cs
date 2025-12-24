@@ -119,8 +119,7 @@ public partial class ListViewItem
         {
             get
             {
-                Debug.Assert(style is not null, "Should have checked CustomStyle");
-                return !style.backColor.IsEmpty;
+                return style is not null && !style.backColor.IsEmpty;
             }
         }
 
@@ -128,8 +127,7 @@ public partial class ListViewItem
         {
             get
             {
-                Debug.Assert(style is not null, "Should have checked CustomStyle");
-                return style.font is not null;
+                return style is not null && style.font is not null;
             }
         }
 
@@ -137,8 +135,7 @@ public partial class ListViewItem
         {
             get
             {
-                Debug.Assert(style is not null, "Should have checked CustomStyle");
-                return !style.foreColor.IsEmpty;
+                return style is not null && !style.foreColor.IsEmpty;
             }
         }
 

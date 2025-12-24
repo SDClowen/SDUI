@@ -439,15 +439,17 @@ public class ListView : UIElementBase
             Style = SKPaintStyle.Fill
         };
 
-        // Row background is expensive; only draw when needed (selection/custom backcolor).
-        bool hasCustomBack = !row.BackColor.IsEmpty;
+        // Row background is expensive; only draw when needed (selection/explicit custom backcolor).
+        // row.BackColor can represent an inherited value (e.g., ListView.BackColor), so we must
+        // check whether the item actually has a custom color set.
+        bool hasCustomBack = row.SubItems.Count > 0 && row.SubItems[0].CustomBackColor;
         bool shouldFillBackground = row.StateSelected || hasCustomBack;
         var rect = new SKRect(0, y, Width, y + RowHeight);
         if (shouldFillBackground)
         {
             backPaint.Color = row.StateSelected
                 ? ColorScheme.PrimaryContainer.ToSKColor()
-                : ToSKColor(row.BackColor);
+                : ToSKColor(row.SubItems[0].BackColor);
             canvas.DrawRect(rect, backPaint);
         }
 
@@ -995,7 +997,9 @@ public class ListView : UIElementBase
         // Draw background once; rows only draw overlays when needed.
         using (var bg = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
         {
-            var bgColor = BackColor.IsEmpty ? ColorScheme.Surface : BackColor;
+            // Treat Transparent as "no explicit background" for this control so it
+            // doesn't visually fall back to the host window's (often white) background.
+            var bgColor = (BackColor.IsEmpty || BackColor.A == 0) ? ColorScheme.Surface : BackColor;
             bg.Color = ToSKColor(bgColor);
             canvas.DrawRect(0, 0, Width, Height, bg);
         }
