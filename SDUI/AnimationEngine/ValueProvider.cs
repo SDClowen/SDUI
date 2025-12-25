@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 
 namespace SDUI.AnimationEngine
 {
@@ -8,6 +9,8 @@ namespace SDUI.AnimationEngine
     /// <typeparam name="T">The type of value that should be transitioned.</typeparam>
     public class ValueProvider<T>
     {
+        private long _startTimestamp;
+        private double _durationTicks;
         /// <summary>
         /// Initializes a new instance of the <see cref="ValueProvider{T}"/> class.
         /// </summary>
@@ -29,6 +32,9 @@ namespace SDUI.AnimationEngine
             this.TargetValue = this.StartValue;
             this.StartTime = DateTime.Now;
             this.Duration = TimeSpan.Zero;
+
+            _startTimestamp = Stopwatch.GetTimestamp();
+            _durationTicks = 0;
 
             this.EasingMethod = easingMethod;
             this.ValueFactory = valueFactory;
@@ -116,10 +122,14 @@ namespace SDUI.AnimationEngine
         {
             get
             {
-                var currentDuration = DateTime.Now - this.StartTime;
-                if (currentDuration >= this.Duration)
+                if (_durationTicks <= 0)
                     return 1;
-                return currentDuration.TotalMilliseconds / this.Duration.TotalMilliseconds;
+
+                var elapsed = Stopwatch.GetTimestamp() - _startTimestamp;
+                if (elapsed >= _durationTicks)
+                    return 1;
+
+                return elapsed / _durationTicks;
             }
         }
 
@@ -160,6 +170,11 @@ namespace SDUI.AnimationEngine
             this.TargetValue = targetValue;
             this.StartTime = DateTime.Now;
             this.Duration = duration;
+
+            _startTimestamp = Stopwatch.GetTimestamp();
+            _durationTicks = duration.TotalSeconds <= 0
+                ? 0
+                : (duration.TotalSeconds * Stopwatch.Frequency);
         }
 
         /// <summary>
@@ -171,6 +186,9 @@ namespace SDUI.AnimationEngine
             this.TargetValue = this.CurrentValue;
             this.StartTime = DateTime.Now;
             this.Duration = TimeSpan.Zero;
+
+            _startTimestamp = Stopwatch.GetTimestamp();
+            _durationTicks = 0;
         }
     }
 }

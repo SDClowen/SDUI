@@ -655,6 +655,93 @@ public class UIWindow : UIWindowBase, IUIElement
     private bool _needsFullRedraw = true;
     private int _suppressImmediateUpdateCount;
 
+    // Hot-path caches (avoid per-frame LINQ allocations)
+    private readonly List<UIElementBase> _frameElements = new();
+    private readonly List<UIElementBase> _hitTestElements = new();
+    private readonly List<ZOrderSortItem> _zOrderSortBuffer = new();
+
+    private readonly struct ZOrderSortItem
+    {
+        public readonly UIElementBase Element;
+        public readonly int ZOrder;
+        public readonly int Sequence;
+
+        public ZOrderSortItem(UIElementBase element, int zOrder, int sequence)
+        {
+            Element = element;
+            ZOrder = zOrder;
+            Sequence = sequence;
+        }
+    }
+
+    // Prevent Invalidate()->Update() storms in Software backend
+    private bool _softwareUpdateQueued;
+
+    private void QueueSoftwareUpdate()
+    {
+        if (_softwareUpdateQueued)
+            return;
+
+        if (!IsHandleCreated || IsDisposed || Disposing)
+            return;
+
+        _softwareUpdateQueued = true;
+        try
+        {
+            BeginInvoke((Action)(() =>
+            {
+                _softwareUpdateQueued = false;
+                if (!IsHandleCreated || IsDisposed || Disposing)
+                    return;
+
+                if (_renderBackend == RenderBackend.Software)
+                    Update();
+            }));
+        }
+        catch
+        {
+            _softwareUpdateQueued = false;
+        }
+    }
+
+    private void StableSortByZOrderAscending(List<UIElementBase> list)
+    {
+        _zOrderSortBuffer.Clear();
+        for (int i = 0; i < list.Count; i++)
+        {
+            var element = list[i];
+            _zOrderSortBuffer.Add(new ZOrderSortItem(element, element.ZOrder, i));
+        }
+
+        _zOrderSortBuffer.Sort(static (a, b) =>
+        {
+            int cmp = a.ZOrder.CompareTo(b.ZOrder);
+            return cmp != 0 ? cmp : a.Sequence.CompareTo(b.Sequence);
+        });
+
+        for (int i = 0; i < list.Count; i++)
+            list[i] = _zOrderSortBuffer[i].Element;
+    }
+
+    private void StableSortByZOrderDescending(List<UIElementBase> list)
+    {
+        _zOrderSortBuffer.Clear();
+        for (int i = 0; i < list.Count; i++)
+        {
+            var element = list[i];
+            _zOrderSortBuffer.Add(new ZOrderSortItem(element, element.ZOrder, i));
+        }
+
+        _zOrderSortBuffer.Sort(static (a, b) =>
+        {
+            int cmp = b.ZOrder.CompareTo(a.ZOrder);
+            return cmp != 0 ? cmp : a.Sequence.CompareTo(b.Sequence);
+        });
+
+        for (int i = 0; i < list.Count; i++)
+            list[i] = _zOrderSortBuffer[i].Element;
+    }
+
     private bool _showPerfOverlay;
     private long _perfLastTimestamp;
     private double _perfSmoothedFrameMs;
@@ -1090,19 +1177,38 @@ public class UIWindow : UIWindowBase, IUIElement
         }
     }
 
+    private void BuildHitTestList(bool requireEnabled)
+    {
+        _hitTestElements.Clear();
+        for (int i = 0; i < Controls.Count; i++)
+        {
+            if (Controls[i] is not UIElementBase element)
+                continue;
+            if (!element.Visible)
+                continue;
+            if (requireEnabled && !element.Enabled)
+                continue;
+            _hitTestElements.Add(element);
+        }
+
+        // Stable ordering prevents subtle behavior changes when ZOrder ties exist.
+        StableSortByZOrderDescending(_hitTestElements);
+    }
+
 
     protected override void OnMouseClick(MouseEventArgs e)
     {
         base.OnMouseClick(e);
 
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        BuildHitTestList(requireEnabled: true);
+        for (int i = 0; i < _hitTestElements.Count; i++)
         {
-            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
-            {
-                var localEvent = CreateChildMouseEvent(e, element);
-                element.OnMouseClick(localEvent);
-                break;
-            }
+            var element = _hitTestElements[i];
+            if (!GetWindowRelativeBoundsStatic(element).Contains(e.Location))
+                continue;
+            var localEvent = CreateChildMouseEvent(e, element);
+            element.OnMouseClick(localEvent);
+            break;
         }
 
         if (!ShowTitle)
@@ -1196,11 +1302,14 @@ public class UIWindow : UIWindowBase, IUIElement
 
         bool elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        BuildHitTestList(requireEnabled: true);
+        for (int i = 0; i < _hitTestElements.Count; i++)
         {
-            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
-            {
-                elementClicked = true;
+            var element = _hitTestElements[i];
+            if (!GetWindowRelativeBoundsStatic(element).Contains(e.Location))
+                continue;
+
+            elementClicked = true;
 
                 // If the element (or its descendants) doesn't set focus, fall back to focusing this element.
                 var prevFocus = FocusedElement;
@@ -1229,8 +1338,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 }
                 // Tıklanan elementi en üste getir
                 BringToFront(element);
-                break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
-            }
+            break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
         }
 
         if (!elementClicked)
@@ -1273,18 +1381,20 @@ public class UIWindow : UIWindowBase, IUIElement
 
         bool elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki elementten başla)
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        BuildHitTestList(requireEnabled: true);
+        for (int i = 0; i < _hitTestElements.Count; i++)
         {
-            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
-            {
-                elementClicked = true;
+            var element = _hitTestElements[i];
+            if (!GetWindowRelativeBoundsStatic(element).Contains(e.Location))
+                continue;
 
-                var localEvent = CreateChildMouseEvent(e, element);
-                element.OnMouseDoubleClick(localEvent);
-                // Tıklanan elementi en üste getir
-                BringToFront(element);
-                break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
-            }
+            elementClicked = true;
+
+            var localEvent = CreateChildMouseEvent(e, element);
+            element.OnMouseDoubleClick(localEvent);
+            // Tıklanan elementi en üste getir
+            BringToFront(element);
+            break; // İlk tıklanan elementten sonra diğerlerini kontrol etmeye gerek yok
         }
 
         if (!elementClicked)
@@ -1349,16 +1459,18 @@ public class UIWindow : UIWindowBase, IUIElement
         // Z-order'a göre tersten kontrol et
         bool elementClicked = false;
         UIElementBase? hitElement = null;
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
+        BuildHitTestList(requireEnabled: true);
+        for (int i = 0; i < _hitTestElements.Count; i++)
         {
-            if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
-            {
-                elementClicked = true;
-                hitElement = element;
-                var localEvent = CreateChildMouseEvent(e, element);
-                element.OnMouseUp(localEvent); 
-                break;
-            }
+            var element = _hitTestElements[i];
+            if (!GetWindowRelativeBoundsStatic(element).Contains(e.Location))
+                continue;
+
+            elementClicked = true;
+            hitElement = element;
+            var localEvent = CreateChildMouseEvent(e, element);
+            element.OnMouseUp(localEvent);
+            break;
         }
 
         if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
@@ -1688,18 +1800,12 @@ public class UIWindow : UIWindowBase, IUIElement
     public new void Invalidate()
     {
         base.Invalidate();
-        // Force immediate repaint for real-time responsiveness
-        if (IsHandleCreated && !IsDisposed && !Disposing)
+        // Avoid synchronous Update() storms (especially with multiple animations). In software
+        // backend we still want snappy repaint, but we coalesce to one Update per message loop.
+        if (IsHandleCreated && !IsDisposed && !Disposing && _suppressImmediateUpdateCount <= 0)
         {
-            if (_suppressImmediateUpdateCount <= 0)
-            {
-                // In GPU-present modes, forcing synchronous Update() can increase tearing/flicker
-                // and prevents WM_PAINT coalescing.
-                if (_renderBackend == RenderBackend.Software)
-                {
-                    Update();
-                }
-            }
+            if (_renderBackend == RenderBackend.Software)
+                QueueSoftwareUpdate();
         }
     }
 
@@ -1730,9 +1836,12 @@ public class UIWindow : UIWindowBase, IUIElement
 
         Rectangle remainingArea = clientArea;
 
-        foreach (var control in Controls.OfType<UIElementBase>())
+        for (int i = 0; i < Controls.Count; i++)
         {
-             SDUI.LayoutEngine.Perform(control, clientArea, ref remainingArea);
+            if (Controls[i] is UIElementBase control)
+            {
+                SDUI.LayoutEngine.Perform(control, clientArea, ref remainingArea);
+            }
         }
     }
 
@@ -1865,18 +1974,28 @@ public class UIWindow : UIWindowBase, IUIElement
 
         if (_needsFullRedraw)
         {
-            foreach (var child in Controls.OfType<UIElementBase>())
+            for (int i = 0; i < Controls.Count; i++)
             {
-                child.InvalidateRenderTree();
+                if (Controls[i] is UIElementBase child)
+                    child.InvalidateRenderTree();
             }
             _needsFullRedraw = false;
         }
 
-        foreach (var element in Controls.OfType<UIElementBase>().OrderBy(el => el.ZOrder))
+        _frameElements.Clear();
+        for (int i = 0; i < Controls.Count; i++)
         {
+            if (Controls[i] is UIElementBase element)
+                _frameElements.Add(element);
+        }
+
+        // Match LINQ OrderBy stability (ties keep original order).
+        StableSortByZOrderAscending(_frameElements);
+        for (int i = 0; i < _frameElements.Count; i++)
+        {
+            var element = _frameElements[i];
             if (!element.Visible || element.Width <= 0 || element.Height <= 0)
                 continue;
-
             element.Render(canvas);
         }
 

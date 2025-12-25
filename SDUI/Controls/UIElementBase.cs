@@ -71,6 +71,8 @@ namespace SDUI.Controls
         [ThreadStatic]
         private static GRContext? s_currentGpuContext;
 
+        private static readonly SKColorSpace s_srgbColorSpace = SKColorSpace.CreateSrgb();
+
         internal static IDisposable PushGpuContext(GRContext? context)
         {
             var prior = s_currentGpuContext;
@@ -855,9 +857,10 @@ namespace SDUI.Controls
         internal void InvalidateRenderTree()
         {
             MarkDirty();
-            foreach (var child in Controls.OfType<UIElementBase>())
+            for (int i = 0; i < Controls.Count; i++)
             {
-                child.InvalidateRenderTree();
+                if (Controls[i] is UIElementBase child)
+                    child.InvalidateRenderTree();
             }
         }
 
@@ -883,7 +886,7 @@ namespace SDUI.Controls
             }
 
             // sRGB color space ile yüksek kaliteli render
-            var desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
+            var desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, s_srgbColorSpace);
 
             var gpuContext = s_currentGpuContext;
             var desiredKind = gpuContext != null ? RenderTargetKind.Gpu : RenderTargetKind.Cpu;
