@@ -48,12 +48,63 @@ public class MenuStrip : UIElementBase
     private SDUI.Orientation _orientation = SDUI.Orientation.Horizontal;
     private float _separatorHeight = 1f;
 
+    private SKPaint? _bgPaint;
+    private SKPaint? _bottomBorderPaint;
+    private SKPaint? _hoverBgPaint;
+    private SKPaint? _imgPaint;
+    private SKPaint? _textPaint;
+    private SKPaint? _arrowPaint;
+    private SKPath? _chevronPath;
+    private SKFont? _defaultSkFont;
+    private Font? _defaultSkFontSource;
+    private int _defaultSkFontDpi;
+    private readonly Dictionary<Bitmap, SKBitmap> _iconCache = new();
+    private const int MaxIconCacheEntries = 256;
+
     public MenuStrip()
     {
         Height = (int)_itemHeight;
         BackColor = ColorScheme.BackColor;
         ForeColor = ColorScheme.ForeColor;
         InitializeAnimationTimer();
+    }
+
+    private SKFont GetDefaultSkFont()
+    {
+        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+        var font = Font;
+        if (_defaultSkFont == null || !ReferenceEquals(_defaultSkFontSource, font) || _defaultSkFontDpi != dpi)
+        {
+            _defaultSkFont?.Dispose();
+            _defaultSkFont = new SKFont
+            {
+                Size = font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(font),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
+            };
+            _defaultSkFontSource = font;
+            _defaultSkFontDpi = dpi;
+        }
+
+        return _defaultSkFont;
+    }
+
+    private SKBitmap GetCachedIconBitmap(Bitmap icon)
+    {
+        if (_iconCache.TryGetValue(icon, out var cached))
+            return cached;
+
+        if (_iconCache.Count >= MaxIconCacheEntries)
+        {
+            foreach (var kvp in _iconCache)
+                kvp.Value.Dispose();
+            _iconCache.Clear();
+        }
+
+        var skBitmap = icon.ToSKBitmap();
+        _iconCache[icon] = skBitmap;
+        return skBitmap;
     }
 
     [Browsable(false)] public List<MenuItem> Items => _items;
@@ -110,16 +161,14 @@ public class MenuStrip : UIElementBase
         var bounds = ClientRectangle;
 
         // Flat modern background
-        using (var bg = new SKPaint { Color = MenuBackColor.ToSKColor(), IsAntialias = true })
-        {
-            canvas.DrawRect(new SKRect(0, 0, bounds.Width, bounds.Height), bg);
-        }
+        _bgPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _bgPaint.Color = MenuBackColor.ToSKColor();
+        canvas.DrawRect(new SKRect(0, 0, bounds.Width, bounds.Height), _bgPaint);
 
         // Subtle bottom border
-        using (var border = new SKPaint { Color = SeparatorColor.ToSKColor().WithAlpha(100), IsAntialias = true, StrokeWidth = 1 })
-        {
-            canvas.DrawLine(0, bounds.Height - 1, bounds.Width, bounds.Height - 1, border);
-        }
+        _bottomBorderPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
+        _bottomBorderPaint.Color = SeparatorColor.ToSKColor().WithAlpha(100);
+        canvas.DrawLine(0, bounds.Height - 1, bounds.Width, bounds.Height - 1, _bottomBorderPaint);
 
         if (Orientation == SDUI.Orientation.Horizontal)
         {
@@ -185,14 +234,15 @@ public class MenuStrip : UIElementBase
         {
             var blend = _hoverBackColor.ToSKColor();
             byte alpha = (byte)(180 + 70 * prog);
-            using var bg = new SKPaint
+            _hoverBgPaint ??= new SKPaint
             {
-                Color = blend.WithAlpha(alpha),
                 IsAntialias = true,
+                Style = SKPaintStyle.Fill,
                 FilterQuality = SKFilterQuality.High
             };
+            _hoverBgPaint.Color = blend.WithAlpha(alpha);
             var rr = new SKRoundRect(bounds, 5);
-            c.DrawRoundRect(rr, bg);
+            c.DrawRoundRect(rr, _hoverBgPaint);
         }
 
         float tx = bounds.Left + 10;
@@ -201,13 +251,13 @@ public class MenuStrip : UIElementBase
         if (ShowIcons && item.Icon != null)
         {
             var iy = bounds.Top + (_itemHeight - _iconSize) / 2;
-            using var img = SKImage.FromBitmap(item.Icon.ToSKBitmap());
-            using var imgPaint = new SKPaint
+            _imgPaint ??= new SKPaint
             {
                 IsAntialias = true,
                 FilterQuality = SKFilterQuality.High
             };
-            c.DrawImage(img, new SKRect(bounds.Left + 8, iy, bounds.Left + 8 + _iconSize, iy + _iconSize), imgPaint);
+            var skBitmap = GetCachedIconBitmap(item.Icon);
+            c.DrawBitmap(skBitmap, new SKRect(bounds.Left + 8, iy, bounds.Left + 8 + _iconSize, iy + _iconSize), _imgPaint);
             tx += _iconSize + 6;
         }
 
@@ -217,21 +267,11 @@ public class MenuStrip : UIElementBase
         : (HoverBackColor.IsEmpty ? MenuForeColor : HoverBackColor.Determine());
     var textColor = hover ? hoverFore : MenuForeColor;
 
-        using (var font = new SKFont
-        {
-            Size = Font.Size.PtToPx(this),
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
-            Subpixel = true,
-            Edging = SKFontEdging.SubpixelAntialias
-        })
-        using (var paint = new SKPaint
-        {
-            Color = textColor.ToSKColor(),
-            IsAntialias = true
-        })
-        {
+        var font = GetDefaultSkFont();
+        _textPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _textPaint.Color = textColor.ToSKColor();
             var drawBounds = SKRect.Create(tx, bounds.Top, bounds.Right - tx, bounds.Height);
-            c.DrawControlText(item.Text, drawBounds, paint, font, ContentAlignment.MiddleLeft, false, true);
+            c.DrawControlText(item.Text, drawBounds, _textPaint, font, ContentAlignment.MiddleLeft, false, true);
 
             // Measure text width for arrow positioning
             var textBounds = new SKRect();
@@ -240,15 +280,15 @@ public class MenuStrip : UIElementBase
             // WinUI3 style chevron arrow with high quality
             if (ShowSubmenuArrow && item.HasDropDown)
             {
-                using var arrowPaint = new SKPaint
+                _arrowPaint ??= new SKPaint
                 {
-                    Color = textColor.ToSKColor(),
                     IsAntialias = true,
                     Style = SKPaintStyle.Stroke,
                     StrokeWidth = 1.2f,
                     StrokeCap = SKStrokeCap.Round,
                     StrokeJoin = SKStrokeJoin.Round
                 };
+                _arrowPaint.Color = textColor.ToSKColor();
 
                 float chevronSize = 5f;
                 float arrowX;
@@ -262,25 +302,26 @@ public class MenuStrip : UIElementBase
                     // Vertical: chevron at the right edge
                     arrowX = bounds.Right - 14;
                     
-                    using var chevronPath = new SKPath();
-                    chevronPath.MoveTo(arrowX - chevronSize, arrowY - chevronSize);
-                    chevronPath.LineTo(arrowX - chevronSize / 2, arrowY);
-                    chevronPath.LineTo(arrowX - chevronSize, arrowY + chevronSize);
-                    c.DrawPath(chevronPath, arrowPaint);
+                    _chevronPath ??= new SKPath();
+                    _chevronPath.Reset();
+                    _chevronPath.MoveTo(arrowX - chevronSize, arrowY - chevronSize);
+                    _chevronPath.LineTo(arrowX - chevronSize / 2, arrowY);
+                    _chevronPath.LineTo(arrowX - chevronSize, arrowY + chevronSize);
+                    c.DrawPath(_chevronPath, _arrowPaint);
                 }
                 else
                 {
                     // Horizontal: chevron after text
                     arrowX = tx + textBounds.Width + 10;
                     
-                    using var chevronPath = new SKPath();
-                    chevronPath.MoveTo(arrowX - chevronSize, arrowY - chevronSize / 2);
-                    chevronPath.LineTo(arrowX, arrowY + chevronSize / 2);
-                    chevronPath.LineTo(arrowX + chevronSize, arrowY - chevronSize / 2);
-                    c.DrawPath(chevronPath, arrowPaint);
+                    _chevronPath ??= new SKPath();
+                    _chevronPath.Reset();
+                    _chevronPath.MoveTo(arrowX - chevronSize, arrowY - chevronSize / 2);
+                    _chevronPath.LineTo(arrowX, arrowY + chevronSize / 2);
+                    _chevronPath.LineTo(arrowX + chevronSize, arrowY - chevronSize / 2);
+                    c.DrawPath(_chevronPath, _arrowPaint);
                 }
             }
-        }
     }
 
     private List<RectangleF> ComputeItemRects()
@@ -440,12 +481,8 @@ public class MenuStrip : UIElementBase
     protected float MeasureItemWidth(MenuItem item)
     {
         if (item is MenuItemSeparator) return 20f;
-        
-        using var font = new SKFont
-        {
-            Size = Font.Size.PtToPx(this),
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-        };
+
+        var font = GetDefaultSkFont();
         
         var tb = new SKRect();
         font.MeasureText(item.Text, out tb);
@@ -477,6 +514,19 @@ public class MenuStrip : UIElementBase
             _itemHoverAnims.Clear();
 
             _activeDropDown?.Dispose();
+
+            foreach (var kvp in _iconCache)
+                kvp.Value?.Dispose();
+            _iconCache.Clear();
+
+            _bgPaint?.Dispose();
+            _bottomBorderPaint?.Dispose();
+            _hoverBgPaint?.Dispose();
+            _imgPaint?.Dispose();
+            _textPaint?.Dispose();
+            _arrowPaint?.Dispose();
+            _chevronPath?.Dispose();
+            _defaultSkFont?.Dispose();
         }
 
         base.Dispose(disposing);

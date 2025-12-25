@@ -40,6 +40,24 @@ public class ComboBox : UIElementBase
         private bool _isClosing;
         private bool _openingUpwards;
 
+        private SKPaint? _layerPaint;
+        private SKPaint? _bgPaint;
+        private SKPaint? _highlightPaint;
+        private SKShader? _highlightShader;
+        private int _highlightShaderHeight;
+        private SKPaint? _borderPaint;
+        private SKPaint? _textPaint;
+        private SKPaint? _selectionPaint;
+        private SKPaint? _hoverPaint;
+        private SKPath? _clipPath;
+
+        private SKFont? _cachedFont;
+        private Font? _cachedFontSource;
+        private int _cachedFontDpi;
+
+        private readonly SKPaint?[] _shadowPaints = new SKPaint?[4];
+        private readonly SKMaskFilter?[] _shadowMaskFilters = new SKMaskFilter?[4];
+
         // Per-item hover animasyonlar�
         private readonly Dictionary<int, AnimationManager> _itemHoverAnims = new();
 
@@ -79,6 +97,60 @@ public class ComboBox : UIElementBase
                 if (_isClosing && p <= 0.001)
                     Hide();
             };
+        }
+
+        private SKFont GetCachedFont()
+        {
+            int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+            var font = _owner.Font;
+
+            if (_cachedFont == null || !ReferenceEquals(_cachedFontSource, font) || _cachedFontDpi != dpi)
+            {
+                _cachedFont?.Dispose();
+                _cachedFont = new SKFont
+                {
+                    Size = font.Size.PtToPx(this),
+                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface(font),
+                    Subpixel = true,
+                    Edging = SKFontEdging.SubpixelAntialias
+                };
+                _cachedFontSource = font;
+                _cachedFontDpi = dpi;
+            }
+
+            return _cachedFont;
+        }
+
+        private void EnsureHighlightShader(int height)
+        {
+            if (_highlightShader != null && _highlightShaderHeight == height)
+                return;
+
+            _highlightShader?.Dispose();
+            _highlightShader = SKShader.CreateLinearGradient(
+                new SKPoint(0, 0),
+                new SKPoint(0, height * 0.15f),
+                new[] { SKColors.White.WithAlpha(12), SKColors.Transparent },
+                null,
+                SKShaderTileMode.Clamp);
+            _highlightShaderHeight = height;
+        }
+
+        private void EnsureShadowResources()
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                if (_shadowPaints[i] != null)
+                    continue;
+
+                float blurRadius = 6 + i * 4;
+                _shadowMaskFilters[i] = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blurRadius);
+                _shadowPaints[i] = new SKPaint
+                {
+                    IsAntialias = true,
+                    MaskFilter = _shadowMaskFilters[i]
+                };
+            }
         }
 
         private int ItemHeight => Math.Max(32, _owner.ItemHeight);
@@ -237,9 +309,9 @@ public class ComboBox : UIElementBase
             float openProgress = (float)_openAnimation.GetProgress();
             if (!Visible) openProgress = 0;
 
-            using (var layerPaint = new SKPaint { Color = SKColors.White.WithAlpha((byte)(255 * openProgress)) })
-            {
-                canvas.SaveLayer(layerPaint);
+            _layerPaint ??= new SKPaint { IsAntialias = true };
+            _layerPaint.Color = SKColors.White.WithAlpha((byte)(255 * openProgress));
+            canvas.SaveLayer(_layerPaint);
                 
                 // Subtle fade-in animasyonu
                 float translateY = (_openingUpwards ? 1f - openProgress : openProgress - 1f) * 8f;
@@ -250,18 +322,14 @@ public class ComboBox : UIElementBase
                 
                 // Multi-layer modern shadow (ContextMenuStrip gibi)
                 canvas.Save();
+                EnsureShadowResources();
                 for (int i = 0; i < 4; i++)
                 {
                     float offsetY = 2 + i * 2;
-                    float blurRadius = 6 + i * 4;
                     byte shadowAlpha = (byte)((25 - i * 5) * openProgress);
 
-                    using var shadowPaint = new SKPaint
-                    {
-                        Color = SKColors.Black.WithAlpha(shadowAlpha),
-                        MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blurRadius),
-                        IsAntialias = true
-                    };
+                    var shadowPaint = _shadowPaints[i]!;
+                    shadowPaint.Color = SKColors.Black.WithAlpha(shadowAlpha);
 
                     canvas.Save();
                     canvas.Translate(0, offsetY);
@@ -272,72 +340,54 @@ public class ComboBox : UIElementBase
                 
                 // High-quality solid background
                 var surfaceColor = ColorScheme.BackColor.ToSKColor().InterpolateColor(SKColors.White, 0.06f);
-                using (var bgPaint = new SKPaint 
-                { 
-                    Color = surfaceColor,
-                    IsAntialias = true,
-                    FilterQuality = SKFilterQuality.High
-                })
+
+                _bgPaint ??= new SKPaint
                 {
-                    canvas.DrawRoundRect(mainRoundRect, bgPaint);
-                }
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Fill,
+                    FilterQuality = SKFilterQuality.High
+                };
+                _bgPaint.Color = surfaceColor;
+                canvas.DrawRoundRect(mainRoundRect, _bgPaint);
 
                 // Clip path
-                using (var clipPath = new SKPath())
-                {
-                    clipPath.AddRoundRect(mainRoundRect);
-                    canvas.Save();
-                    canvas.ClipPath(clipPath, antialias: true);
-                }
+
+                _clipPath ??= new SKPath();
+                _clipPath.Reset();
+                _clipPath.AddRoundRect(mainRoundRect);
+                canvas.Save();
+                canvas.ClipPath(_clipPath, antialias: true);
 
                 // Minimal �st highlight
-                using (var highlightPaint = new SKPaint
-                {
-                    Shader = SKShader.CreateLinearGradient(
-                        new SKPoint(0, 0), 
-                        new SKPoint(0, Height * 0.15f),
-                        new[] 
-                        { 
-                            SKColors.White.WithAlpha(12), 
-                            SKColors.Transparent 
-                        },
-                        null,
-                        SKShaderTileMode.Clamp),
-                    IsAntialias = true
-                })
-                {
-                    canvas.DrawRect(mainRect, highlightPaint);
-                }
+
+                EnsureHighlightShader(Height);
+                _highlightPaint ??= new SKPaint { IsAntialias = true };
+                _highlightPaint.Shader = _highlightShader;
+                canvas.DrawRect(mainRect, _highlightPaint);
 
                 // High-quality border
-                using (var borderPaint = new SKPaint 
-                { 
-                    Color = ColorScheme.BorderColor.Alpha(100).ToSKColor(),
-                    IsAntialias = true, 
-                    Style = SKPaintStyle.Stroke, 
-                    StrokeWidth = 1f,
-                    FilterQuality = SKFilterQuality.High
-                })
-                {
-                    var borderRect = new SKRoundRect(
-                        new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 
-                        CORNER_RADIUS - 0.5f);
-                    canvas.DrawRoundRect(borderRect, borderPaint);
-                }
 
-                // High-quality text paint
-                using var font = new SKFont
-                {
-                    Size = _owner.Font.Size.PtToPx(this),
-                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface(_owner.Font),
-                    Subpixel = true,
-                    Edging = SKFontEdging.SubpixelAntialias
-                };
-
-                using var textPaint = new SKPaint
+                _borderPaint ??= new SKPaint
                 {
                     IsAntialias = true,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 1f,
                     FilterQuality = SKFilterQuality.High
+                };
+                _borderPaint.Color = ColorScheme.BorderColor.Alpha(100).ToSKColor();
+                var borderRect = new SKRoundRect(
+                    new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f),
+                    CORNER_RADIUS - 0.5f);
+                canvas.DrawRoundRect(borderRect, _borderPaint);
+
+                // High-quality text paint
+
+                var font = GetCachedFont();
+                _textPaint ??= new SKPaint
+                {
+                    IsAntialias = true,
+                    FilterQuality = SKFilterQuality.High,
+                    Style = SKPaintStyle.Fill
                 };
 
                 float contentRightInset = (_scrollBar.Visible ? SCROLL_BAR_WIDTH + 6 : 0);
@@ -365,44 +415,75 @@ public class ComboBox : UIElementBase
                     // High-quality selection background
                     if (isSelected)
                     {
-                        using var selPaint = new SKPaint
+                        _selectionPaint ??= new SKPaint
                         {
-                            Color = ColorScheme.AccentColor.Alpha(70).ToSKColor(),
                             IsAntialias = true,
-                            FilterQuality = SKFilterQuality.High
+                            FilterQuality = SKFilterQuality.High,
+                            Style = SKPaintStyle.Fill
                         };
+                        _selectionPaint.Color = ColorScheme.AccentColor.Alpha(70).ToSKColor();
                         var selRect = new SKRoundRect(itemRect, itemRadius);
-                        canvas.DrawRoundRect(selRect, selPaint);
+                        canvas.DrawRoundRect(selRect, _selectionPaint);
                     }
                     // High-quality hover effect
                     else if (hProg > 0.001f)
                     {
                         byte hoverAlpha = (byte)(30 + 45 * hProg);
-                        using var hoverPaint = new SKPaint 
-                        { 
-                            Color = ColorScheme.AccentColor.Alpha(hoverAlpha).ToSKColor(),
+                        _hoverPaint ??= new SKPaint
+                        {
                             IsAntialias = true,
-                            FilterQuality = SKFilterQuality.High
+                            FilterQuality = SKFilterQuality.High,
+                            Style = SKPaintStyle.Fill
                         };
+                        _hoverPaint.Color = ColorScheme.AccentColor.Alpha(hoverAlpha).ToSKColor();
                         var hoverRect = new SKRoundRect(itemRect, itemRadius);
-                        canvas.DrawRoundRect(hoverRect, hoverPaint);
+                        canvas.DrawRoundRect(hoverRect, _hoverPaint);
                     }
 
                     // High-quality text rendering
                     string text = _owner.GetItemText(_owner.Items[i]);
-                    textPaint.Color = ColorScheme.ForeColor.ToSKColor();
+                    _textPaint.Color = ColorScheme.ForeColor.ToSKColor();
 
                     float baseTextY = currentY + ItemHeight / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                     float textX = ITEM_MARGIN + 8;
                     
-                    TextRenderingHelper.DrawText(canvas, text, textX, baseTextY, font, textPaint);
+                    TextRenderingHelper.DrawText(canvas, text, textX, baseTextY, font, _textPaint);
 
                     currentY += ItemHeight;
                 }
 
                 canvas.Restore(); // clipPath restore
                 canvas.Restore(); // layerPaint restore
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _cachedFont?.Dispose();
+                _cachedFont = null;
+                _cachedFontSource = null;
+
+                _layerPaint?.Dispose();
+                _bgPaint?.Dispose();
+                _highlightPaint?.Dispose();
+                _highlightShader?.Dispose();
+                _borderPaint?.Dispose();
+                _textPaint?.Dispose();
+                _selectionPaint?.Dispose();
+                _hoverPaint?.Dispose();
+                _clipPath?.Dispose();
+
+                for (int i = 0; i < _shadowPaints.Length; i++)
+                {
+                    _shadowPaints[i]?.Dispose();
+                    _shadowPaints[i] = null;
+                    _shadowMaskFilters[i]?.Dispose();
+                    _shadowMaskFilters[i] = null;
+                }
             }
+
+            base.Dispose(disposing);
         }
     }
 
@@ -725,6 +806,23 @@ public class ComboBox : UIElementBase
     private KeyEventHandler _windowKeyDownHandler;
     private bool _handlersAttached;
     private bool _ignoreNextClick;
+
+    private SKPaint? _paintShadow;
+    private SKMaskFilter? _shadowMaskFilter;
+    private float _shadowMaskBlur;
+    private SKPaint? _paintBase;
+    private SKPaint? _paintGlow;
+    private SKPaint? _paintHighlight;
+    private SKShader? _highlightShader;
+    private int _highlightShaderHeight;
+    private SKPaint? _paintBorder;
+    private SKPaint? _paintText;
+    private SKPaint? _paintChevronBg;
+    private SKPaint? _paintChevronStroke;
+    private SKPath? _chevronPath;
+    private SKFont? _defaultSkFont;
+    private Font? _defaultSkFontSource;
+    private int _defaultSkFontDpi;
 
     #endregion
 
@@ -1102,6 +1200,49 @@ public class ComboBox : UIElementBase
 
     #region Rendering
 
+    private SKFont GetDefaultSkFont()
+    {
+        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+        if (_defaultSkFont == null || !ReferenceEquals(_defaultSkFontSource, Font) || _defaultSkFontDpi != dpi)
+        {
+            _defaultSkFont?.Dispose();
+            _defaultSkFont = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Subpixel = true
+            };
+            _defaultSkFontSource = Font;
+            _defaultSkFontDpi = dpi;
+        }
+        return _defaultSkFont;
+    }
+
+    private void EnsureHighlightShader(int height)
+    {
+        if (_highlightShader != null && _highlightShaderHeight == height)
+            return;
+
+        _highlightShader?.Dispose();
+        _highlightShader = SKShader.CreateLinearGradient(
+            new SKPoint(0, 0),
+            new SKPoint(0, height * 0.4f),
+            new[] { SKColors.White.WithAlpha(10), SKColors.Transparent },
+            null,
+            SKShaderTileMode.Clamp);
+        _highlightShaderHeight = height;
+    }
+
+    private void EnsureShadowMaskFilter(float blur)
+    {
+        if (_shadowMaskFilter != null && Math.Abs(_shadowMaskBlur - blur) < 0.001f)
+            return;
+
+        _shadowMaskFilter?.Dispose();
+        _shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur);
+        _shadowMaskBlur = blur;
+    }
+
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
@@ -1121,97 +1262,61 @@ public class ComboBox : UIElementBase
         if (ShadowDepth > 0)
         {
             float shadowAlpha = 12 + (hoverProgress * 8) + (pressProgress * 5);
-            using (var shadowPaint = new SKPaint
-            {
-                Color = SKColors.Black.WithAlpha((byte)shadowAlpha),
-                MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, ShadowDepth * 0.5f),
-                IsAntialias = true
-            })
-            {
-                canvas.Save();
-                canvas.Translate(0, ShadowDepth * 0.3f);
-                canvas.DrawRoundRect(rect, _radius, _radius, shadowPaint);
-                canvas.Restore();
-            }
+            _paintShadow ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+            EnsureShadowMaskFilter(ShadowDepth * 0.5f);
+            _paintShadow.MaskFilter = _shadowMaskFilter;
+            _paintShadow.Color = SKColors.Black.WithAlpha((byte)shadowAlpha);
+            canvas.Save();
+            canvas.Translate(0, ShadowDepth * 0.3f);
+            canvas.DrawRoundRect(rect, _radius, _radius, _paintShadow);
+            canvas.Restore();
         }
 
         // Base arka plan
-        using (var basePaint = new SKPaint
-        {
-            Color = backgroundColor,
-            IsAntialias = true
-        })
-        {
-            canvas.DrawRoundRect(rect, _radius, _radius, basePaint);
-        }
+        _paintBase ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _paintBase.Color = backgroundColor;
+        canvas.DrawRoundRect(rect, _radius, _radius, _paintBase);
 
         // Hover/press glow overlay
         if (hoverProgress > 0 || pressProgress > 0)
         {
             byte glowAlpha = (byte)((hoverProgress * 15 + pressProgress * 10));
-            using var glowPaint = new SKPaint
-            {
-                Color = accentColor.WithAlpha(glowAlpha),
-                IsAntialias = true
-            };
-            canvas.DrawRoundRect(rect, _radius, _radius, glowPaint);
+            _paintGlow ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+            _paintGlow.Color = accentColor.WithAlpha(glowAlpha);
+            canvas.DrawRoundRect(rect, _radius, _radius, _paintGlow);
         }
 
         // �stte ince ayd�nl�k highlight (acrylic effect)
-        using (var highlightPaint = new SKPaint
-        {
-            Shader = SKShader.CreateLinearGradient(
-                new SKPoint(0, 0),
-                new SKPoint(0, Height * 0.4f),
-                new[]
-                {
-                    SKColors.White.WithAlpha(10),
-                    SKColors.Transparent
-                },
-                null,
-                SKShaderTileMode.Clamp),
-            IsAntialias = true
-        })
-        {
-            canvas.DrawRoundRect(rect, _radius, _radius, highlightPaint);
-        }
+        EnsureHighlightShader(Height);
+        _paintHighlight ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _paintHighlight.Shader = _highlightShader;
+        canvas.DrawRoundRect(rect, _radius, _radius, _paintHighlight);
 
         // Modern kenarl�k (ince ve zarif)
         float borderAlpha = 0.4f + (hoverProgress * 0.2f) + (pressProgress * 0.1f);
-        using (var borderPaint = new SKPaint
-        {
-            Color = ColorScheme.BorderColor.ToSKColor().InterpolateColor(accentColor, blendFactor * 0.4f).ToColor().Alpha((byte)(255 * borderAlpha)).ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1f
-        })
-        {
-            rect.Inflate(-0.5f, -0.5f);
-            canvas.DrawRoundRect(rect, _radius - 0.5f, _radius - 0.5f, borderPaint);
-        }
+        _paintBorder ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
+        _paintBorder.Color = ColorScheme.BorderColor.ToSKColor()
+            .InterpolateColor(accentColor, blendFactor * 0.4f)
+            .ToColor()
+            .Alpha((byte)(255 * borderAlpha))
+            .ToSKColor();
+        var borderRect = rect;
+        borderRect.Inflate(-0.5f, -0.5f);
+        canvas.DrawRoundRect(borderRect, _radius - 0.5f, _radius - 0.5f, _paintBorder);
         
         var textColor = ColorScheme.ForeColor.ToSKColor();
         var displayText = Text;
 
-        using var font = new SKFont
-        {
-            Size = Font.Size.PtToPx(this),
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
-            Subpixel = true
-        };
-
-        using var textPaint = new SKPaint
-        {
-            Color = textColor,
-            IsAntialias = true
-        };
+        var font = GetDefaultSkFont();
+        _paintText ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _paintText.Color = textColor;
 
         var textBounds = new SKRect();
         font.MeasureText(displayText, out textBounds);
         float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
         float textX = 16;
 
-        TextRenderingHelper.DrawText(canvas, displayText, textX, textY, font, textPaint);
+        TextRenderingHelper.DrawText(canvas, displayText, textX, textY, font, _paintText);
 
         // Modern Chevron ikonu - DropDown ve DropDownList stillerinde g�ster
         if (DropDownStyle != ComboBoxStyle.Simple)
@@ -1232,12 +1337,9 @@ public class ComboBox : UIElementBase
             if (hoverProgress > 0.05f)
             {
                 float circleRadius = 13f * (float)Math.Clamp(hoverProgress, 0, 1);
-                using var bgPaint = new SKPaint
-                {
-                    Color = accentColor.WithAlpha((byte)(hoverProgress * 18)),
-                    IsAntialias = true
-                };
-                canvas.DrawCircle(chevronX, chevronY, circleRadius, bgPaint);
+                _paintChevronBg ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+                _paintChevronBg.Color = accentColor.WithAlpha((byte)(hoverProgress * 18));
+                canvas.DrawCircle(chevronX, chevronY, circleRadius, _paintChevronBg);
             }
 
             // Rotasyon i�in canvas'� kaydet
@@ -1246,23 +1348,23 @@ public class ComboBox : UIElementBase
             canvas.RotateDegrees(rotation);
 
             // Modern chevron (V �ekli) - ince ve zarif
-            using (var chevronPaint = new SKPaint
+            _paintChevronStroke ??= new SKPaint
             {
-                Color = chevronColor,
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = 1.5f,
                 StrokeCap = SKStrokeCap.Round,
                 StrokeJoin = SKStrokeJoin.Round
-            })
-            {
-                float halfSize = chevronSize * 0.45f;
-                using var chevronPath = new SKPath();
-                chevronPath.MoveTo(-halfSize, -halfSize * 0.5f);
-                chevronPath.LineTo(0, halfSize * 0.5f);
-                chevronPath.LineTo(halfSize, -halfSize * 0.5f);
-                canvas.DrawPath(chevronPath, chevronPaint);
-            }
+            };
+            _paintChevronStroke.Color = chevronColor;
+
+            _chevronPath ??= new SKPath();
+            _chevronPath.Reset();
+            float halfSize = chevronSize * 0.45f;
+            _chevronPath.MoveTo(-halfSize, -halfSize * 0.5f);
+            _chevronPath.LineTo(0, halfSize * 0.5f);
+            _chevronPath.LineTo(halfSize, -halfSize * 0.5f);
+            canvas.DrawPath(_chevronPath, _paintChevronStroke);
 
             canvas.Restore();
         }
@@ -1289,6 +1391,34 @@ public class ComboBox : UIElementBase
         {
             DetachWindowHandlers();
             _dropDownPanel?.Dispose();
+
+            _defaultSkFont?.Dispose();
+            _defaultSkFont = null;
+            _defaultSkFontSource = null;
+
+            _paintShadow?.Dispose();
+            _paintShadow = null;
+            _shadowMaskFilter?.Dispose();
+            _shadowMaskFilter = null;
+
+            _paintBase?.Dispose();
+            _paintBase = null;
+            _paintGlow?.Dispose();
+            _paintGlow = null;
+            _paintHighlight?.Dispose();
+            _paintHighlight = null;
+            _highlightShader?.Dispose();
+            _highlightShader = null;
+            _paintBorder?.Dispose();
+            _paintBorder = null;
+            _paintText?.Dispose();
+            _paintText = null;
+            _paintChevronBg?.Dispose();
+            _paintChevronBg = null;
+            _paintChevronStroke?.Dispose();
+            _paintChevronStroke = null;
+            _chevronPath?.Dispose();
+            _chevronPath = null;
         }
         base.Dispose(disposing);
     }

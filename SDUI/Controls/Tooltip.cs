@@ -33,6 +33,19 @@ namespace SDUI.Controls
         private int _maxWidth = 300;
         private int _padding = 8;
 
+        // Cached Skia resources (avoid per-frame allocations)
+        private SKFont? _defaultSkFont;
+        private Font? _defaultSkFontSource;
+        private int _defaultSkFontDpi;
+
+        private SKPaint? _shadowPaint;
+        private SKPaint? _bgPaint;
+        private SKPaint? _borderPaint;
+        private SKPaint? _textPaint;
+
+        private SKImageFilter? _shadowImageFilter;
+        private int _shadowImageFilterBlur;
+
         [DefaultValue("")]
         public string Text
         {
@@ -443,11 +456,7 @@ namespace SDUI.Controls
                 return;
             }
 
-            using var font = new SKFont
-            {
-                Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            };
+            var font = GetDefaultSkFont();
 
             float maxContentWidth = Math.Max(1, _maxWidth - (_padding * 2));
             var (lines, maxLineWidth) = WrapTextIntoLines(Text, font, maxContentWidth);
@@ -469,81 +478,92 @@ namespace SDUI.Controls
             var canvas = e.Surface.Canvas;
             canvas.Clear(SKColors.Transparent);
 
+            EnsureSkiaCaches();
+
             // Gölge çizimi
             if (_shadowOpacity > 0)
             {
-                using (var paint = new SKPaint
-                {
-                    Color = SKColors.Black.WithAlpha((byte)(_shadowOpacity * 255)),
-                    ImageFilter = SKImageFilter.CreateBlur(_shadowBlur, _shadowBlur),
-                    IsAntialias = true
-                })
-                {
-                    var shadowRect = IsBalloon ?
-                        new SKRoundRect(new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur), _cornerRadius) :
-                        new SKRoundRect(new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur), 0);
+                EnsureShadowFilter();
+                _shadowPaint!.Color = SKColors.Black.WithAlpha((byte)(_shadowOpacity * 255));
+                _shadowPaint.ImageFilter = _shadowImageFilter;
 
-                    canvas.DrawRoundRect(shadowRect, paint);
-                }
+                var shadowRect = IsBalloon ?
+                    new SKRoundRect(new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur), _cornerRadius) :
+                    new SKRoundRect(new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur), 0);
+
+                canvas.DrawRoundRect(shadowRect, _shadowPaint);
             }
 
             // Arkaplan çizimi
-            using (var paint = new SKPaint
-            {
-                Color = new SKColor((byte)(BackColor.R), (byte)(BackColor.G), (byte)(BackColor.B), (byte)(BackColor.A)),
-                IsAntialias = true
-            })
-            {
-                var rect = IsBalloon ?
-                    new SKRoundRect(new SKRect(0, 0, Width, Height), _cornerRadius) :
-                    new SKRoundRect(new SKRect(0, 0, Width, Height), 0);
+            _bgPaint!.Color = BackColor.ToSKColor();
+            var rect = IsBalloon ?
+                new SKRoundRect(new SKRect(0, 0, Width, Height), _cornerRadius) :
+                new SKRoundRect(new SKRect(0, 0, Width, Height), 0);
 
-                canvas.DrawRoundRect(rect, paint);
-            }
+            canvas.DrawRoundRect(rect, _bgPaint);
 
             // Kenarlık çizimi
-            using (var paint = new SKPaint
-            {
-                Color = new SKColor((byte)(_borderColor.R), (byte)(_borderColor.G), (byte)(_borderColor.B), (byte)(_borderColor.A)),
-                IsAntialias = true,
-                IsStroke = true,
-                StrokeWidth = 1
-            })
-            {
-                var rect = IsBalloon ?
-                    new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), _cornerRadius) :
-                    new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 0);
+            _borderPaint!.Color = _borderColor.ToSKColor();
+            var borderRect = IsBalloon ?
+                new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), _cornerRadius) :
+                new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 0);
 
-                canvas.DrawRoundRect(rect, paint);
-            }
+            canvas.DrawRoundRect(borderRect, _borderPaint);
 
             // Metin çizimi
             if (!string.IsNullOrEmpty(Text))
             {
-                using (var font = new SKFont
-                {
-                    Size = Font.Size.PtToPx(this),
-                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-                })
-                using (var paint = new SKPaint
-                {
-                    Color = new SKColor((byte)(ForeColor.R), (byte)(ForeColor.G), (byte)(ForeColor.B), (byte)(ForeColor.A)),
-                    IsAntialias = true
-                })
-                {
-                    var metrics = font.Metrics;
-                    float lineHeight = metrics.Descent - metrics.Ascent;
-                    var (lines, _) = WrapTextIntoLines(Text, font, Math.Max(1, Width - (_padding * 2)));
-                    float x = _padding;
-                    float y = _padding - metrics.Ascent;
+                var font = GetDefaultSkFont();
+                _textPaint!.Color = ForeColor.ToSKColor();
 
-                    foreach (var line in lines)
-                    {
-                        TextRenderingHelper.DrawText(canvas, line, x, y, font, paint);
-                        y += lineHeight;
-                    }
+                var metrics = font.Metrics;
+                float lineHeight = metrics.Descent - metrics.Ascent;
+                var (lines, _) = WrapTextIntoLines(Text, font, Math.Max(1, Width - (_padding * 2)));
+                float x = _padding;
+                float y = _padding - metrics.Ascent;
+
+                foreach (var line in lines)
+                {
+                    TextRenderingHelper.DrawText(canvas, line, x, y, font, _textPaint);
+                    y += lineHeight;
                 }
             }
+        }
+
+        private void EnsureSkiaCaches()
+        {
+            _shadowPaint ??= new SKPaint { IsAntialias = true };
+            _bgPaint ??= new SKPaint { IsAntialias = true };
+            _borderPaint ??= new SKPaint { IsAntialias = true, IsStroke = true, StrokeWidth = 1 };
+            _textPaint ??= new SKPaint { IsAntialias = true };
+        }
+
+        private void EnsureShadowFilter()
+        {
+            if (_shadowImageFilter != null && _shadowImageFilterBlur == _shadowBlur)
+                return;
+
+            _shadowImageFilter?.Dispose();
+            _shadowImageFilter = SKImageFilter.CreateBlur(_shadowBlur, _shadowBlur);
+            _shadowImageFilterBlur = _shadowBlur;
+        }
+
+        private SKFont GetDefaultSkFont()
+        {
+            int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+            if (_defaultSkFont == null || !ReferenceEquals(_defaultSkFontSource, Font) || _defaultSkFontDpi != dpi)
+            {
+                _defaultSkFont?.Dispose();
+                _defaultSkFont = new SKFont
+                {
+                    Size = Font.Size.PtToPx(this),
+                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                    Subpixel = true
+                };
+                _defaultSkFontSource = Font;
+                _defaultSkFontDpi = dpi;
+            }
+            return _defaultSkFont;
         }
 
         protected override void Dispose(bool disposing)
@@ -577,6 +597,21 @@ namespace SDUI.Controls
                     _hideTimer.Dispose();
                     _hideTimer = null;
                 }
+
+                _defaultSkFont?.Dispose();
+                _defaultSkFont = null;
+
+                _shadowPaint?.Dispose();
+                _shadowPaint = null;
+                _bgPaint?.Dispose();
+                _bgPaint = null;
+                _borderPaint?.Dispose();
+                _borderPaint = null;
+                _textPaint?.Dispose();
+                _textPaint = null;
+
+                _shadowImageFilter?.Dispose();
+                _shadowImageFilter = null;
             }
             base.Dispose(disposing);
         }

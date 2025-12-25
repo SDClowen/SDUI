@@ -127,12 +127,13 @@ namespace SDUI.Controls
                 try
                 {
                     shadowPaint.Color = SKColors.Black.WithAlpha(30);
-                    shadowPaint.ImageFilter = SKImageFilter.CreateDropShadow(
+                    using var shadowFilter = SKImageFilter.CreateDropShadow(
                         _shadowDepth,
                         _shadowDepth,
                         3,
                         3,
                         SKColors.Black.WithAlpha(30));
+                    shadowPaint.ImageFilter = shadowFilter;
                     shadowPaint.IsAntialias = true;
 
                     if (_radius > 0)

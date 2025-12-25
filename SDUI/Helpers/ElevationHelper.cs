@@ -22,11 +22,12 @@ public static class ElevationHelper
         var shadowColor = ColorScheme.Shadow.Alpha(ColorScheme.IsDarkMode ? 40 : 15);
 
         // Draw shadow
+        using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur / 2))
         using (var shadowPaint = new SKPaint
         {
             IsAntialias = true,
             Color = shadowColor.ToSKColor(),
-            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur / 2)
+            MaskFilter = shadowMaskFilter
         })
         {
             var shadowBounds = new SKRect(

@@ -11,6 +11,7 @@ namespace SDUI.Controls
     public class PictureBox2 : UIElementBase
     {
         private Image _image;
+        private bool _ownsImage;
         private PictureBoxSizeMode _sizeMode;
         private bool _waitOnLoad;
         private SKBitmap _skBitmap;
@@ -36,6 +37,13 @@ namespace SDUI.Controls
             set
             {
                 if (_image == value) return;
+
+                if (_ownsImage)
+                {
+                    _image?.Dispose();
+                }
+
+                _ownsImage = false;
                 _image = value;
                 LoadBitmap();
                 OnImageChanged(EventArgs.Empty);
@@ -101,6 +109,13 @@ namespace SDUI.Controls
             try
             {
                 using var stream = new FileStream(_imageLocation, FileMode.Open, FileAccess.Read);
+
+                if (_ownsImage)
+                {
+                    _image?.Dispose();
+                }
+                _ownsImage = true;
+
                 _image = Image.FromStream(stream);
                 LoadBitmap();
                 LoadCompleted?.Invoke(this, EventArgs.Empty);
@@ -114,9 +129,11 @@ namespace SDUI.Controls
 
         private void LoadBitmap()
         {
+            _skBitmap?.Dispose();
+            _skBitmap = null;
+
             if (_image == null)
             {
-                _skBitmap = null;
                 return;
             }
 
@@ -212,7 +229,7 @@ namespace SDUI.Controls
                 IsAntialias = true
             };
 
-            // Basit bir X iþareti çiz
+            // Basit bir X iï¿½areti ï¿½iz
             canvas.DrawLine(0, 0, Width, Height, paint);
             canvas.DrawLine(Width, 0, 0, Height, paint);
         }

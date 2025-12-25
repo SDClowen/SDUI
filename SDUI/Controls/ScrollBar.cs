@@ -408,10 +408,11 @@ namespace SDUI.Controls
 
             if (_useThumbShadow && visibility > 0f)
             {
+                using var shadowFilter = SKImageFilter.CreateDropShadow(0, 0, 2, 2, SKColors.Black.WithAlpha((byte)(70 * visibility)));
                 using var shadowPaint = new SKPaint
                 {
                     Color = SKColors.Black.WithAlpha((byte)(30 * visibility)),
-                    ImageFilter = SKImageFilter.CreateDropShadow(0, 0, 2, 2, SKColors.Black.WithAlpha((byte)(70 * visibility))),
+                    ImageFilter = shadowFilter,
                     IsAntialias = true
                 };
                 var r = new SKRect(_thumbRect.X, _thumbRect.Y, _thumbRect.Right, _thumbRect.Bottom);

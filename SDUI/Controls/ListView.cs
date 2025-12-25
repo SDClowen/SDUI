@@ -93,6 +93,20 @@ public class ListView : UIElementBase
     private readonly Dictionary<ListViewGroup, Animation.AnimationManager> _groupAnimations = new();
     private readonly HashSet<ListViewGroup> _pendingCollapse = new(); // OUT animasyonu bitince gerçekten collapse edilecekler
 
+    // Skia hot-path caches (avoid per-frame allocations)
+    private SKPaint? _paintFill;
+    private SKPaint? _paintGrid;
+    private SKPaint? _paintText;
+    private SKPaint? _paintHeaderBack;
+    private SKPaint? _paintScrollBar;
+    private SKPaint? _paintChevron;
+    private SKPaint? _paintTextCompat;
+    private SKPath? _chevronPath;
+
+    private SKFont? _defaultSkFont;
+    private Font? _defaultSkFontSource;
+    private int _defaultSkFontDpi;
+
     public ListView()
     {
         _elasticTimer = new(ElasticInterval);
@@ -137,7 +151,7 @@ public class ListView : UIElementBase
         bool needsRefresh = false;
 
         // Horizontal elastic (Shift for horizontal scroll)
-        int totalColumnsWidth = Columns.Sum(c => c.Width);
+        int totalColumnsWidth = GetTotalColumnsWidth();
         float hMax = Math.Max(0, totalColumnsWidth - Width);
 
         if ((ModifierKeys & Keys.Shift) == Keys.Shift)
@@ -188,6 +202,13 @@ public class ListView : UIElementBase
 
     // Effective row height based on current font (keeps 9pt readable and scaled)
     private int RowHeight => Math.Max(24, (int)Math.Ceiling(GetSkTextSize(Font) + 12));
+    private int GetTotalColumnsWidth()
+    {
+        int total = 0;
+        for (int i = 0; i < Columns.Count; i++)
+            total += Columns[i].Width;
+        return total;
+    }
 
     private float GetSkTextSize(Font font)
     {
@@ -215,14 +236,54 @@ public class ListView : UIElementBase
         return f;
     }
 
-    private static void DrawTextCompat(SKCanvas canvas, string text, float x, float y, SKFont font, SKPaint colorSource)
+    private SKFont GetDefaultSkFont()
     {
-        using var p = new SKPaint
+        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+        if (_defaultSkFont == null || !ReferenceEquals(_defaultSkFontSource, Font) || _defaultSkFontDpi != dpi)
+        {
+            _defaultSkFont?.Dispose();
+            _defaultSkFont = CreateFont(Font);
+            _defaultSkFontSource = Font;
+            _defaultSkFontDpi = dpi;
+        }
+        return _defaultSkFont;
+    }
+
+    private SKPaint GetFillPaint()
+        => _paintFill ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+
+    private SKPaint GetHeaderBackPaint()
+        => _paintHeaderBack ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+
+    private SKPaint GetGridPaint()
+        => _paintGrid ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 0.5f };
+
+    private SKPaint GetTextPaint()
+        => _paintText ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+
+    private SKPaint GetScrollBarPaint()
+        => _paintScrollBar ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.StrokeAndFill };
+
+    private SKPaint GetChevronPaint()
+        => _paintChevron ??= new SKPaint
         {
             IsAntialias = true,
-            Color = colorSource.Color,
-            Style = SKPaintStyle.Fill
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 1.75f,
+            StrokeCap = SKStrokeCap.Round,
+            StrokeJoin = SKStrokeJoin.Round
         };
+
+    private SKPath GetChevronPath()
+        => _chevronPath ??= new SKPath();
+
+    private SKPaint GetTextCompatPaint()
+        => _paintTextCompat ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+
+    private void DrawTextCompat(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color)
+    {
+        var p = GetTextCompatPaint();
+        p.Color = color;
         TextRenderingHelper.DrawText(canvas, text, x, y, SKTextAlign.Left, font, p);
     }
 
@@ -230,28 +291,16 @@ public class ListView : UIElementBase
     private void DrawColumns(SKCanvas canvas)
     {
         // Always fill full header width
-        using var headerBack = new SKPaint
-        {
-            IsAntialias = true,
-            Color = ColorScheme.SurfaceContainerHigh.ToSKColor(),
-            Style = SKPaintStyle.Fill
-        };
+        var headerBack = GetHeaderBackPaint();
+        headerBack.Color = ColorScheme.SurfaceContainerHigh.ToSKColor();
         canvas.DrawRect(new SKRect(0, 0, Width, 30), headerBack);
 
-        using var gridPaint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = ColorScheme.OutlineVariant.ToSKColor(),
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = .5f
-        };
-        using var headerFont = CreateFont(Font);
-        using var textPaint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = ColorScheme.OnSurface.ToSKColor(),
-            Style = SKPaintStyle.Fill
-        };
+        var gridPaint = GetGridPaint();
+        gridPaint.Color = ColorScheme.OutlineVariant.ToSKColor();
+        gridPaint.StrokeWidth = 0.5f;
+        var headerFont = GetDefaultSkFont();
+        var textPaint = GetTextPaint();
+        textPaint.Color = ColorScheme.OnSurface.ToSKColor();
 
         // horizontal culling for columns
         int colIndex = 0;
@@ -266,7 +315,7 @@ public class ListView : UIElementBase
             var column = Columns[colIndex];
             var fm = headerFont.Metrics;
             float textY = 15f - (fm.Ascent + fm.Descent) / 2f;
-            DrawTextCompat(canvas, column.Text ?? string.Empty, colX + 5, textY, headerFont, textPaint);
+            DrawTextCompat(canvas, column.Text ?? string.Empty, colX + 5, textY, headerFont, textPaint.Color);
             colX += column.Width;
             canvas.DrawLine(colX, 0, colX, Height, gridPaint);
         }
@@ -323,13 +372,9 @@ public class ListView : UIElementBase
     private void DrawStickyGroupHeaders(SKCanvas canvas)
     {
         const float HEADER_HEIGHT = 30f;
-        using var font = CreateFont(Font);
-        using var textPaint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = ColorScheme.OnSurface.ToSKColor(),
-            Style = SKPaintStyle.Fill
-        };
+        var font = GetDefaultSkFont();
+        var textPaint = GetTextPaint();
+        textPaint.Color = ColorScheme.OnSurface.ToSKColor();
 
         // Header arka planını her zaman tam genişlikte çiz, scrollbar sağda üstüne binsin.
         int contentHeightAll = GetContentHeight();
@@ -370,36 +415,23 @@ public class ListView : UIElementBase
             float headerY = y; if (group == sticky) headerY = stickyY;
             if (headerY >= HEADER_HEIGHT && headerY <= Height)
             {
-                using var bg = new SKPaint
-                {
-                    IsAntialias = true,
-                    Color = ColorScheme.SurfaceContainer.ToSKColor(),
-                    Style = SKPaintStyle.Fill
-                };
+                var bg = GetFillPaint();
+                bg.Color = ColorScheme.SurfaceContainer.ToSKColor();
                 canvas.DrawRect(0, headerY, Width, RowHeight, bg);
-                using var border = new SKPaint
-                {
-                    IsAntialias = true,
-                    Color = ColorScheme.OutlineVariant.ToSKColor(),
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = group == sticky ? 1.5f : 1f
-                };
+
+                var border = GetGridPaint();
+                border.Color = ColorScheme.OutlineVariant.ToSKColor();
+                border.StrokeWidth = group == sticky ? 1.5f : 1f;
                 canvas.DrawLine(0, headerY + RowHeight, Width, headerY + RowHeight, border);
 
                 // Chevron: collapsed => sağ ok (>), expanded => aşağı V
                 // Temel path: aşağı bakan V. Collapsed iken -90° döndürülür (sağa bakar).
                 float cX = 12f; float cY = headerY + RowHeight / 2f; float s = 4.5f;
                 float rotation = (float)((1.0 - prog) * -90.0f); // prog=1 -> 0° (down V), prog=0 -> -90° (right arrow)
-                using var chevPaint = new SKPaint
-                {
-                    IsAntialias = true,
-                    Color = ColorScheme.OnSurfaceVariant.ToSKColor(),
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = 1.75f,
-                    StrokeCap = SKStrokeCap.Round,
-                    StrokeJoin = SKStrokeJoin.Round
-                };
-                using var path = new SKPath();
+                var chevPaint = GetChevronPaint();
+                chevPaint.Color = ColorScheme.OnSurfaceVariant.ToSKColor();
+                var path = GetChevronPath();
+                path.Reset();
                 // Aşağı bakan V
                 path.MoveTo(cX - s, cY - s * 0.5f);
                 path.LineTo(cX, cY + s * 0.7f);
@@ -415,7 +447,7 @@ public class ListView : UIElementBase
                 var fm = font.Metrics;
                 float textHeight = fm.Descent - fm.Ascent;
                 float baseline = headerY + (RowHeight - textHeight) / 2f - fm.Ascent;
-                DrawTextCompat(canvas, group.Header ?? string.Empty, 25, baseline, font, textPaint);
+                DrawTextCompat(canvas, group.Header ?? string.Empty, 25, baseline, font, textPaint.Color);
             }
             y += RowHeight + contentH; if (y > Height) break;
         }
@@ -423,21 +455,24 @@ public class ListView : UIElementBase
 
     private void DrawRow(SKCanvas canvas, ListViewItem row, float y, bool isGroupItem = false)
     {
-        using var backPaint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
-        using var gridPaint = new SKPaint
+        var backPaint = GetFillPaint();
+        var gridPaint = GetGridPaint();
+        gridPaint.Color = ColorScheme.OutlineVariant.ToSKColor();
+        gridPaint.StrokeWidth = 0.5f;
+        var textPaint = GetTextPaint();
+        textPaint.Color = ColorScheme.OnSurface.ToSKColor();
+
+        SKFont? rowFont = null;
+        bool disposeRowFont = false;
+        if (row.Font == null || ReferenceEquals(row.Font, Font))
         {
-            IsAntialias = true,
-            Color = ColorScheme.OutlineVariant.ToSKColor(),
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 0.5f
-        };
-        using var rowFont = CreateFont(row.Font ?? Font);
-        using var textPaint = new SKPaint
+            rowFont = GetDefaultSkFont();
+        }
+        else
         {
-            IsAntialias = true,
-            Color = ColorScheme.OnSurface.ToSKColor(),
-            Style = SKPaintStyle.Fill
-        };
+            rowFont = CreateFont(row.Font);
+            disposeRowFont = true;
+        }
 
         // Row background is expensive; only draw when needed (selection/explicit custom backcolor).
         // row.BackColor can represent an inherited value (e.g., ListView.BackColor), so we must
@@ -474,24 +509,23 @@ public class ListView : UIElementBase
             var fm = rowFont.Metrics;
             float textY = y + (RowHeight - (fm.Descent - fm.Ascent)) / 2f - fm.Ascent;
 
-            DrawTextCompat(canvas, row.SubItems[i].Text ?? string.Empty, x + 5, textY, rowFont, textPaint);
+            DrawTextCompat(canvas, row.SubItems[i].Text ?? string.Empty, x + 5, textY, rowFont, textPaint.Color);
             x += Columns[i].Width;
         }
 
         canvas.DrawLine(0, y, Width, y, gridPaint);
+
+        if (disposeRowFont)
+            rowFont.Dispose();
     }
 
     private void DrawScrollBars(SKCanvas canvas)
     {
-        using var paint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = ColorScheme.OutlineVariant.Alpha(140).ToSKColor(),
-            Style = SKPaintStyle.StrokeAndFill
-        };
+        var paint = GetScrollBarPaint();
+        paint.Color = ColorScheme.OutlineVariant.Alpha(140).ToSKColor();
 
         // Horizontal (içerik üstüne overlay)
-        int totalColumnsWidth = Columns.Sum(c => c.Width);
+        int totalColumnsWidth = GetTotalColumnsWidth();
         if (totalColumnsWidth > Width)
         {
             float scrollbarWidth = Width * (Width / (float)totalColumnsWidth);
@@ -523,7 +557,7 @@ public class ListView : UIElementBase
 
         if ((ModifierKeys & Keys.Shift) == Keys.Shift)
         {
-            int totalColumnsWidth = Columns.Sum(c => c.Width);
+            int totalColumnsWidth = GetTotalColumnsWidth();
             _horizontalScrollOffset = Math.Max(-Width / 4, Math.Min(_horizontalScrollOffset - delta * 30, totalColumnsWidth - Width + Width / 4));
         }
         else
@@ -813,7 +847,7 @@ public class ListView : UIElementBase
         // 1) Scrollbar hit test
         int contentHeight = GetContentHeight();
         int viewportHeight = Math.Max(0, Height - 30);
-        int totalColumnsWidth = Columns.Sum(c => c.Width);
+        int totalColumnsWidth = GetTotalColumnsWidth();
         if (e.X >= Width - 15 && e.X <= Width - 5 && contentHeight > viewportHeight && e.Y >= 30 && e.Y <= Height)
         {
             _isDraggingScrollbar = true;
@@ -995,14 +1029,12 @@ public class ListView : UIElementBase
         canvas.Clear(SKColors.Transparent);
 
         // Draw background once; rows only draw overlays when needed.
-        using (var bg = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
-        {
-            // Treat Transparent as "no explicit background" for this control so it
-            // doesn't visually fall back to the host window's (often white) background.
-            var bgColor = (BackColor.IsEmpty || BackColor.A == 0) ? ColorScheme.Surface : BackColor;
-            bg.Color = ToSKColor(bgColor);
-            canvas.DrawRect(0, 0, Width, Height, bg);
-        }
+        var bg = GetFillPaint();
+        // Treat Transparent as "no explicit background" for this control so it
+        // doesn't visually fall back to the host window's (often white) background.
+        var bgColor = (BackColor.IsEmpty || BackColor.A == 0) ? ColorScheme.Surface : BackColor;
+        bg.Color = ToSKColor(bgColor);
+        canvas.DrawRect(0, 0, Width, Height, bg);
 
         EnsureGroupAnimations();
         DrawGroups(canvas);
@@ -1048,7 +1080,7 @@ public class ListView : UIElementBase
 
         if (_isDraggingScrollbar)
         {
-            int totalColumnsWidth = Columns.Sum(c => c.Width);
+            int totalColumnsWidth = GetTotalColumnsWidth();
             if (_isVerticalScrollbar)
             {
                 int contentHeight = GetContentHeight();
@@ -1147,6 +1179,27 @@ public class ListView : UIElementBase
                 anim?.Dispose();
             _groupAnimations.Clear();
             _pendingCollapse.Clear();
+
+            _defaultSkFont?.Dispose();
+            _defaultSkFont = null;
+            _defaultSkFontSource = null;
+
+            _paintFill?.Dispose();
+            _paintFill = null;
+            _paintGrid?.Dispose();
+            _paintGrid = null;
+            _paintText?.Dispose();
+            _paintText = null;
+            _paintHeaderBack?.Dispose();
+            _paintHeaderBack = null;
+            _paintScrollBar?.Dispose();
+            _paintScrollBar = null;
+            _paintChevron?.Dispose();
+            _paintChevron = null;
+            _paintTextCompat?.Dispose();
+            _paintTextCompat = null;
+            _chevronPath?.Dispose();
+            _chevronPath = null;
         }
 
         base.Dispose(disposing);

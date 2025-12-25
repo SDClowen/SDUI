@@ -48,6 +48,31 @@ public class TrackBar : UIElementBase
     private string _valueFormat = "{0}";
     private Size _customThumbSize = Size.Empty;
 
+    // Skia caches (to avoid per-frame allocations)
+    private SKPaint? _trackEmptyPaint;
+    private SKPaint? _trackFilledPaint;
+    private SKPaint? _thumbShadowPaint;
+    private SKPaint? _thumbFillPaint;
+    private SKPaint? _thumbBorderPaint;
+    private SKPaint? _thumbIndicatorPaint;
+    private SKPaint? _tickPaint;
+    private SKPaint? _tickTextPaint;
+    private SKPaint? _valueTextPaint;
+
+    private SKPath? _thumbTrianglePath;
+    private SKPath? _thumbDiamondPath;
+    private SKPath? _thumbIndicatorPath;
+
+    private SKFont? _tickFont;
+    private int _tickFontDpi;
+    private SKFont? _valueFont;
+    private Font? _valueFontSource;
+    private int _valueFontDpi;
+
+    private SKImageFilter? _thumbShadowFilter;
+    private float _thumbShadowFilterScale;
+    private SKShader? _thumbFillShader;
+
     #endregion
 
     #region Properties
@@ -613,35 +638,37 @@ public class TrackBar : UIElementBase
                 break;
 
             case ThumbShape.Triangle:
-                using (var path = new SKPath())
+                EnsureSkiaCaches();
+                _thumbTrianglePath ??= new SKPath();
+                _thumbTrianglePath.Reset();
+
+                if (_orientation == SDUI.Orientation.Horizontal)
                 {
-                    if (_orientation == SDUI.Orientation.Horizontal)
-                    {
-                        path.MoveTo(centerX, centerY - halfWidth);
-                        path.LineTo(centerX + halfWidth, centerY + halfWidth);
-                        path.LineTo(centerX - halfWidth, centerY + halfWidth);
-                    }
-                    else
-                    {
-                        path.MoveTo(centerX - halfWidth, centerY);
-                        path.LineTo(centerX + halfWidth, centerY - halfWidth);
-                        path.LineTo(centerX + halfWidth, centerY + halfWidth);
-                    }
-                    path.Close();
-                    canvas.DrawPath(path, paint);
+                    _thumbTrianglePath.MoveTo(centerX, centerY - halfWidth);
+                    _thumbTrianglePath.LineTo(centerX + halfWidth, centerY + halfWidth);
+                    _thumbTrianglePath.LineTo(centerX - halfWidth, centerY + halfWidth);
                 }
+                else
+                {
+                    _thumbTrianglePath.MoveTo(centerX - halfWidth, centerY);
+                    _thumbTrianglePath.LineTo(centerX + halfWidth, centerY - halfWidth);
+                    _thumbTrianglePath.LineTo(centerX + halfWidth, centerY + halfWidth);
+                }
+
+                _thumbTrianglePath.Close();
+                canvas.DrawPath(_thumbTrianglePath, paint);
                 break;
 
             case ThumbShape.Diamond:
-                using (var path = new SKPath())
-                {
-                    path.MoveTo(centerX, centerY - halfWidth);
-                    path.LineTo(centerX + halfWidth, centerY);
-                    path.LineTo(centerX, centerY + halfWidth);
-                    path.LineTo(centerX - halfWidth, centerY);
-                    path.Close();
-                    canvas.DrawPath(path, paint);
-                }
+                EnsureSkiaCaches();
+                _thumbDiamondPath ??= new SKPath();
+                _thumbDiamondPath.Reset();
+                _thumbDiamondPath.MoveTo(centerX, centerY - halfWidth);
+                _thumbDiamondPath.LineTo(centerX + halfWidth, centerY);
+                _thumbDiamondPath.LineTo(centerX, centerY + halfWidth);
+                _thumbDiamondPath.LineTo(centerX - halfWidth, centerY);
+                _thumbDiamondPath.Close();
+                canvas.DrawPath(_thumbDiamondPath, paint);
                 break;
         }
     }
@@ -649,7 +676,9 @@ public class TrackBar : UIElementBase
     {
         var thickness = 6 * ScaleFactor;
 
-        using var path = new SKPath();
+        EnsureSkiaCaches();
+        _thumbIndicatorPath ??= new SKPath();
+        _thumbIndicatorPath.Reset();
 
         if (_orientation == SDUI.Orientation.Horizontal)
         {
@@ -657,9 +686,9 @@ public class TrackBar : UIElementBase
             var baseY = thumbRect.Bottom - 1 * ScaleFactor;   // anchor under the thumb
             var centerX = thumbRect.Left + thumbRect.Width / 2f;
 
-            path.MoveTo(centerX, tipY);
-            path.LineTo(centerX - thickness, baseY);
-            path.LineTo(centerX + thickness, baseY);
+            _thumbIndicatorPath.MoveTo(centerX, tipY);
+            _thumbIndicatorPath.LineTo(centerX - thickness, baseY);
+            _thumbIndicatorPath.LineTo(centerX + thickness, baseY);
         }
         else
         {
@@ -667,26 +696,30 @@ public class TrackBar : UIElementBase
             var baseX = thumbRect.Right - 1 * ScaleFactor;
             var centerY = thumbRect.Top + thumbRect.Height / 2f;
 
-            path.MoveTo(tipX, centerY);
-            path.LineTo(baseX, centerY - thickness);
-            path.LineTo(baseX, centerY + thickness);
+            _thumbIndicatorPath.MoveTo(tipX, centerY);
+            _thumbIndicatorPath.LineTo(baseX, centerY - thickness);
+            _thumbIndicatorPath.LineTo(baseX, centerY + thickness);
         }
 
-        path.Close();
-        canvas.DrawPath(path, paint);
+        _thumbIndicatorPath.Close();
+        canvas.DrawPath(_thumbIndicatorPath, paint);
     }
 
     private void DrawTicks(SKCanvas canvas, RectangleF trackRect)
     {
         if (!_showTicks) return;
 
-        using var paint = new SKPaint
-        {
-            Color = (_tickColor == Color.Empty ? ColorScheme.ForeColor : _tickColor)
-                .Alpha(150).ToSKColor(),
-            StrokeWidth = 1 * ScaleFactor,
-            IsAntialias = true
-        };
+        EnsureSkiaCaches();
+
+        var tickPaint = _tickPaint!;
+        tickPaint.Color = (_tickColor == Color.Empty ? ColorScheme.ForeColor : _tickColor)
+            .Alpha(150).ToSKColor();
+        tickPaint.StrokeWidth = 1 * ScaleFactor;
+
+        var textPaint = _tickTextPaint!;
+        textPaint.Color = tickPaint.Color;
+
+        var font = GetTickSkFont();
 
         var tickCount = (_maximum - _minimum) / _tickFrequency;
         var isHorizontal = _orientation == SDUI.Orientation.Horizontal;
@@ -700,13 +733,13 @@ public class TrackBar : UIElementBase
             {
                 x = trackRect.Left + trackRect.Width * position;
                 y = trackRect.Bottom + 3 * ScaleFactor;
-                canvas.DrawLine(x, y, x, y + 5 * ScaleFactor, paint);
+                canvas.DrawLine(x, y, x, y + 5 * ScaleFactor, tickPaint);
             }
             else
             {
                 x = trackRect.Right + 3 * ScaleFactor;
                 y = trackRect.Top + trackRect.Height * (1 - position);
-                canvas.DrawLine(x, y, x + 5 * ScaleFactor, y, paint);
+                canvas.DrawLine(x, y, x + 5 * ScaleFactor, y, tickPaint);
             }
 
             // Tick değerini yaz
@@ -714,19 +747,6 @@ public class TrackBar : UIElementBase
             {
                 var value = _minimum + i * _tickFrequency;
                 var text = (value / (float)_dividedValue).ToString();
-
-                using var font = new SKFont
-                {
-                    Size = 8f.PtToPx(this),
-                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface("Segoe UI"),
-                    Subpixel = true,
-                    Edging = SKFontEdging.SubpixelAntialias
-                };
-                using var textPaint = new SKPaint
-                {
-                    Color = paint.Color,
-                    IsAntialias = true
-                };
 
                 var textAlign = isHorizontal ? SKTextAlign.Center : SKTextAlign.Left;
 
@@ -738,63 +758,84 @@ public class TrackBar : UIElementBase
         }
     }
 
-    private void DrawTrack(SKCanvas canvas, RectangleF trackRect, SKPaint paint)
+    private void EnsureSkiaCaches()
     {
-        switch (_trackStyle)
+        _trackEmptyPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _trackFilledPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _thumbShadowPaint ??= new SKPaint { IsAntialias = true };
+        _thumbFillPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _thumbBorderPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
+        _thumbIndicatorPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
+        _tickPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke };
+        _tickTextPaint ??= new SKPaint { IsAntialias = true };
+        _valueTextPaint ??= new SKPaint { IsAntialias = true };
+    }
+
+    private SKFont GetTickSkFont()
+    {
+        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+        if (_tickFont == null || _tickFontDpi != dpi)
         {
-            case TrackStyle.Simple:
-                canvas.DrawRoundRect(trackRect.ToSKRect(), 1 * ScaleFactor, 1 * ScaleFactor, paint);
-                break;
+            _tickFont?.Dispose();
+            _tickFont = new SKFont
+            {
+                Size = 8f.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface("Segoe UI"),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
+            };
+            _tickFontDpi = dpi;
+        }
+        return _tickFont;
+    }
 
-            case TrackStyle.Rounded:
-                canvas.DrawRoundRect(trackRect.ToSKRect(), trackRect.Height / 2, trackRect.Height / 2, paint);
-                break;
+    private SKFont GetValueSkFont()
+    {
+        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+        if (_valueFont == null || _valueFontDpi != dpi || !ReferenceEquals(_valueFontSource, Font))
+        {
+            _valueFont?.Dispose();
+            _valueFont = new SKFont
+            {
+                Size = 9f.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Subpixel = true,
+                Edging = SKFontEdging.SubpixelAntialias
+            };
+            _valueFontDpi = dpi;
+            _valueFontSource = Font;
+        }
+        return _valueFont;
+    }
 
-            case TrackStyle.Groove:
-                var oldMaskFilter = paint.MaskFilter;
-                paint.MaskFilter = null;
-
-                paint.MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, 1f * ScaleFactor);
-                canvas.DrawRoundRect(trackRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor, paint);
-                paint.MaskFilter = oldMaskFilter;
-                oldMaskFilter?.Dispose();
-
-                break;
-
-            case TrackStyle.Glass:
-                using (var path = new SKPath())
-                {
-                    path.AddRoundRect(trackRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor);
-
-                    // Ana track
-                    canvas.DrawPath(path, paint);
-
-                    // Parlama efekti
-                    using var shimmerPaint = new SKPaint
-                    {
-                        Style = SKPaintStyle.Fill,
-                        Color = SKColors.White.WithAlpha(40),
-                        IsAntialias = true,
-                        ImageFilter = SKImageFilter.CreateBlur(2 * ScaleFactor, 2 * ScaleFactor)
-                    };
-
-                    var shimmerRect = trackRect;
-                    shimmerRect.Height /= 2;
-                    using var shimmerPath = new SKPath();
-                    shimmerPath.AddRoundRect(shimmerRect.ToSKRect(), 2 * ScaleFactor, 2 * ScaleFactor);
-                    canvas.DrawPath(shimmerPath, shimmerPaint);
-                }
-                break;
+    private void EnsureThumbShadowFilter()
+    {
+        // Recreate only when scale factor changes meaningfully
+        if (_thumbShadowFilter == null || Math.Abs(_thumbShadowFilterScale - ScaleFactor) > 0.0001f)
+        {
+            _thumbShadowFilter?.Dispose();
+            _thumbShadowFilter = SKImageFilter.CreateDropShadow(
+                0,
+                1 * ScaleFactor,
+                3 * ScaleFactor,
+                3 * ScaleFactor,
+                SKColors.Black.WithAlpha(40));
+            _thumbShadowFilterScale = ScaleFactor;
         }
     }
 
-    private SKPaint CreateGradientPaint(RectangleF rect, Color startColor, Color endColor, Color defaultColor, byte alpha = 255)
+    private SKPaint UpdateThumbFillPaint(RectangleF rect, Color startColor, Color endColor, Color defaultColor, byte alpha = 255)
     {
-        var paint = new SKPaint { IsAntialias = true };
+        EnsureSkiaCaches();
+
+        var paint = _thumbFillPaint!;
+        paint.IsAntialias = true;
+        paint.Style = SKPaintStyle.Fill;
 
         if (startColor != Color.Empty && endColor != Color.Empty)
         {
-            paint.Shader = SKShader.CreateLinearGradient(
+            // NOTE: shader coordinates depend on rect position, so this is updated per paint.
+            var newShader = SKShader.CreateLinearGradient(
                 new SKPoint(rect.Left, rect.Top),
                 new SKPoint(rect.Right, rect.Bottom),
                 new[]
@@ -803,11 +844,19 @@ public class TrackBar : UIElementBase
                     endColor.ToSKColor().WithAlpha(alpha)
                 },
                 null,
-                SKShaderTileMode.Clamp
-            );
+                SKShaderTileMode.Clamp);
+
+            paint.Color = SKColors.Transparent;
+            var oldShader = _thumbFillShader;
+            _thumbFillShader = newShader;
+            paint.Shader = _thumbFillShader;
+            oldShader?.Dispose();
         }
         else
         {
+            paint.Shader = null;
+            _thumbFillShader?.Dispose();
+            _thumbFillShader = null;
             paint.Color = defaultColor.ToSKColor().WithAlpha(alpha);
         }
 
@@ -817,6 +866,7 @@ public class TrackBar : UIElementBase
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         base.OnPaint(e);
+        EnsureSkiaCaches();
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.Transparent);
 
@@ -838,16 +888,13 @@ public class TrackBar : UIElementBase
             visualTrackRect.Inflate((trackThickness - trackRect.Width) / 2, 0);
 
         // Draw Empty Track
-        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
-        {
-            paint.Color = (_trackColor == Color.Empty ? ColorScheme.BorderColor : _trackColor).ToSKColor();
-            canvas.DrawRoundRect(visualTrackRect.ToSKRect(), trackThickness / 2, trackThickness / 2, paint);
-        }
+        var emptyTrackPaint = _trackEmptyPaint!;
+        emptyTrackPaint.Color = (_trackColor == Color.Empty ? ColorScheme.BorderColor : _trackColor).ToSKColor();
+        canvas.DrawRoundRect(visualTrackRect.ToSKRect(), trackThickness / 2, trackThickness / 2, emptyTrackPaint);
 
         // Draw Filled Track
-        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
-        {
-            paint.Color = (_thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor).ToSKColor();
+        var filledTrackPaint = _trackFilledPaint!;
+        filledTrackPaint.Color = (_thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor).ToSKColor();
 
             SKRect filledRect;
             if (_orientation == SDUI.Orientation.Horizontal)
@@ -869,60 +916,40 @@ public class TrackBar : UIElementBase
                     Math.Max(visualTrackRect.Top + minFilled, visualTrackRect.Bottom));
             }
 
-            canvas.DrawRoundRect(filledRect, trackThickness / 2, trackThickness / 2, paint);
-        }
+        canvas.DrawRoundRect(filledRect, trackThickness / 2, trackThickness / 2, filledTrackPaint);
 
         // Draw Ticks
         DrawTicks(canvas, trackRect);
 
         // Draw Thumb Shadow
-        using (var shadowPaint = new SKPaint
-        {
-            Color = SKColors.Black.WithAlpha(40),
-            IsAntialias = true,
-            ImageFilter = SKImageFilter.CreateDropShadow(0, 1 * ScaleFactor, 3 * ScaleFactor, 3 * ScaleFactor, SKColors.Black.WithAlpha(40))
-        })
-        {
-            DrawThumb(canvas, thumbRect, shadowPaint);
-        }
+        EnsureThumbShadowFilter();
+        var shadowPaint = _thumbShadowPaint!;
+        shadowPaint.Color = SKColors.Black.WithAlpha(40);
+        shadowPaint.ImageFilter = _thumbShadowFilter;
+        DrawThumb(canvas, thumbRect, shadowPaint);
 
         // Draw Thumb Fill
-        using (var paint = CreateGradientPaint(thumbRect, lightAccent, accentColor, accentColor))
-        {
-            paint.Style = SKPaintStyle.Fill;
-            paint.IsAntialias = true;
-            DrawThumb(canvas, thumbRect, paint);
-        }
+        var thumbFillPaint = UpdateThumbFillPaint(thumbRect, lightAccent, accentColor, accentColor);
+        DrawThumb(canvas, thumbRect, thumbFillPaint);
 
         // Draw Thumb Border
-        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 2 * ScaleFactor })
-        {
-            paint.Color = accentColor.ToSKColor();
-            DrawThumb(canvas, thumbRect, paint);
-        }
+        var thumbBorderPaint = _thumbBorderPaint!;
+        thumbBorderPaint.StrokeWidth = 2 * ScaleFactor;
+        thumbBorderPaint.Color = accentColor.ToSKColor();
+        DrawThumb(canvas, thumbRect, thumbBorderPaint);
         
         // Draw indicator (arrow) to anchor the thumb visually to the track
-        using (var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill })
-        {
-            paint.Color = accentColor.ToSKColor().WithAlpha(200);
-            DrawThumbIndicator(canvas, thumbRect, trackRect, paint);
-        }
+        var indicatorPaint = _thumbIndicatorPaint!;
+        indicatorPaint.Color = accentColor.ToSKColor().WithAlpha(200);
+        DrawThumbIndicator(canvas, thumbRect, trackRect, indicatorPaint);
 
         // Değer metni
         if (_drawValueString)
         {
-            using var font = new SKFont
-            {
-                Size = 9f.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
-                Subpixel = true,
-                Edging = SKFontEdging.SubpixelAntialias
-            };
-            using var paint = new SKPaint
-            {
-                Color = ColorScheme.ForeColor.ToSKColor(),
-                IsAntialias = true
-            };
+            var font = GetValueSkFont();
+            var paint = _valueTextPaint!;
+            paint.Color = ColorScheme.ForeColor.ToSKColor();
+            paint.IsAntialias = true;
 
             var formattedValue = string.Format(_valueFormat, ValueToSet);
 
@@ -961,6 +988,26 @@ public class TrackBar : UIElementBase
         if (disposing)
         {
             _tooltip?.Dispose();
+
+            _trackEmptyPaint?.Dispose();
+            _trackFilledPaint?.Dispose();
+            _thumbShadowPaint?.Dispose();
+            _thumbFillPaint?.Dispose();
+            _thumbBorderPaint?.Dispose();
+            _thumbIndicatorPaint?.Dispose();
+            _tickPaint?.Dispose();
+            _tickTextPaint?.Dispose();
+            _valueTextPaint?.Dispose();
+
+            _thumbTrianglePath?.Dispose();
+            _thumbDiamondPath?.Dispose();
+            _thumbIndicatorPath?.Dispose();
+
+            _tickFont?.Dispose();
+            _valueFont?.Dispose();
+
+            _thumbShadowFilter?.Dispose();
+            _thumbFillShader?.Dispose();
         }
         base.Dispose(disposing);
     }

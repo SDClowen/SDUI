@@ -78,11 +78,12 @@ public class GroupBox : UIElementBase
         var titleRect = new SKRect(0, 0, rect.Width, Font.Height + 7);
 
         // Gölge çizimi
+        using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, _shadowDepth / 2f))
         using (var paint = new SKPaint
         {
             Color = SKColors.Black.WithAlpha(20),
             IsAntialias = true,
-            MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, _shadowDepth / 2f)
+            MaskFilter = shadowMaskFilter
         })
         {
             canvas.DrawRoundRect(shadowRect, _radius, _radius, paint);

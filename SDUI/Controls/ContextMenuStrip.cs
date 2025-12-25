@@ -26,6 +26,26 @@ public class ContextMenuStrip : MenuStrip
     private readonly AnimationManager _fadeInAnimation;
     private readonly Dictionary<MenuItem, AnimationManager> _itemHoverAnims = new();
 
+    // Cached Skia resources (avoid per-frame allocations)
+    private SKPaint? _bgPaint;
+    private SKPaint? _borderPaint;
+    private SKPaint? _separatorPaint;
+    private SKPaint? _hoverPaint;
+    private SKPaint? _iconPaint;
+    private SKPaint? _textPaint;
+    private SKPaint? _arrowPaint;
+    private SKPath? _chevronPath;
+
+    private readonly SKPaint?[] _shadowPaints = new SKPaint?[2];
+    private readonly SKMaskFilter?[] _shadowMaskFilters = new SKMaskFilter?[2];
+
+    private SKFont? _defaultSkFont;
+    private Font? _defaultSkFontSource;
+    private int _defaultSkFontDpi;
+
+    private readonly Dictionary<Bitmap, SKBitmap> _iconCache = new();
+    private const int MaxIconCacheEntries = 256;
+
     public event EventHandler Opening;
     public event EventHandler Closing;
 
@@ -258,6 +278,8 @@ public class ContextMenuStrip : MenuStrip
         var bounds = ClientRectangle;
         canvas.Clear(SKColors.Transparent);
 
+        EnsureSkiaCaches();
+
         float fadeProgress = (float)_fadeInAnimation.GetProgress();
         byte fadeAlpha = (byte)(fadeProgress * 255);
         const float CORNER_RADIUS = 10f;
@@ -271,18 +293,14 @@ public class ContextMenuStrip : MenuStrip
 
         // Multi-layer shadow system (extra subtle)
         canvas.Save();
+        EnsureShadowResources();
         for (int i = 0; i < 2; i++)
         {
             float offsetY = 0.75f + i * 0.85f;
-            float blurRadius = 3.0f + i * 2.75f;
             byte shadowAlpha = (byte)((8 - i * 3) * fadeProgress);
 
-            using var shadowPaint = new SKPaint
-            {
-                Color = SKColors.Black.WithAlpha(shadowAlpha),
-                MaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blurRadius),
-                IsAntialias = true
-            };
+            var shadowPaint = _shadowPaints[i]!;
+            shadowPaint.Color = SKColors.Black.WithAlpha(shadowAlpha);
 
             canvas.Save();
             canvas.Translate(0, offsetY);
@@ -292,21 +310,17 @@ public class ContextMenuStrip : MenuStrip
         canvas.Restore();
 
         // High-quality background
-        using (var bgPaint = new SKPaint { Color = MenuBackColor.ToSKColor().WithAlpha(fadeAlpha), IsAntialias = true, FilterQuality = SKFilterQuality.High })
-        {
-            canvas.DrawRoundRect(contentRect, CORNER_RADIUS, CORNER_RADIUS, bgPaint);
-        }
+        _bgPaint!.Color = MenuBackColor.ToSKColor().WithAlpha(fadeAlpha);
+        canvas.DrawRoundRect(contentRect, CORNER_RADIUS, CORNER_RADIUS, _bgPaint);
 
         // Border
-        using (var borderPaint = new SKPaint { Color = SeparatorColor.ToSKColor().WithAlpha((byte)(fadeAlpha * 0.35f)), Style = SKPaintStyle.Stroke, StrokeWidth = 1, IsAntialias = true, FilterQuality = SKFilterQuality.High })
-        {
-            var borderRect = new SKRect(
-                contentRect.Left + 0.5f,
-                contentRect.Top + 0.5f,
-                contentRect.Right - 0.5f,
-                contentRect.Bottom - 0.5f);
-            canvas.DrawRoundRect(borderRect, CORNER_RADIUS, CORNER_RADIUS, borderPaint);
-        }
+        _borderPaint!.Color = SeparatorColor.ToSKColor().WithAlpha((byte)(fadeAlpha * 0.35f));
+        var borderRect = new SKRect(
+            contentRect.Left + 0.5f,
+            contentRect.Top + 0.5f,
+            contentRect.Right - 0.5f,
+            contentRect.Bottom - 0.5f);
+        canvas.DrawRoundRect(borderRect, CORNER_RADIUS, CORNER_RADIUS, _borderPaint);
 
         float y = contentRect.Top + ItemPadding;
 
@@ -314,13 +328,13 @@ public class ContextMenuStrip : MenuStrip
         {
             if (item.IsSeparator)
             {
-                using var sepPaint = new SKPaint { Color = SeparatorColor.ToSKColor().WithAlpha(fadeAlpha), IsAntialias = true, StrokeWidth = 1 };
+                _separatorPaint!.Color = SeparatorColor.ToSKColor().WithAlpha(fadeAlpha);
                 canvas.DrawLine(
                     contentRect.Left + ItemPadding + 8,
                     y + SeparatorMargin,
                     contentRect.Right - ItemPadding - 8,
                     y + SeparatorMargin,
-                    sepPaint);
+                    _separatorPaint);
                 y += SeparatorMargin * 2 + 1 + ItemPadding;
                 continue;
             }
@@ -343,8 +357,8 @@ public class ContextMenuStrip : MenuStrip
             if (hoverProgress > 0.001f || isHovered)
             {
                 byte hoverAlpha = (byte)(Math.Max(180, 180 + 70 * hoverProgress));
-                using var hoverPaint = new SKPaint { Color = HoverBackColor.ToSKColor().WithAlpha((byte)(fadeAlpha * hoverAlpha / 255f)), IsAntialias = true, FilterQuality = SKFilterQuality.High };
-                canvas.DrawRoundRect(itemRect, 7, 7, hoverPaint);
+                _hoverPaint!.Color = HoverBackColor.ToSKColor().WithAlpha((byte)(fadeAlpha * hoverAlpha / 255f));
+                canvas.DrawRoundRect(itemRect, 7, 7, _hoverPaint);
             }
 
             float textX = itemRect.Left + 12;
@@ -352,9 +366,9 @@ public class ContextMenuStrip : MenuStrip
             if (ShowIcons && item.Icon != null)
             {
                 var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
-                using var iconImage = SKImage.FromBitmap(item.Icon.ToSKBitmap());
-                using var iconPaint = new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High, Color = SKColors.White.WithAlpha(fadeAlpha) };
-                canvas.DrawImage(iconImage, new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height), iconPaint);
+                var iconBitmap = GetCachedIconBitmap(item.Icon);
+                _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
+                canvas.DrawBitmap(iconBitmap, new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height), _iconPaint);
                 textX += ImageScalingSize.Width + 8;
             }
 
@@ -363,33 +377,133 @@ public class ContextMenuStrip : MenuStrip
                 : (HoverBackColor.IsEmpty ? MenuForeColor : HoverBackColor.Determine());
             var textColor = isHovered ? hoverFore : MenuForeColor;
 
-            using (var font = new SKFont
+            var font = GetDefaultSkFont();
+            _textPaint!.Color = textColor.ToSKColor().WithAlpha(fadeAlpha);
+            var textBounds = SKRect.Create(textX, itemRect.Top, itemRect.Right - textX, itemRect.Height);
+            canvas.DrawControlText(item.Text, textBounds, _textPaint, font, ContentAlignment.MiddleLeft, false, true);
+
+            if (ShowSubmenuArrow && item.HasDropDown)
+            {
+                float chevronSize = 5f;
+                float chevronX = itemRect.Right - 14;
+                float chevronY = itemRect.MidY;
+
+                _arrowPaint!.Color = textColor.ToSKColor().WithAlpha(fadeAlpha);
+                _chevronPath!.Reset();
+                _chevronPath.MoveTo(chevronX - chevronSize, chevronY - chevronSize);
+                _chevronPath.LineTo(chevronX - chevronSize / 2, chevronY);
+                _chevronPath.LineTo(chevronX - chevronSize, chevronY + chevronSize);
+                canvas.DrawPath(_chevronPath, _arrowPaint);
+            }
+
+            y += ItemHeight + ItemPadding;
+        }
+    }
+
+    private void EnsureSkiaCaches()
+    {
+        _bgPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
+        _borderPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1, FilterQuality = SKFilterQuality.High };
+        _separatorPaint ??= new SKPaint { IsAntialias = true, StrokeWidth = 1 };
+        _hoverPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
+        _iconPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
+        _textPaint ??= new SKPaint { IsAntialias = true };
+        _arrowPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1.2f, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round };
+        _chevronPath ??= new SKPath();
+    }
+
+    private void EnsureShadowResources()
+    {
+        // Two-layer shadow system
+        var blur0 = 3.0f;
+        var blur1 = 5.75f;
+
+        if (_shadowMaskFilters[0] == null)
+            _shadowMaskFilters[0] = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur0);
+        if (_shadowMaskFilters[1] == null)
+            _shadowMaskFilters[1] = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur1);
+
+        if (_shadowPaints[0] == null)
+            _shadowPaints[0] = new SKPaint { IsAntialias = true, MaskFilter = _shadowMaskFilters[0] };
+        if (_shadowPaints[1] == null)
+            _shadowPaints[1] = new SKPaint { IsAntialias = true, MaskFilter = _shadowMaskFilters[1] };
+    }
+
+    private SKBitmap GetCachedIconBitmap(Bitmap icon)
+    {
+        if (_iconCache.TryGetValue(icon, out var cached))
+            return cached;
+
+        if (_iconCache.Count >= MaxIconCacheEntries)
+        {
+            foreach (var pair in _iconCache)
+                pair.Value.Dispose();
+            _iconCache.Clear();
+        }
+
+        var bmp = icon.ToSKBitmap();
+        _iconCache[icon] = bmp;
+        return bmp;
+    }
+
+    private SKFont GetDefaultSkFont()
+    {
+        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+        if (_defaultSkFont == null || !ReferenceEquals(_defaultSkFontSource, Font) || _defaultSkFontDpi != dpi)
+        {
+            _defaultSkFont?.Dispose();
+            _defaultSkFont = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
                 Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
-            })
-            using (var textPaint = new SKPaint { Color = textColor.ToSKColor().WithAlpha(fadeAlpha), IsAntialias = true })
-            {
-                var textBounds = SKRect.Create(textX, itemRect.Top, itemRect.Right - textX, itemRect.Height);
-                canvas.DrawControlText(item.Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, false, true);
-            }
-
-            if (ShowSubmenuArrow && item.HasDropDown)
-            {
-                using var arrowPaint = new SKPaint { Color = textColor.ToSKColor().WithAlpha(fadeAlpha), IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1.2f, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round };
-                float chevronSize = 5f;
-                float chevronX = itemRect.Right - 14;
-                float chevronY = itemRect.MidY;
-                using var chevronPath = new SKPath();
-                chevronPath.MoveTo(chevronX - chevronSize, chevronY - chevronSize);
-                chevronPath.LineTo(chevronX - chevronSize / 2, chevronY);
-                chevronPath.LineTo(chevronX - chevronSize, chevronY + chevronSize);
-                canvas.DrawPath(chevronPath, arrowPaint);
-            }
-
-            y += ItemHeight + ItemPadding;
+            };
+            _defaultSkFontSource = Font;
+            _defaultSkFontDpi = dpi;
         }
+        return _defaultSkFont;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _defaultSkFont?.Dispose();
+            _defaultSkFont = null;
+
+            _bgPaint?.Dispose();
+            _bgPaint = null;
+            _borderPaint?.Dispose();
+            _borderPaint = null;
+            _separatorPaint?.Dispose();
+            _separatorPaint = null;
+            _hoverPaint?.Dispose();
+            _hoverPaint = null;
+            _iconPaint?.Dispose();
+            _iconPaint = null;
+            _textPaint?.Dispose();
+            _textPaint = null;
+            _arrowPaint?.Dispose();
+            _arrowPaint = null;
+            _chevronPath?.Dispose();
+            _chevronPath = null;
+
+            for (int i = 0; i < _shadowPaints.Length; i++)
+            {
+                _shadowPaints[i]?.Dispose();
+                _shadowPaints[i] = null;
+            }
+            for (int i = 0; i < _shadowMaskFilters.Length; i++)
+            {
+                _shadowMaskFilters[i]?.Dispose();
+                _shadowMaskFilters[i] = null;
+            }
+
+            foreach (var pair in _iconCache)
+                pair.Value.Dispose();
+            _iconCache.Clear();
+        }
+        base.Dispose(disposing);
     }
 }

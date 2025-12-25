@@ -98,16 +98,17 @@ public class Panel : UIElementBase
         // Gölge çizimi
         if (_shadowDepth > 0)
         {
+            using var shadowFilter = SKImageFilter.CreateDropShadow(
+                _shadowDepth,
+                _shadowDepth,
+                3,
+                3,
+                SKColors.Black.WithAlpha(30));
             using var shadowPaint = new SKPaint
             {
                 IsAntialias = true,
                 FilterQuality = SKFilterQuality.High,
-                ImageFilter = SKImageFilter.CreateDropShadow(
-                    _shadowDepth,
-                    _shadowDepth,
-                    3,
-                    3,
-                    SKColors.Black.WithAlpha(30))
+                ImageFilter = shadowFilter
             };
             try
             {

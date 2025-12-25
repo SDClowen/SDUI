@@ -552,15 +552,16 @@ public class FlowLayoutPanel : UIElementBase
         // Gölge çizimi
         if (_shadowDepth > 0)
         {
+            using var shadowFilter = SKImageFilter.CreateDropShadow(
+                _shadowDepth,
+                _shadowDepth,
+                3,
+                3,
+                SKColors.Black.WithAlpha(30));
             using var shadowPaint = new SKPaint
             {
                 Color = SKColors.Black.WithAlpha(30),
-                ImageFilter = SKImageFilter.CreateDropShadow(
-                    _shadowDepth,
-                    _shadowDepth,
-                    3,
-                    3,
-                    SKColors.Black.WithAlpha(30)),
+                ImageFilter = shadowFilter,
                 IsAntialias = true
             };
 

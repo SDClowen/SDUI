@@ -134,10 +134,11 @@ public class ToggleButton : UIElementBase
         var progress = (float)animationManager.GetProgress();
         var toggleWidth = Width - textWidth - 10;
 
+        using (var shadowFilter = SKImageFilter.CreateDropShadow(0, 1, 2, 2, SKColors.Black.WithAlpha(20)))
         using (var shadowPaint = new SKPaint
         {
             Color = SKColors.Black.WithAlpha(20),
-            ImageFilter = SKImageFilter.CreateDropShadow(0, 1, 2, 2, SKColors.Black.WithAlpha(20)),
+            ImageFilter = shadowFilter,
             IsAntialias = true,
             FilterQuality = SKFilterQuality.High,
             Style = SKPaintStyle.Fill
@@ -168,13 +169,14 @@ public class ToggleButton : UIElementBase
             canvas.DrawRoundRect(rect, radius, radius, paint);
         }
 
+        using (var thumbShadowFilter = SKImageFilter.CreateDropShadow(0, 1, 2, 1, SKColors.Black.WithAlpha(40)))
         using (var paint = new SKPaint
         {
             Color = SKColors.White,
             IsAntialias = true,
             FilterQuality = SKFilterQuality.High,
             Style = SKPaintStyle.Fill,
-            ImageFilter = SKImageFilter.CreateDropShadow(0, 1, 2, 1, SKColors.Black.WithAlpha(40))
+            ImageFilter = thumbShadowFilter
         })
         {
             float padding = 2f;
