@@ -295,14 +295,16 @@ public class TextBox : UIElementBase
             Interval = blinkTime,
             Enabled = false
         };
-        _cursorBlinkTimer.Tick += (s, e) =>
-        {
-            if (Focused)
-            {
-                _showCursor = !_showCursor;
-                Invalidate();
-            }
-        };
+        _cursorBlinkTimer.Tick += CursorBlinkTimer_Tick;
+    }
+
+    private void CursorBlinkTimer_Tick(object sender, EventArgs e)
+    {
+        if (!Focused)
+            return;
+
+        _showCursor = !_showCursor;
+        Invalidate();
     }
 
     private void InitializeScrollBars()
@@ -1343,7 +1345,12 @@ public class TextBox : UIElementBase
     {
         if (disposing)
         {
-            _cursorBlinkTimer?.Dispose();
+            if (_cursorBlinkTimer != null)
+            {
+                _cursorBlinkTimer.Stop();
+                _cursorBlinkTimer.Tick -= CursorBlinkTimer_Tick;
+                _cursorBlinkTimer.Dispose();
+            }
             _focusAnimation?.Dispose();
             ColorScheme.ThemeChanged -= OnThemeChanged;
         }

@@ -7,6 +7,11 @@ namespace SDUI;
 
 public class ColorScheme
 {
+    /// <summary>
+    /// When enabled, the UI favors a flat look (no elevation / heavy shadows).
+    /// </summary>
+    public static bool FlatDesign { get; set; } = true;
+
     private static bool _isDarkMode = false;
     private static double _themeTransitionProgress = 1.0;
     private static bool _isTransitioning;
@@ -397,7 +402,7 @@ public class ColorScheme
     public static Color PrimaryColor => Primary;
     public static Color BorderColor => Outline;
     public static Color BackColor2 => SurfaceVariant;
-    public static Color ShadowColor => Shadow.Alpha(CurrentIsDark ? 30 : 20);
+    public static Color ShadowColor => FlatDesign ? Color.Transparent : Shadow.Alpha(CurrentIsDark ? 30 : 20);
     
     /// <summary>
     /// Elevation levels (0-5) returning appropriate shadow/tint
@@ -423,6 +428,9 @@ public class ColorScheme
     /// </summary>
     public static float GetElevationBlur(int level)
     {
+        if (FlatDesign)
+            return 0f;
+
         return level switch
         {
             0 => 0f,
@@ -440,6 +448,9 @@ public class ColorScheme
     /// </summary>
     public static float GetElevationOffset(int level)
     {
+        if (FlatDesign)
+            return 0f;
+
         return level switch
         {
             0 => 0f,

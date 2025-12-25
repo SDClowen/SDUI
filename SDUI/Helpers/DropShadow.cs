@@ -53,6 +53,12 @@ public static class DropShadow
         var bounds = GetBounds(path, radius, out Rectangle pathBounds, out int inflate);
         var shadow = new Bitmap(bounds.Width, bounds.Height);
 
+        // Flat UI mode: skip generating shadows (still return correct-sized bitmap)
+        if (global::SDUI.ColorScheme.FlatDesign)
+        {
+            return shadow;
+        }
+
         if (color.A == 0)
         {
             return shadow;
@@ -105,7 +111,8 @@ public static class DropShadow
         }
         finally
         {
-            shadow.UnlockBits(data);
+            if (data != null)
+                shadow.UnlockBits(data);
         }
     }
 

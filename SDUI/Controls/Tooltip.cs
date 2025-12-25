@@ -446,7 +446,7 @@ namespace SDUI.Controls
             using var font = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.Name)
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
             };
 
             float maxContentWidth = Math.Max(1, _maxWidth - (_padding * 2));
@@ -523,7 +523,7 @@ namespace SDUI.Controls
                 using (var font = new SKFont
                 {
                     Size = Font.Size.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name)
+                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
                 })
                 using (var paint = new SKPaint
                 {
@@ -550,8 +550,33 @@ namespace SDUI.Controls
         {
             if (disposing)
             {
-                _showTimer?.Dispose();
-                _hideTimer?.Dispose();
+                // Ensure we don't keep controls/windows alive via event handlers.
+                Hide();
+
+                foreach (var pair in _tooltips)
+                {
+                    if (pair.Key != null)
+                        UnsubscribeFromControl(pair.Key);
+                }
+                _tooltips.Clear();
+
+                DetachWindowHandlers();
+
+                if (_showTimer != null)
+                {
+                    _showTimer.Stop();
+                    _showTimer.Tick -= ShowTimer_Tick;
+                    _showTimer.Dispose();
+                    _showTimer = null;
+                }
+
+                if (_hideTimer != null)
+                {
+                    _hideTimer.Stop();
+                    _hideTimer.Tick -= HideTimer_Tick;
+                    _hideTimer.Dispose();
+                    _hideTimer = null;
+                }
             }
             base.Dispose(disposing);
         }

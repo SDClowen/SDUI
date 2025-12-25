@@ -20,6 +20,7 @@ namespace SDUI.Controls
         private Point _mouseLocation;
         private bool _isUsingKeyboard;
         private Timer _longPressTimer = new();
+        private readonly Font _symbolFont;
 
         private RectangleF _upButtonRect;
         private RectangleF _downButtonRect;
@@ -117,7 +118,34 @@ namespace SDUI.Controls
             _longPressTimer.Tick += LongPressTimer_Tick;
             _longPressTimer.Interval = LONG_PRESS_TIMER_INTERVAL;
 
+            _symbolFont = new Font("Segoe UI Symbol", 9f, FontStyle.Regular);
+
             UpdateButtonRects();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (IsDisposed)
+            {
+                base.Dispose(disposing);
+                return;
+            }
+
+            if (disposing)
+            {
+                _longPressTimer.Stop();
+                _longPressTimer.Tick -= LongPressTimer_Tick;
+                _longPressTimer.Dispose();
+
+                upButtonHoverAnimation.Dispose();
+                downButtonHoverAnimation.Dispose();
+                upButtonPressAnimation.Dispose();
+                downButtonPressAnimation.Dispose();
+
+                _symbolFont.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         private void UpdateButtonRects()
@@ -430,7 +458,7 @@ namespace SDUI.Controls
             using (var font = new SKFont
             {
                 Size = 9f.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName("Segoe UI Symbol"),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(_symbolFont),
                 Subpixel = true
             })
             using (var textPaint = new SKPaint

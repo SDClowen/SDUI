@@ -718,7 +718,7 @@ public class TrackBar : UIElementBase
                 using var font = new SKFont
                 {
                     Size = 8f.PtToPx(this),
-                    Typeface = SKTypeface.FromFamilyName("Segoe UI"),
+                    Typeface = SDUI.Helpers.FontManager.GetSKTypeface("Segoe UI"),
                     Subpixel = true,
                     Edging = SKFontEdging.SubpixelAntialias
                 };
@@ -914,7 +914,7 @@ public class TrackBar : UIElementBase
             using var font = new SKFont
             {
                 Size = 9f.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
             };

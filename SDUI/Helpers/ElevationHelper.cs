@@ -14,6 +14,7 @@ public static class ElevationHelper
     /// </summary>
     public static void DrawElevation(SKCanvas canvas, SKRect bounds, float cornerRadius, int elevation)
     {
+        if (ColorScheme.FlatDesign) return;
         if (elevation <= 0) return;
 
         var blur = ColorScheme.GetElevationBlur(elevation);
@@ -55,6 +56,7 @@ public static class ElevationHelper
     /// </summary>
     public static void DrawGlassEffect(SKCanvas canvas, SKRect bounds, float cornerRadius, float opacity = 0.1f)
     {
+        if (ColorScheme.FlatDesign) return;
         using var shader = SKShader.CreateLinearGradient(
             new SKPoint(bounds.Left, bounds.Top),
             new SKPoint(bounds.Right, bounds.Bottom),

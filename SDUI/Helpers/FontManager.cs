@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Drawing.Text;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Collections.Concurrent;
 using SkiaSharp;
 using static SDUI.NativeMethods;
 
@@ -11,6 +12,7 @@ namespace SDUI.Helpers
     public class FontManager
     {
         private static readonly PrivateFontCollection privateFontCollection = new();
+        private static readonly ConcurrentDictionary<(string Family, SKFontStyleWeight Weight, SKFontStyleSlant Slant), SKTypeface> _typefaceCache = new();
         public static Font Inter = GetFont(Resources.InterFont, 9f, FontStyle.Regular);
         public static Font Segoe = new("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
 
@@ -47,7 +49,17 @@ namespace SDUI.Helpers
             SKFontStyleWeight weight = font.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal;
             SKFontStyleSlant slant = font.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright;
 
-            return SKTypeface.FromFamilyName(font.Name, weight, SKFontStyleWidth.Normal, slant);
+            var key = (Family: font.Name, Weight: weight, Slant: slant);
+            return _typefaceCache.GetOrAdd(key, k => SKTypeface.FromFamilyName(k.Family, k.Weight, SKFontStyleWidth.Normal, k.Slant));
+        }
+
+        public static SKTypeface GetSKTypeface(string family, SKFontStyleWeight weight = SKFontStyleWeight.Normal, SKFontStyleSlant slant = SKFontStyleSlant.Upright)
+        {
+            if (string.IsNullOrWhiteSpace(family))
+                family = Segoe.Name;
+
+            var key = (Family: family, Weight: weight, Slant: slant);
+            return _typefaceCache.GetOrAdd(key, k => SKTypeface.FromFamilyName(k.Family, k.Weight, SKFontStyleWidth.Normal, k.Slant));
         }
     }
 }

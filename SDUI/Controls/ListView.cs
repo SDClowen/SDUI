@@ -1125,4 +1125,30 @@ public class ListView : UIElementBase
         }
         return -1;
     }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (IsDisposed)
+        {
+            base.Dispose(disposing);
+            return;
+        }
+
+        if (disposing)
+        {
+            if (_elasticTimer != null)
+            {
+                _elasticTimer.Stop();
+                _elasticTimer.Elapsed -= ElasticTimer_Tick;
+                _elasticTimer.Dispose();
+            }
+
+            foreach (var anim in _groupAnimations.Values)
+                anim?.Dispose();
+            _groupAnimations.Clear();
+            _pendingCollapse.Clear();
+        }
+
+        base.Dispose(disposing);
+    }
 }

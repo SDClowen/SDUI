@@ -62,7 +62,27 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")][DefaultValue(typeof(Size),"20, 20")] public Size ImageScalingSize { get=>_imageScalingSize; set{ if(_imageScalingSize==value) return; _imageScalingSize=value; _iconSize=Math.Min(value.Width,value.Height); Invalidate(); } }
     [Category("Behavior")][DefaultValue(true)] public bool ShowSubmenuArrow { get=>_showSubmenuArrow; set{ if(_showSubmenuArrow==value) return; _showSubmenuArrow=value; Invalidate(); } }
 
-    private void InitializeAnimationTimer(){ _animationTimer=new Timer{ Interval=16 }; _animationTimer.Tick+=(s,e)=>{ if(!_isAnimating) return; _animationProgress=Math.Min(1f,_animationProgress+(16f/_submenuAnimationDuration)); if(_animationProgress>=1f){ _isAnimating=false; _animationTimer.Stop(); } Invalidate(); }; }
+    private void InitializeAnimationTimer()
+    {
+        _animationTimer = new Timer { Interval = 16 };
+        _animationTimer.Tick += AnimationTimer_Tick;
+    }
+
+    private void AnimationTimer_Tick(object sender, EventArgs e)
+    {
+        if (!_isAnimating)
+            return;
+
+        _animationProgress = Math.Min(1f, _animationProgress + (16f / _submenuAnimationDuration));
+
+        if (_animationProgress >= 1f)
+        {
+            _isAnimating = false;
+            _animationTimer.Stop();
+        }
+
+        Invalidate();
+    }
 
     [Category("Appearance")] public Color MenuBackColor { get=>_menuBackColor; set{ if(_menuBackColor==value) return; _menuBackColor=value; Invalidate(); } }
     [Category("Appearance")] public Color MenuForeColor { get=>_menuForeColor; set{ if(_menuForeColor==value) return; _menuForeColor=value; Invalidate(); } }
@@ -441,7 +461,26 @@ public class MenuStrip : UIElementBase
         return w + 12;
     }
 
-    protected override void Dispose(bool disposing){ if(disposing){ _animationTimer?.Dispose(); _activeDropDown?.Dispose(); } base.Dispose(disposing); }
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            if (_animationTimer != null)
+            {
+                _animationTimer.Stop();
+                _animationTimer.Tick -= AnimationTimer_Tick;
+                _animationTimer.Dispose();
+            }
+
+            foreach (var anim in _itemHoverAnims.Values)
+                anim?.Dispose();
+            _itemHoverAnims.Clear();
+
+            _activeDropDown?.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
 
     private AnimationManager EnsureHoverAnim(MenuItem item){ if(!_itemHoverAnims.TryGetValue(item,out var engine)){ engine=new AnimationManager(singular:true){ Increment=0.28, AnimationType= AnimationType.EaseOut, InterruptAnimation=true }; engine.OnAnimationProgress+=_=>Invalidate(); _itemHoverAnims[item]=engine; } return engine; }
 }

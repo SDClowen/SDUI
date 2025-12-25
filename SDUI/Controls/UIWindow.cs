@@ -2135,7 +2135,7 @@ public class UIWindow : UIWindowBase, IUIElement
                     IsAntialias = true
                 };
 
-                var path = new SKPath();
+                using var path = new SKPath();
                 path.AddRoundRect(new SKRect(
                     _extendBoxRect.X + 20 * DPI,
                     (_titleHeightDPI / 2) - (hoverSize / 2),
@@ -2186,7 +2186,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 IsAntialias = true
             };
 
-            var path = new SKPath();
+            using var path = new SKPath();
             path.AddRoundRect(_formMenuRect.ToSKRect(), 10, 10);
             canvas.DrawPath(path, paint);
 
@@ -2217,7 +2217,8 @@ public class UIWindow : UIWindowBase, IUIElement
             if (ShowIcon && Icon != null)
             {
                 using var bitmap = Icon.ToBitmap();
-                using var image = SKImage.FromBitmap(SKBitmap.FromImage(SKImage.FromBitmap(bitmap.ToSKBitmap())));
+                using var skBitmap = bitmap.ToSKBitmap();
+                using var image = SKImage.FromBitmap(skBitmap);
                 var iconRect = SKRect.Create(10, (_titleHeightDPI / 2) - (faviconSize / 2), faviconSize, faviconSize);
                 canvas.DrawImage(image, iconRect);
             }
@@ -2229,7 +2230,7 @@ public class UIWindow : UIWindowBase, IUIElement
             using var font = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
-                Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
             };
@@ -2326,7 +2327,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 var tabRect = new SKRect(x, 6, x + width, _titleHeightDPI);
                 var radius = 9 * DPI;
 
-                var path = new SKPath();
+                using var path = new SKPath();
                 path.AddRoundRect(tabRect, radius, radius);
                 canvas.DrawPath(path, tabPaint);
             }
@@ -2344,7 +2345,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 var tabRect = new SKRect(x, 5, x + width, _titleHeightDPI - 7);
                 var radius = 12;
 
-                var path = new SKPath();
+                using var path = new SKPath();
                 path.AddRoundRect(tabRect, radius, radius);
                 canvas.DrawPath(path, tabPaint);
             }
@@ -2361,7 +2362,7 @@ public class UIWindow : UIWindowBase, IUIElement
                     using var font = new SKFont
                     {
                         Size = 12f.PtToPx(this),
-                        Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                        Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
                         Subpixel = true,
                         Edging = SKFontEdging.SubpixelAntialias
                     };
@@ -2392,7 +2393,7 @@ public class UIWindow : UIWindowBase, IUIElement
                     using var font = new SKFont
                     {
                         Size = 9f.PtToPx(this),
-                        Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+                        Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
                         Subpixel = true,
                         Edging = SKFontEdging.SubpixelAntialias
                     };
@@ -2467,7 +2468,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 _newTabBoxRect = new RectangleF(lastTabRect.X + lastTabRect.Width + size / 2, _titleHeightDPI / 2 - size / 2, size, size);
                 var buttonRect = _newTabBoxRect.ToSKRect();
 
-                var path = new SKPath();
+                using var path = new SKPath();
                 path.AddRoundRect(buttonRect, 4, 4);
                 canvas.DrawPath(path, buttonPaint);
 

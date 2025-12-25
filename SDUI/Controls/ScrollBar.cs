@@ -307,11 +307,34 @@ namespace SDUI.Controls
             };
 
             _hideTimer = new Timer { Interval = _hideDelay };
-            _hideTimer.Tick += (s, e) => HideNow();
+            _hideTimer.Tick += HideTimer_Tick;
 
             _visibilityAnim.SetProgress(_autoHide ? 0 : 1);
             _animatedValue = _value;
             _targetValue = _value;
+        }
+
+        private void HideTimer_Tick(object sender, EventArgs e) => HideNow();
+
+        protected override void Dispose(bool disposing)
+        {
+            if (IsDisposed)
+            {
+                base.Dispose(disposing);
+                return;
+            }
+
+            if (disposing)
+            {
+                _hideTimer.Stop();
+                _hideTimer.Tick -= HideTimer_Tick;
+                _hideTimer.Dispose();
+
+                _visibilityAnim.Dispose();
+                _scrollAnim.Dispose();
+            }
+
+            base.Dispose(disposing);
         }
 
         private void UpdateThumbRect()

@@ -244,6 +244,7 @@ public class FlowLayoutPanel : UIElementBase
         // Kontrol kaldırıldığında animasyonu temizle
         if (_animations.ContainsKey(e.Element))
         {
+            _animations[e.Element]?.Dispose();
             _animations.Remove(e.Element);
         }
         if (_targetLocations.ContainsKey(e.Element))
@@ -621,7 +622,7 @@ public class FlowLayoutPanel : UIElementBase
                     if (_border.Left > 0)
                     {
                         paint.StrokeWidth = _border.Left;
-                        var left = new SKPath();
+                        using var left = new SKPath();
                         left.MoveTo(rect.Left + _radius * ScaleFactor, rect.Top);
                         left.LineTo(rect.Left + _radius * ScaleFactor, rect.Bottom);
                         canvas.DrawPath(left, paint);
@@ -631,7 +632,7 @@ public class FlowLayoutPanel : UIElementBase
                     if (_border.Top > 0)
                     {
                         paint.StrokeWidth = _border.Top;
-                        var top = new SKPath();
+                        using var top = new SKPath();
                         top.MoveTo(rect.Left, rect.Top + _radius * ScaleFactor);
                         top.LineTo(rect.Right, rect.Top + _radius * ScaleFactor);
                         canvas.DrawPath(top, paint);
@@ -641,7 +642,7 @@ public class FlowLayoutPanel : UIElementBase
                     if (_border.Right > 0)
                     {
                         paint.StrokeWidth = _border.Right;
-                        var right = new SKPath();
+                        using var right = new SKPath();
                         right.MoveTo(rect.Right - _radius * ScaleFactor, rect.Top);
                         right.LineTo(rect.Right - _radius * ScaleFactor, rect.Bottom);
                         canvas.DrawPath(right, paint);
@@ -651,7 +652,7 @@ public class FlowLayoutPanel : UIElementBase
                     if (_border.Bottom > 0)
                     {
                         paint.StrokeWidth = _border.Bottom;
-                        var bottom = new SKPath();
+                        using var bottom = new SKPath();
                         bottom.MoveTo(rect.Left, rect.Bottom - _radius * ScaleFactor);
                         bottom.LineTo(rect.Right, rect.Bottom - _radius * ScaleFactor);
                         canvas.DrawPath(bottom, paint);
@@ -716,8 +717,23 @@ public class FlowLayoutPanel : UIElementBase
     {
         if (disposing)
         {
+            foreach (var animation in _animations.Values)
+                animation?.Dispose();
+
             _animations.Clear();
             _targetLocations.Clear();
+
+            if (_vScrollBar != null)
+            {
+                _vScrollBar.ValueChanged -= ScrollBar_ValueChanged;
+                _vScrollBar.Dispose();
+            }
+
+            if (_hScrollBar != null)
+            {
+                _hScrollBar.ValueChanged -= ScrollBar_ValueChanged;
+                _hScrollBar.Dispose();
+            }
         }
         base.Dispose(disposing);
     }

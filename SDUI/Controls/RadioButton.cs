@@ -134,7 +134,7 @@ public class Radio : UIElementBase
         using var font = new SKFont
         {
             Size = Font.Size.PtToPx(this),
-            Typeface = SKTypeface.FromFamilyName(Font.FontFamily.Name),
+            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
             Edging = SKFontEdging.SubpixelAntialias
         };
 
