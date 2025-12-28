@@ -553,11 +553,10 @@ namespace SDUI.Controls
                 {
                     selectedPage.Location = new Point(0, HeaderHeight);
                     selectedPage.Size = new Size(bounds.Width, bounds.Height - HeaderHeight);
-                    
+
                     canvas.Save();
-                    canvas.Translate(0, HeaderHeight);
-                    var snapshot = selectedPage.RenderSnapshot();
-                    if (snapshot != null) canvas.DrawImage(snapshot, 0, 0);
+                    canvas.ClipRect(new SKRect(0, HeaderHeight, bounds.Width, bounds.Height));
+                    selectedPage.Render(canvas);
                     canvas.Restore();
                 }
             }

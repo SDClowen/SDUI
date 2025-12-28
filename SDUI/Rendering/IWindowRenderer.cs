@@ -12,4 +12,6 @@ internal interface IWindowRenderer : IDisposable
     void Resize(int width, int height);
 
     void Render(int width, int height, Action<SKCanvas, SKImageInfo> draw);
+
+    void TrimCaches();
 }

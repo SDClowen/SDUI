@@ -129,6 +129,11 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         SwapBuffers(_hdc);
     }
 
+    public void TrimCaches()
+    {
+        _grContext?.PurgeResources();
+    }
+
     public void Dispose()
     {
         _surface?.Dispose();

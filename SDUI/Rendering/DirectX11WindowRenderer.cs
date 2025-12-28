@@ -19,6 +19,12 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 {
     public RenderBackend Backend => RenderBackend.DirectX11;
 
+    /// <summary>
+    /// Maximum retained bytes for the CPU backbuffer cache (SKBitmap + SKSurface + optional GDI Bitmap wrapper).
+    /// Set to 0 (or less) to disable the limit (unlimited).
+    /// </summary>
+    public static long MaxCpuBackBufferBytes { get; set; } = 24L * 1024 * 1024;
+
     // If SkiaSharp has a D3D backend in this build, we render directly to the swapchain backbuffer.
     // Otherwise we fall back to the existing CPU->GDI blit path.
     public GRContext? GrContext => _grContext;
@@ -94,6 +100,24 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         }
 
         Resize(1, 1);
+    }
+
+    public void TrimCaches()
+    {
+        // Only purge GPU resources; do not dispose CPU/GDI resources here to avoid invalid state.
+        try
+        {
+            if (_grContext == null)
+            {
+                System.Diagnostics.Debug.WriteLine("[DX11 TrimCaches] _grContext is null");
+                return;
+            }
+            _grContext.PurgeResources();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[DX11 TrimCaches] Exception: {ex}");
+        }
     }
 
     private IDXGISwapChain1 CreateSwapChainForHwnd(int width, int height, bool gdiCompatible)
@@ -198,12 +222,49 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
     private void CreateCpuCacheResources(int width, int height)
     {
         var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
+        var bytes = EstimateBackBufferBytes(width, height);
+        var max = MaxCpuBackBufferBytes;
+
+        // If the requested buffer is too large, do not retain a cached backbuffer.
+        // We'll render into a temporary buffer per frame.
+        if (max > 0 && bytes > max)
+        {
+            _gdiBitmap?.Dispose();
+            _gdiBitmap = null;
+
+            _cacheSurface?.Dispose();
+            _cacheSurface = null;
+
+            _cacheBitmap?.Dispose();
+            _cacheBitmap = null;
+
+            return;
+        }
+
         _cacheBitmap = new SKBitmap(info);
         var pixels = _cacheBitmap.GetPixels();
         _cacheSurface = SKSurface.Create(info, pixels, _cacheBitmap.RowBytes);
 
         // Only needed for the legacy GDI blit path.
         _gdiBitmap = new Bitmap(width, height, _cacheBitmap.RowBytes, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, pixels);
+    }
+
+    private static long EstimateBackBufferBytes(int width, int height)
+    {
+        if (width <= 0 || height <= 0)
+            return 0;
+
+        try
+        {
+            checked
+            {
+                return (long)width * height * 4;
+            }
+        }
+        catch
+        {
+            return long.MaxValue;
+        }
     }
 
     private void EnsureCpuUploadResources(int width, int height)
@@ -240,9 +301,9 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         _cpuUploadHeight = height;
     }
 
-    private unsafe void PresentFromCpuCacheViaD3D11Upload(int width, int height)
+    private unsafe void PresentFromCpuCacheViaD3D11Upload(SKBitmap srcBitmap, int width, int height)
     {
-        if (_context == null || _swapChain == null || _cacheBitmap == null)
+        if (_context == null || _swapChain == null)
             return;
 
         EnsureCpuUploadResources(width, height);
@@ -252,10 +313,10 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         var mapped = _context.Map(_cpuUploadTexture, 0, MapMode.WriteDiscard, Vortice.Direct3D11.MapFlags.None);
         try
         {
-            var srcBase = (byte*)_cacheBitmap.GetPixels().ToPointer();
+            var srcBase = (byte*)srcBitmap.GetPixels().ToPointer();
             var dstBase = (byte*)mapped.DataPointer.ToPointer();
 
-            var srcStride = _cacheBitmap.RowBytes;
+            var srcStride = srcBitmap.RowBytes;
             var dstStride = mapped.RowPitch;
             var rowBytes = width * 4;
 
@@ -573,8 +634,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
         if (_useSkiaGpu && _grSurface != null && _grContext != null)
         {
-            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
-            draw(_grSurface.Canvas, info);
+            var gpuInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
+            draw(_grSurface.Canvas, gpuInfo);
             _grSurface.Canvas.Flush();
             _grContext.Flush();
             _grContext.Submit();
@@ -582,11 +643,12 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             return;
         }
 
-        if (_cacheSurface == null || _cacheBitmap == null)
-            return;
+        // #####################
+        var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
 
+        // If we have a cached CPU backbuffer (within MaxCpuBackBufferBytes), use it.
+        if (_cacheSurface != null && _cacheBitmap != null)
         {
-            var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
             draw(_cacheSurface.Canvas, info);
             _cacheSurface.Canvas.Flush();
 
@@ -594,7 +656,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             {
                 try
                 {
-                    PresentFromCpuCacheViaD3D11Upload(width, height);
+                    PresentFromCpuCacheViaD3D11Upload(_cacheBitmap, width, height);
                 }
                 catch (Exception ex)
                 {
@@ -616,10 +678,9 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
                 }
                 catch (Exception ex)
                 {
-                    // This is the observed failure (DXGI_ERROR_INVALID_CALL) on some drivers.
                     LastInitError = $"GetDC failed; switching to D3D upload: {ex.Message}";
                     _useCpuUploadPath = true;
-                    PresentFromCpuCacheViaD3D11Upload(width, height);
+                    PresentFromCpuCacheViaD3D11Upload(_cacheBitmap, width, height);
                     return;
                 }
 
@@ -637,10 +698,72 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             }
             catch (Exception ex)
             {
-                // Never crash the app; record the error and keep the session alive.
                 LastInitError = $"DirectX11 CPU present failed: {ex.Message}";
             }
+
+            return;
         }
+
+        // Otherwise render into a temporary buffer per frame to keep resident memory low.
+        using var tempBitmap = new SKBitmap(info);
+        var pixels = tempBitmap.GetPixels();
+        using var tempSurface = SKSurface.Create(info, pixels, tempBitmap.RowBytes);
+        if (tempSurface == null)
+            return;
+
+        draw(tempSurface.Canvas, info);
+        tempSurface.Canvas.Flush();
+
+        if (_useCpuUploadPath)
+        {
+            try
+            {
+                PresentFromCpuCacheViaD3D11Upload(tempBitmap, width, height);
+            }
+            catch (Exception ex)
+            {
+                LastInitError = $"D3D11 upload present failed: {ex.Message}";
+            }
+
+            return;
+        }
+        
+        if (_gdiSurface == null)
+            return;
+
+        try
+        {
+            nint hdc;
+            try
+            {
+                hdc = _gdiSurface.GetDC(true);
+            }
+            catch (Exception ex)
+            {
+                LastInitError = $"GetDC failed; switching to D3D upload: {ex.Message}";
+                _useCpuUploadPath = true;
+                PresentFromCpuCacheViaD3D11Upload(tempBitmap, width, height);
+                return;
+            }
+
+            try
+            {
+                using var gfx = Graphics.FromHdc(hdc);
+                using var tempGdiBitmap = new Bitmap(width, height, tempBitmap.RowBytes, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, pixels);
+                gfx.DrawImageUnscaled(tempGdiBitmap, 0, 0);
+            }
+            finally
+            {
+                _gdiSurface.ReleaseDC(null);
+            }
+
+            _swapChain.Present(1, PresentFlags.None);
+        }
+        catch (Exception ex)
+        {
+            LastInitError = $"DirectX11 CPU present failed: {ex.Message}";
+        }
+        // #####################
     }
 
     public void Dispose()

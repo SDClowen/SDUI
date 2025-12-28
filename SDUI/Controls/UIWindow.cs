@@ -655,6 +655,92 @@ public class UIWindow : UIWindowBase, IUIElement
     private bool _needsFullRedraw = true;
     private int _suppressImmediateUpdateCount;
 
+    /// <summary>
+    /// Maximum retained bytes for the software backbuffer (SKBitmap + SKSurface + GDI Bitmap wrapper).
+    /// This prevents 4K/8K windows from permanently retaining very large pixel buffers.
+    /// Set to 0 (or less) to disable the limit (unlimited).
+    /// </summary>
+    public static long MaxSoftwareBackBufferBytes { get; set; } = 24L * 1024 * 1024;
+
+    public static bool EnableIdleMaintenance { get; set; } = true;
+
+    /// <summary>
+    /// Delay (ms) after the last repaint request before trimming retained backbuffers and
+    /// asking Skia to purge resource caches.
+    /// </summary>
+    public static int IdleMaintenanceDelayMs { get; set; } = 1500;
+
+    public static bool PurgeSkiaResourceCacheOnIdle { get; set; } = true;
+
+    private Timer? _idleMaintenanceTimer;
+
+    private bool ShouldForceSoftwareUpdate()
+    {
+        // Only force synchronous Update() when we need smooth, real-time visuals.
+        // Otherwise let WinForms coalesce paints to keep idle CPU low.
+        if (_suppressImmediateUpdateCount > 0)
+            return false;
+
+        if (_showPerfOverlay)
+            return true;
+
+        return pageAreaAnimationManager.Running
+            || minBoxHoverAnimationManager.Running
+            || maxBoxHoverAnimationManager.Running
+            || closeBoxHoverAnimationManager.Running
+            || extendBoxHoverAnimationManager.Running
+            || tabCloseHoverAnimationManager.Running
+            || newTabHoverAnimationManager.Running
+            || formMenuHoverAnimationManager.Running;
+    }
+
+    private void EnsureIdleMaintenanceTimer()
+    {
+        if (!EnableIdleMaintenance)
+            return;
+
+        if (_idleMaintenanceTimer == null)
+        {
+            _idleMaintenanceTimer = new Timer();
+            _idleMaintenanceTimer.Interval = IdleMaintenanceDelayMs;
+            _idleMaintenanceTimer.Tick += IdleMaintenanceTimer_Tick;
+        }
+    }
+
+    private void ArmIdleMaintenance()
+    {
+        if (!EnableIdleMaintenance)
+            return;
+
+        EnsureIdleMaintenanceTimer();
+        if (_idleMaintenanceTimer != null)
+        {
+            _idleMaintenanceTimer.Stop();
+            _idleMaintenanceTimer.Start();
+        }
+    }
+
+    private void IdleMaintenanceTimer_Tick(object? sender, EventArgs e)
+    {
+        _idleMaintenanceTimer?.Stop();
+
+        // 1. Trim renderer caches (DirectX / OpenGL)
+        _renderer?.TrimCaches();
+
+        // 2. Trim software backbuffer if using software rendering
+        if (_renderer == null)
+        {
+             DisposeSoftwareBackBuffer();
+             _needsFullRedraw = true;
+        }
+
+        // 3. Purge global Skia resource cache if requested
+        if (PurgeSkiaResourceCacheOnIdle)
+        {
+            SKGraphics.PurgeResourceCache();
+        }
+    }
+
     // Hot-path caches (avoid per-frame LINQ allocations)
     private readonly List<UIElementBase> _frameElements = new();
     private readonly List<UIElementBase> _hitTestElements = new();
@@ -1009,12 +1095,7 @@ public class UIWindow : UIWindowBase, IUIElement
     {
         if (info.Width <= 0 || info.Height <= 0)
         {
-            _cacheSurface?.Dispose();
-            _cacheSurface = null;
-            _cacheBitmap?.Dispose();
-            _cacheBitmap = null;
-            _gdiBitmap?.Dispose();
-            _gdiBitmap = null;
+            DisposeSoftwareBackBuffer();
             return;
         }
 
@@ -1030,6 +1111,53 @@ public class UIWindow : UIWindowBase, IUIElement
             _gdiBitmap = new Bitmap(info.Width, info.Height, _cacheBitmap.RowBytes, PixelFormat.Format32bppPArgb, pixels);
             _needsFullRedraw = true;
         }
+    }
+
+    private static long EstimateBackBufferBytes(SKImageInfo info)
+    {
+        // Estimate: BGRA8888/RGBA8888 => 4 bytes per pixel
+        var bytes = (long)info.Width * info.Height * 4;
+        return bytes > 0 ? bytes : 0;
+    }
+
+    private static bool ShouldCacheSoftwareBackBuffer(SKImageInfo info)
+    {
+        var maxBytes = MaxSoftwareBackBufferBytes;
+        if (maxBytes <= 0)
+            return true;
+
+        var estimated = EstimateBackBufferBytes(info);
+        return estimated > 0 && estimated <= maxBytes;
+    }
+
+    private void DisposeSoftwareBackBuffer()
+    {
+        _cacheSurface?.Dispose();
+        _cacheSurface = null;
+
+        _cacheBitmap?.Dispose();
+        _cacheBitmap = null;
+
+        _gdiBitmap?.Dispose();
+        _gdiBitmap = null;
+    }
+
+    private void RenderSoftwareFrameUncached(SKImageInfo info, Graphics graphics)
+    {
+        using var skBitmap = new SKBitmap(info);
+        var pixels = skBitmap.GetPixels();
+
+        using var surface = SKSurface.Create(info, pixels, skBitmap.RowBytes);
+        if (surface == null)
+            return;
+
+        var canvas = surface.Canvas;
+        RenderScene(canvas, info);
+        canvas.Flush();
+        surface.Flush();
+
+        using var gdiBitmap = new Bitmap(info.Width, info.Height, skBitmap.RowBytes, PixelFormat.Format32bppPArgb, pixels);
+        graphics.DrawImageUnscaled(gdiBitmap, 0, 0);
     }
 
     protected override void OnBackColorChanged(EventArgs e)
@@ -1804,7 +1932,7 @@ public class UIWindow : UIWindowBase, IUIElement
         // backend we still want snappy repaint, but we coalesce to one Update per message loop.
         if (IsHandleCreated && !IsDisposed && !Disposing && _suppressImmediateUpdateCount <= 0)
         {
-            if (_renderBackend == RenderBackend.Software)
+            if (_renderBackend == RenderBackend.Software && ShouldForceSoftwareUpdate())
                 QueueSoftwareUpdate();
         }
     }
@@ -1855,17 +1983,28 @@ public class UIWindow : UIWindowBase, IUIElement
         if (!DesignMode && _renderBackend != RenderBackend.Software && _renderer != null)
         {
             _renderer.Render(w, h, RenderScene);
+            ArmIdleMaintenance();
             return;
         }
 
         var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
-        var bmp = RenderSoftwareFrameToGdiBitmap(info);
-        if (bmp != null)
+        if (ShouldCacheSoftwareBackBuffer(info))
         {
-            e.Graphics.DrawImageUnscaled(bmp, 0, 0);
+            var bmp = RenderSoftwareFrameToGdiBitmap(info);
+            if (bmp != null)
+            {
+                e.Graphics.DrawImageUnscaled(bmp, 0, 0);
+            }
+        }
+        else
+        {
+            // Free any previously retained backbuffer (e.g., after resizing to a large size).
+            DisposeSoftwareBackBuffer();
+            RenderSoftwareFrameUncached(info, e.Graphics);
         }
 
         base.OnPaint(e);
+        ArmIdleMaintenance();
     }
 
     private void ApplyRenderStyles()

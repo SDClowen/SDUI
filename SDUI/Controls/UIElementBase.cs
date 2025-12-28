@@ -14,6 +14,10 @@ namespace SDUI.Controls
 {
     public abstract class UIElementBase : IUIElement, IDisposable
     {
+        private static readonly object s_renderCacheLock = new();
+        private static readonly LinkedList<UIElementBase> s_renderCacheLru = new();
+        private static long s_totalCachedElementBytes;
+
         public System.Drawing.ContentAlignment ImageAlign { get; set; }
         public RightToLeft RightToLeft { get; set; } = RightToLeft.No;
         public SizeF AutoScaleDimensions { get; set; }
@@ -33,6 +37,28 @@ namespace SDUI.Controls
         public Size AutoScrollMargin { get; set; }
 
         public Image Image { get; set; }
+
+        /// <summary>
+        /// Enables/disables per-element offscreen surface + snapshot caching.
+        /// When disabled (or when <see cref="MaxCachedElementBytes"/> is exceeded),
+        /// the element is rendered into a temporary surface per frame to reduce retained native memory.
+        /// </summary>
+        [Category("Performance")]
+        [DefaultValue(true)]
+        public bool UseRenderCache { get; set; } = true;
+
+        /// <summary>
+        /// Optional per-element cap for cached render targets.
+        /// 0 means unlimited (default behavior). If set to a positive value, elements whose
+        /// estimated pixel buffer exceeds this cap will not keep cached surfaces/snapshots.
+        /// </summary>
+        public static long MaxCachedElementBytes { get; set; } = 8L * 1024 * 1024;
+
+        /// <summary>
+        /// Global maximum cached surface budget across all elements (in bytes).
+        /// Set to 0 (or less) to disable global limit (unlimited).
+        /// </summary>
+        public static long MaxTotalCachedElementBytes { get; set; } = 32L * 1024 * 1024;
 
         private float _currentDpi = 96f;
         private IUIElement _parent;
@@ -58,6 +84,9 @@ namespace SDUI.Controls
         private SKSurface? _renderSurface;
         private SKImageInfo _renderInfo;
         private SKImage? _renderSnapshot;
+
+        private long _cachedSurfaceBytes;
+        private LinkedListNode<UIElementBase>? _renderCacheLruNode;
 
         private enum RenderTargetKind
         {
@@ -866,6 +895,8 @@ namespace SDUI.Controls
 
         private void DisposeRenderResources()
         {
+            UnregisterFromGlobalRenderCache();
+
             _renderSnapshot?.Dispose();
             _renderSnapshot = null;
 
@@ -877,8 +908,156 @@ namespace SDUI.Controls
             _renderGpuContext = null;
         }
 
+        private static long EstimateSurfaceBytes(int width, int height)
+        {
+            if (width <= 0 || height <= 0)
+                return 0;
+
+            // Estimate: RGBA8888 => 4 bytes per pixel (conservative).
+            var bytes = (long)width * height * 4;
+            return bytes > 0 ? bytes : 0;
+        }
+
+        private void EvictRenderResources_NoGlobal()
+        {
+            _renderSnapshot?.Dispose();
+            _renderSnapshot = null;
+
+            _renderSurface?.Dispose();
+            _renderSurface = null;
+            _renderInfo = SKImageInfo.Empty;
+
+            _renderTargetKind = RenderTargetKind.Cpu;
+            _renderGpuContext = null;
+            NeedsRedraw = true;
+        }
+
+        private static List<UIElementBase>? CollectEvictions_NoLock(UIElementBase? exclude)
+        {
+            var maxTotal = MaxTotalCachedElementBytes;
+            if (maxTotal <= 0)
+                return null;
+
+            if (s_totalCachedElementBytes <= maxTotal)
+                return null;
+
+            List<UIElementBase>? toEvict = null;
+
+            while (s_totalCachedElementBytes > maxTotal)
+            {
+                var lruNode = s_renderCacheLru.Last;
+                if (lruNode == null)
+                    break;
+
+                if (exclude != null && ReferenceEquals(lruNode.Value, exclude))
+                {
+                    lruNode = lruNode.Previous;
+                    if (lruNode == null)
+                        break;
+                }
+
+                var victim = lruNode.Value;
+                s_renderCacheLru.Remove(lruNode);
+
+                victim._renderCacheLruNode = null;
+
+                if (victim._cachedSurfaceBytes != 0)
+                {
+                    s_totalCachedElementBytes -= victim._cachedSurfaceBytes;
+                    victim._cachedSurfaceBytes = 0;
+                }
+
+                toEvict ??= new List<UIElementBase>(8);
+                toEvict.Add(victim);
+            }
+
+            return toEvict;
+        }
+
+        private void RegisterOrTouchGlobalRenderCache(long estimatedBytes)
+        {
+            if (estimatedBytes <= 0)
+                return;
+
+            List<UIElementBase>? toEvict;
+
+            lock (s_renderCacheLock)
+            {
+                if (_renderCacheLruNode == null)
+                {
+                    _renderCacheLruNode = s_renderCacheLru.AddFirst(this);
+                    _cachedSurfaceBytes = estimatedBytes;
+                    s_totalCachedElementBytes += estimatedBytes;
+                }
+                else
+                {
+                    if (_renderCacheLruNode.List != null)
+                    {
+                        s_renderCacheLru.Remove(_renderCacheLruNode);
+                        s_renderCacheLru.AddFirst(_renderCacheLruNode);
+                    }
+
+                    if (_cachedSurfaceBytes != estimatedBytes)
+                    {
+                        s_totalCachedElementBytes += (estimatedBytes - _cachedSurfaceBytes);
+                        _cachedSurfaceBytes = estimatedBytes;
+                    }
+                }
+
+                toEvict = CollectEvictions_NoLock(exclude: this);
+            }
+
+            if (toEvict == null)
+                return;
+
+            foreach (var victim in toEvict)
+            {
+                victim.EvictRenderResources_NoGlobal();
+            }
+        }
+
+        private void UnregisterFromGlobalRenderCache()
+        {
+            lock (s_renderCacheLock)
+            {
+                if (_renderCacheLruNode != null && _renderCacheLruNode.List != null)
+                {
+                    s_renderCacheLru.Remove(_renderCacheLruNode);
+                }
+
+                _renderCacheLruNode = null;
+
+                if (_cachedSurfaceBytes != 0)
+                {
+                    s_totalCachedElementBytes -= _cachedSurfaceBytes;
+                    _cachedSurfaceBytes = 0;
+                }
+            }
+        }
+
+        private bool ShouldUseRenderCache()
+        {
+            if (!UseRenderCache)
+                return false;
+
+            var maxBytes = MaxCachedElementBytes;
+            if (maxBytes <= 0)
+                return true;
+
+            // Estimate: RGBA8888 => 4 bytes per pixel.
+            var estimatedBytes = (long)Width * Height * 4;
+            return estimatedBytes > 0 && estimatedBytes <= maxBytes;
+        }
+
         private void EnsureRenderTarget()
         {
+            if (!ShouldUseRenderCache())
+            {
+                // Ensure we don't keep large native buffers alive when caching is disabled.
+                DisposeRenderResources();
+                return;
+            }
+
             if (Width <= 0 || Height <= 0)
             {
                 DisposeRenderResources();
@@ -911,6 +1090,7 @@ namespace SDUI.Controls
                 : SKSurface.Create(desiredInfo);
 
             _renderInfo = desiredInfo;
+            RegisterOrTouchGlobalRenderCache(EstimateSurfaceBytes(desiredInfo.Width, desiredInfo.Height));
             MarkDirty();
         }
 
@@ -929,11 +1109,41 @@ namespace SDUI.Controls
                 .OrderBy(el => el.ZOrder)
                 .ThenBy(el => el.TabIndex))
             {
-                var snapshot = child.RenderSnapshot();
-                if (snapshot == null)
-                    continue;
+                child.Render(canvas);
+            }
+        }
 
-                canvas.DrawImage(snapshot, child.Location.X, child.Location.Y);
+        private void RenderUncached(SKCanvas targetCanvas)
+        {
+            // Render into a temporary surface for this frame only.
+            // This avoids retaining large native pixel buffers per element.
+            var info = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, s_srgbColorSpace);
+
+            var gpuContext = s_currentGpuContext;
+            var surface = gpuContext != null
+                ? SKSurface.Create(gpuContext, true, info)
+                : SKSurface.Create(info);
+
+            if (surface == null)
+                return;
+
+            using (surface)
+            {
+                var canvas = surface.Canvas;
+                canvas.Save();
+                canvas.Clear(ResolveBackgroundColor());
+
+                var args = new SKPaintSurfaceEventArgs(surface, info);
+                OnPaint(args);
+                Paint?.Invoke(this, args);
+
+                RenderChildren(canvas);
+
+                canvas.Restore();
+                canvas.Flush();
+
+                using var image = surface.Snapshot();
+                targetCanvas.DrawImage(image, Location.X, Location.Y);
             }
         }
 
@@ -948,6 +1158,8 @@ namespace SDUI.Controls
             EnsureRenderTarget();
             if (_renderSurface == null)
                 return null;
+
+            RegisterOrTouchGlobalRenderCache(EstimateSurfaceBytes(_renderInfo.Width, _renderInfo.Height));
 
             if (NeedsRedraw)
             {
@@ -976,11 +1188,25 @@ namespace SDUI.Controls
 
         internal void Render(SKCanvas targetCanvas)
         {
-            var snapshot = RenderSnapshot();
-            if (snapshot == null)
+            if (!Visible || Width <= 0 || Height <= 0)
+            {
+                DisposeRenderResources();
                 return;
+            }
 
-            targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
+            if (ShouldUseRenderCache())
+            {
+                var snapshot = RenderSnapshot();
+                if (snapshot == null)
+                    return;
+
+                targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
+                return;
+            }
+
+            // If we previously cached, free it now.
+            DisposeRenderResources();
+            RenderUncached(targetCanvas);
         }
 
         public virtual void Focus()
