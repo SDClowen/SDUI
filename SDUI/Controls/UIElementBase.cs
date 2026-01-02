@@ -921,7 +921,12 @@ namespace SDUI.Controls
 
         private readonly ElementCollection _controls;
 
-        protected bool _isLayoutSuspended;
+        // Use a counter to support nested SuspendLayout/ResumeLayout like WinForms.
+        // When > 0 layout is suspended; when it reaches 0 we allow layouts again.
+        protected int _layoutSuspendCount;
+
+        // Guard to prevent re-entrant PerformLayout calls from causing stack overflows.
+        private bool _isPerformingLayout;
 
         public bool IsHandleCreated;
 
@@ -1230,7 +1235,8 @@ namespace SDUI.Controls
 
         internal SKImage? RenderSnapshot()
         {
-            if (!Visible || Width <= 0 || Height <= 0)
+            // Disposed veya geçersiz durumları kontrol et
+            if (_isDisposed || !Visible || Width <= 0 || Height <= 0)
             {
                 DisposeRenderResources();
                 return null;
@@ -1269,7 +1275,8 @@ namespace SDUI.Controls
 
         public void Render(SKCanvas targetCanvas)
         {
-            if (!Visible || Width <= 0 || Height <= 0)
+            // Disposed, null canvas veya geçersiz boyutları kontrol et
+            if (_isDisposed || targetCanvas == null || !Visible || Width <= 0 || Height <= 0)
             {
                 DisposeRenderResources();
                 return;
@@ -1278,14 +1285,56 @@ namespace SDUI.Controls
             if (ShouldUseRenderCache())
             {
                 var snapshot = RenderSnapshot();
-                if (snapshot == null)
+                // Snapshot null veya dispose edilmiş mi kontrol et
+                if (snapshot == null || snapshot.Handle == IntPtr.Zero)
                     return;
 
-                targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
+                // If the cached surface was GPU-backed but the current GPU context is different (or null),
+                // avoid drawing the GPU image directly (which can crash with native access violations).
+                // Instead, create a temporary CPU-backed surface, draw the snapshot into it (readback),
+                // and draw that safe raster copy.
+                try
+                {
+                    if (_renderTargetKind == RenderTargetKind.Gpu && !ReferenceEquals(s_currentGpuContext, _renderGpuContext))
+                    {
+                        var info = new SKImageInfo(snapshot.Width, snapshot.Height, SKColorType.Rgba8888, SKAlphaType.Premul, s_srgbColorSpace);
+                        using var tmpSurface = SKSurface.Create(info);
+                        if (tmpSurface != null)
+                        {
+                            var tmpCanvas = tmpSurface.Canvas;
+                            tmpCanvas.Save();
+                            tmpCanvas.Clear(SKColors.Transparent);
+                            tmpCanvas.DrawImage(snapshot, 0, 0);
+                            tmpCanvas.Restore();
+                            tmpCanvas.Flush();
+
+                            using var raster = tmpSurface.Snapshot();
+                            targetCanvas.DrawImage(raster, Location.X, Location.Y);
+                        }
+                        else
+                        {
+                            // Fallback to uncached rendering if we couldn't create a temporary surface
+                            
+                            DisposeRenderResources();
+                            RenderUncached(targetCanvas);
+                        }
+                    }
+                    else
+                    {
+                        // Safe to draw directly (either CPU-backed snapshot or same GPU context)
+                        targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
+                    }
+                }
+                catch (Exception)
+                {
+                    // DrawImage başarısız olursa, cache'i temizle ve uncached rendering dene
+                    DisposeRenderResources();
+                    RenderUncached(targetCanvas);
+                }
                 return;
             }
 
-            // If we previously cached, free it now.
+            // Önceden cache varsa, şimdi serbest bırak
             DisposeRenderResources();
             RenderUncached(targetCanvas);
         }
@@ -1631,7 +1680,12 @@ namespace SDUI.Controls
 
         internal virtual void OnPaddingChanged(EventArgs e) => PaddingChanged?.Invoke(this, e);
 
-        internal virtual void OnMarginChanged(EventArgs e) => MarginChanged?.Invoke(this, e);
+        internal virtual void OnMarginChanged(EventArgs e)
+        {
+            MarginChanged?.Invoke(this, e);
+            if (Parent is UIWindowBase parentWindow) parentWindow.PerformLayout();
+            else if (Parent is UIElementBase parentElement) parentElement.PerformLayout();
+        }
 
         internal virtual void OnTabStopChanged(EventArgs e) => TabStopChanged?.Invoke(this, e);
 
@@ -2104,18 +2158,40 @@ namespace SDUI.Controls
         #region Layout Methods
         public virtual void PerformLayout()
         {
-            if (_isLayoutSuspended)
+            if (_layoutSuspendCount > 0)
                 return;
 
-            OnLayout(new UILayoutEventArgs(null!));
+            if (_isPerformingLayout)
+                return;
+
+            try
+            {
+                _isPerformingLayout = true;
+                OnLayout(new UILayoutEventArgs(null!));
+            }
+            finally
+            {
+                _isPerformingLayout = false;
+            }
         }
 
         public virtual void PerformLayout(UIElementBase affectedElement)
         {
-            if (_isLayoutSuspended)
+            if (_layoutSuspendCount > 0)
                 return;
 
-            OnLayout(new UILayoutEventArgs(affectedElement));
+            if (_isPerformingLayout)
+                return;
+
+            try
+            {
+                _isPerformingLayout = true;
+                OnLayout(new UILayoutEventArgs(affectedElement));
+            }
+            finally
+            {
+                _isPerformingLayout = false;
+            }
         }
 
         protected virtual void OnLayout(UILayoutEventArgs e)
@@ -2131,12 +2207,45 @@ namespace SDUI.Controls
 
             Rectangle remainingArea = clientArea;
 
-            // Dock işlemleri
-            foreach (UIElementBase control in _controls)
+            // Dock işlemleri - process in order: Top, Bottom, Left, Right, Fill, None
+            var top = new List<UIElementBase>();
+            var bottom = new List<UIElementBase>();
+            var left = new List<UIElementBase>();
+            var right = new List<UIElementBase>();
+            var fill = new List<UIElementBase>();
+            var none = new List<UIElementBase>();
+
+            foreach (UIElementBase child in _controls)
             {
-                LayoutEngine.Perform(control, clientArea, ref remainingArea);
-                control.PerformLayout();
+                if (!child.Visible)
+                    continue;
+
+                switch (child.Dock)
+                {
+                    case DockStyle.Top: top.Add(child); break;
+                    case DockStyle.Bottom: bottom.Add(child); break;
+                    case DockStyle.Left: left.Add(child); break;
+                    case DockStyle.Right: right.Add(child); break;
+                    case DockStyle.Fill: fill.Add(child); break;
+                    default: none.Add(child); break;
+                }
             }
+
+            void ProcessList(IEnumerable<UIElementBase> list)
+            {
+                foreach (var control in list)
+                {
+                    LayoutEngine.Perform(control, clientArea, ref remainingArea);
+                    control.PerformLayout();
+                }
+            }
+
+            ProcessList(top);
+            ProcessList(bottom);
+            ProcessList(left);
+            ProcessList(right);
+            ProcessList(fill);
+            ProcessList(none);
 
             Invalidate();
         }
@@ -2175,7 +2284,7 @@ namespace SDUI.Controls
 
         public void SuspendLayout()
         {
-            _isLayoutSuspended = true;
+            _layoutSuspendCount++;
         }
 
         public void ResumeLayout()
@@ -2185,9 +2294,10 @@ namespace SDUI.Controls
 
         public void ResumeLayout(bool performLayout)
         {
-            _isLayoutSuspended = false;
+            if (_layoutSuspendCount > 0)
+                _layoutSuspendCount--;
 
-            if (performLayout)
+            if (performLayout && _layoutSuspendCount == 0)
                 PerformLayout();
         }
 

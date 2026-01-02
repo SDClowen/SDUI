@@ -32,6 +32,31 @@ namespace SDUI.Demo
 
             var rightLabel = new SDUI.Controls.Label { Text = "Right Pane", Dock = DockStyle.Top, Height = 28 };
             var rightPanel = new SDUI.Controls.Panel { Dock = DockStyle.Fill };
+
+            // AutoSize demo: FlowLayoutPanel with AutoSize and some AutoSize buttons
+            var autoDemoPanel = new SDUI.Controls.FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowOnly,
+                FlowDirection = FlowDirection.LeftToRight
+            };
+            autoDemoPanel.Controls.Add(new SDUI.Controls.Button { Text = "Short", AutoSize = true });
+            autoDemoPanel.Controls.Add(new SDUI.Controls.Button { Text = "A much longer button text", AutoSize = true });
+
+            // Docked AutoSize demo: a docked top button that should size to preferred height
+            var dockAutoButton = new SDUI.Controls.Button { Text = "Docked AutoSize", Dock = DockStyle.Top, AutoSize = true };
+
+            rightPanel.Controls.Add(autoDemoPanel);
+            rightPanel.Controls.Add(dockAutoButton);
+
+            // Stacked AutoSize (Top) controls + Fill example to exercise layout
+            var stackDemo = new SDUI.Controls.Panel { Dock = DockStyle.Top, Height = 120 };
+            stackDemo.Controls.Add(new SDUI.Controls.Button { Text = "Stack Top 1", Dock = DockStyle.Top, AutoSize = true, Margin = new Padding(2) });
+            stackDemo.Controls.Add(new SDUI.Controls.Button { Text = "Stack Top 2", Dock = DockStyle.Top, AutoSize = true, Margin = new Padding(3) });
+            stackDemo.Controls.Add(new SDUI.Controls.Panel { Dock = DockStyle.Fill, BackColor = Color.LightGray });
+            rightPanel.Controls.Add(stackDemo);
+
             rightPanel.Controls.Add(new SDUI.Controls.Label { Text = "Content goes here", Dock = DockStyle.Top, Height = 24 });
             vSplit.Panel2.Controls.Add(rightPanel);
             vSplit.Panel2.Controls.Add(rightLabel);

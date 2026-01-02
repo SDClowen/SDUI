@@ -307,6 +307,30 @@ public class FlowLayoutPanel : UIElementBase
         var maxContentWidth = 0;
         var maxContentHeight = 0;
 
+        // Ensure AutoSize children are sized to their preferred sizes before layout calculations
+        foreach (var control in controls)
+        {
+            if (control.AutoSize)
+            {
+                // Provide the available client area as proposed size so children can measure accordingly
+                var proposed = control.GetPreferredSize(new Size(clientArea.Width, clientArea.Height));
+                if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
+                {
+                    proposed.Width = Math.Max(control.Size.Width, proposed.Width);
+                    proposed.Height = Math.Max(control.Size.Height, proposed.Height);
+                }
+
+                // Clamp to min/max
+                if (control.MinimumSize.Width > 0) proposed.Width = Math.Max(proposed.Width, control.MinimumSize.Width);
+                if (control.MinimumSize.Height > 0) proposed.Height = Math.Max(proposed.Height, control.MinimumSize.Height);
+                if (control.MaximumSize.Width > 0) proposed.Width = Math.Min(proposed.Width, control.MaximumSize.Width);
+                if (control.MaximumSize.Height > 0) proposed.Height = Math.Min(proposed.Height, control.MaximumSize.Height);
+
+                if (control.Size != proposed)
+                    control.Size = proposed;
+            }
+        }
+
         // Yatay düzenleme
         if (_flowDirection == FlowDirection.LeftToRight || _flowDirection == FlowDirection.RightToLeft)
         {

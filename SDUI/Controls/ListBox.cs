@@ -233,11 +233,11 @@ namespace SDUI.Controls
                 _verticalScrollBar.Value = Math.Min(index - visibleItems + 1, _verticalScrollBar.Maximum);
         }
 
-        public void BeginUpdate() { _isLayoutSuspended = true; }
+        public void BeginUpdate() { SuspendLayout(); }
 
         public void EndUpdate()
         {
-            _isLayoutSuspended = false;
+            ResumeLayout(true);
             UpdateMaxItemWidth();
             UpdateScrollbars();
             Invalidate();

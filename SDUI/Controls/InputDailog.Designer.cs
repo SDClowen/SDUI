@@ -181,6 +181,7 @@ namespace SDUI.Controls
             MaximizeBox = false;
             MinimizeBox = false;
             Name = "InputDialog";
+            Padding = new(10);
             ShowIcon = false;
             ShowInTaskbar = false;
             SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
