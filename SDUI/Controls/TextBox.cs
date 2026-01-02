@@ -5,6 +5,7 @@ using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.ComponentModel;
 using System.Drawing;
 using System.Runtime.InteropServices;
@@ -45,6 +46,8 @@ internal static class NativeTextBoxMenu
     private const uint CMD_PASTE = 4;
     private const uint CMD_DELETE = 5;
     private const uint CMD_SELECTALL = 6;
+    private const uint CMD_BOLD = 7;
+    private const uint CMD_ITALIC = 8;
 
     public static void ShowContextMenu(TextBox textBox, Point screenLocation)
     {
@@ -85,7 +88,19 @@ internal static class NativeTextBoxMenu
             if (!hasSelection || isReadOnly) deleteFlags |= MF_GRAYED;
             AppendMenu(hMenu, deleteFlags, CMD_DELETE, "Si&l\tDel");
 
-            AppendMenu(hMenu, MF_SEPARATOR, 0, null);
+            // Rich text formatting (only when supported)
+            if (textBox.IsRich)
+            {
+                uint boldFlags = MF_STRING;
+                if (!hasSelection || isReadOnly) boldFlags |= MF_GRAYED;
+                AppendMenu(hMenu, boldFlags, CMD_BOLD, "&Kalın\tCtrl+B");
+
+                uint italicFlags = MF_STRING;
+                if (!hasSelection || isReadOnly) italicFlags |= MF_GRAYED;
+                AppendMenu(hMenu, italicFlags, CMD_ITALIC, "&İtalik\tCtrl+I");
+
+                AppendMenu(hMenu, MF_SEPARATOR, 0, null);
+            }
 
             // Tümünü Seç
             AppendMenu(hMenu, MF_STRING, CMD_SELECTALL, "&Tümünü Seç\tCtrl+A");
@@ -95,7 +110,7 @@ internal static class NativeTextBoxMenu
             var hWnd = form?.Handle ?? IntPtr.Zero;
             if (hWnd == IntPtr.Zero) return;
 
-            var cmd = (uint)TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN, 
+            var cmd = (uint)TrackPopupMenuEx(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN,
                 screenLocation.X, screenLocation.Y, hWnd, IntPtr.Zero);
 
             if (cmd > 0)
@@ -121,6 +136,18 @@ internal static class NativeTextBoxMenu
                         textBox.SelectAll();
                         textBox.Invalidate();
                         break;
+                    case CMD_BOLD:
+                        if (textBox.IsRich && !textBox.ReadOnly)
+                        {
+                            textBox.ToggleBoldSelection();
+                        }
+                        break;
+                    case CMD_ITALIC:
+                        if (textBox.IsRich && !textBox.ReadOnly)
+                        {
+                            textBox.ToggleItalicSelection();
+                        }
+                        break;
                 }
 
                 // Keep UI state consistent after a menu command.
@@ -141,6 +168,72 @@ public class RichTextBox : TextBox
     {
         IsRich = true;
         AutoScroll = true;
+    }
+
+    public RichTextBoxScrollBars ScrollBars
+    {
+        get => _verticalScrollBar.Visible && _horizontalScrollBar.Visible
+            ? RichTextBoxScrollBars.Both
+            : _verticalScrollBar.Visible
+                ? RichTextBoxScrollBars.Vertical
+                : _horizontalScrollBar.Visible
+                    ? RichTextBoxScrollBars.Horizontal
+                    : RichTextBoxScrollBars.None;
+        set
+        {
+            switch (value)
+            {
+                case RichTextBoxScrollBars.Both:
+                    _verticalScrollBar.Visible = true;
+                    _horizontalScrollBar.Visible = true;
+                    break;
+                case RichTextBoxScrollBars.Vertical:
+                    _verticalScrollBar.Visible = true;
+                    _horizontalScrollBar.Visible = false;
+                    break;
+                case RichTextBoxScrollBars.Horizontal:
+                    _verticalScrollBar.Visible = false;
+                    _horizontalScrollBar.Visible = true;
+                    break;
+                case RichTextBoxScrollBars.None:
+                    _verticalScrollBar.Visible = false;
+                    _horizontalScrollBar.Visible = false;
+                    break;
+            }
+            Invalidate();
+        }
+    }
+
+
+    /// <summary>
+    /// Select a range of text inside the RichTextBox.
+    /// </summary>
+    /// <param name="start">Zero-based start index.</param>
+    /// <param name="length">Number of characters to select.</param>
+    public void Select(int start, int length)
+    {
+        if (start < 0) start = 0;
+        if (length < 0) length = 0;
+
+        if (start > Text.Length)
+            start = Text.Length;
+
+        if (start + length > Text.Length)
+            length = Math.Max(0, Text.Length - start);
+
+        // Use base selection properties
+        SelectionStart = start;
+        SelectionLength = length;
+
+        // Make selection visible
+        if (AutoScroll)
+            ScrollToCaret();
+
+        // Optionally focus so selection is visible when possible
+        if (!Focused)
+            Focus();
+
+        Invalidate();
     }
 }
 
@@ -165,11 +258,14 @@ public class TextBox : UIElementBase
     private Timer _cursorBlinkTimer = null!;
     private bool _showCursor;
     private bool _isDragging;
+    private int _selectionAnchor = -1;
+    private float? _preferredCaretX = null;
     private HorizontalAlignment _textAlignment = HorizontalAlignment.Left;
     private bool _acceptsTab;
     private bool _acceptsReturn;
     private bool _hideSelection;
     private Color _selectionColor = ColorScheme.AccentColor.Alpha(90);
+    private Color _selectionBackColor = Color.Empty;
     private int _caretWidth = 1;
     private int _radius = 2;
     private bool _autoHeight;
@@ -185,10 +281,11 @@ public class TextBox : UIElementBase
     private bool _showCharCount;
     private Color _charCountColor = Color.Gray;
     private bool _isRich;
-    private ScrollBar _verticalScrollBar = null!;
-    private ScrollBar _horizontalScrollBar = null!;
+    internal ScrollBar _verticalScrollBar = null!;
+    internal ScrollBar _horizontalScrollBar = null!;
     private bool _autoScroll = true;
     private List<TextStyle> _styles = new();
+    private List<TextStyleSpan> _styleSpans = new();
     private float _scrollSpeed = 1.0f;
 
     // Theme-driven defaults (only update if user hasn't overridden)
@@ -226,10 +323,86 @@ public class TextBox : UIElementBase
     private Font? _boldSkFontSource;
     private int _boldSkFontDpi;
 
+    private Font? _italicSystemFont;
+    private Font? _italicSystemFontSource;
+    private SKFont? _italicSkFont;
+    private Font? _italicSkFontSource;
+    private int _italicSkFontDpi;
+
     public int SelectionStart { get => _selectionStart; set { _selectionStart = value; Invalidate(); } }
     public int SelectionLength { get => _selectionLength; set { _selectionLength = value; Invalidate(); } }
     public int TextLength => Text.Length;
     public int LineCount => Text.Split('\n').Length;
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool AcceptsReturn
+    {
+        get => _acceptsReturn;
+        set
+        {
+            if (_acceptsReturn == value) return;
+            _acceptsReturn = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool AcceptsTab
+    {
+        get => _acceptsTab;
+        set
+        {
+            if (_acceptsTab == value) return;
+            _acceptsTab = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue("")]
+    public string PlaceholderText
+    {
+        get => _placeholderText;
+        set
+        {
+            if (_placeholderText == value) return;
+            _placeholderText = value ?? string.Empty;
+            Invalidate();
+        }
+    }
+
+    /// <summary>
+    /// Returns the text broken into lines. Normalizes CRLF to LF so callers can assume '\n' separators.
+    /// </summary>
+    public string[] Lines
+    {
+        get
+        {
+            if (string.IsNullOrEmpty(Text)) return Array.Empty<string>();
+            return Text.Replace("\r\n", "\n").Split('\n');
+        }
+    }
+
+    /// <summary>
+    /// Returns the zero-based index of the first character in the specified line.
+    /// Returns -1 if the lineIndex is out of range.
+    /// </summary>
+    public int GetFirstCharIndexFromLine(int lineIndex)
+    {
+        if (lineIndex < 0) return -1;
+        var lines = Lines;
+        if (lineIndex >= lines.Length) return -1;
+        int index = 0;
+        for (int i = 0; i < lineIndex; i++)
+        {
+            // each line ended with a single '\n' after normalization
+            index += lines[i].Length + 1;
+        }
+        return Math.Min(index, Text.Length);
+    }
+
     public Font SelectionFont { get; set; } = new Font("Segoe UI", 9.75f);
 
     public TextBox()
@@ -247,7 +420,11 @@ public class TextBox : UIElementBase
         InitializeFocusAnimation();
         InitializeThemeBinding();
         InitializeScrollBars();
-        
+
+        // sensible default: when multiline is used, enable scrollbars
+        if (MultiLine && !_showScrollbar)
+            _showScrollbar = true;
+
         NeedsRedraw = true;
         Invalidate();
         System.Diagnostics.Debug.WriteLine("TextBox.Constructor: SDUI Custom TextBox created!");
@@ -315,7 +492,7 @@ public class TextBox : UIElementBase
         // Eğer blink time -1 ise (blink disabled), default 530ms kullan
         if (blinkTime <= 0)
             blinkTime = 530;
-            
+
         _cursorBlinkTimer = new Timer
         {
             Interval = blinkTime,
@@ -379,20 +556,7 @@ public class TextBox : UIElementBase
 
             _text = value ?? string.Empty;
             OnTextChanged(EventArgs.Empty);
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    [DefaultValue("")]
-    public string PlaceholderText
-    {
-        get => _placeholderText;
-        set
-        {
-            if (_placeholderText == value) return;
-            _placeholderText = value;
-            Invalidate();
+                UpdateScrollBars();
         }
     }
 
@@ -409,6 +573,14 @@ public class TextBox : UIElementBase
             {
                 Height = 23;
             }
+            else
+            {
+                // When enabling multiline, enable scrollbars by default and allow auto-height adjustments
+                if (!_showScrollbar)
+                    _showScrollbar = true;
+            }
+
+            UpdateScrollBars();
             Invalidate();
         }
     }
@@ -524,21 +696,7 @@ public class TextBox : UIElementBase
         }
     }
 
-    [Category("Behavior")]
-    [DefaultValue(false)]
-    public bool AcceptsTab
-    {
-        get => _acceptsTab;
-        set => _acceptsTab = value;
-    }
 
-    [Category("Behavior")]
-    [DefaultValue(false)]
-    public bool AcceptsReturn
-    {
-        get => _acceptsReturn;
-        set => _acceptsReturn = value;
-    }
 
     [Category("Behavior")]
     [DefaultValue(false)]
@@ -574,6 +732,18 @@ public class TextBox : UIElementBase
         {
             if (_selectionColor == value) return;
             _selectionColor = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    public Color SelectionBackColor
+    {
+        get => _selectionBackColor;
+        set
+        {
+            if (_selectionBackColor == value) return;
+            _selectionBackColor = value;
             Invalidate();
         }
     }
@@ -664,6 +834,7 @@ public class TextBox : UIElementBase
         {
             if (_showScrollbar == value) return;
             _showScrollbar = value;
+            UpdateScrollBars();
             Invalidate();
         }
     }
@@ -871,8 +1042,46 @@ public class TextBox : UIElementBase
                 current = current.Parent as UIElementBase;
             }
 
-            // Fallback to native-like menu when no SDUI context menu is assigned.
-            NativeTextBoxMenu.ShowContextMenu(this, point);
+            // Fallback to SDUI ContextMenuStrip when no custom menu is assigned.
+            var menu = new ContextMenuStrip();
+            bool hasSelection = _selectionLength > 0;
+            bool canPaste = Clipboard.ContainsText();
+            bool isReadOnly = ReadOnly;
+
+            var miCut = new MenuItem("Kes") { Enabled = hasSelection && !isReadOnly };
+            miCut.Click += (_, _) => Cut();
+            menu.Items.Add(miCut);
+
+            var miCopy = new MenuItem("Kopyala") { Enabled = hasSelection };
+            miCopy.Click += (_, _) => Copy();
+            menu.Items.Add(miCopy);
+
+            var miPaste = new MenuItem("Yapıştır") { Enabled = canPaste && !isReadOnly };
+            miPaste.Click += (_, _) => Paste();
+            menu.Items.Add(miPaste);
+
+            var miDelete = new MenuItem("Sil") { Enabled = hasSelection && !isReadOnly };
+            miDelete.Click += (_, _) => { if (_selectionLength > 0) DeleteSelection(); };
+            menu.Items.Add(miDelete);
+
+            menu.Items.Add(new MenuItem { IsSeparator = true });
+
+            var miSelectAll = new MenuItem("Tümünü Seç") { Enabled = Text.Length > 0 };
+            miSelectAll.Click += (_, _) => SelectAll();
+            menu.Items.Add(miSelectAll);
+
+            if (IsRich)
+            {
+                menu.Items.Add(new MenuItem { IsSeparator = true });
+                var miBold = new MenuItem("Kalın") { Enabled = _selectionLength > 0 && !isReadOnly };
+                miBold.Click += (_, _) => ToggleBoldSelection();
+                menu.Items.Add(miBold);
+                var miItalic = new MenuItem("İtalik") { Enabled = _selectionLength > 0 && !isReadOnly };
+                miItalic.Click += (_, _) => ToggleItalicSelection();
+                menu.Items.Add(miItalic);
+            }
+
+            menu.Show(this, point);
             return;
         }
 
@@ -885,7 +1094,7 @@ public class TextBox : UIElementBase
 
         if (e.Button == MouseButtons.Left && _isDragging)
         {
-            UpdateSelectionFromMousePosition(e.Location);
+            UpdateSelectionFromMousePosition(e.Location, extend: true);
         }
 
         if (ShowScrollbar && MultiLine)
@@ -929,29 +1138,28 @@ public class TextBox : UIElementBase
 
         if (e.Button == MouseButtons.Left)
         {
-            if (!Focused)
-                Focus();
-            else
-            {
-                // Reaffirm focus visuals on repeated clicks.
-                _focusAnimation?.StartNewAnimation(AnimationDirection.In);
-            }
+            // Always ensure control gets focus on click and reaffirm visuals.
+            Focus();
+            _focusAnimation?.StartNewAnimation(AnimationDirection.In);
             _isDragging = true;
 
-            if (ModifierKeys == Keys.Shift)
+            var extend = ModifierKeys.HasFlag(Keys.Shift);
+            UpdateSelectionFromMousePosition(e.Location, extend);
+
+            if (!extend)
             {
-                // Shift ile tıklama - seçimi genişlet
-                var oldStart = _selectionStart;
-                UpdateSelectionFromMousePosition(e.Location);
-                var newPos = _selectionStart;
-                _selectionStart = Math.Min(oldStart, newPos);
-                _selectionLength = Math.Abs(newPos - oldStart);
+                // Normal click - set anchor to caret
+                _selectionAnchor = _selectionStart;
+                _selectionLength = 0;
             }
             else
             {
-                // Normal tıklama
-                UpdateSelectionFromMousePosition(e.Location);
-                _selectionLength = 0;
+                // Ensure anchor exists
+                if (_selectionAnchor < 0) _selectionAnchor = 0;
+                var anchor = _selectionAnchor;
+                var start = Math.Min(anchor, _selectionStart);
+                _selectionLength = Math.Abs(_selectionStart - anchor);
+                _selectionStart = start;
             }
         }
 
@@ -1028,55 +1236,138 @@ public class TextBox : UIElementBase
                     break;
 
                 case Keys.Left when _selectionStart > 0:
-                    if (e.Shift)
-                    {
-                        _selectionLength++;
-                    }
-                    else
-                    {
-                        _selectionLength = 0;
-                    }
-                    _selectionStart--;
-                    Invalidate();
+                    SetCaret(_selectionStart - 1, e.Shift);
+                    e.Handled = true;
                     break;
 
                 case Keys.Right when _selectionStart < Text.Length:
-                    if (e.Shift)
-                    {
-                        _selectionLength++;
-                    }
-                    else
-                    {
-                        _selectionLength = 0;
-                    }
-                    _selectionStart++;
-                    Invalidate();
+                    SetCaret(_selectionStart + 1, e.Shift);
+                    e.Handled = true;
                     break;
 
                 case Keys.Home:
-                    if (e.Shift)
-                    {
-                        _selectionLength = _selectionStart;
-                    }
-                    else
-                    {
-                        _selectionLength = 0;
-                    }
-                    _selectionStart = 0;
-                    Invalidate();
+                    SetCaret(0, e.Shift);
+                    e.Handled = true;
                     break;
 
                 case Keys.End:
-                    if (e.Shift)
+                    SetCaret(Text.Length, e.Shift);
+                    e.Handled = true;
+                    break;
+
+                case Keys.Enter:
+                    // If the textbox is multiline and accepts return, insert newline
+                    if (MultiLine && AcceptsReturn && !ReadOnly)
                     {
-                        _selectionLength = Text.Length - _selectionStart;
-                    }
-                    else
+                        if (_selectionLength > 0) DeleteSelection();
+
+                    if (MaxLength > 0 && (Text.Length + 1) > MaxLength)
                     {
-                        _selectionLength = 0;
+                        e.Handled = true;
+                        e.SuppressKeyPress = true;
+                        break;
                     }
-                    _selectionStart = Text.Length;
-                    Invalidate();
+
+                    Text = Text.Insert(_selectionStart, "\n");
+                    _selectionStart++;
+                    _selectionLength = 0;
+                    UpdateScrollBars();
+                    if (AutoScroll) ScrollToCaret();
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    }
+                    break;
+
+                case Keys.Up:
+                    if (MultiLine)
+                    {
+                        var font = GetDefaultSkFont();
+                        var lines = GetTextLinesWithIndices(font);
+                        var caret = _selectionStart + _selectionLength;
+                        // find current line
+                        int lineIndex = 0;
+                        for (int i = 0; i < lines.Count; i++)
+                        {
+                            if (caret >= lines[i].StartIndex && caret <= lines[i].StartIndex + lines[i].Line.Length)
+                            {
+                                lineIndex = i;
+                                break;
+                            }
+                        }
+
+                        var curLine = lines[lineIndex];
+                        var localPos = caret - curLine.StartIndex;
+                        var tmp = new SKRect();
+                        font.MeasureText(curLine.Line.Substring(0, Math.Max(0, Math.Min(curLine.Line.Length, localPos))), out tmp);
+                        _preferredCaretX = tmp.Width;
+
+                        if (lineIndex > 0)
+                        {
+                            var target = lines[lineIndex - 1];
+                            int bestIdx = 0;
+                            float bestDiff = float.MaxValue;
+                            for (int i = 0; i <= target.Line.Length; i++)
+                            {
+                                font.MeasureText(target.Line.Substring(0, i), out tmp);
+                                var diff = Math.Abs(tmp.Width - (_preferredCaretX ?? 0));
+                                if (diff < bestDiff)
+                                {
+                                    bestDiff = diff;
+                                    bestIdx = i;
+                                }
+                            }
+
+                            var dest = target.StartIndex + bestIdx;
+                            SetCaret(dest, e.Shift);
+                        }
+                        e.Handled = true;
+                    }
+                    break;
+
+                case Keys.Down:
+                    if (MultiLine)
+                    {
+                        var font = GetDefaultSkFont();
+                        var lines = GetTextLinesWithIndices(font);
+                        var caret = _selectionStart + _selectionLength;
+                        // find current line
+                        int lineIndex = 0;
+                        for (int i = 0; i < lines.Count; i++)
+                        {
+                            if (caret >= lines[i].StartIndex && caret <= lines[i].StartIndex + lines[i].Line.Length)
+                            {
+                                lineIndex = i;
+                                break;
+                            }
+                        }
+
+                        var curLine = lines[lineIndex];
+                        var localPos = caret - curLine.StartIndex;
+                        var tmp = new SKRect();
+                        font.MeasureText(curLine.Line.Substring(0, Math.Max(0, Math.Min(curLine.Line.Length, localPos))), out tmp);
+                        _preferredCaretX = tmp.Width;
+
+                        if (lineIndex < lines.Count - 1)
+                        {
+                            var target = lines[lineIndex + 1];
+                            int bestIdx = 0;
+                            float bestDiff = float.MaxValue;
+                            for (int i = 0; i <= target.Line.Length; i++)
+                            {
+                                font.MeasureText(target.Line.Substring(0, i), out tmp);
+                                var diff = Math.Abs(tmp.Width - (_preferredCaretX ?? 0));
+                                if (diff < bestDiff)
+                                {
+                                    bestDiff = diff;
+                                    bestIdx = i;
+                                }
+                            }
+
+                            var dest = target.StartIndex + bestIdx;
+                            SetCaret(dest, e.Shift);
+                        }
+                        e.Handled = true;
+                    }
                     break;
                 case Keys.Delete:
                     if (!ReadOnly)
@@ -1141,79 +1432,172 @@ public class TextBox : UIElementBase
         var displayText = UseSystemPasswordChar && !string.IsNullOrEmpty(Text)
             ? new string(PasswordChar, Text.Length)
             : Text;
-            
+
         bool isPlaceholder = string.IsNullOrEmpty(displayText) && !string.IsNullOrEmpty(PlaceholderText) && !Focused;
         string textToDraw = isPlaceholder ? PlaceholderText : displayText;
-        
-        // 6. Calculate Text Position
-        var textBounds = new SKRect();
-        if (!string.IsNullOrEmpty(textToDraw))
-        {
-            font.MeasureText(textToDraw, out textBounds);
-        }
-        
-        var metrics = font.Metrics;
-        var y = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2);
-        var x = GetTextX(bounds.Width, textBounds.Width);
 
-        // 7. Draw Text
+        var metrics = font.Metrics;
+
+        // Draw single-line or multi-line text and selection/caret
         var activeTextColor = (Enabled ? ForeColor : ForeColor.Alpha(120)).ToSKColor();
         var placeholderColor = ColorScheme.ForeColor.Alpha(140).ToSKColor();
 
-        if (!string.IsNullOrEmpty(textToDraw) && !IsRich)
+        if (!IsRich && !MultiLine)
         {
-            _textPaint!.Color = isPlaceholder ? placeholderColor : activeTextColor;
-            TextRenderingHelper.DrawText(canvas, textToDraw, x, y, SKTextAlign.Left, font, _textPaint);
-        }
-
-        // 8. Draw Selection (if not placeholder and not Rich)
-        if (!isPlaceholder && Focused && _selectionLength > 0 && !IsRich)
-        {
-            var selectedText = displayText.Substring(_selectionStart, _selectionLength);
-            var selectedBounds = new SKRect();
-            font.MeasureText(selectedText, out selectedBounds);
-
-            var selectionStartX = x;
-            if (_selectionStart > 0)
+            // Single-line behavior (existing)
+            var textBounds = new SKRect();
+            if (!string.IsNullOrEmpty(textToDraw))
             {
-                var preText = displayText.Substring(0, _selectionStart);
-                var preBounds = new SKRect();
-                font.MeasureText(preText, out preBounds);
-                selectionStartX += preBounds.Width;
+                font.MeasureText(textToDraw, out textBounds);
             }
 
-            _selectionPaint!.Color = SelectionColor.ToSKColor();
-            var selectionTop = y + metrics.Ascent;
-            var selectionBottom = y + metrics.Descent;
+            var y = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2);
+            var x = GetTextX(bounds.Width, textBounds.Width);
 
-            canvas.DrawRect(
-                new SKRect(selectionStartX, selectionTop,
+            if (!string.IsNullOrEmpty(textToDraw))
+            {
+                _textPaint!.Color = isPlaceholder ? placeholderColor : activeTextColor;
+                TextRenderingHelper.DrawText(canvas, textToDraw, x, y, SKTextAlign.Left, font, _textPaint);
+            }
+
+            // Selection (single-line)
+            if (!isPlaceholder && Focused && _selectionLength > 0)
+            {
+                var selectedText = displayText.Substring(_selectionStart, _selectionLength);
+                var selectedBounds = new SKRect();
+                font.MeasureText(selectedText, out selectedBounds);
+
+                var selectionStartX = x;
+                if (_selectionStart > 0)
+                {
+                    var preText = displayText.Substring(0, _selectionStart);
+                    var preBounds = new SKRect();
+                    font.MeasureText(preText, out preBounds);
+                    selectionStartX += preBounds.Width;
+                }
+
+                _selectionPaint!.Color = (SelectionBackColor != Color.Empty ? SelectionBackColor : SelectionColor).ToSKColor();
+                var selectionTop = y + metrics.Ascent;
+                var selectionBottom = y + metrics.Descent;
+
+                canvas.DrawRect(new SKRect(selectionStartX, selectionTop,
                     selectionStartX + selectedBounds.Width,
-                    selectionBottom),
-                _selectionPaint);
+                    selectionBottom), _selectionPaint);
+            }
+
+            // Cursor (single-line)
+            if (Focused && _showCursor && _selectionLength == 0)
+            {
+                _cursorPaint!.Color = ForeColor.ToSKColor();
+                _cursorPaint.StrokeWidth = _caretWidth;
+
+                var cursorX = GetTextX(bounds.Width, textBounds.Width);
+                if (!string.IsNullOrEmpty(displayText))
+                {
+                    var preText = displayText.Substring(0, Math.Min(_selectionStart, displayText.Length));
+                    var preBounds = new SKRect();
+                    font.MeasureText(preText, out preBounds);
+                    cursorX += preBounds.Width;
+                }
+
+                var cursorTop = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2) + metrics.Ascent;
+                var cursorBottom = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2) + metrics.Descent;
+
+                canvas.DrawLine(new SKPoint(cursorX, cursorTop), new SKPoint(cursorX, cursorBottom), _cursorPaint);
+            }
+        }
+        else if (!IsRich && MultiLine)
+        {
+            // Multi-line rendering (non-rich)
+            var lines = GetTextLines(font);
+            var lineHeight = font.Size + LineSpacing;
+            var richY = Padding.Top - _scrollPosition;
+            var xOffset = Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0);
+
+            _textPaint!.Color = isPlaceholder ? placeholderColor : activeTextColor;
+
+            // Draw lines
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var line = lines[i];
+                var drawY = richY + (i * lineHeight) + font.Size;
+                if (drawY + font.Size < 0)
+                    continue;
+                if (drawY - font.Size > bounds.Height)
+                    break;
+
+                TextRenderingHelper.DrawText(canvas, line, xOffset, drawY, font, _textPaint);
+            }
+
+            // Selection
+            if (!isPlaceholder && Focused && _selectionLength > 0)
+            {
+                var selStart = _selectionStart;
+                var selEnd = _selectionStart + _selectionLength;
+                var linesWithIdx = GetTextLinesWithIndices(font);
+                foreach (var item in linesWithIdx)
+                {
+                    var lineText = item.Line;
+                    var lineStart = item.StartIndex;
+                    var lineEnd = lineStart + lineText.Length;
+
+                    var overlapStart = Math.Max(selStart, lineStart);
+                    var overlapEnd = Math.Min(selEnd, lineEnd);
+
+                    if (overlapStart < overlapEnd)
+                    {
+                        var localStart = overlapStart - lineStart;
+                        var localLen = overlapEnd - overlapStart;
+
+                        var preText = lineText.Substring(0, localStart);
+                        var selText = lineText.Substring(localStart, localLen);
+
+                        var preBounds = new SKRect();
+                        var selBounds = new SKRect();
+                        font.MeasureText(preText, out preBounds);
+                        font.MeasureText(selText, out selBounds);
+
+                        var top = Padding.Top - _scrollPosition + (linesWithIdx.IndexOf(item) * lineHeight) + metrics.Ascent;
+                        var bottom = top + (metrics.Descent - metrics.Ascent);
+
+                        _selectionPaint!.Color = (SelectionBackColor != Color.Empty ? SelectionBackColor : SelectionColor).ToSKColor();
+                        canvas.DrawRect(new SKRect(xOffset + preBounds.Width, top, xOffset + preBounds.Width + selBounds.Width, top + (metrics.Descent - metrics.Ascent)), _selectionPaint);
+                    }
+                }
+            }
+
+            // Cursor
+            if (Focused && _showCursor && _selectionLength == 0)
+            {
+                var caretIndex = Math.Min(_selectionStart, Text.Length);
+                var linesWithIdx = GetTextLinesWithIndices(font);
+                int caretLineIdx = 0;
+                for (int i = 0; i < linesWithIdx.Count; i++)
+                {
+                    var s = linesWithIdx[i];
+                    if (caretIndex >= s.StartIndex && caretIndex <= s.StartIndex + s.Line.Length)
+                    {
+                        caretLineIdx = i;
+                        break;
+                    }
+                }
+
+                var caretLine = linesWithIdx[caretLineIdx];
+                var localPos = caretIndex - caretLine.StartIndex;
+                var preText = caretLine.Line.Substring(0, localPos);
+                var preBounds = new SKRect();
+                font.MeasureText(preText, out preBounds);
+
+                var cursorX = xOffset + preBounds.Width;
+                var cursorTop = Padding.Top - _scrollPosition + (caretLineIdx * (font.Size + LineSpacing)) + metrics.Ascent;
+                var cursorBottom = cursorTop + (metrics.Descent - metrics.Ascent);
+
+                _cursorPaint!.Color = ForeColor.ToSKColor();
+                _cursorPaint.StrokeWidth = _caretWidth;
+                canvas.DrawLine(new SKPoint(cursorX, cursorTop), new SKPoint(cursorX, cursorBottom), _cursorPaint);
+            }
         }
 
-        // 9. Draw Cursor
-        if (Focused && _showCursor && _selectionLength == 0)
-        {
-             _cursorPaint!.Color = ForeColor.ToSKColor();
-             _cursorPaint.StrokeWidth = _caretWidth;
-             
-             var cursorX = x;
-             if (!string.IsNullOrEmpty(displayText))
-             {
-                 var preText = displayText.Substring(0, Math.Min(_selectionStart, displayText.Length));
-                 var preBounds = new SKRect();
-                 font.MeasureText(preText, out preBounds);
-                 cursorX += preBounds.Width;
-             }
-             
-             var cursorTop = y + metrics.Ascent;
-             var cursorBottom = y + metrics.Descent;
-             
-             canvas.DrawLine(new SKPoint(cursorX, cursorTop), new SKPoint(cursorX, cursorBottom), _cursorPaint);
-        }
-        
         // 10. CharCount
         if (ShowCharCount)
         {
@@ -1234,60 +1618,117 @@ public class TextBox : UIElementBase
         // 11. Scrollbars
         if (ShowScrollbar && MultiLine)
         {
-             var scrollBarBounds = new SKRect(
-                bounds.Width - 12,
-                2,
-                bounds.Width - 4,
-                bounds.Height - 4);
+            var scrollBarBounds = new SKRect(
+               bounds.Width - 12,
+               2,
+               bounds.Width - 4,
+               bounds.Height - 4);
 
             _scrollbarPaint!.Color = (_isScrollBarHovered ? ScrollBarHoverColor : ScrollBarColor).ToSKColor();
             canvas.DrawRoundRect(scrollBarBounds, 4, 4, _scrollbarPaint);
         }
 
-        // 12. Rich Text
+        // 12. Rich Text (span-based)
         if (IsRich && !string.IsNullOrEmpty(Text))
         {
-            var lines = GetTextLines(font);
+            var lines = GetTextLinesWithIndices(font);
             var richY = Padding.Top - _scrollPosition;
             var lineHeight = font.Size + LineSpacing;
 
-            _richTextPaint!.Color = ForeColor.ToSKColor();
-
-            foreach (var line in lines)
+            for (int idx = 0; idx < lines.Count; idx++)
             {
-                if (richY + lineHeight < 0)
+                var item = lines[idx];
+                var line = item.Line;
+                var lineStart = item.StartIndex;
+
+                // Compute baseline (top-aligned): padding + line index * lineHeight + ascent, adjusted by scroll
+                var top = Padding.Top - _scrollPosition + (idx * lineHeight) + metrics.Ascent;
+                var lineTop = top - metrics.Ascent;
+
+                // Visibility checks
+                if (lineTop + lineHeight < 0)
                 {
-                    richY += lineHeight;
+                    // line is above viewport
                     continue;
                 }
 
-                if (richY > bounds.Height)
+                if (lineTop > bounds.Height)
                     break;
 
-                var drawFont = font;
-                foreach (var style in _styles)
+                // Draw selection for this line (if any)
+                if (Focused && _selectionLength > 0)
                 {
-                    if (line.Contains(style.Pattern))
+                    var selStart = _selectionStart;
+                    var selEnd = _selectionStart + _selectionLength;
+
+                    var overlapStart = Math.Max(selStart, lineStart);
+                    var overlapEnd = Math.Min(selEnd, lineStart + line.Length);
+
+                    if (overlapStart < overlapEnd)
                     {
-                        _richTextPaint.Color = style.Color.ToSKColor();
-                        if (style.IsBold)
-                        {
-                            drawFont = GetBoldSkFont();
-                        }
+                        var preText = line.Substring(0, overlapStart - lineStart);
+                        var selText = line.Substring(overlapStart - lineStart, overlapEnd - overlapStart);
+
+                        var preBounds = new SKRect();
+                        var selBounds = new SKRect();
+                        font.MeasureText(preText, out preBounds);
+                        font.MeasureText(selText, out selBounds);
+
+                        _selectionPaint!.Color = (SelectionBackColor != Color.Empty ? SelectionBackColor : SelectionColor).ToSKColor();
+                        canvas.DrawRect(new SKRect(Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0) + preBounds.Width, top, Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0) + preBounds.Width + selBounds.Width, top + (metrics.Descent - metrics.Ascent)), _selectionPaint);
                     }
                 }
 
-                TextRenderingHelper.DrawText(
-                    canvas,
-                    line,
-                    Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0),
-                    richY + font.Size,
-                    drawFont,
-                    _richTextPaint);
-                richY += lineHeight;
+                // Draw text in runs according to spans
+                int pos = 0;
+                while (pos < line.Length)
+                {
+                    var globalPos = lineStart + pos;
+                    var span = _styleSpans.FirstOrDefault(s => s.Start <= globalPos && (s.Start + s.Length) > globalPos);
+                    int segLen;
+                    TextStyle? segStyle = null;
 
-                _richTextPaint.Color = ForeColor.ToSKColor();
+                    if (span != null)
+                    {
+                        segStyle = span.Style;
+                        segLen = Math.Min(line.Length - pos, (span.Start + span.Length) - globalPos);
+                    }
+                    else
+                    {
+                        var nextSpanStart = _styleSpans.Where(s => s.Start > globalPos && s.Start < lineStart + line.Length).Select(s => s.Start).DefaultIfEmpty(lineStart + line.Length).Min();
+                        segLen = nextSpanStart - globalPos;
+                    }
+
+                    var segText = line.Substring(pos, segLen);
+                    SKFont segFont;
+                    if (segStyle != null && segStyle.IsBold)
+                        segFont = GetBoldSkFont();
+                    else if (segStyle != null && segStyle.IsItalic)
+                        segFont = GetItalicSkFont();
+                    else
+                        segFont = font;
+                    _richTextPaint!.Color = (segStyle != null) ? segStyle.Color.ToSKColor() : ForeColor.ToSKColor();
+
+                    var xPos = Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0);
+                    var preBounds = new SKRect();
+                    font.MeasureText(line.Substring(0, pos), out preBounds);
+
+                    TextRenderingHelper.DrawText(
+                        canvas,
+                        segText,
+                        xPos + preBounds.Width,
+                        top,
+                        segFont,
+                        _richTextPaint);
+
+                    pos += segLen;
+                }
+
+                richY += lineHeight;
             }
+
+            // reset rich paint color
+            _richTextPaint!.Color = ForeColor.ToSKColor();
         }
     }
 
@@ -1377,6 +1818,35 @@ public class TextBox : UIElementBase
         }
 
         return _boldSkFont;
+    }
+
+    private SKFont GetItalicSkFont()
+    {
+        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+
+        if (_italicSystemFont == null || !ReferenceEquals(_italicSystemFontSource, Font))
+        {
+            _italicSystemFont?.Dispose();
+            _italicSystemFont = new Font(Font, FontStyle.Italic);
+            _italicSystemFontSource = Font;
+        }
+
+        if (_italicSkFont == null || !ReferenceEquals(_italicSkFontSource, Font) || _italicSkFontDpi != dpi)
+        {
+            _italicSkFont?.Dispose();
+            _italicSkFont = new SKFont
+            {
+                Size = Font.Size.PtToPx(this),
+                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(_italicSystemFont),
+                Hinting = SKFontHinting.Full,
+                Edging = SKFontEdging.SubpixelAntialias,
+                Subpixel = true
+            };
+            _italicSkFontSource = Font;
+            _italicSkFontDpi = dpi;
+        }
+
+        return _italicSkFont;
     }
 
     private Color ResolveSurfaceColor(bool enabled)
@@ -1505,31 +1975,63 @@ public class TextBox : UIElementBase
             _selectionStart++;
             _selectionLength = 0;
             e.Handled = true;
+
+            // When inserting a newline ensure scrollbars are updated and caret visible
+            if (e.KeyChar == '\n')
+            {
+                UpdateScrollBars();
+                if (AutoScroll)
+                    ScrollToCaret();
+            }
         }
 
         base.OnKeyPress(e);
     }
 
-    private void UpdateSelectionFromMousePosition(Point location)
+    private void UpdateSelectionFromMousePosition(Point location, bool extend)
     {
         var font = GetDefaultSkFont();
-        var displayText = UseSystemPasswordChar ? new string(PasswordChar, Text.Length) : Text;
-        var clickX = location.X - Padding.Left;
+        var linesWithIdx = GetTextLinesWithIndices(font);
+        var lineHeight = font.Size + LineSpacing;
+        var y = location.Y - Padding.Top + (int)_scrollPosition;
+        var lineIndex = Math.Max(0, Math.Min(linesWithIdx.Count - 1, (int)(y / lineHeight)));
 
-        for (int i = 0; i <= displayText.Length; i++)
+        var line = linesWithIdx[lineIndex];
+        var clickX = location.X - Padding.Left + (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0);
+
+        int charIndexInLine = 0;
+        for (int i = 0; i <= line.Line.Length; i++)
         {
-            var textPart = displayText.Substring(0, i);
+            var textPart = line.Line.Substring(0, i);
             var bounds = new SKRect();
             font.MeasureText(textPart, out bounds);
 
-            if (bounds.Width >= clickX || i == displayText.Length)
+            if (bounds.Width >= clickX || i == line.Line.Length)
             {
-                _selectionStart = i;
-                _selectionLength = 0;
-                Invalidate();
+                charIndexInLine = i;
                 break;
             }
         }
+
+        var caretIndex = line.StartIndex + charIndexInLine;
+
+        if (!extend)
+        {
+            _selectionAnchor = caretIndex;
+            _selectionStart = caretIndex;
+            _selectionLength = 0;
+        }
+        else
+        {
+            if (_selectionAnchor < 0)
+                _selectionAnchor = _selectionStart;
+
+            var start = Math.Min(_selectionAnchor, caretIndex);
+            _selectionStart = start;
+            _selectionLength = Math.Abs(caretIndex - _selectionAnchor);
+        }
+
+        Invalidate();
     }
 
     private SKTextAlign GetSkiaTextAlign()
@@ -1554,6 +2056,27 @@ public class TextBox : UIElementBase
         };
     }
 
+    private void SetCaret(int caretIndex, bool extend)
+    {
+        caretIndex = Math.Max(0, Math.Min(Text.Length, caretIndex));
+        if (!extend)
+        {
+            _selectionAnchor = caretIndex;
+            _selectionStart = caretIndex;
+            _selectionLength = 0;
+        }
+        else
+        {
+            if (_selectionAnchor < 0)
+                _selectionAnchor = _selectionStart;
+
+            var start = Math.Min(_selectionAnchor, caretIndex);
+            _selectionStart = start;
+            _selectionLength = Math.Abs(caretIndex - _selectionAnchor);
+        }
+        Invalidate();
+    }
+
     private void UpdateAutoHeight()
     {
         if (!AutoHeight || !MultiLine) return;
@@ -1571,48 +2094,89 @@ public class TextBox : UIElementBase
 
     private List<string> GetTextLines(SKFont font)
     {
-        var lines = new List<string>();
+        // Simple wrapper that returns only the line text; uses the richer indexed implementation.
+        var indexed = GetTextLinesWithIndices(font);
+        var lines = new List<string>(indexed.Count);
+        foreach (var it in indexed)
+            lines.Add(it.Line);
+        return lines;
+    }
+
+    private List<(string Line, int StartIndex)> GetTextLinesWithIndices(SKFont font)
+    {
+        var result = new List<(string, int)>();
         if (string.IsNullOrEmpty(Text))
         {
-            lines.Add(string.Empty);
-            return lines;
+            result.Add((string.Empty, 0));
+            return result;
         }
 
-        var availableWidth = Width - Padding.Horizontal - (ShowScrollbar ? 20 : 0);
+        var availableWidth = Math.Max(10, Width - Padding.Horizontal - (ShowScrollbar ? 20 : 0));
+        int pos = 0;
+        var text = Text;
 
-        if (!WordWrap)
+        while (pos < text.Length)
         {
-            lines.AddRange(Text.Split('\n'));
-            return lines;
-        }
+            int nl = text.IndexOf('\n', pos);
+            int paragraphLength = (nl >= 0) ? nl - pos : text.Length - pos;
+            var paragraph = text.Substring(pos, paragraphLength);
 
-        var words = Text.Split(' ');
-        var currentLine = new StringBuilder();
-
-        foreach (var word in words)
-        {
-            var testLine = currentLine.Length == 0 ? word : currentLine + " " + word;
-            var bounds = new SKRect();
-            font.MeasureText(testLine, out bounds);
-
-            if (bounds.Width > availableWidth && currentLine.Length > 0)
+            if (!WordWrap || paragraph.Length == 0)
             {
-                lines.Add(currentLine.ToString());
-                currentLine.Clear();
-                currentLine.Append(word);
+                // Add paragraph as-is
+                result.Add((paragraph, pos));
             }
             else
             {
-                if (currentLine.Length > 0)
-                    currentLine.Append(' ');
-                currentLine.Append(word);
+                int pIdx = 0;
+                while (pIdx < paragraph.Length)
+                {
+                    int start = pIdx;
+                    int lastFit = start;
+                    var sb = new StringBuilder();
+                    for (; pIdx < paragraph.Length; pIdx++)
+                    {
+                        sb.Append(paragraph[pIdx]);
+                        var bounds = new SKRect();
+                        font.MeasureText(sb.ToString(), out bounds);
+                        if (bounds.Width > availableWidth)
+                        {
+                            // If nothing fits (very narrow), force at least one char
+                            if (sb.Length == 1)
+                            {
+                                lastFit = start + 1;
+                                pIdx = start + 1;
+                            }
+                            else
+                            {
+                                lastFit = pIdx - 1;
+                            }
+                            break;
+                        }
+                        lastFit = pIdx + 1;
+                    }
+
+                    if (lastFit <= start)
+                        lastFit = start + 1;
+
+                    var line = paragraph.Substring(start, lastFit - start);
+                    result.Add((line, pos + start));
+
+                    if (pIdx >= paragraph.Length)
+                        break;
+                }
+            }
+
+            pos = (nl >= 0) ? nl + 1 : text.Length;
+
+            // If paragraph ended with an explicit newline and it was empty, preserve it
+            if (nl >= 0 && paragraph.Length == 0)
+            {
+                result.Add((string.Empty, pos - 1));
             }
         }
 
-        if (currentLine.Length > 0)
-            lines.Add(currentLine.ToString());
-
-        return lines;
+        return result;
     }
 
     internal override void OnMouseWheel(MouseEventArgs e)
@@ -1627,6 +2191,7 @@ public class TextBox : UIElementBase
                 _verticalScrollBar.Value - (int)delta));
         }
     }
+
 
     internal override void OnTextChanged(EventArgs e)
     {
@@ -1654,9 +2219,73 @@ public class TextBox : UIElementBase
         Invalidate();
     }
 
+    public void ApplyStyleToSelection(TextStyle style)
+    {
+        if (_selectionLength <= 0) return;
+        _styleSpans.Add(new TextStyleSpan(_selectionStart, _selectionLength, style));
+        Invalidate();
+    }
+
+    public void RemoveStylesInSelection()
+    {
+        if (_selectionLength <= 0) return;
+        var selStart = _selectionStart;
+        var selEnd = _selectionStart + _selectionLength;
+        _styleSpans.RemoveAll(s => s.Start < selEnd && (s.Start + s.Length) > selStart);
+        Invalidate();
+    }
+
+    public void ToggleBoldSelection()
+    {
+        if (_selectionLength <= 0) return;
+        var selStart = _selectionStart;
+        var selEnd = _selectionStart + _selectionLength;
+        bool hasBold = _styleSpans.Any(s => s.Start < selEnd && (s.Start + s.Length) > selStart && s.Style.IsBold);
+        if (hasBold)
+        {
+            _styleSpans.RemoveAll(s => s.Start < selEnd && (s.Start + s.Length) > selStart && s.Style.IsBold);
+        }
+        else
+        {
+            var style = new TextStyle(string.Empty, ForeColor, isBold: true);
+            _styleSpans.Add(new TextStyleSpan(selStart, _selectionLength, style));
+        }
+        Invalidate();
+    }
+
+    public void ToggleItalicSelection()
+    {
+        if (_selectionLength <= 0) return;
+        var selStart = _selectionStart;
+        var selEnd = _selectionStart + _selectionLength;
+        bool hasItalic = _styleSpans.Any(s => s.Start < selEnd && (s.Start + s.Length) > selStart && s.Style.IsItalic);
+        if (hasItalic)
+        {
+            _styleSpans.RemoveAll(s => s.Start < selEnd && (s.Start + s.Length) > selStart && s.Style.IsItalic);
+        }
+        else
+        {
+            var style = new TextStyle(string.Empty, ForeColor, isBold: false, isItalic: true);
+            _styleSpans.Add(new TextStyleSpan(selStart, _selectionLength, style));
+        }
+        Invalidate();
+    }
+
+    public void SetSelectionColor(Color color)
+    {
+        if (_selectionLength <= 0) return;
+        var selStart = _selectionStart;
+        var selEnd = _selectionStart + _selectionLength;
+        _styleSpans.RemoveAll(s => s.Start < selEnd && (s.Start + s.Length) > selStart && s.Style.Color != color);
+        var style = new TextStyle(string.Empty, color);
+        _styleSpans.Add(new TextStyleSpan(selStart, _selectionLength, style));
+        Invalidate();
+    }
+
     public void Clear()
     {
         Text = string.Empty;
+        _styleSpans.Clear();
         Invalidate();
     }
 
@@ -1710,8 +2339,8 @@ public class TextBox : UIElementBase
             _horizontalScrollBar.LargeChange = Width;
         }
 
-        _verticalScrollBar.Visible = showVertical;
-        _horizontalScrollBar.Visible = showHorizontal;
+        _verticalScrollBar.Visible = showVertical && ShowScrollbar;
+        _horizontalScrollBar.Visible = showHorizontal && ShowScrollbar;
     }
 }
 
@@ -1720,11 +2349,27 @@ public class TextStyle
     public string Pattern { get; set; }
     public Color Color { get; set; }
     public bool IsBold { get; set; }
+    public bool IsItalic { get; set; }
 
-    public TextStyle(string pattern, Color color, bool isBold = false)
+    public TextStyle(string pattern, Color color, bool isBold = false, bool isItalic = false)
     {
         Pattern = pattern;
         Color = color;
         IsBold = isBold;
+        IsItalic = isItalic;
+    }
+}
+
+public class TextStyleSpan
+{
+    public int Start { get; set; }
+    public int Length { get; set; }
+    public TextStyle Style { get; set; }
+
+    public TextStyleSpan(int start, int length, TextStyle style)
+    {
+        Start = start;
+        Length = length;
+        Style = style;
     }
 }

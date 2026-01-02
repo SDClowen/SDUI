@@ -1,6 +1,8 @@
 using SDUI.Collections;
+using SkiaSharp;
 using System;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace SDUI.Controls
 {
@@ -18,10 +20,16 @@ namespace SDUI.Controls
         Color ForeColor { get; set; }
         Font Font { get; set; }
 
-        UIElementBase FocusedElement { get; set; }
+        IUIElement FocusedElement { get; set; }
         
         ElementCollection Controls { get; }
+        object Tag { get; set; }
+        DockStyle Dock { get; set; }
+        int ZOrder { get; set; }
+        int TabIndex { get; set; }
+        bool TabStop { get; set; }
 
+        void Render(SKCanvas canvas);
         void Invalidate();
         void Refresh();
         void PerformLayout();
@@ -29,5 +37,10 @@ namespace SDUI.Controls
         void ResumeLayout();
         void ResumeLayout(bool performLayout);
         void UpdateZOrder();
+        void BringToFront();
+        void OnCreateControl();
+        UIWindowBase GetParentWindow();
+        void EnsureLoadedRecursively();
+        void EnsureUnloadedRecursively();
     }
 }

@@ -571,8 +571,25 @@ public class UIWindow : UIWindowBase, IUIElement
 
     private UIElementBase _focusedElement;
     private UIElementBase _lastHoveredElement;
+    // Element that has explicitly captured mouse input (via SetMouseCapture)
+    private UIElementBase? _mouseCapturedElement;
     private Bitmap? _gdiBitmap;
     public SKSize CanvasSize => _cacheBitmap == null ? SKSize.Empty : new SKSize(_cacheBitmap.Width, _cacheBitmap.Height);
+
+    protected internal override void SetMouseCapture(UIElementBase element)
+    {
+        _mouseCapturedElement = element;
+        NativeMethods.SetCapture(this.Handle);
+    }
+
+    protected internal override void ReleaseMouseCapture(UIElementBase element)
+    {
+        if (_mouseCapturedElement == element)
+        {
+            _mouseCapturedElement = null;
+            NativeMethods.ReleaseCapture();
+        }
+    }
 
     public new ElementCollection Controls { get; }
 
@@ -615,6 +632,40 @@ public class UIWindow : UIWindowBase, IUIElement
         }
     }
 
+    // Explicit implementations to satisfy IUIElement interface contracts that differ from internal types
+    IUIElement IUIElement.FocusedElement
+    {
+        get => _focusedElement;
+        set => FocusedElement = value as UIElementBase;
+    }
+
+    int IUIElement.ZOrder { get; set; }
+
+    void IUIElement.OnCreateControl()
+    {
+        // Forward to the Form's protected OnCreateControl
+        OnCreateControl();
+    }
+
+    UIWindowBase IUIElement.GetParentWindow() => this;
+
+    void IUIElement.EnsureLoadedRecursively()
+    {
+        foreach (var c in Controls)
+        {
+            if (c is IUIElement el)
+                el.EnsureLoadedRecursively();
+        }
+    }
+
+    void IUIElement.EnsureUnloadedRecursively()
+    {
+        foreach (var c in Controls)
+        {
+            if (c is IUIElement el)
+                el.EnsureUnloadedRecursively();
+        }
+    }
 
     private WindowPageControl _windowPageControl;
 
@@ -1556,6 +1607,19 @@ public class UIWindow : UIWindowBase, IUIElement
 
     protected override void OnMouseUp(MouseEventArgs e)
     {
+        // If an element captured the mouse, forward the mouse up to it and release capture if left button
+        if (_mouseCapturedElement != null)
+        {
+            var captured = _mouseCapturedElement;
+            var bounds = GetWindowRelativeBoundsStatic(captured);
+            var localEvent = new MouseEventArgs(e.Button, e.Clicks, e.X - bounds.X, e.Y - bounds.Y, e.Delta);
+            captured.OnMouseUp(localEvent);
+            if (e.Button == MouseButtons.Left)
+            {
+                ReleaseMouseCapture(captured);
+            }
+        }
+
         base.OnMouseUp(e);
 
         if (!IsDisposed && _formMoveMouseDown)
@@ -1637,6 +1701,16 @@ public class UIWindow : UIWindowBase, IUIElement
 
     protected override void OnMouseMove(MouseEventArgs e)
     {
+        // If an element has captured mouse, forward all mouse move events to it (so dragging continues even when cursor leaves its bounds)
+        if (_mouseCapturedElement != null)
+        {
+            var captured = _mouseCapturedElement;
+            var bounds = GetWindowRelativeBoundsStatic(captured);
+            var localEvent = new MouseEventArgs(e.Button, e.Clicks, e.X - bounds.X, e.Y - bounds.Y, e.Delta);
+            captured.OnMouseMove(localEvent);
+            return;
+        }
+
         if (_formMoveMouseDown && !MousePosition.Equals(_mouseOffset))
         {
             if (WindowState == FormWindowState.Maximized)
@@ -1971,6 +2045,16 @@ public class UIWindow : UIWindowBase, IUIElement
                 SDUI.LayoutEngine.Perform(control, clientArea, ref remainingArea);
             }
         }
+    }
+
+    void IUIElement.Render(SKCanvas canvas)
+    {
+        var w = ClientSize.Width;
+        var h = ClientSize.Height;
+        if (w <= 0 || h <= 0)
+            return;
+        var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
+        RenderScene(canvas, info);
     }
 
     protected override void OnPaint(PaintEventArgs e)

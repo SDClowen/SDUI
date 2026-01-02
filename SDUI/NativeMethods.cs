@@ -165,6 +165,9 @@ public class NativeMethods
     public static extern bool ReleaseCapture();
 
     [DllImport(user32, SetLastError = true)]
+    public static extern IntPtr SetCapture(IntPtr hWnd);
+
+    [DllImport(user32, SetLastError = true)]
     public static extern IntPtr SendMessage(IntPtr hWnd, int msg, int wParam, int lParam);
 
     [DllImport(user32, SetLastError = true)]

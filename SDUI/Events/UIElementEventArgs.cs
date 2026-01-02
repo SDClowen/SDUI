@@ -5,9 +5,9 @@ namespace SDUI;
 
 public class UIElementEventArgs : EventArgs
 {
-    public UIElementBase Element { get; }
+    public IUIElement Element { get; }
 
-    public UIElementEventArgs(UIElementBase element)
+    public UIElementEventArgs(IUIElement element)
     {
         Element = element;
     }

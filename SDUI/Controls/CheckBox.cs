@@ -145,7 +145,7 @@ namespace SDUI.Controls
             return new Size(width + Padding.Horizontal, height + Padding.Vertical);
         }
 
-        internal override void OnCreateControl()
+        public override void OnCreateControl()
         {
             base.OnCreateControl();
             AttachInputHandlers();

@@ -467,6 +467,11 @@ namespace SDUI.Controls
                     _isThumbPressed = true;
                     _dragStartPoint = e.Location;
                     _dragStartValue = Value;
+
+                    // Capture mouse at window level so we continue receiving moves/up even when cursor leaves scrollbar bounds
+                    var parentWindow = (this as IUIElement).GetParentWindow();
+                    if (parentWindow != null)
+                        parentWindow.SetMouseCapture(this);
                 }
                 else
                 {
@@ -520,6 +525,12 @@ namespace SDUI.Controls
             {
                 _isDragging = false;
                 _isThumbPressed = false;
+
+                // Release capture if we had captured it
+                var parentWindow = (this as IUIElement).GetParentWindow();
+                if (parentWindow != null)
+                    parentWindow.ReleaseMouseCapture(this);
+
                 Invalidate();
                 if (_autoHide)
                 {

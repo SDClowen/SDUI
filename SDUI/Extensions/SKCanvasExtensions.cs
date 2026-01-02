@@ -8,28 +8,9 @@ namespace SDUI.Extensions;
 
 public static class SKCanvasExtensions
 {
-    public static float PtToPx(this float pt, Control control) => (pt * 1.333f) * control.DeviceDpi / 96f;
+    public static float PtToPx(this float pt, Controls.UIWindow control) => (pt * 1.333f) * control.DeviceDpi / 96f;
     public static float PtToPx(this float pt, Controls.UIElementBase control) => (pt * 1.333f) * control.ScaleFactor;
 
-    public static SKPaint CreateTextPaint(this SKCanvas canvas, Font font, Color color, Control control, ContentAlignment alignment = ContentAlignment.MiddleCenter)
-    {
-        var paint = new SKPaint
-        {
-            Color = color.ToSKColor(),
-            TextSize = font.Size.PtToPx(control),
-            TextAlign = alignment.ToSKTextAlign(),
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(font)
-        };
-
-        bool isHighDpi = control.DeviceDpi > 96;
-        paint.IsAntialias = true;
-        paint.FilterQuality = isHighDpi ? SKFilterQuality.Medium : SKFilterQuality.None;
-        paint.SubpixelText = isHighDpi;
-        paint.LcdRenderText = isHighDpi;
-        paint.HintingLevel = isHighDpi ? SKPaintHinting.Full : SKPaintHinting.Normal;
-
-        return paint;
-    }
     public static SKPaint CreateTextPaint(this SKCanvas canvas, Font font, Color color, UIElementBase control, ContentAlignment alignment = ContentAlignment.MiddleCenter)
     {
         var paint = new SKPaint

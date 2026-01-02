@@ -52,6 +52,8 @@ public partial class MainWindow
         toolStripMenuItem7 = new ();
         toolStripSeparator6 = new ();
         menuStrip1 = new SDUI.Controls.MenuStrip();
+        statusStrip1 = new SDUI.Controls.StatusStrip();
+        statusStripLabel1 = new MenuItem();
         fileToolStripMenuItem = new ();
         newToolStripMenuItem = new ();
         openToolStripMenuItem = new ();
@@ -214,6 +216,25 @@ public partial class MainWindow
         menuStrip1.Stretch = false;
         menuStrip1.TabIndex = 1;
         menuStrip1.Text = "menuStrip1";
+        // 
+        // statusStripLabel1
+        // 
+        statusStripLabel1 = new MenuItem();
+        statusStripLabel1.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+        statusStripLabel1.Name = "statusStripLabel1";
+        statusStripLabel1.Size = new System.Drawing.Size(200, 24);
+        statusStripLabel1.Text = "Ready";
+        // 
+        // statusStrip1
+        // 
+        statusStrip1.BackColor = System.Drawing.Color.Transparent;
+        statusStrip1.Dock = DockStyle.Bottom;
+        statusStrip1.Items.Add(statusStripLabel1);
+        statusStrip1.Location = new System.Drawing.Point(1, 736);
+        statusStrip1.Name = "statusStrip1";
+        statusStrip1.Size = new System.Drawing.Size(1239, 28);
+        statusStrip1.TabIndex = 2;
+        statusStrip1.Text = "statusStrip1";
         // 
         // fileToolStripMenuItem
         // 
@@ -463,6 +484,7 @@ public partial class MainWindow
         ClientSize = new System.Drawing.Size(1241, 768);
         ContextMenuStrip = contextMenuStrip1;
         Controls.Add(menuStrip1);
+        Controls.Add(statusStrip1);
         Controls.Add(separator1);
         Controls.Add(windowPageControl);
         DwmMargin = -1;
@@ -481,6 +503,8 @@ public partial class MainWindow
         contextMenuStrip1.ResumeLayout(false);
         menuStrip1.ResumeLayout(false);
         menuStrip1.PerformLayout();
+        statusStrip1?.ResumeLayout(false);
+        statusStrip1?.PerformLayout();
         ResumeLayout(false);
         PerformLayout();
     }
@@ -536,4 +560,6 @@ public partial class MainWindow
     private SDUI.Controls.ToolTip toolTip1;
     private WindowPageControl windowPageControl;
     private Separator separator1;
+    private Controls.StatusStrip statusStrip1;
+    private MenuItem statusStripLabel1;
 }

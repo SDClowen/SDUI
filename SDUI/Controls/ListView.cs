@@ -25,9 +25,9 @@ public class ListView : UIElementBase
     private readonly Dictionary<int, ListViewItem> _listItemsTable = [];
     public IndexedList<System.Windows.Forms.ColumnHeader> Columns { get; } = [];
     public ListViewItemCollection Items { get; }
-    public IndexedList<System.Windows.Forms.ListViewItem> CheckedItems { get; } = [];
+    public IndexedList<SDUI.Controls.ListViewItem> CheckedItems { get; } = [];
     public IndexedList<int> SelectedIndices { get; } = [];
-    public IndexedList<System.Windows.Forms.ListViewItem> SelectedItems { get; } = [];
+    public IndexedList<SDUI.Controls.ListViewItem> SelectedItems { get; } = [];
     public SDUI.Collections.ListViewGroupCollection Groups { get; }
 
     public System.Windows.Forms.ImageList SmallImageList { get; set; }

@@ -1,5 +1,5 @@
 ﻿namespace SDUI.Controls;
 
-public class SDUserControl : UIElementBase
+public class DoubleBufferedControl : UIElementBase
 {
 }

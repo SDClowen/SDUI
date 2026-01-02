@@ -34,6 +34,8 @@ public class MenuStrip : UIElementBase
     private bool _showSubmenuArrow = true;
     private bool _showIcons = true;
     private bool _showHoverEffect = true;
+    private bool _showCheckMargin = true;
+    private bool _showImageMargin = true;
     private bool _roundedCorners = true;
     private float _cornerRadius = 6f;
     private float _submenuCornerRadius = 8f;
@@ -146,6 +148,8 @@ public class MenuStrip : UIElementBase
     [Category("Layout")] public float ItemPadding { get=>_itemPadding; set{ if(_itemPadding==value) return; _itemPadding=value; Invalidate(); } }
     [Category("Appearance")] public bool ShowIcons { get=>_showIcons; set{ if(_showIcons==value) return; _showIcons=value; Invalidate(); } }
     [Category("Behavior")] public bool ShowHoverEffect { get=>_showHoverEffect; set{ if(_showHoverEffect==value) return; _showHoverEffect=value; Invalidate(); } }
+    [Category("Layout")][DefaultValue(true)] public bool ShowCheckMargin { get=>_showCheckMargin; set{ if(_showCheckMargin==value) return; _showCheckMargin=value; Invalidate(); } }
+    [Category("Layout")][DefaultValue(true)] public bool ShowImageMargin { get=>_showImageMargin; set{ if(_showImageMargin==value) return; _showImageMargin=value; Invalidate(); } }
     [Category("Appearance")] public bool RoundedCorners { get=>_roundedCorners; set{ if(_roundedCorners==value) return; _roundedCorners=value; Invalidate(); } }
     [Category("Appearance")] public Color SeparatorBackColor { get=>_separatorBackColor; set{ if(_separatorBackColor==value) return; _separatorBackColor=value; Invalidate(); } }
     [Category("Appearance")] public Color SeparatorForeColor { get=>_separatorForeColor; set{ if(_separatorForeColor==value) return; _separatorForeColor=value; Invalidate(); } }
@@ -474,7 +478,7 @@ public class MenuStrip : UIElementBase
 
     private void EnsureDropDownHost(){ if(_activeDropDown!=null) return; _activeDropDown=new ContextMenuStrip{ AutoClose=true, Dock=DockStyle.None }; _activeDropDown.Opening+=(_, _)=>SyncDropDownAppearance(); _activeDropDown.Closing+=(_, _)=>{ _openedItem=null; _activeDropDownOwner=null; Invalidate(); }; }
 
-    private void SyncDropDownAppearance(){ if(_activeDropDown==null) return; _activeDropDown.MenuBackColor=SubmenuBackColor; _activeDropDown.MenuForeColor=MenuForeColor; _activeDropDown.HoverBackColor=HoverBackColor; _activeDropDown.HoverForeColor=HoverForeColor; _activeDropDown.SubmenuBackColor=SubmenuBackColor; _activeDropDown.SeparatorColor=SeparatorColor; _activeDropDown.RoundedCorners=RoundedCorners; _activeDropDown.ItemPadding=Math.Max(ItemPadding, 6f); _activeDropDown.Orientation=SDUI.Orientation.Vertical; _activeDropDown.ImageScalingSize=ImageScalingSize; _activeDropDown.ShowSubmenuArrow=ShowSubmenuArrow; _activeDropDown.ShowIcons=ShowIcons; }
+    private void SyncDropDownAppearance(){ if(_activeDropDown==null) return; _activeDropDown.MenuBackColor=SubmenuBackColor; _activeDropDown.MenuForeColor=MenuForeColor; _activeDropDown.HoverBackColor=HoverBackColor; _activeDropDown.HoverForeColor=HoverForeColor; _activeDropDown.SubmenuBackColor=SubmenuBackColor; _activeDropDown.SeparatorColor=SeparatorColor; _activeDropDown.RoundedCorners=RoundedCorners; _activeDropDown.ItemPadding=Math.Max(ItemPadding, 6f); _activeDropDown.Orientation=SDUI.Orientation.Vertical; _activeDropDown.ImageScalingSize=ImageScalingSize; _activeDropDown.ShowSubmenuArrow=ShowSubmenuArrow; _activeDropDown.ShowIcons=ShowIcons; _activeDropDown.ShowCheckMargin=ShowCheckMargin; _activeDropDown.ShowImageMargin=ShowImageMargin; }
 
     private MenuItem CloneMenuItem(MenuItem source){ if(source is MenuItemSeparator separator){ var cloneSeparator=new MenuItemSeparator{ Height=separator.Height, Margin=separator.Margin, LineColor=separator.LineColor, ShadowColor=separator.ShadowColor }; return cloneSeparator; } var clone=new MenuItem{ Text=source.Text, Icon=source.Icon, Image=source.Image, ShortcutKeys=source.ShortcutKeys, ShowSubmenuArrow=source.ShowSubmenuArrow, ForeColor=source.ForeColor, BackColor=source.BackColor, Enabled=source.Enabled, Visible=source.Visible, Font=source.Font, AutoSize=source.AutoSize, Padding=source.Padding, Tag=source.Tag, Checked=source.Checked }; foreach(var child in source.DropDownItems) clone.AddDropDownItem(CloneMenuItem(child)); clone.Click+=(_, _)=>{ source.OnClick(); _activeDropDown?.Hide(); }; return clone; }
 

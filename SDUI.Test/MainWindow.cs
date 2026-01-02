@@ -25,8 +25,10 @@ public partial class MainWindow : UIWindow
             new ModernControlsPage() {Dock = System.Windows.Forms.DockStyle.Fill },
             new GeneralPage() {Dock = System.Windows.Forms.DockStyle.Fill },
             new ListViewPage() {Dock = System.Windows.Forms.DockStyle.Fill },
+            new TreeViewPage() {Dock = System.Windows.Forms.DockStyle.Fill },
             new ConfigPage() {Dock = System.Windows.Forms.DockStyle.Fill },
-            new TabControlTestPage() {Dock = System.Windows.Forms.DockStyle.Fill }
+            new TabControlTestPage() {Dock = System.Windows.Forms.DockStyle.Fill },
+            new SplitContainerPage() {Dock = System.Windows.Forms.DockStyle.Fill }
         ]);
     }
 }

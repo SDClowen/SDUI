@@ -23,11 +23,11 @@ namespace SDUI.Controls
         private float _borderWidth = 1.0f;
         private float _cornerRadius = 8.0f;
         private int _headerHeight = 40;
-        private int _tabGap = 0; // Chrome'da gap yok, tab'lar biti�ik
+        private int _tabGap = 0;
         private int _indicatorHeight = 3;
         private Size _headerControlSize = new Size(20, 20);
-        private bool _renderNewPageButton = true;
-        private bool _renderPageClose = true;
+        private bool _renderNewPageButton = false;
+        private bool _renderPageClose = false;
         private bool _renderPageIcon = false;
 
         private int _hoveredCloseButtonIndex = -1;
@@ -65,10 +65,9 @@ namespace SDUI.Controls
             Size = new Size(500, 320);
             BackColor = ColorScheme.BackColor;
 
-            // Modern, kontrastl� renkler - tema uyumlu
-            _headerBackColor = ColorScheme.BackColor;
+            _headerBackColor = ColorScheme.OnBackground;
             _headerForeColor = ColorScheme.ForeColor;
-            _selectedTabColor = ColorScheme.BackColor;
+            _selectedTabColor = ColorScheme.OnSurface;
             _selectedTabForeColor = ColorScheme.AccentColor;
             _borderColor = ColorScheme.BorderColor;
 
@@ -132,8 +131,7 @@ namespace SDUI.Controls
             Controls.Add(page);
             page.Visible = false;
             EnsureHoverAnim(_pages.Count - 1);
-            
-            // === D�ZG�N A�ILI� AN�MASYONU ===
+
             var addAnim = new AnimationManager(singular: true)
             {
                 Increment = 0.12,
@@ -167,7 +165,6 @@ namespace SDUI.Controls
             var index = _pages.IndexOf(page);
             if (index >= 0)
             {
-                // === SMOOTH KAPANI� - KASMA YOK ===
                 var removeAnim = new AnimationManager(singular: true)
                 {
                     Increment = 0.08,
@@ -287,7 +284,6 @@ namespace SDUI.Controls
             
             UpdateTabRects();
 
-            // === HEADER - Modern uyumlu ===
             var isDarkTheme = ColorScheme.BackColor.IsDark();
             var headerColor = isDarkTheme 
                 ? Color.FromArgb(
@@ -306,19 +302,16 @@ namespace SDUI.Controls
             // === TAB AREA CLIPPING ===
             canvas.Save();
             float clipStart = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
-            
-            // + BUTTON VARSA VE SAB�TSE, onun soluna kadar clip et
+
             float clipEnd;
             if (_showRightChevron && RenderNewPageButton)
             {
-                // Chevron varsa + button sabit, onun soluna kadar clip
                 float buttonSize = 24f;
                 float buttonX = Width - CHEVRON_WIDTH - buttonSize - 12;
-                clipEnd = buttonX - 4;  // + button'dan 4px �nce kes
+                clipEnd = buttonX - 4;
             }
             else
             {
-                // Normal: sa� chevron veya kenara kadar
                 clipEnd = Width - (_showRightChevron ? CHEVRON_WIDTH + 4 : 4);
             }
             
@@ -870,7 +863,7 @@ namespace SDUI.Controls
 
     public class TabPage : UIElementBase
     {
-        private string _text = "Yeni Sayfa";
+        private string _text = nameof(TabPage);
         
         public TabPage()
         {
@@ -885,9 +878,13 @@ namespace SDUI.Controls
             get => _text; 
             set 
             { 
-                if (_text == value) return; 
-                _text = value; 
-                if (Parent is TabControl tc) tc.Invalidate(); 
+                if (_text == value) 
+                    return;
+
+                _text = value;
+
+                if (Parent is TabControl tc) 
+                    tc.Invalidate(); 
             } 
         }
 

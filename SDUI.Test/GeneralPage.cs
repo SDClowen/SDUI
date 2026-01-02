@@ -38,6 +38,11 @@ namespace SDUI.Demo
             InitializeComponent();
             this.Text = "General";
             comboBox6.Items.AddRange(Enum.GetNames<HatchStyle>());
+
+            // Demo: programmatically select text in the RichTextBox and set SelectionBackColor
+            richTextBox1.Text = "This is a demo of RichTextBox selection and SelectionBackColor.";
+            richTextBox1.Select(5, 10);
+            richTextBox1.SelectionBackColor = Color.LightBlue;
         }
 
         private void trackBar1_Scroll(object sender, EventArgs e)

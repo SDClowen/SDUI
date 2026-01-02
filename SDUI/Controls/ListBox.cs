@@ -154,42 +154,69 @@ namespace SDUI.Controls
             }
         }
 
+        private bool _isUpdatingScrollbars = false;
+
         private void UpdateScrollbars()
         {
-            if (!_autoScroll)
+            if (_isUpdatingScrollbars) return;
+            _isUpdatingScrollbars = true;
+
+            try
             {
-                _verticalScrollBar.Visible = _horizontalScrollBar.Visible = false;
-                return;
+                if (!_autoScroll)
+                {
+                    if (_verticalScrollBar.Visible) _verticalScrollBar.Visible = false;
+                    if (_horizontalScrollBar.Visible) _horizontalScrollBar.Visible = false;
+                    return;
+                }
+
+                var totalItems = _items.Count;
+
+                // Two-step visibility evaluation to account for scrollbar interaction
+                var heightNoH = Height - Padding.Vertical; // assume no horizontal bar
+                var visibleItemsNoH = heightNoH / ItemHeight;
+                var needV = totalItems > visibleItemsNoH;
+
+                var clientWidthIfV = Width - (needV ? _verticalScrollBar.Width : 0);
+                var needH = _maxItemWidth > clientWidthIfV;
+
+                // Re-evaluate vertical need now that horizontal may be present
+                var heightIfH = Height - Padding.Vertical - (needH ? _horizontalScrollBar.Height : 0);
+                var visibleItemsIfH = heightIfH / ItemHeight;
+                needV = totalItems > visibleItemsIfH;
+
+                if (needV != _verticalScrollBar.Visible) _verticalScrollBar.Visible = needV;
+                if (needH != _horizontalScrollBar.Visible) _horizontalScrollBar.Visible = needH;
+
+                // Update vertical scrollbar range using final visibleItemsIfH
+                if (_verticalScrollBar.Visible)
+                {
+                    var max = Math.Max(0, totalItems - visibleItemsIfH);
+                    if (_verticalScrollBar.Maximum != max) _verticalScrollBar.Maximum = max;
+                    if (_verticalScrollBar.Value > _verticalScrollBar.Maximum) _verticalScrollBar.Value = _verticalScrollBar.Maximum;
+                    var newHeight = Height - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Height : 0);
+                    if (_verticalScrollBar.Height != newHeight) _verticalScrollBar.Height = newHeight;
+                    var newX = Width - _verticalScrollBar.Width;
+                    if (_verticalScrollBar.Location.X != newX) _verticalScrollBar.Location = new Point(newX, 0);
+                }
+
+                // Update horizontal scrollbar using final vertical visibility
+                var clientWidth = Width - (_verticalScrollBar.Visible ? _verticalScrollBar.Width : 0);
+                if (_horizontalScrollBar.Visible)
+                {
+                    var max = Math.Max(0, _maxItemWidth - clientWidth);
+                    if (_horizontalScrollBar.Maximum != max) _horizontalScrollBar.Maximum = max;
+                    if (_horizontalScrollBar.Value > _horizontalScrollBar.Maximum) _horizontalScrollBar.Value = _horizontalScrollBar.Maximum;
+
+                    var newWidth = Width - (_verticalScrollBar.Visible ? _verticalScrollBar.Width : 0);
+                    if (_horizontalScrollBar.Width != newWidth) _horizontalScrollBar.Width = newWidth;
+                    var newY = Height - _horizontalScrollBar.Height;
+                    if (_horizontalScrollBar.Location.Y != newY) _horizontalScrollBar.Location = new Point(0, newY);
+                }
             }
-
-            var visibleItems = (Height - Padding.Vertical - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Height : 0)) / ItemHeight;
-            var totalItems = _items.Count;
-
-            _verticalScrollBar.Visible = totalItems > visibleItems;
-            if (_verticalScrollBar.Visible)
+            finally
             {
-                _verticalScrollBar.Maximum = Math.Max(0, totalItems - visibleItems);
-                _verticalScrollBar.Value = Math.Min(_verticalScrollBar.Value, _verticalScrollBar.Maximum);
-            }
-
-            var clientWidth = Width - (_verticalScrollBar.Visible ? _verticalScrollBar.Width : 0);
-            _horizontalScrollBar.Visible = _maxItemWidth > clientWidth;
-            if (_horizontalScrollBar.Visible)
-            {
-                _horizontalScrollBar.Maximum = Math.Max(0, _maxItemWidth - clientWidth);
-                _horizontalScrollBar.Value = Math.Min(_horizontalScrollBar.Value, _horizontalScrollBar.Maximum);
-            }
-
-            if (_horizontalScrollBar.Visible)
-            {
-                _horizontalScrollBar.Width = Width - (_verticalScrollBar.Visible ? _verticalScrollBar.Width : 0);
-                _horizontalScrollBar.Location = new Point(0, Height - _horizontalScrollBar.Height);
-            }
-
-            if (_verticalScrollBar.Visible)
-            {
-                _verticalScrollBar.Height = Height - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Height : 0);
-                _verticalScrollBar.Location = new Point(Width - _verticalScrollBar.Width, 0);
+                _isUpdatingScrollbars = false;
             }
         }
 
@@ -303,6 +330,30 @@ namespace SDUI.Controls
             }
         }
 
+        internal override void OnMouseWheel(MouseEventArgs e)
+        {
+            base.OnMouseWheel(e);
+            int scrollLines = SystemInformation.MouseWheelScrollLines;
+            int delta = (e.Delta / 120) * scrollLines;
+
+            // Shift+wheel => horizontal scroll
+            if ((ModifierKeys & Keys.Shift) == Keys.Shift)
+            {
+                var newLeft = _horizontalScrollBar.Value - delta * 10; // multiplier to feel snappier
+                newLeft = Math.Max(_horizontalScrollBar.Minimum, Math.Min(_horizontalScrollBar.Maximum, newLeft));
+                _horizontalScrollBar.Value = newLeft;
+                _leftIndex = _horizontalScrollBar.Value;
+            }
+            else
+            {
+                var newTop = _verticalScrollBar.Value - delta;
+                newTop = Math.Max(_verticalScrollBar.Minimum, Math.Min(_verticalScrollBar.Maximum, newTop));
+                _verticalScrollBar.Value = newTop;
+                _topIndex = _verticalScrollBar.Value;
+            }
+
+            Invalidate();
+        }
         protected virtual void OnSelectedIndexChanged(EventArgs e)
         {
             SelectedIndexChanged?.Invoke(this, e);

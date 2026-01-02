@@ -33,6 +33,11 @@ public class UIWindowBase : Form
         }
     }
 
+    /// <summary>
+    /// Indicates whether this window has completed its Load phase.
+    /// </summary>
+    public bool IsLoaded { get; private set; } = false;
+
     // Z-order için yeni özellikler
 
     public int DwmMargin
@@ -127,12 +132,39 @@ public class UIWindowBase : Form
         if (DesignMode)
             return;
 
+        // Mark window as loaded so dynamically added controls can trigger their Load immediately
+        IsLoaded = true;
+
+        // Ensure all child elements receive Load before the window is shown
+        foreach (var c in this.Controls)
+        {
+            if (c is UIElementBase child)
+                child.EnsureLoadedRecursively();
+        }
+
         // Otherwise, it will not be applied.
         if (StartPosition == FormStartPosition.CenterScreen)
             CenterToScreen();
 
         if (BackColor != ColorScheme.BackColor)
             BackColor = ColorScheme.BackColor;
+    }
+
+    protected override void OnFormClosed(FormClosedEventArgs e)
+    {
+        base.OnFormClosed(e);
+
+        if (DesignMode)
+            return;
+
+        // Unload all child elements now the window is closed
+        foreach (var c in this.Controls)
+        {
+            if (c is UIElementBase child)
+                child.EnsureUnloadedRecursively();
+        }
+
+        IsLoaded = false;
     }
 
     private const int htLeft = 10;
@@ -336,5 +368,23 @@ public class UIWindowBase : Form
     protected override void OnDpiChanged(DpiChangedEventArgs e)
     {
         base.OnDpiChanged(e);
+    }
+
+    /// <summary>
+    /// Request that the window capture mouse input for the specified element.
+    /// Default implementation does nothing; derived window classes may override to provide capture semantics.
+    /// </summary>
+    protected internal virtual void SetMouseCapture(UIElementBase element)
+    {
+        // No-op by default
+    }
+
+    /// <summary>
+    /// Release mouse capture previously set for the specified element.
+    /// Default implementation does nothing; derived window classes may override to provide capture semantics.
+    /// </summary>
+    protected internal virtual void ReleaseMouseCapture(UIElementBase element)
+    {
+        // No-op by default
     }
 }

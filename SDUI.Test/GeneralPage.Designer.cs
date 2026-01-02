@@ -1417,7 +1417,7 @@
         private Controls.Label label4;
         private Controls.Button button5;
         private Controls.GroupBox groupBox3;
-        private Controls.TextBox richTextBox1;
+        private Controls.RichTextBox richTextBox1;
         private Controls.Radio radio2;
         private Controls.Radio radio1;
         private Controls.CheckBox checkBox6;

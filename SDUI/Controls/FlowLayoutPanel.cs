@@ -34,8 +34,8 @@ public class FlowLayoutPanel : UIElementBase
     private FlowAlignment _verticalAlignment = FlowAlignment.Near;
     private FlowAlignment _horizontalAlignment = FlowAlignment.Near;
     private Padding _itemPadding = new(3);
-    private readonly Dictionary<UIElementBase, Point> _targetLocations = new();
-    private readonly Dictionary<UIElementBase, AnimationManager> _animations = new();
+    private readonly Dictionary<IUIElement, Point> _targetLocations = new();
+    private readonly Dictionary<IUIElement, AnimationManager> _animations = new();
     private readonly ScrollBar _vScrollBar;
     private readonly ScrollBar _hScrollBar;
     private bool _isLayouting;
@@ -222,7 +222,7 @@ public class FlowLayoutPanel : UIElementBase
     internal override void OnControlAdded(UIElementEventArgs e)
     {
         base.OnControlAdded(e);
-        if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;
+        if (e.Element is UIElementBase el && (el == _vScrollBar || el == _hScrollBar)) return;
 
         // Yeni kontrol için animasyon motoru oluştur
         _animations[e.Element] = new AnimationManager(singular: true)
@@ -239,7 +239,7 @@ public class FlowLayoutPanel : UIElementBase
     internal override void OnControlRemoved(UIElementEventArgs e)
     {
         base.OnControlRemoved(e);
-        if (e.Element == _vScrollBar || e.Element == _hScrollBar) return;
+        if (e.Element is UIElementBase el && (el == _vScrollBar || el == _hScrollBar)) return;
 
         // Kontrol kaldırıldığında animasyonu temizle
         if (_animations.ContainsKey(e.Element))
@@ -503,13 +503,21 @@ public class FlowLayoutPanel : UIElementBase
 
     private void UpdateScrollBars(int contentWidth, int contentHeight)
     {
-        var needHScroll = contentWidth > ClientRectangle.Width;
-        var needVScroll = contentHeight > ClientRectangle.Height;
+        // Determine thresholds combining client area and AutoScrollMinSize
+        var clientW = ClientRectangle.Width;
+        var clientH = ClientRectangle.Height;
 
+        var hThreshold = Math.Max(clientW, AutoScrollMinSize.Width);
+        var vThreshold = Math.Max(clientH, AutoScrollMinSize.Height);
+
+        var needHScroll = contentWidth > hThreshold;
+        var needVScroll = contentHeight > vThreshold;
+
+        // Re-evaluate if one scrollbar appearing would reduce client area
         if (needHScroll && !_hScrollBar.Visible)
-            needVScroll = contentHeight > (ClientRectangle.Height - _hScrollBar.Height);
+            needVScroll = contentHeight > Math.Max(clientH - _hScrollBar.Height, AutoScrollMinSize.Height);
         if (needVScroll && !_vScrollBar.Visible)
-            needHScroll = contentWidth > (ClientRectangle.Width - _vScrollBar.Width);
+            needHScroll = contentWidth > Math.Max(clientW - _vScrollBar.Width, AutoScrollMinSize.Width);
 
         _hScrollBar.Visible = needHScroll;
         _vScrollBar.Visible = needVScroll;
@@ -518,7 +526,7 @@ public class FlowLayoutPanel : UIElementBase
         {
             _hScrollBar.Minimum = 0;
             _hScrollBar.Maximum = contentWidth;
-            _hScrollBar.LargeChange = ClientRectangle.Width;
+            _hScrollBar.LargeChange = clientW;
             _hScrollBar.SmallChange = _itemPadding.Horizontal;
         }
 
@@ -526,7 +534,7 @@ public class FlowLayoutPanel : UIElementBase
         {
             _vScrollBar.Minimum = 0;
             _vScrollBar.Maximum = contentHeight;
-            _vScrollBar.LargeChange = ClientRectangle.Height;
+            _vScrollBar.LargeChange = clientH;
             _vScrollBar.SmallChange = _itemPadding.Vertical;
         }
     }

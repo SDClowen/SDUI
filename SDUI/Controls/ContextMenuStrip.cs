@@ -46,8 +46,15 @@ public class ContextMenuStrip : MenuStrip
     private readonly Dictionary<Bitmap, SKBitmap> _iconCache = new();
     private const int MaxIconCacheEntries = 256;
 
-    public event EventHandler Opening;
-    public event EventHandler Closing;
+    private bool _showCheckMargin = true;
+    private bool _showImageMargin = true;
+    private const float CheckMarginWidth = 22f;
+
+    [Category("Layout")][DefaultValue(true)] public bool ShowCheckMargin { get => _showCheckMargin; set { if (_showCheckMargin == value) return; _showCheckMargin = value; Invalidate(); } }
+    [Category("Layout")][DefaultValue(true)] public bool ShowImageMargin { get => _showImageMargin; set { if (_showImageMargin == value) return; _showImageMargin = value; Invalidate(); } }
+
+    public event CancelEventHandler Opening;
+    public event CancelEventHandler Closing;
 
     public ContextMenuStrip()
     {
@@ -83,7 +90,12 @@ public class ContextMenuStrip : MenuStrip
         var owner = ResolveOwner(element);
         if (owner == null) return;
 
-        Opening?.Invoke(this, EventArgs.Empty);
+
+        var canceling = new CancelEventArgs();
+        Opening?.Invoke(this, canceling);
+        if (canceling.Cancel)
+            return;
+
         _sourceElement = element;
         _ownerWindow = owner;
 
@@ -109,11 +121,15 @@ public class ContextMenuStrip : MenuStrip
 
     public void Show(Point location) => Show(null, location);
 
-    public void Hide()
+    public new void Hide()
     {
         if (!_isOpen) return;
 
-        Closing?.Invoke(this, EventArgs.Empty);
+        var canceling = new CancelEventArgs();
+        Closing?.Invoke(this, canceling);
+        if (canceling.Cancel)
+            return;
+        
         DetachHandlers();
         Visible = false;
         _ownerWindow?.Invalidate();
@@ -363,13 +379,48 @@ public class ContextMenuStrip : MenuStrip
 
             float textX = itemRect.Left + 12;
 
-            if (ShowIcons && item.Icon != null)
+            // Reserve space for check mark if enabled
+            if (ShowCheckMargin)
             {
-                var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
-                var iconBitmap = GetCachedIconBitmap(item.Icon);
-                _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
-                canvas.DrawBitmap(iconBitmap, new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height), _iconPaint);
-                textX += ImageScalingSize.Width + 8;
+                if (item.Checked)
+                {
+                    var cx = itemRect.Left + 12 + CheckMarginWidth / 2f;
+                    var cy = itemRect.MidY;
+                    float s = Math.Min(8f, ItemHeight / 3f);
+                    _arrowPaint!.Color = MenuForeColor.ToSKColor().WithAlpha(fadeAlpha);
+                    var chk = new SKPath();
+                    chk.MoveTo(cx - s, cy);
+                    chk.LineTo(cx - s / 2f, cy + s / 2f);
+                    chk.LineTo(cx + s, cy - s);
+                    canvas.DrawPath(chk, _arrowPaint);
+                    chk.Dispose();
+                }
+                textX += CheckMarginWidth;
+            }
+
+            var imageAreaWidth = ImageScalingSize.Width + 8;
+
+            if (ShowImageMargin)
+            {
+                if (ShowIcons && item.Icon != null)
+                {
+                    var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
+                    var iconBitmap = GetCachedIconBitmap(item.Icon);
+                    _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
+                    canvas.DrawBitmap(iconBitmap, new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height), _iconPaint);
+                }
+                textX += imageAreaWidth;
+            }
+            else
+            {
+                if (ShowIcons && item.Icon != null)
+                {
+                    var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
+                    var iconBitmap = GetCachedIconBitmap(item.Icon);
+                    _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
+                    canvas.DrawBitmap(iconBitmap, new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height), _iconPaint);
+                    textX += ImageScalingSize.Width + 8;
+                }
             }
 
             var hoverFore = !HoverForeColor.IsEmpty
@@ -444,6 +495,25 @@ public class ContextMenuStrip : MenuStrip
         var bmp = icon.ToSKBitmap();
         _iconCache[icon] = bmp;
         return bmp;
+    }
+
+    // Include reserved margins for checks and images when measuring dropdown item width
+    protected new float MeasureItemWidth(MenuItem item)
+    {
+        if (item is MenuItemSeparator) return 20f;
+
+        float w = base.MeasureItemWidth(item);
+
+        if (ShowCheckMargin)
+            w += CheckMarginWidth;
+
+        if (ShowImageMargin)
+        {
+            if (!(ShowIcons && item.Icon != null))
+                w += ImageScalingSize.Width + 8;
+        }
+
+        return w;
     }
 
     private SKFont GetDefaultSkFont()

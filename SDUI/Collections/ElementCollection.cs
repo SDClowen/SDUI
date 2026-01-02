@@ -35,7 +35,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///  the child control list. If the control is already a child of another control it
     ///  is first removed from that control.
     /// </summary>
-    public virtual void Add(UIElementBase? value)
+    public virtual void Add(IUIElement value)
     {
         if (value is null)
         {
@@ -204,7 +204,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         return new ControlCollectionEnumerator(this);
     }
 
-    public int IndexOf(UIElementBase? control) => ((IList)InnerList).IndexOf(control);
+    public int IndexOf(IUIElement control) => ((IList)InnerList).IndexOf(control);
 
     /// <summary>
     ///  The zero-based index of the first occurrence of value within the entire CollectionBase, if found; otherwise, -1.
@@ -258,7 +258,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///  Removes control from this control. Inheriting controls should call
     ///  base.remove to ensure that the control is removed.
     /// </summary>
-    public virtual void Remove(UIElementBase? value)
+    public virtual void Remove(IUIElement value)
     {
         // Sanity check parameter
         if (value is null)
@@ -382,7 +382,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///  is thrown if child is not parented to this
     ///  UIElementBase.
     /// </summary>
-    public int GetChildIndex(UIElementBase child)
+    public int GetChildIndex(IUIElement child)
     {
         return GetChildIndex(child, true);
     }
@@ -393,7 +393,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///  is thrown if child is not parented to this
     ///  UIElementBase.
     /// </summary>
-    public virtual int GetChildIndex(UIElementBase child, bool throwException)
+    public virtual int GetChildIndex(IUIElement child, bool throwException)
     {
         return IndexOf(child);
     }
@@ -402,7 +402,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///  This is internal virtual method so that "Readonly Collections" can override this and throw as they should not allow changing
     ///  the child control indices.
     /// </summary>
-    internal virtual void SetChildIndexInternal(UIElementBase child, int newIndex)
+    internal virtual void SetChildIndexInternal(IUIElement child, int newIndex)
     {
         // Sanity check parameters
         ArgumentNullException.ThrowIfNull(child);
@@ -431,7 +431,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///  is thrown if child is not parented to this
     ///  UIElementBase.
     /// </summary>
-    public virtual void SetChildIndex(UIElementBase child, int newIndex)
+    public virtual void SetChildIndex(IUIElement child, int newIndex)
     {
         SetChildIndexInternal(child, newIndex);
     }

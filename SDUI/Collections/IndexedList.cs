@@ -6,7 +6,7 @@ public class IndexedList<T> : List<T>
 {
     public new int Add(T item)
     {
-        Add(item);
+        base.Add(item);
         return Count - 1;
     }
 }

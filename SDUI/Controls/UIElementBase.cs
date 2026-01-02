@@ -18,7 +18,10 @@ namespace SDUI.Controls
         private static readonly LinkedList<UIElementBase> s_renderCacheLru = new();
         private static long s_totalCachedElementBytes;
 
+        public Image BackgroundImage { get; set; }
         public System.Drawing.ContentAlignment ImageAlign { get; set; }
+        public System.Windows.Forms.ImageLayout BackgroundImageLayout { get; set; }
+        
         public RightToLeft RightToLeft { get; set; } = RightToLeft.No;
         public SizeF AutoScaleDimensions { get; set; }
         public AutoScaleMode AutoScaleMode { get; set; }
@@ -28,11 +31,15 @@ namespace SDUI.Controls
         public bool CheckForIllegalCrossThreadCalls { get; set; }
         public void SetStyle(ControlStyles flag, bool value) { }
         public void SetTopLevel(bool value) { }
+
+        public bool InvokeRequired => false;
+        public void BeginInvoke(Delegate method) { method.DynamicInvoke(); }
+        public void BeginInvoke(Delegate method, params object[] args) { method.DynamicInvoke(args); }
         public void Invoke(Delegate method) { method.DynamicInvoke(); }
         public void Invoke(Delegate method, params object[] args) { method.DynamicInvoke(args); }
         public void Show() { Visible = true; }
         public void Hide() { Visible = false; }
-        public object Tag;
+        public object Tag { get; set; }
         public bool AutoScroll { get; set; }
         public Size AutoScrollMargin { get; set; }
 
@@ -221,6 +228,33 @@ namespace SDUI.Controls
         {
             get => Size;
             set => Size = value;
+        }
+
+        private Size _autoScrollMinSize;
+        [Category("Layout")]
+        [DefaultValue(typeof(Size), "0, 0")]
+        public virtual Size AutoScrollMinSize
+        {
+            get => _autoScrollMinSize;
+            set
+            {
+                if (_autoScrollMinSize == value) return;
+                _autoScrollMinSize = value;
+
+                // Trigger layout so containers can re-evaluate scrollbar visibility
+                if (Parent is UIWindowBase parentWindow)
+                {
+                    parentWindow.PerformLayout();
+                }
+                else if (Parent is UIElementBase parentElement)
+                {
+                    parentElement.PerformLayout();
+                }
+                else
+                {
+                    PerformLayout();
+                }
+            }
         }
 
         private bool _visible = true;
@@ -468,10 +502,10 @@ namespace SDUI.Controls
         private int _zOrder;
 
         [Browsable(false)]
-        public int ZOrder
+        internal int ZOrder
         {
             get => _zOrder;
-            internal set => _zOrder = value;
+            set => _zOrder = value;
         }
 
         public int Width
@@ -829,6 +863,58 @@ namespace SDUI.Controls
 
         public event EventHandler DpiChanged;
 
+        // Fired when the element is loaded (parent window has finished loading). Raised once per element.
+        public event EventHandler? Load;
+
+        private bool _isLoaded;
+
+        /// <summary>
+        /// Raises the Load event for this element. This is safe to call multiple times; the event will only fire once.
+        /// </summary>
+        protected virtual void OnLoad(EventArgs e)
+        {
+            if (_isLoaded) return;
+            _isLoaded = true;
+            Load?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Ensures Load has been raised for this element and all its child elements (recursively).
+        /// </summary>
+        public void EnsureLoadedRecursively()
+        {
+            OnLoad(EventArgs.Empty);
+            for (int i = 0; i < Controls.Count; i++)
+            {
+                Controls[i].EnsureLoadedRecursively();
+            }
+        }
+
+        // Fired when the element is unloaded (parent window is closing or control removed from a loaded window).
+        public event EventHandler? Unload;
+
+        /// <summary>
+        /// Raises the Unload event for this element. This is safe to call multiple times; it will fire only when the element was previously loaded.
+        /// </summary>
+        protected virtual void OnUnload(EventArgs e)
+        {
+            if (!_isLoaded) return; // only unload if previously loaded
+            _isLoaded = false;
+            Unload?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Ensures Unload has been raised for this element and all its child elements (recursively).
+        /// </summary>
+        public void EnsureUnloadedRecursively()
+        {
+            OnUnload(EventArgs.Empty);
+            for (int i = 0; i < Controls.Count; i++)
+            {
+                Controls[i].EnsureUnloadedRecursively();
+            }
+        }
+
         #endregion
 
         protected bool IsDesignMode { get; }
@@ -876,11 +962,6 @@ namespace SDUI.Controls
             NeedsRedraw = true;
             _renderSnapshot?.Dispose();
             _renderSnapshot = null;
-        }
-
-        internal void InvalidateRender()
-        {
-            MarkDirty();
         }
 
         internal void InvalidateRenderTree()
@@ -1105,7 +1186,7 @@ namespace SDUI.Controls
         private void RenderChildren(SKCanvas canvas)
         {
             foreach (var child in Controls
-                .OfType<UIElementBase>()
+                .OfType<IUIElement>()
                 .OrderBy(el => el.ZOrder)
                 .ThenBy(el => el.TabIndex))
             {
@@ -1186,7 +1267,7 @@ namespace SDUI.Controls
             return _renderSnapshot;
         }
 
-        internal void Render(SKCanvas targetCanvas)
+        public void Render(SKCanvas targetCanvas)
         {
             if (!Visible || Width <= 0 || Height <= 0)
             {
@@ -1229,6 +1310,19 @@ namespace SDUI.Controls
                     OnGotFocus(EventArgs.Empty);
                     break;
             }
+        }
+
+        // Explicit interface implementations to satisfy IUIElement contract
+        IUIElement IUIElement.FocusedElement
+        {
+            get => _focusedElement;
+            set => _focusedElement = value as UIElementBase;
+        }
+
+        int IUIElement.ZOrder
+        {
+            get => _zOrder;
+            set => _zOrder = value;
         }
 
         protected virtual void AdjustSize()
@@ -1396,9 +1490,9 @@ namespace SDUI.Controls
         /// <summary>
         /// Gets the parent UIWindowBase for this element
         /// </summary>
-        private UIWindowBase? GetParentWindow()
+        public UIWindowBase GetParentWindow()
         {
-            IUIElement? current = this;
+            IUIElement current = this;
             while (current != null)
             {
                 if (current is UIWindowBase window)
@@ -1653,7 +1747,7 @@ namespace SDUI.Controls
             }
         }
 
-        internal virtual void OnCreateControl()
+        public virtual void OnCreateControl()
         {
             if (_isCreated) return;
             _isCreated = true;
@@ -2041,7 +2135,7 @@ namespace SDUI.Controls
             foreach (UIElementBase control in _controls)
             {
                 LayoutEngine.Perform(control, clientArea, ref remainingArea);
-                //control.PerformLayout();
+                control.PerformLayout();
             }
 
             Invalidate();
@@ -2050,33 +2144,33 @@ namespace SDUI.Controls
         internal virtual void OnControlAdded(UIElementEventArgs e)
         {
             ControlAdded?.Invoke(this, e);
-            /*if (e.Element != null)
+
+            // If the added element has a parent window that has already completed loading,
+            // immediately raise Load for the newly added element (and its subtree).
+            if (e.Element != null)
             {
-                if (Parent is UIWindowBase parentWindow)
+                var parentWindow = e.Element.GetParentWindow();
+                if (parentWindow != null && parentWindow.IsLoaded)
                 {
-                    e.Element.Parent = parentWindow;
-                    ControlAdded?.Invoke(this, e);
-                    PerformLayout(e.Element);
+                    e.Element.EnsureLoadedRecursively();
                 }
-                else
-                {
-                    ControlAdded?.Invoke(this, e);
-                }
-            }*/
+            }
         }
 
         internal virtual void OnControlRemoved(UIElementEventArgs e)
         {
             ControlRemoved?.Invoke(this, e);
-            //if (e.Element != null)
-            //{
-            //    if (e.Element.Parent == Parent)
-            //    {
-            //        e.Element.Parent = null;
-            //    }
-            //    ControlRemoved?.Invoke(this, e);
-            //    PerformLayout();
-            //}
+
+            // If the removed element was part of a window that is already loaded,
+            // raise Unload for that element and its subtree immediately.
+            if (e.Element != null)
+            {
+                var parentWindow = this.GetParentWindow();
+                if (parentWindow != null && parentWindow.IsLoaded)
+                {
+                    e.Element.EnsureUnloadedRecursively();
+                }
+            }
         }
 
         public void SuspendLayout()

@@ -29,7 +29,12 @@ public class MenuItem
     private Padding _padding = new(3);
     private bool _autoSize = true;
     private bool _showSubmenuArrow = true;
-
+    
+    /// <summary>
+    /// TODO!
+    /// </summary>
+    public ToolStripItemAlignment Alignment { get; set; } = ToolStripItemAlignment.Left;
+    
     private bool _checked;
     public bool Checked { get => _checked; set { _checked = value; Parent?.Invalidate(); } }
 
