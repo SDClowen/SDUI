@@ -1198,6 +1198,15 @@ public class ComboBox : UIElementBase
 
     #endregion
 
+    protected override void InvalidateFontCache()
+    {
+        base.InvalidateFontCache();
+        _defaultSkFont?.Dispose();
+        _defaultSkFont = null;
+        _defaultSkFontSource = null;
+        _defaultSkFontDpi = 0;
+    }
+
     #region Rendering
 
     private SKFont GetDefaultSkFont()

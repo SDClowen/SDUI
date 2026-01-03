@@ -109,7 +109,26 @@ public class ContextMenuStrip : MenuStrip
         // WinForms z-order + SDUI'nin kendi ZOrder sistemini güncelle.
         BringToFront();
         if (_ownerWindow is UIWindow uiw)
+        {
             uiw.BringToFront(this);
+
+            // Ensure z-order is reasserted after current message processing to avoid
+            // race where other controls draw over the popup on the first show.
+            try
+            {
+                uiw.BeginInvoke((Action)(() =>
+                {
+                    try
+                    {
+                        this.BringToFront();
+                        uiw.BringToFront(this);
+                        uiw.Invalidate();
+                    }
+                    catch { }
+                }));
+            }
+            catch { }
+        }
         AttachHandlers();
 
         _fadeInAnimation.SetProgress(0);
@@ -229,6 +248,10 @@ public class ContextMenuStrip : MenuStrip
         
         foreach (var item in Items)
         {
+            // Respect MenuItem.Visible — skip hidden items from size calculations
+            if (!item.Visible)
+                continue;
+
             if (item.IsSeparator)
             {
                 contentHeight += SeparatorMargin * 2 + 1 + ItemPadding;
@@ -342,6 +365,10 @@ public class ContextMenuStrip : MenuStrip
 
         foreach (var item in Items)
         {
+            // Skip hidden items — visibility should control drawing and layout
+            if (!item.Visible)
+                continue;
+
             if (item.IsSeparator)
             {
                 _separatorPaint!.Color = SeparatorColor.ToSKColor().WithAlpha(fadeAlpha);

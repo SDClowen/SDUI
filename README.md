@@ -28,7 +28,7 @@ tv.SetSelectedNode(root);
 ## Layout compatibility (WinForms) ⚖️
 SDUI's layout engine tries to mimic WinForms Dock/AutoSize/Anchor behavior to make porting easier. Key points:
 
-- Child controls are laid out in this deterministic order: **Top → Bottom → Left → Right → Fill → None**. This ensures stacked AutoSize docks and Fill siblings behave like WinForms.
+- **Child controls are laid out in the same order they appear in the container's `Controls` collection (the Controls.Add / z-order), matching WinForms behavior**. This ensures controls that rely on add-order docking reproduce WinForms layouts.
 - AutoSize controls docked to Top/Bottom/Left/Right use `GetPreferredSize` and respect `AutoSizeMode`, `MinimumSize` and `MaximumSize` when sizing.
 - Anchored controls keep their distances to the anchored edges and resize when both opposite anchors are set (e.g., Left+Right or Top+Bottom).
 

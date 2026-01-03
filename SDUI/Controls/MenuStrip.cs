@@ -56,7 +56,9 @@ public class MenuStrip : UIElementBase
     private SKPaint? _imgPaint;
     private SKPaint? _textPaint;
     private SKPaint? _arrowPaint;
+    private SKPaint? _checkPaint;
     private SKPath? _chevronPath;
+    private SKPath? _checkPath;
     private SKFont? _defaultSkFont;
     private Font? _defaultSkFontSource;
     private int _defaultSkFontDpi;
@@ -69,6 +71,15 @@ public class MenuStrip : UIElementBase
         BackColor = ColorScheme.BackColor;
         ForeColor = ColorScheme.ForeColor;
         InitializeAnimationTimer();
+    }
+
+    protected override void InvalidateFontCache()
+    {
+        base.InvalidateFontCache();
+        _defaultSkFont?.Dispose();
+        _defaultSkFont = null;
+        _defaultSkFontSource = null;
+        _defaultSkFontDpi = 0;
     }
 
     private SKFont GetDefaultSkFont()
@@ -176,33 +187,19 @@ public class MenuStrip : UIElementBase
 
         if (Orientation == SDUI.Orientation.Horizontal)
         {
-            float x = ItemPadding;
-            float available = bounds.Width - (ItemPadding * 2);
-            float total = 0;
-            float[] widths = new float[_items.Count];
-            for (int i = 0; i < _items.Count; i++)
-            {
-                widths[i] = MeasureItemWidth(_items[i]);
-                total += widths[i];
-                if (i < _items.Count - 1) total += ItemPadding;
-            }
+            // Use ComputeItemRects to respect visibility and spacing logic
+            var rects = ComputeItemRects();
+            int rectIndex = 0;
 
-            // Yatay menüde fazladan boşlukları sınırlı tut.
-            float extra = 0;
-            if (Stretch && _items.Count > 1 && total < available)
-            {
-                float rawExtra = (available - total) / (_items.Count - 1);
-                // Her boşluk en fazla ItemPadding kadar genişlesin.
-                float maxExtraPerGap = ItemPadding;
-                extra = Math.Min(rawExtra, maxExtraPerGap);
-            }
             for (int i = 0; i < _items.Count; i++)
             {
                 var item = _items[i];
-                var w = widths[i];
-                var r = new SKRect(x, 0, x + w, ItemHeight);
+                if (!item.Visible) continue;
+
+                if (rectIndex >= rects.Count) break;
+                var rf = rects[rectIndex++];
+                var r = new SKRect(rf.Left, rf.Top, rf.Right, rf.Bottom);
                 DrawMenuItem(canvas, item, r);
-                x += w + ItemPadding + (i < _items.Count - 1 ? extra : 0);
             }
         }
         else
@@ -250,6 +247,57 @@ public class MenuStrip : UIElementBase
         }
 
         float tx = bounds.Left + 10;
+
+        // Checkmark area (left margin for checkbox/radio)
+        float checkAreaWidth = 20;
+        if (item.CheckState != SDUI.Enums.CheckState.Unchecked || item.Icon != null)
+        {
+            float checkX = bounds.Left + 8;
+            float checkY = bounds.MidY;
+            float checkSize = 12f;
+
+            if (item.CheckState == SDUI.Enums.CheckState.Checked)
+            {
+                // Draw checkmark (✓)
+                _checkPaint ??= new SKPaint
+                {
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Stroke,
+                    StrokeWidth = 1.8f,
+                    StrokeCap = SKStrokeCap.Round,
+                    StrokeJoin = SKStrokeJoin.Round
+                };
+                _checkPaint.Color = MenuForeColor.ToSKColor();
+
+                _checkPath ??= new SKPath();
+                _checkPath.Reset();
+                _checkPath.MoveTo(checkX, checkY);
+                _checkPath.LineTo(checkX + checkSize * 0.35f, checkY + checkSize * 0.35f);
+                _checkPath.LineTo(checkX + checkSize, checkY - checkSize * 0.4f);
+                c.DrawPath(_checkPath, _checkPaint);
+            }
+            else if (item.CheckState == SDUI.Enums.CheckState.Indeterminate)
+            {
+                // Draw indeterminate box (filled square)
+                _checkPaint ??= new SKPaint
+                {
+                    IsAntialias = true,
+                    Style = SKPaintStyle.Fill
+                };
+                _checkPaint.Color = MenuForeColor.ToSKColor().WithAlpha(128);
+                
+                float boxSize = 8f;
+                var boxRect = new SKRect(
+                    checkX,
+                    checkY - boxSize / 2,
+                    checkX + boxSize,
+                    checkY + boxSize / 2
+                );
+                c.DrawRect(boxRect, _checkPaint);
+            }
+
+            tx += checkAreaWidth;
+        }
 
         // Icon
         if (ShowIcons && item.Icon != null)
@@ -377,6 +425,9 @@ public class MenuStrip : UIElementBase
             {
                 var item = _items[i];
 
+                // Skip invisible items when computing rects
+                if (!item.Visible) continue;
+
                 if (item.IsSeparator)
                 {
                     // İnce çizgi için küçük bir satır yüksekliği ayırıyoruz.
@@ -465,11 +516,37 @@ public class MenuStrip : UIElementBase
 
         _activeDropDownOwner = item;
         _openedItem = item;
+        
+        // Initialize dropdown DPI from parent before showing
+        if (_activeDropDown != null)
+        {
+            _activeDropDown.InitializeDpi(this.DeviceDpi);
+        }
+        
         _activeDropDown.Show(this, screenPoint);
 
         // İlk açılışta da her zaman en üst z-index'te olsun.
         if (FindForm() is UIWindow uiw)
+        {
             uiw.BringToFront(_activeDropDown);
+
+            // Re-assert top z-order after current message loop to avoid
+            // first-show draw races where popup may appear behind other elements.
+            try
+            {
+                uiw.BeginInvoke((Action)(() =>
+                {
+                    try
+                    {
+                        _activeDropDown?.BringToFront();
+                        uiw.BringToFront(_activeDropDown);
+                        uiw.Invalidate();
+                    }
+                    catch { }
+                }));
+            }
+            catch { }
+        }
 
         Invalidate();
     }

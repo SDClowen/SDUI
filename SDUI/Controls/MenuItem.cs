@@ -1,3 +1,4 @@
+using SDUI.Enums;
 using SDUI.Extensions;
 using SkiaSharp;
 using System;
@@ -35,8 +36,49 @@ public class MenuItem
     /// </summary>
     public ToolStripItemAlignment Alignment { get; set; } = ToolStripItemAlignment.Left;
     
-    private bool _checked;
-    public bool Checked { get => _checked; set { _checked = value; Parent?.Invalidate(); } }
+    private Enums.CheckState _checkState = Enums.CheckState.Unchecked;
+    private bool _checkOnClick;
+
+    [Category("Behavior")]
+    [DefaultValue(false)]
+    public bool CheckOnClick
+    {
+        get => _checkOnClick;
+        set
+        {
+            if (_checkOnClick == value) return;
+            _checkOnClick = value;
+        }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue(typeof(Enums.CheckState), "Unchecked")]
+    public Enums.CheckState CheckState
+    {
+        get => _checkState;
+        set
+        {
+            if (_checkState == value) return;
+            var oldChecked = _checkState == Enums.CheckState.Checked;
+            _checkState = value;
+            var newChecked = _checkState == Enums.CheckState.Checked;
+            
+            Parent?.Invalidate();
+            
+            if (oldChecked != newChecked)
+            {
+                CheckedChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+    }
+
+    [Category("Appearance")]
+    [DefaultValue(false)]
+    public bool Checked
+    {
+        get => _checkState == Enums.CheckState.Checked;
+        set => CheckState = value ? Enums.CheckState.Checked : Enums.CheckState.Unchecked;
+    }
 
     public string Text
     {
@@ -330,10 +372,17 @@ public class MenuItem
     internal void OnClick()
     {
         if (!Enabled) return;
+        
+        if (CheckOnClick)
+        {
+            CheckState = CheckState == Enums.CheckState.Checked ? Enums.CheckState.Unchecked : Enums.CheckState.Checked;
+        }
+        
         Click?.Invoke(this, EventArgs.Empty);
     }
 
     public event EventHandler Click;
+    public event EventHandler CheckedChanged;
 }
 
 public class MenuItemSeparator : MenuItem

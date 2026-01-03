@@ -2,8 +2,19 @@ using SkiaSharp;
 
 namespace SDUI.Helpers
 {
-    internal static class TextRenderingHelper
+    public static class TextRenderingHelper
     {
+        public static void DrawText(SKCanvas canvas, string? text, float x, float y, SKColor color)
+        {
+            using var paint = new SKPaint
+            {
+                Color = color,
+                IsAntialias = true,
+            };
+            
+            DrawText(canvas, text, x, y, SKTextAlign.Left, null, paint);
+        }
+
         public static void DrawText(SKCanvas canvas, string? text, float x, float y, SKPaint paint)
         {
             DrawText(canvas, text, x, y, SKTextAlign.Left, null, paint);

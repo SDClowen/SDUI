@@ -267,7 +267,7 @@ namespace SDUI.Controls
 
             using var font = new SKFont
             {
-                Size = ItemHeight - 10,
+                Size = 9f.PtToPx(this),
                 Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
                 Edging = SKFontEdging.SubpixelAntialias
             };
@@ -303,7 +303,7 @@ namespace SDUI.Controls
                         Color = ColorScheme.AccentColor.ToSKColor()
                     };
                     canvas.DrawRect(itemRect, selectionPaint);
-                    paint.Color = ColorScheme.AccentColor.ToSKColor();
+                    paint.Color = ColorScheme.AccentColor.Determine().ToSKColor();
                 }
                 else
                 {

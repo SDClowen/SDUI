@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using System.Linq;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
@@ -340,6 +341,21 @@ public class UIWindowBase : Form
         }
 
         SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOOWNERZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
+
+        // Ensure child elements receive the correct initial DPI now that the window handle is available.
+        // Use InitializeDpi on first load to set DPI without scaling (design-time sizes are for 96 DPI)
+        try
+        {
+            float windowDpi = DpiHelper.GetDpiForWindowInternal(Handle);
+            foreach (var child in Controls.OfType<UIElementBase>())
+            {
+                child.InitializeDpi(windowDpi);
+            }
+        }
+        catch
+        {
+            // Swallow — DPI helpers may not be available on all platforms; nothing to do.
+        }
     }
 
     protected override void OnBackColorChanged(EventArgs e)

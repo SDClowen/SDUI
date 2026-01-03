@@ -12,7 +12,7 @@ using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class ListView : UIElementBase
+public partial class ListView : UIElementBase
 {
     public System.Windows.Forms.ColumnHeaderStyle HeaderStyle { get; set; } = System.Windows.Forms.ColumnHeaderStyle.Clickable;
     public System.Windows.Forms.View View { get; set; } = System.Windows.Forms.View.Details;
@@ -21,13 +21,13 @@ public class ListView : UIElementBase
     public bool CheckBoxes { get; set; } = false;
     public bool ShowItemToolTips { get; set; } = false;
     public bool UseCompatibleStateImageBehavior { get; set; } = false;
-    internal List<ListViewItem>? _listViewItems = [];
-    private readonly Dictionary<int, ListViewItem> _listItemsTable = [];
-    public IndexedList<System.Windows.Forms.ColumnHeader> Columns { get; } = [];
+    internal List<ListViewItem>? _listViewItems = null;
+    private readonly Dictionary<int, ListViewItem> _listItemsTable = new Dictionary<int, ListViewItem>();
+    public IndexedList<System.Windows.Forms.ColumnHeader> Columns { get; } = new IndexedList<System.Windows.Forms.ColumnHeader>();
     public ListViewItemCollection Items { get; }
-    public IndexedList<SDUI.Controls.ListViewItem> CheckedItems { get; } = [];
-    public IndexedList<int> SelectedIndices { get; } = [];
-    public IndexedList<SDUI.Controls.ListViewItem> SelectedItems { get; } = [];
+    public IndexedList<SDUI.Controls.ListViewItem> CheckedItems { get; } = new IndexedList<SDUI.Controls.ListViewItem>();
+    public IndexedList<int> SelectedIndices { get; } = new IndexedList<int>();
+    public IndexedList<SDUI.Controls.ListViewItem> SelectedItems { get; } = new IndexedList<SDUI.Controls.ListViewItem>();
     public SDUI.Collections.ListViewGroupCollection Groups { get; }
 
     public System.Windows.Forms.ImageList SmallImageList { get; set; }
@@ -249,6 +249,15 @@ public class ListView : UIElementBase
         return _defaultSkFont;
     }
 
+    protected override void InvalidateFontCache()
+    {
+        base.InvalidateFontCache();
+        _defaultSkFont?.Dispose();
+        _defaultSkFont = null;
+        _defaultSkFontSource = null;
+        _defaultSkFontDpi = 0;
+    }
+
     private SKPaint GetFillPaint()
         => _paintFill ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
 
@@ -455,68 +464,8 @@ public class ListView : UIElementBase
 
     private void DrawRow(SKCanvas canvas, ListViewItem row, float y, bool isGroupItem = false)
     {
-        var backPaint = GetFillPaint();
-        var gridPaint = GetGridPaint();
-        gridPaint.Color = ColorScheme.OutlineVariant.ToSKColor();
-        gridPaint.StrokeWidth = 0.5f;
-        var textPaint = GetTextPaint();
-        textPaint.Color = ColorScheme.OnSurface.ToSKColor();
-
-        SKFont? rowFont = null;
-        bool disposeRowFont = false;
-        if (row.Font == null || ReferenceEquals(row.Font, Font))
-        {
-            rowFont = GetDefaultSkFont();
-        }
-        else
-        {
-            rowFont = CreateFont(row.Font);
-            disposeRowFont = true;
-        }
-
-        // Row background is expensive; only draw when needed (selection/explicit custom backcolor).
-        // row.BackColor can represent an inherited value (e.g., ListView.BackColor), so we must
-        // check whether the item actually has a custom color set.
-        bool hasCustomBack = row.SubItems.Count > 0 && row.SubItems[0].CustomBackColor;
-        bool shouldFillBackground = row.StateSelected || hasCustomBack;
-        var rect = new SKRect(0, y, Width, y + RowHeight);
-        if (shouldFillBackground)
-        {
-            backPaint.Color = row.StateSelected
-                ? ColorScheme.PrimaryContainer.ToSKColor()
-                : ToSKColor(row.SubItems[0].BackColor);
-            canvas.DrawRect(rect, backPaint);
-        }
-
-        var x = -_horizontalScrollOffset;
-        int i = 0;
-        // skip columns left of viewport
-        while (i < Columns.Count && x + Columns[i].Width <= 0)
-        {
-            x += Columns[i].Width;
-            i++;
-        }
-
-        for (; i < row.SubItems.Count && i < Columns.Count && x < Width; i++)
-        {
-            var defaultFore = row.StateSelected
-                ? ColorScheme.OnPrimaryContainer.ToSKColor()
-                : ColorScheme.OnSurface.ToSKColor();
-            var foreColor = !row.ForeColor.IsEmpty ? ToSKColor(row.ForeColor) : defaultFore;
-            textPaint.Color = foreColor;
-
-            // Vertical centering using font metrics from SKFont
-            var fm = rowFont.Metrics;
-            float textY = y + (RowHeight - (fm.Descent - fm.Ascent)) / 2f - fm.Ascent;
-
-            DrawTextCompat(canvas, row.SubItems[i].Text ?? string.Empty, x + 5, textY, rowFont, textPaint.Color);
-            x += Columns[i].Width;
-        }
-
-        canvas.DrawLine(0, y, Width, y, gridPaint);
-
-        if (disposeRowFont)
-            rowFont.Dispose();
+        // Use the enhanced version with icon support
+        DrawRowWithIcon(canvas, row, y, isGroupItem);
     }
 
     private void DrawScrollBars(SKCanvas canvas)
@@ -698,7 +647,16 @@ public class ListView : UIElementBase
             AnimationType = Animation.AnimationType.EaseInOut,
             InterruptAnimation = true
         };
-        anim.OnAnimationProgress += _ => Invalidate();
+        double lastProgress = -1;
+        anim.OnAnimationProgress += (sender) => 
+        {
+            double prog = anim.GetProgress();
+            if (Math.Abs(prog - lastProgress) > 0.01) // Only invalidate on visible progress change
+            {
+                lastProgress = prog;
+                Invalidate();
+            }
+        };
         anim.OnAnimationFinished += _ =>
         {
             if (_pendingCollapse.Contains(group))
@@ -1007,7 +965,16 @@ public class ListView : UIElementBase
                 AnimationType = Animation.AnimationType.EaseInOut,
                 InterruptAnimation = true
             };
-            anim.OnAnimationProgress += _ => Invalidate();
+            double lastProgress = -1;
+            anim.OnAnimationProgress += (sender) => 
+            {
+                double prog = anim.GetProgress();
+                if (Math.Abs(prog - lastProgress) > 0.01)
+                {
+                    lastProgress = prog;
+                    Invalidate();
+                }
+            };
             anim.OnAnimationFinished += _ =>
             {
                 if (_pendingCollapse.Contains(group))

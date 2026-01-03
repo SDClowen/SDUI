@@ -13,15 +13,31 @@ namespace SDUI.Helpers
     {
         private static readonly PrivateFontCollection privateFontCollection = new();
         private static readonly ConcurrentDictionary<(string Family, SKFontStyleWeight Weight, SKFontStyleSlant Slant), SKTypeface> _typefaceCache = new();
-        public static Font Inter = GetFont(Resources.InterFont, 9f, FontStyle.Regular);
+        private static Font? _inter;
+        public static Font Inter => _inter ??= GetFont(Resources.InterFont, 9f, FontStyle.Regular);
         public static Font Segoe = new("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
 
-        public static SKTypeface InterTypeface { get; private set; }
-
-        static FontManager()
+        private static SKTypeface? _interTypeface;
+        public static SKTypeface InterTypeface
         {
-            using var data = SKData.CreateCopy(Resources.InterFont);
-            InterTypeface = SKTypeface.FromData(data);
+            get
+            {
+                if (_interTypeface == null)
+                {
+                    try
+                    {
+                        using var data = SKData.CreateCopy(Resources.InterFont);
+                        _interTypeface = SKTypeface.FromData(data);
+                    }
+                    catch
+                    {
+                        // If Skia initialization fails, fall back to default typeface to avoid crashing the app during startup.
+                        _interTypeface = SKTypeface.Default;
+                    }
+                }
+
+                return _interTypeface;
+            }
         }
 
         private static Font GetFont(byte[] fontResource, float size, FontStyle style)

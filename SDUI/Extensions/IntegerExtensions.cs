@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using SkiaSharp;
+using System.Drawing;
 
 public static class IntegerExtensions
 {
@@ -24,6 +25,18 @@ public static class IntegerExtensions
             (argb & 0xff0000) >> 16,
             (argb & 0xff00) >> 8,
              argb & 0xff);
+    }
+
+    /// <summary>
+    /// Convert an integer number to a SKColor.
+    /// </summary>
+    /// <returns></returns>
+    public static SKColor ToSKColor(this int argb)
+    {
+        return new SKColor(
+            (byte)((argb & 0xff0000) >> 16),
+            (byte)((argb & 0xff00) >> 8),
+             (byte)(argb & 0xff));
     }
 
     /// <summary>

@@ -107,7 +107,27 @@ namespace SDUI.Controls
         [ThreadStatic]
         private static GRContext? s_currentGpuContext;
 
-        private static readonly SKColorSpace s_srgbColorSpace = SKColorSpace.CreateSrgb();
+        private static SKColorSpace? s_srgbColorSpace;
+        private static SKColorSpace? SrgbColorSpace
+        {
+            get
+            {
+                if (s_srgbColorSpace == null)
+                {
+                    try
+                    {
+                        s_srgbColorSpace = SKColorSpace.CreateSrgb();
+                    }
+                    catch
+                    {
+                        // Skia native initialization failed in this environment; fall back to null (device/default color space).
+                        s_srgbColorSpace = null;
+                    }
+                }
+
+                return s_srgbColorSpace;
+            }
+        }
 
         internal static IDisposable PushGpuContext(GRContext? context)
         {
@@ -1151,7 +1171,7 @@ namespace SDUI.Controls
             }
 
             // sRGB color space ile yüksek kaliteli render
-            var desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, s_srgbColorSpace);
+            var desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
 
             var gpuContext = s_currentGpuContext;
             var desiredKind = gpuContext != null ? RenderTargetKind.Gpu : RenderTargetKind.Cpu;
@@ -1203,7 +1223,7 @@ namespace SDUI.Controls
         {
             // Render into a temporary surface for this frame only.
             // This avoids retaining large native pixel buffers per element.
-            var info = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, s_srgbColorSpace);
+            var info = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
 
             var gpuContext = s_currentGpuContext;
             var surface = gpuContext != null
@@ -1297,7 +1317,7 @@ namespace SDUI.Controls
                 {
                     if (_renderTargetKind == RenderTargetKind.Gpu && !ReferenceEquals(s_currentGpuContext, _renderGpuContext))
                     {
-                        var info = new SKImageInfo(snapshot.Width, snapshot.Height, SKColorType.Rgba8888, SKAlphaType.Premul, s_srgbColorSpace);
+                        var info = new SKImageInfo(snapshot.Width, snapshot.Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
                         using var tmpSurface = SKSurface.Create(info);
                         if (tmpSurface != null)
                         {
@@ -1816,6 +1836,30 @@ namespace SDUI.Controls
             MouseWheel?.Invoke(this, e);
         }
 
+        /// <summary>
+        /// Initialize DPI on first load without scaling (design-time sizes are for 96 DPI baseline).
+        /// </summary>
+        internal void InitializeDpi(float dpi)
+        {
+            _currentDpi = dpi > 0 ? dpi : DpiHelper.GetSystemDpi();
+            
+            // Invalidate font caches so they rebuild with correct DPI
+            InvalidateFontCache();
+            
+            foreach (UIElementBase control in _controls)
+            {
+                control.InitializeDpi(_currentDpi);
+            }
+            
+            // Trigger layout to update element sizes based on new DPI
+            if (_controls.Count > 0)
+            {
+                PerformLayout();
+            }
+            
+            NeedsRedraw = true;
+        }
+
         internal virtual void OnDpiChanged(float newDpi, float oldDpi)
         {
             if (oldDpi <= 0)
@@ -1826,21 +1870,16 @@ namespace SDUI.Controls
 
             var scaleFactor = oldDpi <= 0 ? 1f : newDpi / oldDpi;
             _currentDpi = newDpi;
+            
+            // Invalidate font caches BEFORE scaling so fonts rebuild with correct DPI
+            InvalidateFontCache();
 
-            var previousLocation = Location;
             var previousSize = Size;
 
             if (Math.Abs(scaleFactor - 1f) > 0.001f)
             {
-                var scaledLocation = new Point(
-                    (int)Math.Round(previousLocation.X * scaleFactor),
-                    (int)Math.Round(previousLocation.Y * scaleFactor));
-
-                if (scaledLocation != previousLocation)
-                {
-                    Location = scaledLocation;
-                }
-
+                // Don't scale Location - layout engine will handle positioning based on parent DPI
+                // Only scale Size, Padding, Margin
                 if (!AutoSize)
                 {
                     var scaledSize = new Size(
@@ -1864,6 +1903,12 @@ namespace SDUI.Controls
             foreach (UIElementBase control in _controls)
             {
                 control.OnDpiChanged(newDpi, oldDpi);
+            }
+
+            // Trigger layout after DPI change to reposition/resize children
+            if (_parent != null && Math.Abs(scaleFactor - 1f) > 0.001f)
+            {
+                PerformLayout();
             }
 
             NeedsRedraw = true;
@@ -1918,6 +1963,14 @@ namespace SDUI.Controls
             {
                 _currentDpi = DpiHelper.GetSystemDpi();
             }
+        }
+
+        /// <summary>
+        /// Override this to clear cached font objects when DPI changes.
+        /// </summary>
+        protected virtual void InvalidateFontCache()
+        {
+            // Base implementation does nothing - derived controls override to clear their font caches
         }
 
         private static Padding ScalePadding(Padding padding, float scaleFactor)
@@ -2207,47 +2260,24 @@ namespace SDUI.Controls
 
             Rectangle remainingArea = clientArea;
 
-            // Dock işlemleri - process in order: Top, Bottom, Left, Right, Fill, None
-            var top = new List<UIElementBase>();
-            var bottom = new List<UIElementBase>();
-            var left = new List<UIElementBase>();
-            var right = new List<UIElementBase>();
-            var fill = new List<UIElementBase>();
-            var none = new List<UIElementBase>();
-
-            foreach (UIElementBase child in _controls)
+            // Dock işlemleri - follow Controls collection order to match WinForms behavior.
+            // Capture child bounds before/after layout so we only invalidate when something actually changed.
+            var beforeBounds = _controls.Cast<UIElementBase>().Select(c => c.Bounds).ToArray();
+            foreach (UIElementBase control in _controls)
             {
-                if (!child.Visible)
+                if (!control.Visible)
                     continue;
 
-                switch (child.Dock)
-                {
-                    case DockStyle.Top: top.Add(child); break;
-                    case DockStyle.Bottom: bottom.Add(child); break;
-                    case DockStyle.Left: left.Add(child); break;
-                    case DockStyle.Right: right.Add(child); break;
-                    case DockStyle.Fill: fill.Add(child); break;
-                    default: none.Add(child); break;
-                }
+                LayoutEngine.Perform(control, clientArea, ref remainingArea);
+                control.PerformLayout();
             }
 
-            void ProcessList(IEnumerable<UIElementBase> list)
-            {
-                foreach (var control in list)
-                {
-                    LayoutEngine.Perform(control, clientArea, ref remainingArea);
-                    control.PerformLayout();
-                }
-            }
+            var afterBounds = _controls.Cast<UIElementBase>().Select(c => c.Bounds).ToArray();
+            bool boundsChanged = beforeBounds.Length != afterBounds.Length || beforeBounds.Zip(afterBounds, (b, a) => b != a).Any(x => x);
 
-            ProcessList(top);
-            ProcessList(bottom);
-            ProcessList(left);
-            ProcessList(right);
-            ProcessList(fill);
-            ProcessList(none);
-
-            Invalidate();
+            // Invalidate only when layout actually changed something or a redraw was requested.
+            if (boundsChanged || NeedsRedraw)
+                Invalidate();
         }
 
         internal virtual void OnControlAdded(UIElementEventArgs e)

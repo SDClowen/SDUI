@@ -74,6 +74,10 @@ public partial class MainWindow
         pasteToolStripMenuItem = new ();
         toolStripSeparator4 = new ();
         selectAllToolStripMenuItem = new ();
+        viewToolStripMenuItem = new ();
+        toolbarToolStripMenuItem = new ();
+        statusBarToolStripMenuItem = new ();
+        wordWrapToolStripMenuItem = new ();
         toolsToolStripMenuItem = new ();
         customizeToolStripMenuItem = new ();
         optionsToolStripMenuItem = new ();
@@ -208,7 +212,7 @@ public partial class MainWindow
         menuStrip1.BackColor = System.Drawing.Color.Transparent;
         menuStrip1.Dock = DockStyle.Top;
         menuStrip1.ImageScalingSize = new System.Drawing.Size(24, 24);
-        menuStrip1.Items.AddRange(new MenuItem[] { fileToolStripMenuItem, editToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
+        menuStrip1.Items.AddRange(new MenuItem[] { fileToolStripMenuItem, editToolStripMenuItem, viewToolStripMenuItem, toolsToolStripMenuItem, helpToolStripMenuItem });
         menuStrip1.Location = new System.Drawing.Point(1, 737);
         menuStrip1.Name = "menuStrip1";
         menuStrip1.Padding = new Padding(6, 2, 0, 2);
@@ -386,6 +390,44 @@ public partial class MainWindow
         selectAllToolStripMenuItem.Size = new System.Drawing.Size(179, 26);
         selectAllToolStripMenuItem.Text = "Select &All";
         // 
+        // viewToolStripMenuItem
+        // 
+        viewToolStripMenuItem.DropDownItems.AddRange(new MenuItem[] { toolbarToolStripMenuItem, statusBarToolStripMenuItem, wordWrapToolStripMenuItem });
+        viewToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+        viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+        viewToolStripMenuItem.Size = new System.Drawing.Size(55, 24);
+        viewToolStripMenuItem.Text = "&View";
+        // 
+        // toolbarToolStripMenuItem
+        // 
+        toolbarToolStripMenuItem.CheckOnClick = true;
+        toolbarToolStripMenuItem.Checked = true;
+        toolbarToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+        toolbarToolStripMenuItem.Name = "toolbarToolStripMenuItem";
+        toolbarToolStripMenuItem.Size = new System.Drawing.Size(155, 26);
+        toolbarToolStripMenuItem.Text = "&Toolbar";
+        toolbarToolStripMenuItem.CheckedChanged += toolbarToolStripMenuItem_CheckedChanged;
+        // 
+        // statusBarToolStripMenuItem
+        // 
+        statusBarToolStripMenuItem.CheckOnClick = true;
+        statusBarToolStripMenuItem.Checked = true;
+        statusBarToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+        statusBarToolStripMenuItem.Name = "statusBarToolStripMenuItem";
+        statusBarToolStripMenuItem.Size = new System.Drawing.Size(155, 26);
+        statusBarToolStripMenuItem.Text = "&Status Bar";
+        statusBarToolStripMenuItem.CheckedChanged += statusBarToolStripMenuItem_CheckedChanged;
+        // 
+        // wordWrapToolStripMenuItem
+        // 
+        wordWrapToolStripMenuItem.CheckOnClick = true;
+        wordWrapToolStripMenuItem.CheckState = SDUI.Enums.CheckState.Indeterminate;
+        wordWrapToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
+        wordWrapToolStripMenuItem.Name = "wordWrapToolStripMenuItem";
+        wordWrapToolStripMenuItem.Size = new System.Drawing.Size(155, 26);
+        wordWrapToolStripMenuItem.Text = "&Word Wrap";
+        wordWrapToolStripMenuItem.CheckedChanged += wordWrapToolStripMenuItem_CheckedChanged;
+        // 
         // toolsToolStripMenuItem
         // 
         toolsToolStripMenuItem.DropDownItems.AddRange(new MenuItem[] { customizeToolStripMenuItem, optionsToolStripMenuItem });
@@ -531,6 +573,10 @@ public partial class MainWindow
     private MenuItem pasteToolStripMenuItem;
     private MenuItemSeparator toolStripSeparator4;
     private MenuItem selectAllToolStripMenuItem;
+    private MenuItem viewToolStripMenuItem;
+    private MenuItem toolbarToolStripMenuItem;
+    private MenuItem statusBarToolStripMenuItem;
+    private MenuItem wordWrapToolStripMenuItem;
     private MenuItem toolsToolStripMenuItem;
     private MenuItem customizeToolStripMenuItem;
     private MenuItem optionsToolStripMenuItem;

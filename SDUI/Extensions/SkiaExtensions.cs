@@ -1,5 +1,7 @@
 ﻿using SkiaSharp;
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 public static class SkiaExtensions
 {
@@ -166,6 +168,18 @@ public static class SkiaExtensions
             {
                 tempImage.ReadPixels(pixmap, 0, 0);
             }
+        }
+    }
+
+    public static SKBitmap ToSKBitmap(this Image image)
+    {
+        using (var bitmap = new Bitmap(image))
+        {
+            var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
+            var skBitmap = new SKBitmap();
+            skBitmap.InstallPixels(new SKImageInfo(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Premul), data.Scan0, data.Stride);
+            bitmap.UnlockBits(data);
+            return skBitmap.Copy();
         }
     }
 
