@@ -1,4 +1,5 @@
 using SDUI.Controls;
+using SDUI.Helpers;
 using System;
 
 namespace SDUI.Demo;
@@ -10,6 +11,13 @@ public partial class MainWindow : UIWindow
         Console.WriteLine("MainWindow(): enter");
         InitializeComponent();
         Console.WriteLine("MainWindow(): after InitializeComponent");
+
+#if DEBUG
+        // Enable lightweight render logging for diagnostics when running in Debug builds.
+        DebugSettings.EnableRenderLogging = true;
+        DebugSettings.Log("MainWindow: Render logging enabled (Debug build)");
+#endif
+
         // Try OpenGL first for better performance, fallback to Software if it fails
         try
         {
@@ -21,6 +29,7 @@ public partial class MainWindow : UIWindow
             RenderBackend = Rendering.RenderBackend.Software;
             Console.WriteLine($"MainWindow(): RenderBackend=Software (fallback)");
         }
+
         ShowPerfOverlay = true;
         Console.WriteLine("MainWindow(): exit");
     }
@@ -42,7 +51,8 @@ public partial class MainWindow : UIWindow
             new ConfigPage() {Dock = System.Windows.Forms.DockStyle.Fill },
             new TabControlTestPage() {Dock = System.Windows.Forms.DockStyle.Fill },
             new SplitContainerPage() {Dock = System.Windows.Forms.DockStyle.Fill },
-            new LayoutCompatibilityPage() { Dock = System.Windows.Forms.DockStyle.Fill }
+            new LayoutCompatibilityPage() { Dock = System.Windows.Forms.DockStyle.Fill },
+            new LayoutTestPage() { Dock = System.Windows.Forms.DockStyle.Fill }
         ]);
     }
 

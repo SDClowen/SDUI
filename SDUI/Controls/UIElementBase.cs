@@ -43,7 +43,20 @@ namespace SDUI.Controls
         public bool AutoScroll { get; set; }
         public Size AutoScrollMargin { get; set; }
 
-        public Image Image { get; set; }
+        private Image _image;
+        public Image Image
+        {
+            get => _image;
+            set
+            {
+                if (_image == value)
+                    return;
+
+                _image = value;
+                InvalidateMeasure();
+                Invalidate();
+            }
+        }
 
         /// <summary>
         /// Enables/disables per-element offscreen surface + snapshot caching.
@@ -94,6 +107,9 @@ namespace SDUI.Controls
 
         private long _cachedSurfaceBytes;
         private LinkedListNode<UIElementBase>? _renderCacheLruNode;
+
+        // Lock to protect concurrent access to native render resources (SKSurface, SKImage)
+        private readonly object _renderLock = new();
 
         private enum RenderTargetKind
         {
@@ -219,14 +235,17 @@ namespace SDUI.Controls
                 _size = newSize;
                 OnSizeChanged(EventArgs.Empty);
 
-                // Parent'a bildir
-                if (Parent is UIWindowBase parentWindow)
+                // Parent'a bildir - but not during layout to prevent recursion
+                if (!_isPerformingLayout && !_isArranging)
                 {
-                    parentWindow.PerformLayout();
-                }
-                else if (Parent is UIElementBase parentElement)
-                {
-                    parentElement.PerformLayout();
+                    if (Parent is UIWindowBase parentWindow)
+                    {
+                        parentWindow.PerformLayout();
+                    }
+                    else if (Parent is UIElementBase parentElement)
+                    {
+                        parentElement.PerformLayout();
+                    }
                 }
             }
         }
@@ -358,7 +377,7 @@ namespace SDUI.Controls
                 _font = value;
 
                 OnFontChanged(EventArgs.Empty);
-
+                InvalidateMeasure();
                 Invalidate();
             }
         }
@@ -376,7 +395,7 @@ namespace SDUI.Controls
                 _text = value;
 
                 OnTextChanged(EventArgs.Empty);
-
+                InvalidateMeasure();
                 Invalidate();
             }
         }
@@ -394,7 +413,7 @@ namespace SDUI.Controls
                 _padding = value;
 
                 OnPaddingChanged(EventArgs.Empty);
-
+                InvalidateMeasure();
                 Invalidate();
             }
         }
@@ -412,7 +431,7 @@ namespace SDUI.Controls
                 _margin = value;
 
                 OnMarginChanged(EventArgs.Empty);
-
+                InvalidateMeasure();
                 Invalidate();
             }
         }
@@ -947,6 +966,16 @@ namespace SDUI.Controls
 
         // Guard to prevent re-entrant PerformLayout calls from causing stack overflows.
         private bool _isPerformingLayout;
+        protected bool IsPerformingLayout => _isPerformingLayout;
+        
+        // Guard to prevent layout during Arrange phase
+        private bool _isArranging;
+
+        // Layout pass tracking for Measure/Arrange caching
+        private Size? _cachedMeasure;
+        private Size _lastMeasureConstraint;
+        private int _layoutPassId;
+        private static int s_globalLayoutPassId;
 
         public bool IsHandleCreated;
 
@@ -1001,17 +1030,20 @@ namespace SDUI.Controls
 
         private void DisposeRenderResources()
         {
-            UnregisterFromGlobalRenderCache();
+            lock (_renderLock)
+            {
+                UnregisterFromGlobalRenderCache();
 
-            _renderSnapshot?.Dispose();
-            _renderSnapshot = null;
+                _renderSnapshot?.Dispose();
+                _renderSnapshot = null;
 
-            _renderSurface?.Dispose();
-            _renderSurface = null;
-            _renderInfo = SKImageInfo.Empty;
+                _renderSurface?.Dispose();
+                _renderSurface = null;
+                _renderInfo = SKImageInfo.Empty;
 
-            _renderTargetKind = RenderTargetKind.Cpu;
-            _renderGpuContext = null;
+                _renderTargetKind = RenderTargetKind.Cpu;
+                _renderGpuContext = null;
+            }
         }
 
         private static long EstimateSurfaceBytes(int width, int height)
@@ -1026,16 +1058,20 @@ namespace SDUI.Controls
 
         private void EvictRenderResources_NoGlobal()
         {
-            _renderSnapshot?.Dispose();
-            _renderSnapshot = null;
+            // Same behavior as DisposeRenderResources, but does not touch global cache references.
+            lock (_renderLock)
+            {
+                _renderSnapshot?.Dispose();
+                _renderSnapshot = null;
 
-            _renderSurface?.Dispose();
-            _renderSurface = null;
-            _renderInfo = SKImageInfo.Empty;
+                _renderSurface?.Dispose();
+                _renderSurface = null;
+                _renderInfo = SKImageInfo.Empty;
 
-            _renderTargetKind = RenderTargetKind.Cpu;
-            _renderGpuContext = null;
-            NeedsRedraw = true;
+                _renderTargetKind = RenderTargetKind.Cpu;
+                _renderGpuContext = null;
+                NeedsRedraw = true;
+            }
         }
 
         private static List<UIElementBase>? CollectEvictions_NoLock(UIElementBase? exclude)
@@ -1176,28 +1212,31 @@ namespace SDUI.Controls
             var gpuContext = s_currentGpuContext;
             var desiredKind = gpuContext != null ? RenderTargetKind.Gpu : RenderTargetKind.Cpu;
 
-            if (_renderSurface != null &&
-                _renderInfo.Width == desiredInfo.Width &&
-                _renderInfo.Height == desiredInfo.Height &&
-                _renderInfo.ColorType == desiredInfo.ColorType &&
-                _renderTargetKind == desiredKind &&
-                (desiredKind == RenderTargetKind.Cpu || ReferenceEquals(_renderGpuContext, gpuContext)))
+            lock (_renderLock)
             {
-                return;
+                if (_renderSurface != null &&
+                    _renderInfo.Width == desiredInfo.Width &&
+                    _renderInfo.Height == desiredInfo.Height &&
+                    _renderInfo.ColorType == desiredInfo.ColorType &&
+                    _renderTargetKind == desiredKind &&
+                    (desiredKind == RenderTargetKind.Cpu || ReferenceEquals(_renderGpuContext, gpuContext)))
+                {
+                    return;
+                }
+
+                DisposeRenderResources();
+
+                _renderTargetKind = desiredKind;
+                _renderGpuContext = gpuContext;
+
+                _renderSurface = desiredKind == RenderTargetKind.Gpu
+                    ? SKSurface.Create(gpuContext!, true, desiredInfo)
+                    : SKSurface.Create(desiredInfo);
+
+                _renderInfo = desiredInfo;
+                RegisterOrTouchGlobalRenderCache(EstimateSurfaceBytes(desiredInfo.Width, desiredInfo.Height));
+                MarkDirty();
             }
-
-            DisposeRenderResources();
-
-            _renderTargetKind = desiredKind;
-            _renderGpuContext = gpuContext;
-
-            _renderSurface = desiredKind == RenderTargetKind.Gpu
-                ? SKSurface.Create(gpuContext!, true, desiredInfo)
-                : SKSurface.Create(desiredInfo);
-
-            _renderInfo = desiredInfo;
-            RegisterOrTouchGlobalRenderCache(EstimateSurfaceBytes(desiredInfo.Width, desiredInfo.Height));
-            MarkDirty();
         }
 
         private SKColor ResolveBackgroundColor()
@@ -1262,6 +1301,11 @@ namespace SDUI.Controls
                 return null;
             }
 
+            if (DebugSettings.EnableRenderLogging)
+            {
+                DebugSettings.Log($"UIElementBase.RenderSnapshot: enter element={this.GetType().Name} size={Width}x{Height} renderTargetKind={_renderTargetKind} renderGpuContext={( _renderGpuContext != null ? "non-null" : "null") } currentGpuContext={( s_currentGpuContext != null ? "non-null" : "null") });");
+            }
+
             EnsureRenderTarget();
             if (_renderSurface == null)
                 return null;
@@ -1270,24 +1314,84 @@ namespace SDUI.Controls
 
             if (NeedsRedraw)
             {
-                var canvas = _renderSurface.Canvas;
-                canvas.Save();
+                lock (_renderLock)
+                {
+                    var canvas = _renderSurface.Canvas;
+                    canvas.Save();
 
-                // Yüksek kaliteli render ayarları
-                canvas.Clear(ResolveBackgroundColor());
+                    // Yüksek kaliteli render ayarları
+                    canvas.Clear(ResolveBackgroundColor());
 
-                var args = new SKPaintSurfaceEventArgs(_renderSurface, _renderInfo);
-                OnPaint(args);
-                Paint?.Invoke(this, args);
+                    var args = new SKPaintSurfaceEventArgs(_renderSurface, _renderInfo);
+                    OnPaint(args);
+                    Paint?.Invoke(this, args);
 
-                RenderChildren(canvas);
+                    RenderChildren(canvas);
 
-                canvas.Restore();
-                canvas.Flush();
+                    canvas.Restore();
+                    canvas.Flush();
 
-                _renderSnapshot?.Dispose();
-                _renderSnapshot = _renderSurface.Snapshot();
-                NeedsRedraw = false;
+                    // Replace snapshot with safe image; guard against GPU-backed snapshots that
+                    // may be invalid when drawn in a different context (can cause access violations).
+                    _renderSnapshot?.Dispose();
+                    try
+                    {
+                        var raw = _renderSurface.Snapshot();
+
+                        // If this element was GPU-rendered but the current global GPU context differs
+                        // (or is null), rasterize into a CPU-backed surface so future draws are safe.
+                        if (_renderTargetKind == RenderTargetKind.Gpu && !ReferenceEquals(s_currentGpuContext, _renderGpuContext))
+                        {
+                            var info = new SKImageInfo(raw.Width, raw.Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
+                            using var rasterSurf = SKSurface.Create(info);
+                            if (rasterSurf != null)
+                            {
+                                var rc = rasterSurf.Canvas;
+                                rc.Save();
+                                rc.Clear(SKColors.Transparent);
+                                rc.DrawImage(raw, 0, 0);
+                                rc.Restore();
+                                rc.Flush();
+
+                                raw.Dispose();
+                                _renderSnapshot = rasterSurf.Snapshot();
+
+                                if (DebugSettings.EnableRenderLogging)
+                                {
+                                    DebugSettings.Log($"UIElementBase: Rasterized GPU snapshot into CPU surface for element {this.GetType().Name} ({this.Width}x{this.Height})");
+                                }
+                            }
+                            else
+                            {
+                                // Couldn't create raster surface; fall back to raw snapshot
+                                _renderSnapshot = raw;
+
+                                if (DebugSettings.EnableRenderLogging)
+                                {
+                                    DebugSettings.Log($"UIElementBase: Could not create raster surface for element {this.GetType().Name} ({this.Width}x{this.Height}), falling back to raw snapshot");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            _renderSnapshot = raw;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Snapshot/ rasterization may fail due to transient native state; clean up and
+                        // force uncached rendering fallback next time to avoid crashing the process.
+                        DisposeRenderResources();
+                        _renderSnapshot = null;
+
+                        if (DebugSettings.EnableRenderLogging)
+                        {
+                            DebugSettings.Log($"UIElementBase: Snapshot creation/rasterization failed for element {this.GetType().Name} ({this.Width}x{this.Height}): {ex}");
+                        }
+                    }
+
+                    NeedsRedraw = false;
+                }
             }
 
             return _renderSnapshot;
@@ -1315,40 +1419,47 @@ namespace SDUI.Controls
                 // and draw that safe raster copy.
                 try
                 {
-                    if (_renderTargetKind == RenderTargetKind.Gpu && !ReferenceEquals(s_currentGpuContext, _renderGpuContext))
+                    lock (_renderLock)
                     {
-                        var info = new SKImageInfo(snapshot.Width, snapshot.Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
-                        using var tmpSurface = SKSurface.Create(info);
-                        if (tmpSurface != null)
+                        if (_renderTargetKind == RenderTargetKind.Gpu && !ReferenceEquals(s_currentGpuContext, _renderGpuContext))
                         {
-                            var tmpCanvas = tmpSurface.Canvas;
-                            tmpCanvas.Save();
-                            tmpCanvas.Clear(SKColors.Transparent);
-                            tmpCanvas.DrawImage(snapshot, 0, 0);
-                            tmpCanvas.Restore();
-                            tmpCanvas.Flush();
+                            var info = new SKImageInfo(snapshot.Width, snapshot.Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
+                            using var tmpSurface = SKSurface.Create(info);
+                            if (tmpSurface != null)
+                            {
+                                var tmpCanvas = tmpSurface.Canvas;
+                                tmpCanvas.Save();
+                                tmpCanvas.Clear(SKColors.Transparent);
+                                tmpCanvas.DrawImage(snapshot, 0, 0);
+                                tmpCanvas.Restore();
+                                tmpCanvas.Flush();
 
-                            using var raster = tmpSurface.Snapshot();
-                            targetCanvas.DrawImage(raster, Location.X, Location.Y);
+                                using var raster = tmpSurface.Snapshot();
+                                targetCanvas.DrawImage(raster, Location.X, Location.Y);
+                            }
+                            else
+                            {
+                                // Fallback to uncached rendering if we couldn't create a temporary surface
+                                
+                                DisposeRenderResources();
+                                RenderUncached(targetCanvas);
+                            }
                         }
                         else
                         {
-                            // Fallback to uncached rendering if we couldn't create a temporary surface
-                            
-                            DisposeRenderResources();
-                            RenderUncached(targetCanvas);
+                            // Safe to draw directly (either CPU-backed snapshot or same GPU context)
+                            targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
                         }
                     }
-                    else
-                    {
-                        // Safe to draw directly (either CPU-backed snapshot or same GPU context)
-                        targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
-                    }
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
                     // DrawImage başarısız olursa, cache'i temizle ve uncached rendering dene
                     DisposeRenderResources();
+                    if (DebugSettings.EnableRenderLogging)
+                    {
+                        DebugSettings.Log($"UIElementBase: DrawImage failed for element {this.GetType().Name} ({this.Width}x{this.Height}): {ex}");
+                    }
                     RenderUncached(targetCanvas);
                 }
                 return;
@@ -1421,6 +1532,87 @@ namespace SDUI.Controls
                 Size = proposedSize;
         }
 
+        /// <summary>
+        /// Measures the element and returns its desired size given the available space.
+        /// This is the first phase of the layout pass.
+        /// </summary>
+        /// <param name="availableSize">The available space that a parent element can allocate to a child element.</param>
+        /// <returns>The desired size of the element.</returns>
+        public virtual Size Measure(Size availableSize)
+        {
+            // Cache measurement within the same layout pass
+            if (_cachedMeasure.HasValue && _lastMeasureConstraint == availableSize && _layoutPassId == s_globalLayoutPassId)
+            {
+                return _cachedMeasure.Value;
+            }
+
+            // Default implementation: use GetPreferredSize for backward compatibility
+            var desiredSize = GetPreferredSize(availableSize);
+
+            // Apply MinimumSize/MaximumSize constraints
+            if (MinimumSize.Width > 0)
+                desiredSize.Width = Math.Max(desiredSize.Width, MinimumSize.Width);
+            if (MinimumSize.Height > 0)
+                desiredSize.Height = Math.Max(desiredSize.Height, MinimumSize.Height);
+            if (MaximumSize.Width > 0)
+                desiredSize.Width = Math.Min(desiredSize.Width, MaximumSize.Width);
+            if (MaximumSize.Height > 0)
+                desiredSize.Height = Math.Min(desiredSize.Height, MaximumSize.Height);
+
+            // Cache for this layout pass
+            _cachedMeasure = desiredSize;
+            _lastMeasureConstraint = availableSize;
+            _layoutPassId = s_globalLayoutPassId;
+
+            return desiredSize;
+        }
+
+        /// <summary>
+        /// Positions the element and determines its final size.
+        /// This is the second phase of the layout pass.
+        /// </summary>
+        /// <param name="finalRect">The final area within the parent that the element should use to arrange itself and its children.</param>
+        public virtual void Arrange(Rectangle finalRect)
+        {
+            // Default implementation: set Bounds directly
+            if (Bounds != finalRect)
+            {
+                _isArranging = true;
+                try
+                {
+                    Bounds = finalRect;
+                }
+                finally
+                {
+                    _isArranging = false;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Invalidates the cached measurement and triggers layout if AutoSize is enabled.
+        /// Call this when properties that affect the element's size change (Text, Font, Image, etc.).
+        /// </summary>
+        internal void InvalidateMeasure()
+        {
+            // Clear cached measurement
+            _cachedMeasure = null;
+
+            // Trigger layout if AutoSize is enabled
+            if (AutoSize)
+            {
+                // Trigger parent layout to re-measure and re-arrange this element
+                if (Parent is UIWindowBase parentWindow)
+                {
+                    parentWindow.PerformLayout();
+                }
+                else if (Parent is UIElementBase parentElement)
+                {
+                    parentElement.PerformLayout();
+                }
+            }
+        }
+
         public virtual Size GetPreferredSize(Size proposedSize)
         {
             return Size;
@@ -1449,7 +1641,11 @@ namespace SDUI.Controls
         internal virtual void OnSizeChanged(EventArgs e)
         {
             SizeChanged?.Invoke(this, e);
-            PerformLayout();
+            
+            // Don't trigger layout during arrange/layout operation to prevent infinite recursion
+            if (!_isPerformingLayout && !_isArranging)
+                PerformLayout();
+            
             Invalidate();
         }
 
@@ -2220,6 +2416,11 @@ namespace SDUI.Controls
             try
             {
                 _isPerformingLayout = true;
+                
+                // Invalidate cached measurements for new layout pass
+                s_globalLayoutPassId++;
+                _cachedMeasure = null;
+                
                 OnLayout(new UILayoutEventArgs(null!));
             }
             finally

@@ -115,7 +115,7 @@ namespace SDUI.Controls
         public Color BorderColor { get => _borderColor; set { if (_borderColor == value) return; _borderColor = value; Invalidate(); } }
         public float BorderWidth { get => _borderWidth; set { if (_borderWidth == value) return; _borderWidth = value; Invalidate(); } }
         public float CornerRadius { get => _cornerRadius; set { if (_cornerRadius == value) return; _cornerRadius = value; Invalidate(); } }
-        public int HeaderHeight { get => _headerHeight; set { if (_headerHeight == value) return; _headerHeight = value; Invalidate(); } }
+        public int HeaderHeight { get => _headerHeight; set { var newVal = Math.Max(24, value); if (_headerHeight == newVal) return; _headerHeight = newVal; UpdatePagesLayout(); Invalidate(); } }
         public int TabGap { get => _tabGap; set { if (_tabGap == value) return; _tabGap = Math.Max(0, value); Invalidate(); } }
         public int IndicatorHeight { get => _indicatorHeight; set { if (_indicatorHeight == value) return; _indicatorHeight = Math.Max(1, value); Invalidate(); } }
         public Size HeaderControlSize { get => _headerControlSize; set { if (_headerControlSize == value) return; _headerControlSize = value; Invalidate(); } }
@@ -270,6 +270,36 @@ namespace SDUI.Controls
             }
             
             _scrollOffset = Math.Clamp(_scrollOffset, 0, _maxScrollOffset);
+
+            // After scroll change, invalidate and update tab layout so that tab visibility is correct
+            UpdateTabRects();
+            Invalidate();
+        }
+
+        private void UpdatePagesLayout()
+        {
+            int contentY = HeaderHeight;
+            int contentH = Math.Max(0, Height - HeaderHeight);
+            var contentRect = new Rectangle(0, contentY, Width, contentH);
+
+            for (int i = 0; i < _pages.Count; i++)
+            {
+                var page = _pages[i];
+                page.Location = contentRect.Location;
+                page.Size = contentRect.Size;
+                page.Visible = (i == _selectedIndex);
+                if (page.Visible)
+                {
+                    page.BringToFront();
+                    page.PerformLayout();
+                }
+            }
+        }
+
+        internal override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            UpdatePagesLayout();
         }
         
         public override void OnPaint(SKPaintSurfaceEventArgs e)
@@ -725,11 +755,18 @@ namespace SDUI.Controls
             if (oldIndex >= 0 && oldIndex < _pages.Count) _pages[oldIndex].OnDeselected();
             if (newIndex >= 0 && newIndex < _pages.Count) _pages[newIndex].OnSelected();
             SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+
+            // Ensure pages are positioned and visible according to the selected index
+            UpdatePagesLayout();
+            Invalidate();
         }
 
         private void DrawChevrons(SkiaSharp.SKCanvas canvas, Rectangle bounds)
         {
             var isDarkTheme = ColorScheme.BackColor.IsDark();
+
+            // Ensure page bounds are updated when header area changes
+            UpdatePagesLayout();
             var chevBg = isDarkTheme 
                 ? Color.FromArgb(
                     Math.Min(255, ColorScheme.BackColor.R + 12),
@@ -818,6 +855,8 @@ namespace SDUI.Controls
             }
             else
             {
+                // No tabs - position near left with padding
+                // No tabs - position near left with padding
                 buttonX = _showLeftChevron ? CHEVRON_WIDTH + 8 : 8;
             }
 

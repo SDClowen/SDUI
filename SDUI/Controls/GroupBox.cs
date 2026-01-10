@@ -1,5 +1,6 @@
 ﻿using SDUI.Extensions;
 using SkiaSharp;
+using System;
 using System.Drawing;
 using SDUI.Helpers;
 using System.Windows.Forms;
@@ -74,8 +75,11 @@ public class GroupBox : UIElementBase
         rect.Inflate(-inflate, -inflate);
         var shadowRect = rect;
 
-        // Başlık alanı için rect
-        var titleRect = new SKRect(0, 0, rect.Width, Font.Height + 7);
+        // Başlık ölçüleri (padding uygulanmış genişlik)
+        var titleHeight = Font.Height + 7;
+        float titleX = Padding.Left;
+        float titleWidth = Math.Max(0, rect.Width - Padding.Horizontal);
+        var titleRect = new SKRect(titleX, 0, titleX + titleWidth, titleHeight);
 
         // Gölge çizimi
         using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, _shadowDepth / 2f))
@@ -100,7 +104,7 @@ public class GroupBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
 
-        // Başlık alanı çizimi
+        // Başlık alanı çizimi (padding uygulanmış sınırlar içinde)
         canvas.Save();
         canvas.ClipRect(titleRect);
 
@@ -113,10 +117,10 @@ public class GroupBox : UIElementBase
             StrokeWidth = 1
         })
         {
-            canvas.DrawLine(0, titleRect.Height - 1, titleRect.Width, titleRect.Height - 1, paint);
+            canvas.DrawLine(titleRect.Left, titleRect.Height - 1, titleRect.Right, titleRect.Height - 1, paint);
         }
 
-        // Başlık arka plan
+        // Başlık arka plan (hafif)
         using (var paint = new SKPaint
         {
             Color = ColorScheme.BackColor2.ToSKColor().WithAlpha(15),
@@ -152,18 +156,18 @@ public class GroupBox : UIElementBase
             switch (TextAlign)
             {
                 case ContentAlignment.MiddleLeft:
-                    textX = rect.Left + Padding.Left;
+                    textX = titleRect.Left;
                     break;
                 case ContentAlignment.MiddleRight:
-                    textX = rect.Right - textWidth - Padding.Right;
+                    textX = titleRect.Right - textWidth;
                     break;
                 case ContentAlignment.MiddleCenter:
                 default:
-                    textX = rect.Left + (rect.Width - textWidth) / 2f;
+                    textX = titleRect.Left + (titleWidth - textWidth) / 2f;
                     break;
             }
 
-                TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
+            TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
         // Çerçeve çizimi
@@ -186,5 +190,28 @@ public class GroupBox : UIElementBase
         preferredSize.Height += _shadowDepth;
 
         return preferredSize;
+    }
+
+    public override void PerformLayout()
+    {
+        base.PerformLayout();
+
+        if (Controls.Count == 0)
+            return;
+
+        // Title height for offset
+        int titleHeight = Font.Height + 7;
+        
+        // Apply padding and title offset to child bounds
+        var clientRect = new Rectangle(
+            Padding.Left,
+            Padding.Top + titleHeight,
+            Width - Padding.Horizontal - _shadowDepth / 2,
+            Height - Padding.Vertical - titleHeight - _shadowDepth / 2
+        );
+
+        // Use LayoutEngine to layout children within client area
+        var remaining = clientRect;
+        LayoutEngine.Perform(this, clientRect, ref remaining);
     }
 }

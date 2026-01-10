@@ -202,8 +202,11 @@ public partial class ListViewItem
             get => text ?? string.Empty;
             set
             {
+                if (text == value)
+                    return;
+                    
                 text = value;
-                _owner?.UpdateSubItems(-1);
+                _owner?.UpdateSubItems(Index);
             }
         }
 

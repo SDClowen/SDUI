@@ -51,7 +51,8 @@ namespace SDUI.Controls
             set
             {
                 ripple = value;
-                AutoSize = AutoSize;
+                if (AutoSize)
+                    AdjustSize();
                 if (value) Margin = new Padding(0);
                 Invalidate();
             }

@@ -11,22 +11,22 @@ using Vortice.DXGI;
 namespace SDUI.Rendering;
 
 /// <summary>
-/// DirectX11 presenter that uses a GDI-compatible swapchain.
-/// Rendering is still done with the existing Skia software path into a bitmap,
-/// then blitted onto the swapchain backbuffer via IDXGISurface1.GetDC.
+/// DirectX11 presenter that uses a D3D swapchain and prefers GPU-backed Skia rendering.
+/// Rendering is done with Skia; when GPU path is unavailable we fall back to a CPU-rendered bitmap
+/// and present it via a D3D upload (no GDI blit fallback).
 /// </summary>
 internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRenderer
 {
     public RenderBackend Backend => RenderBackend.DirectX11;
 
     /// <summary>
-    /// Maximum retained bytes for the CPU backbuffer cache (SKBitmap + SKSurface + optional GDI Bitmap wrapper).
+    /// Maximum retained bytes for the CPU backbuffer cache (SKBitmap + SKSurface).
     /// Set to 0 (or less) to disable the limit (unlimited).
     /// </summary>
     public static long MaxCpuBackBufferBytes { get; set; } = 24L * 1024 * 1024;
 
     // If SkiaSharp has a D3D backend in this build, we render directly to the swapchain backbuffer.
-    // Otherwise we fall back to the existing CPU->GDI blit path.
+    // Otherwise we fall back to the CPU upload (D3D) path.
     public GRContext? GrContext => _grContext;
 
     public bool IsSkiaGpuActive => _useSkiaGpu && _grContext != null && _grSurface != null;
@@ -36,8 +36,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
     private ID3D11Device? _device;
     private ID3D11DeviceContext? _context;
     private IDXGISwapChain1? _swapChain;
-    private IDXGISurface1? _gdiSurface;
-    private bool _swapChainIsGdiCompatible;
+
 
     public string? LastInitError { get; private set; }
 
@@ -55,7 +54,9 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
     private SKBitmap? _cacheBitmap;
     private SKSurface? _cacheSurface;
-    private Bitmap? _gdiBitmap;
+
+    // Lock to protect access to CPU cache resources during present/upload
+    private readonly object _cpuCacheLock = new();
 
     private int _width;
     private int _height;
@@ -90,8 +91,9 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
         try
         {
-            _swapChain = CreateSwapChainForHwnd(width: 1, height: 1, gdiCompatible: !_useSkiaGpu);
-            _swapChainIsGdiCompatible = !_useSkiaGpu;
+            // Create a normal swapchain; we will prefer GPU path when available
+            // and fall back to CPU upload (D3D texture) when not.
+            _swapChain = CreateSwapChainForHwnd(width: 1, height: 1, gdiCompatible: false);
         }
         catch (Exception ex)
         {
@@ -174,49 +176,25 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
     private bool EnsureCpuSwapChain(int width, int height)
     {
+        // Ensure a swapchain exists for CPU upload path (non-GDI flip model).
         if (_swapChain == null)
-            return false;
-
-        if (_swapChainIsGdiCompatible)
-            return false;
-
-        try
         {
-            _gdiSurface?.Dispose();
-            _gdiSurface = null;
-
-            _swapChain?.Dispose();
-            _swapChain = null;
-
-            _swapChain = CreateSwapChainForHwnd(width, height, gdiCompatible: true);
-            _swapChainIsGdiCompatible = true;
-
-            CreateGdiResources(width, height);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            LastInitError = $"Failed to recreate CPU/GDI swapchain: {ex.Message}";
-            throw;
-        }
-    }
-
-    private void CreateGdiResources(int width, int height)
-    {
-        if (_swapChain == null)
-            return;
-
-        try
-        {
-            _gdiSurface = _swapChain.GetBuffer<IDXGISurface1>(0);
-        }
-        catch (Exception ex)
-        {
-            LastInitError = $"GetBuffer(IDXGISurface1) failed: {ex.Message}";
-            throw;
+            try
+            {
+                _swapChain?.Dispose();
+                _swapChain = CreateSwapChainForHwnd(width, height, gdiCompatible: false);
+                // Create or refresh CPU cache resources
+                CreateCpuCacheResources(width, height);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LastInitError = $"Failed to recreate CPU swapchain: {ex.Message}";
+                throw;
+            }
         }
 
-        CreateCpuCacheResources(width, height);
+        return false;
     }
 
     private void CreateCpuCacheResources(int width, int height)
@@ -229,24 +207,38 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         // We'll render into a temporary buffer per frame.
         if (max > 0 && bytes > max)
         {
-            _gdiBitmap?.Dispose();
-            _gdiBitmap = null;
+            lock (_cpuCacheLock)
+            {
+                _cacheSurface?.Dispose();
+                _cacheSurface = null;
 
+                _cacheBitmap?.Dispose();
+                _cacheBitmap = null;
+            }
+
+            return;
+        }
+
+        lock (_cpuCacheLock)
+        {
+            _cacheBitmap = new SKBitmap(info);
+            var pixels = _cacheBitmap.GetPixels();
+            _cacheSurface = SKSurface.Create(info, pixels, _cacheBitmap.RowBytes);
+
+            // Note: GDI fallback removed. We use D3D upload (PresentFromCpuCacheViaD3D11Upload) when GPU is unavailable.
+        }
+    }
+
+    private void DisposeCpuCacheResources()
+    {
+        lock (_cpuCacheLock)
+        {
             _cacheSurface?.Dispose();
             _cacheSurface = null;
 
             _cacheBitmap?.Dispose();
             _cacheBitmap = null;
-
-            return;
         }
-
-        _cacheBitmap = new SKBitmap(info);
-        var pixels = _cacheBitmap.GetPixels();
-        _cacheSurface = SKSurface.Create(info, pixels, _cacheBitmap.RowBytes);
-
-        // Only needed for the legacy GDI blit path.
-        _gdiBitmap = new Bitmap(width, height, _cacheBitmap.RowBytes, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, pixels);
     }
 
     private static long EstimateBackBufferBytes(int width, int height)
@@ -303,36 +295,44 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
     private unsafe void PresentFromCpuCacheViaD3D11Upload(SKBitmap srcBitmap, int width, int height)
     {
-        if (_context == null || _swapChain == null)
-            return;
+            if (_context == null || _swapChain == null || srcBitmap == null)
+                return;
 
-        EnsureCpuUploadResources(width, height);
-        if (_cpuUploadTexture == null || _presentBackBuffer == null)
-            return;
+            EnsureCpuUploadResources(width, height);
+            if (_cpuUploadTexture == null || _presentBackBuffer == null)
+                return;
 
-        var mapped = _context.Map(_cpuUploadTexture, 0, MapMode.WriteDiscard, Vortice.Direct3D11.MapFlags.None);
-        try
-        {
-            var srcBase = (byte*)srcBitmap.GetPixels().ToPointer();
-            var dstBase = (byte*)mapped.DataPointer.ToPointer();
-
-            var srcStride = srcBitmap.RowBytes;
-            var dstStride = mapped.RowPitch;
-            var rowBytes = width * 4;
-
-            for (var y = 0; y < height; y++)
+            lock (_cpuCacheLock)
             {
-                Buffer.MemoryCopy(srcBase + (y * srcStride), dstBase + (y * dstStride), dstStride, rowBytes);
+                var mapped = _context.Map(_cpuUploadTexture, 0, MapMode.WriteDiscard, Vortice.Direct3D11.MapFlags.None);
+                try
+                {
+                    // Defensive guard: re-check srcBitmap and pixel pointer
+                    var pixelsPtr = srcBitmap.GetPixels();
+                    if (pixelsPtr == IntPtr.Zero)
+                        return;
+
+                    var srcBase = (byte*)pixelsPtr.ToPointer();
+                    var dstBase = (byte*)mapped.DataPointer.ToPointer();
+
+                    var srcStride = srcBitmap.RowBytes;
+                    var dstStride = mapped.RowPitch;
+                    var rowBytes = width * 4;
+
+                    for (var y = 0; y < height; y++)
+                    {
+                        Buffer.MemoryCopy(srcBase + (y * srcStride), dstBase + (y * dstStride), dstStride, rowBytes);
+                    }
+                }
+                finally
+                {
+                    _context.Unmap(_cpuUploadTexture, 0);
+                }
+
+                _context.CopyResource(_presentBackBuffer, _cpuUploadTexture);
+                _swapChain.Present(1, PresentFlags.None);
             }
         }
-        finally
-        {
-            _context.Unmap(_cpuUploadTexture, 0);
-        }
-
-        _context.CopyResource(_presentBackBuffer, _cpuUploadTexture);
-        _swapChain.Present(1, PresentFlags.None);
-    }
 
     private static (ID3D11Device device, ID3D11DeviceContext context) CreateDeviceWithFallback(DeviceCreationFlags flags, FeatureLevel[] featureLevels)
     {
@@ -475,14 +475,11 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         width = Math.Max(1, width);
         height = Math.Max(1, height);
 
-        if (_width == width && _height == height && _gdiSurface != null)
+        if (_width == width && _height == height)
             return;
 
         _width = width;
         _height = height;
-
-        _gdiSurface?.Dispose();
-        _gdiSurface = null;
 
         _grSurface?.Dispose();
         _grSurface = null;
@@ -502,11 +499,9 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         _cacheSurface = null;
         _cacheBitmap?.Dispose();
         _cacheBitmap = null;
-        _gdiBitmap?.Dispose();
-        _gdiBitmap = null;
 
         // If GPU init was attempted and later disabled, we may still have a flip-model swapchain.
-        // The GDI blit path requires a GDI-compatible swapchain; recreate it if needed.
+        // Ensure we have a swapchain and CPU cache resources for the CPU upload path.
         if (!_useSkiaGpu && EnsureCpuSwapChain(width, height))
             return;
 
@@ -527,8 +522,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             return;
         }
 
-        // Prefer the legacy GDI blit path unless it fails at runtime.
-        // If we already switched to upload mode, do not require a GDI surface.
+        // Prefer the D3D upload path; if we already switched to upload mode, ensure CPU cache resources.
         if (_useCpuUploadPath)
         {
             CreateCpuCacheResources(width, height);
@@ -537,23 +531,17 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
         try
         {
-            CreateGdiResources(width, height);
+            CreateCpuCacheResources(width, height);
         }
         catch (Exception ex)
         {
-            // Some systems/drivers still fail the GDI swapchain surface path.
-            // Switch to a CPU->D3D11 upload path to keep DirectX presenting.
-            LastInitError = $"GDI surface init failed; switching to D3D upload: {ex.Message}";
-            _useCpuUploadPath = true;
-            _gdiSurface?.Dispose();
-            _gdiSurface = null;
-            _gdiBitmap?.Dispose();
-            _gdiBitmap = null;
+            LastInitError = $"CPU cache init failed: {ex.Message}";
+
             _cacheSurface?.Dispose();
             _cacheSurface = null;
             _cacheBitmap?.Dispose();
             _cacheBitmap = null;
-            CreateCpuCacheResources(width, height);
+            // If CPU cache creation fails, we will fall back to per-frame uncached rendering.
         }
     }
 
@@ -608,7 +596,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         }
         catch (Exception ex)
         {
-            // If anything fails, fall back to the CPU/GDI blit path for this session.
+            // If anything fails, fall back to the CPU upload path for this session.
             LastInitError = $"Skia D3D backbuffer init failed: {ex.Message}";
             _useSkiaGpu = false;
             _grSurface?.Dispose();
@@ -618,8 +606,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             _backBuffer?.Dispose();
             _backBuffer = null;
 
-            // Important: if the swapchain was created as flip-model for GPU, recreate it as GDI-compatible
-            // before we ever call IDXGISurface1.GetDC.
+            // Ensure we have a swapchain suitable for CPU upload/present.
             if (EnsureCpuSwapChain(width, height))
                 return;
         }
@@ -649,61 +636,25 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         // If we have a cached CPU backbuffer (within MaxCpuBackBufferBytes), use it.
         if (_cacheSurface != null && _cacheBitmap != null)
         {
-            draw(_cacheSurface.Canvas, info);
-            _cacheSurface.Canvas.Flush();
-
-            if (_useCpuUploadPath)
-            {
-                try
+                lock (_cpuCacheLock)
                 {
-                    PresentFromCpuCacheViaD3D11Upload(_cacheBitmap, width, height);
-                }
-                catch (Exception ex)
-                {
-                    LastInitError = $"D3D11 upload present failed: {ex.Message}";
-                }
+                    draw(_cacheSurface.Canvas, info);
+                    _cacheSurface.Canvas.Flush();
 
-                return;
-            }
-
-            if (_gdiSurface == null || _gdiBitmap == null)
-                return;
-
-            try
-            {
-                nint hdc;
-                try
-                {
-                    hdc = _gdiSurface.GetDC(true);
+                    // Prefer D3D upload path for presenting CPU-rendered cache.
+                    try
+                    {
+                        PresentFromCpuCacheViaD3D11Upload(_cacheBitmap, width, height);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        LastInitError = $"D3D11 upload present failed: {ex.Message}; falling back to per-frame rendering.";
+                        DisposeCpuCacheResources();
+                        // Fall through to per-frame temporary rendering below.
+                    }
                 }
-                catch (Exception ex)
-                {
-                    LastInitError = $"GetDC failed; switching to D3D upload: {ex.Message}";
-                    _useCpuUploadPath = true;
-                    PresentFromCpuCacheViaD3D11Upload(_cacheBitmap, width, height);
-                    return;
-                }
-
-                try
-                {
-                    using var gfx = Graphics.FromHdc(hdc);
-                    gfx.DrawImageUnscaled(_gdiBitmap, 0, 0);
-                }
-                finally
-                {
-                    _gdiSurface.ReleaseDC(null);
-                }
-
-                _swapChain.Present(1, PresentFlags.None);
-            }
-            catch (Exception ex)
-            {
-                LastInitError = $"DirectX11 CPU present failed: {ex.Message}";
-            }
-
-            return;
         }
-
         // Otherwise render into a temporary buffer per frame to keep resident memory low.
         using var tempBitmap = new SKBitmap(info);
         var pixels = tempBitmap.GetPixels();
@@ -714,54 +665,15 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         draw(tempSurface.Canvas, info);
         tempSurface.Canvas.Flush();
 
-        if (_useCpuUploadPath)
-        {
-            try
-            {
-                PresentFromCpuCacheViaD3D11Upload(tempBitmap, width, height);
-            }
-            catch (Exception ex)
-            {
-                LastInitError = $"D3D11 upload present failed: {ex.Message}";
-            }
-
-            return;
-        }
-        
-        if (_gdiSurface == null)
-            return;
-
         try
         {
-            nint hdc;
-            try
-            {
-                hdc = _gdiSurface.GetDC(true);
-            }
-            catch (Exception ex)
-            {
-                LastInitError = $"GetDC failed; switching to D3D upload: {ex.Message}";
-                _useCpuUploadPath = true;
-                PresentFromCpuCacheViaD3D11Upload(tempBitmap, width, height);
-                return;
-            }
-
-            try
-            {
-                using var gfx = Graphics.FromHdc(hdc);
-                using var tempGdiBitmap = new Bitmap(width, height, tempBitmap.RowBytes, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, pixels);
-                gfx.DrawImageUnscaled(tempGdiBitmap, 0, 0);
-            }
-            finally
-            {
-                _gdiSurface.ReleaseDC(null);
-            }
-
-            _swapChain.Present(1, PresentFlags.None);
+            PresentFromCpuCacheViaD3D11Upload(tempBitmap, width, height);
+            return;
         }
         catch (Exception ex)
         {
-            LastInitError = $"DirectX11 CPU present failed: {ex.Message}";
+            LastInitError = $"D3D11 upload present failed: {ex.Message}; no fallback available for this frame.";
+            return;
         }
         // #####################
     }
@@ -786,17 +698,11 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         _grContext?.Dispose();
         _grContext = null;
 
-        _gdiBitmap?.Dispose();
-        _gdiBitmap = null;
-
         _cacheSurface?.Dispose();
         _cacheSurface = null;
 
         _cacheBitmap?.Dispose();
         _cacheBitmap = null;
-
-        _gdiSurface?.Dispose();
-        _gdiSurface = null;
 
         _swapChain?.Dispose();
         _swapChain = null;

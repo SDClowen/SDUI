@@ -450,6 +450,9 @@ public partial class ListViewItem : ICloneable
         }
         set
         {
+            if (ImageIndexer.Index == value)
+                return;
+                
             ImageIndexer.Index = value;
 
             if (_listView is not null && _listView.IsHandleCreated)
@@ -470,6 +473,9 @@ public partial class ListViewItem : ICloneable
         get => ImageIndexer.Key;
         set
         {
+            if (ImageIndexer.Key == value)
+                return;
+                
             ImageIndexer.Key = value;
 
             if (_listView is not null && _listView.IsHandleCreated)
@@ -673,11 +679,12 @@ public partial class ListViewItem : ICloneable
     {
         get
         {
-            if (SubItemCount == 0)
+            // Use direct state access to avoid property recursion
+            if (_state[s_subItemCountSection] == 0)
             {
                 _subItems = new List<ListViewSubItem>(1);
                 _subItems.Add(new ListViewSubItem(this, string.Empty));
-                SubItemCount = 1;
+                _state[s_subItemCountSection] = 1;
             }
 
             return _listViewSubItemCollection ??= new(this);

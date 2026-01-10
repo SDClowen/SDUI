@@ -32,11 +32,61 @@ SDUI's layout engine tries to mimic WinForms Dock/AutoSize/Anchor behavior to ma
 - AutoSize controls docked to Top/Bottom/Left/Right use `GetPreferredSize` and respect `AutoSizeMode`, `MinimumSize` and `MaximumSize` when sizing.
 - Anchored controls keep their distances to the anchored edges and resize when both opposite anchors are set (e.g., Left+Right or Top+Bottom).
 
-Demo scenarios added (open Demo app and choose "Layout Compatibility"):
+## NEW: Measure/Arrange Layout API 📐
 
-- **Min/Max enforcement**: AutoSize controls with `MinimumSize`/`MaximumSize` to verify enforced bounds.
-- **Left/Right stacked AutoSize**: Multiple Left/Right docked AutoSize controls to verify stacking and width behavior.
-- **Nested Dock + Anchor combos**: Panels nested with mixed docking and an anchored control to verify complex resize semantics.
+SDUI now implements a **two-phase layout pipeline** similar to WPF/Avalonia for improved layout performance and predictability:
+
+### How It Works
+
+**Phase 1: Measure** - Controls calculate their desired size given available space:
+```csharp
+Size desiredSize = control.Measure(availableSize);
+```
+
+**Phase 2: Arrange** - Controls are positioned and sized to their final bounds:
+```csharp
+control.Arrange(new Rectangle(x, y, width, height));
+```
+
+### Features
+
+- **Measurement Caching**: Results are cached per layout pass to avoid redundant calculations
+- **Automatic Cache Invalidation**: Content changes (Text, Font, Image, Padding, Margin) automatically clear cache
+- **DPI-Aware**: Layout automatically re-measures on DPI changes
+- **Backward Compatible**: Falls back to `GetPreferredSize()` if not overridden
+
+### For Control Authors
+
+Override `Measure()` to provide custom sizing logic:
+```csharp
+public override Size Measure(Size availableSize)
+{
+    // Calculate desired size based on content
+    var contentSize = MeasureContent(availableSize);
+    
+    // Apply padding
+    contentSize.Width += Padding.Horizontal;
+    contentSize.Height += Padding.Vertical;
+    
+    // Let base class apply MinimumSize/MaximumSize constraints
+    return base.Measure(availableSize);
+}
+```
+
+The layout engine handles:
+- Calling `Measure()` before `Arrange()` 
+- Respecting `MinimumSize` / `MaximumSize` constraints
+- Caching results within the same layout pass
+- Invalidating cache when content properties change
+
+See [DOCS/LayoutDesign.md](DOCS/LayoutDesign.md) for full design details.
+
+Demo scenarios added (open Demo app and choose "Layout Test Page"):
+
+- **Dock Test**: All dock styles (Top/Bottom/Left/Right/Fill) with proper measure/arrange flow
+- **Anchor Test**: All anchor combinations with window resize
+- **AutoSize Test**: Interactive tests showing Text/Font/Padding changes triggering layout
+- **Measure API Test**: Direct API usage demonstration
 
 If you rely on unit tests, please note: we run layout verification through the demo app and interactive manual tests. If you see a mismatch with WinForms, open an issue with repro steps.
 

@@ -300,12 +300,16 @@ public class FlowLayoutPanel : UIElementBase
         }
 
         var clientArea = GetClientArea();
-        var currentX = clientArea.Left;
-        var currentY = clientArea.Top;
+        int hOffset = (_autoScroll && _hScrollBar.Visible) ? _hScrollBar.Value : 0;
+        int vOffset = (_autoScroll && _vScrollBar.Visible) ? _vScrollBar.Value : 0;
+        var contentOriginX = clientArea.Left - hOffset;
+        var contentOriginY = clientArea.Top - vOffset;
+        var currentX = contentOriginX;
+        var currentY = contentOriginY;
         var rowHeight = 0;
         var columnWidth = 0;
-        var maxContentWidth = 0;
-        var maxContentHeight = 0;
+        int contentMaxWidth = 0;
+        int contentMaxHeight = 0;
 
         // Ensure AutoSize children are sized to their preferred sizes before layout calculations
         foreach (var control in controls)
@@ -338,15 +342,15 @@ public class FlowLayoutPanel : UIElementBase
 
             foreach (var control in controls)
             {
-                // Satır sonuna gelindi mi kontrol et
-                if (_wrapContents && currentX + control.Width + _itemPadding.Horizontal > clientArea.Right)
+                // Satır sonuna gelindi mi kontrol et (kullanılabilir genişlik clientArea içinde hesaplanır)
+                if (_wrapContents && currentX + control.Width + _itemPadding.Left > clientArea.Right - hOffset)
                 {
                     // Mevcut satırı hizala
                     AlignRow(row, currentY, rowHeight, clientArea);
                     row.Clear();
 
-                    currentX = clientArea.Left;
-                    currentY += rowHeight + _itemPadding.Vertical;
+                    currentX = contentOriginX;
+                    currentY += rowHeight + _itemPadding.Top;
                     rowHeight = 0;
                 }
 
@@ -359,9 +363,11 @@ public class FlowLayoutPanel : UIElementBase
                     StartAnimation(control, targetPoint);
                 }
 
-                currentX += control.Width + _itemPadding.Horizontal;
+                // Hesaplama: içeriğin sağ sınırını güncelle
+                var endX = currentX + control.Width;
+                currentX += control.Width + _itemPadding.Left;
                 rowHeight = Math.Max(rowHeight, control.Height);
-                maxContentWidth = Math.Max(maxContentWidth, currentX);
+                contentMaxWidth = Math.Max(contentMaxWidth, endX - contentOriginX);
                 row.Add(control);
             }
 
@@ -371,7 +377,7 @@ public class FlowLayoutPanel : UIElementBase
                 AlignRow(row, currentY, rowHeight, clientArea);
             }
 
-            maxContentHeight = currentY + rowHeight;
+            contentMaxHeight = Math.Max(contentMaxHeight, (currentY + rowHeight) - contentOriginY);
         }
         // Dikey düzenleme
         else
@@ -381,14 +387,14 @@ public class FlowLayoutPanel : UIElementBase
             foreach (var control in controls)
             {
                 // Sütun sonuna gelindi mi kontrol et
-                if (_wrapContents && currentY + control.Height + _itemPadding.Vertical > clientArea.Bottom)
+                if (_wrapContents && currentY + control.Height + _itemPadding.Top > clientArea.Bottom - vOffset)
                 {
                     // Mevcut sütunu hizala
                     AlignColumn(column, currentX, columnWidth, clientArea);
                     column.Clear();
 
-                    currentY = clientArea.Top;
-                    currentX += columnWidth + _itemPadding.Horizontal;
+                    currentY = contentOriginY;
+                    currentX += columnWidth + _itemPadding.Left;
                     columnWidth = 0;
                 }
 
@@ -401,9 +407,10 @@ public class FlowLayoutPanel : UIElementBase
                     StartAnimation(control, targetPoint);
                 }
 
-                currentY += control.Height + _itemPadding.Vertical;
+                var endY = currentY + control.Height;
+                currentY += control.Height + _itemPadding.Top;
                 columnWidth = Math.Max(columnWidth, control.Width);
-                maxContentHeight = Math.Max(maxContentHeight, currentY);
+                contentMaxHeight = Math.Max(contentMaxHeight, endY - contentOriginY);
                 column.Add(control);
             }
 
@@ -413,13 +420,13 @@ public class FlowLayoutPanel : UIElementBase
                 AlignColumn(column, currentX, columnWidth, clientArea);
             }
 
-            maxContentWidth = currentX + columnWidth;
+            contentMaxWidth = Math.Max(contentMaxWidth, (currentX + columnWidth) - contentOriginX);
         }
 
         // ScrollBar'ları güncelle
         if (_autoScroll)
         {
-            UpdateScrollBars(maxContentWidth, maxContentHeight);
+            UpdateScrollBars(contentMaxWidth, contentMaxHeight);
         }
 
         _isLayouting = false;
@@ -446,16 +453,17 @@ public class FlowLayoutPanel : UIElementBase
     {
         if (row.Count == 0) return;
 
-        var totalWidth = row.Sum(c => c.Width) + (row.Count - 1) * _itemPadding.Horizontal;
-        var startX = clientArea.Left;
+        var totalWidth = row.Sum(c => c.Width) + (row.Count - 1) * _itemPadding.Left;
+        var startXBase = clientArea.Left - (_hScrollBar?.Value ?? 0);
+        var startX = startXBase;
 
         switch (_horizontalAlignment)
         {
             case FlowAlignment.Center:
-                startX = clientArea.Left + (clientArea.Width - totalWidth) / 2;
+                startX = startXBase + (clientArea.Width - totalWidth) / 2;
                 break;
             case FlowAlignment.Far:
-                startX = clientArea.Right - totalWidth;
+                startX = startXBase + (clientArea.Width - totalWidth);
                 break;
         }
 
@@ -473,7 +481,7 @@ public class FlowLayoutPanel : UIElementBase
             }
 
             _targetLocations[control] = new Point(startX, targetY);
-            startX += control.Width + _itemPadding.Horizontal;
+            startX += control.Width + _itemPadding.Left;
         }
     }
 
@@ -481,16 +489,17 @@ public class FlowLayoutPanel : UIElementBase
     {
         if (column.Count == 0) return;
 
-        var totalHeight = column.Sum(c => c.Height) + (column.Count - 1) * _itemPadding.Vertical;
-        var startY = clientArea.Top;
+        var totalHeight = column.Sum(c => c.Height) + (column.Count - 1) * _itemPadding.Top;
+        var startYBase = clientArea.Top - (_vScrollBar?.Value ?? 0);
+        var startY = startYBase;
 
         switch (_verticalAlignment)
         {
             case FlowAlignment.Center:
-                startY = clientArea.Top + (clientArea.Height - totalHeight) / 2;
+                startY = startYBase + (clientArea.Height - totalHeight) / 2;
                 break;
             case FlowAlignment.Far:
-                startY = clientArea.Bottom - totalHeight;
+                startY = startYBase + (clientArea.Height - totalHeight);
                 break;
         }
 
@@ -508,13 +517,19 @@ public class FlowLayoutPanel : UIElementBase
             }
 
             _targetLocations[control] = new Point(targetX, startY);
-            startY += control.Height + _itemPadding.Vertical;
+            startY += control.Height + _itemPadding.Top;
         }
     }
 
     private Rectangle GetClientArea()
     {
         var area = ClientRectangle;
+        // Respect own Padding as content inset
+        area.X += Padding.Left;
+        area.Y += Padding.Top;
+        area.Width -= Padding.Horizontal;
+        area.Height -= Padding.Vertical;
+
         if (_autoScroll)
         {
             if (_vScrollBar.Visible)
@@ -528,8 +543,9 @@ public class FlowLayoutPanel : UIElementBase
     private void UpdateScrollBars(int contentWidth, int contentHeight)
     {
         // Determine thresholds combining client area and AutoScrollMinSize
-        var clientW = ClientRectangle.Width;
-        var clientH = ClientRectangle.Height;
+        var clientArea = GetClientArea();
+        var clientW = clientArea.Width;
+        var clientH = clientArea.Height;
 
         var hThreshold = Math.Max(clientW, AutoScrollMinSize.Width);
         var vThreshold = Math.Max(clientH, AutoScrollMinSize.Height);
@@ -551,7 +567,7 @@ public class FlowLayoutPanel : UIElementBase
             _hScrollBar.Minimum = 0;
             _hScrollBar.Maximum = contentWidth;
             _hScrollBar.LargeChange = clientW;
-            _hScrollBar.SmallChange = _itemPadding.Horizontal;
+            _hScrollBar.SmallChange = _itemPadding.Left;
         }
 
         if (needVScroll)
@@ -559,7 +575,7 @@ public class FlowLayoutPanel : UIElementBase
             _vScrollBar.Minimum = 0;
             _vScrollBar.Maximum = contentHeight;
             _vScrollBar.LargeChange = clientH;
-            _vScrollBar.SmallChange = _itemPadding.Vertical;
+            _vScrollBar.SmallChange = _itemPadding.Top;
         }
     }
 

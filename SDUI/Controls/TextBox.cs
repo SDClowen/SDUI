@@ -1452,7 +1452,9 @@ public class TextBox : UIElementBase
             }
 
             var y = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2);
-            var x = GetTextX(bounds.Width, textBounds.Width);
+            // Account for horizontal scroll offset when computing X origin
+            var hOffset = _horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0;
+            var x = GetTextX(bounds.Width, textBounds.Width) - hOffset;
 
             if (!string.IsNullOrEmpty(textToDraw))
             {
@@ -1491,7 +1493,7 @@ public class TextBox : UIElementBase
                 _cursorPaint!.Color = ForeColor.ToSKColor();
                 _cursorPaint.StrokeWidth = _caretWidth;
 
-                var cursorX = GetTextX(bounds.Width, textBounds.Width);
+                var cursorX = GetTextX(bounds.Width, textBounds.Width) - hOffset;
                 if (!string.IsNullOrEmpty(displayText))
                 {
                     var preText = displayText.Substring(0, Math.Min(_selectionStart, displayText.Length));
@@ -1502,6 +1504,9 @@ public class TextBox : UIElementBase
 
                 var cursorTop = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2) + metrics.Ascent;
                 var cursorBottom = (bounds.Height / 2) - ((metrics.Ascent + metrics.Descent) / 2) + metrics.Descent;
+
+                // Ensure caret is not drawn off the left edge (can happen when scrollbar value > text origin)
+                cursorX = Math.Max(cursorX, Padding.Left - hOffset);
 
                 canvas.DrawLine(new SKPoint(cursorX, cursorTop), new SKPoint(cursorX, cursorBottom), _cursorPaint);
             }
@@ -2050,8 +2055,8 @@ public class TextBox : UIElementBase
         return TextAlignment switch
         {
             HorizontalAlignment.Left => Padding.Left,
-            HorizontalAlignment.Center => (boundsWidth - textWidth) / 2,
-            HorizontalAlignment.Right => boundsWidth - textWidth - Padding.Right,
+            HorizontalAlignment.Center => Padding.Left + ((boundsWidth - Padding.Horizontal) - textWidth) / 2,
+            HorizontalAlignment.Right => boundsWidth - Padding.Right - textWidth,
             _ => Padding.Left
         };
     }

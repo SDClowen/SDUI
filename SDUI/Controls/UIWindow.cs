@@ -304,15 +304,39 @@ public class UIWindow : UIWindowBase, IUIElement
                 Bounds = suggested;
             }
 
+            // Invalidate measurements recursively before DPI notification
+            InvalidateMeasureRecursive();
+
             foreach (UIElementBase element in Controls)
                 element.OnDpiChanged(e.DeviceDpiNew, e.DeviceDpiOld);
 
+            // Invalidate layout measurements on DPI change
+            PerformLayout();
+            
             _needsFullRedraw = true;
             Invalidate();
         }
         finally
         {
             _suppressImmediateUpdateCount--;
+        }
+    }
+
+    private void InvalidateMeasureRecursive()
+    {
+        // Recursively invalidate all children
+        foreach (UIElementBase child in Controls)
+        {
+            InvalidateMeasureRecursiveInternal(child);
+        }
+    }
+
+    private static void InvalidateMeasureRecursiveInternal(UIElementBase element)
+    {
+        element.InvalidateMeasure();
+        foreach (UIElementBase child in element.Controls)
+        {
+            InvalidateMeasureRecursiveInternal(child);
         }
     }
 
@@ -573,7 +597,7 @@ public class UIWindow : UIWindowBase, IUIElement
     private UIElementBase _lastHoveredElement;
     // Element that has explicitly captured mouse input (via SetMouseCapture)
     private UIElementBase? _mouseCapturedElement;
-    private Bitmap? _gdiBitmap;
+    private readonly object _softwareCacheLock = new();
     public SKSize CanvasSize => _cacheBitmap == null ? SKSize.Empty : new SKSize(_cacheBitmap.Width, _cacheBitmap.Height);
 
     protected internal override void SetMouseCapture(UIElementBase element)
@@ -1154,12 +1178,10 @@ public class UIWindow : UIWindowBase, IUIElement
         {
             _cacheSurface?.Dispose();
             _cacheBitmap?.Dispose();
-            _gdiBitmap?.Dispose();
 
             _cacheBitmap = new SKBitmap(info);
             var pixels = _cacheBitmap.GetPixels();
             _cacheSurface = SKSurface.Create(info, pixels, _cacheBitmap.RowBytes);
-            _gdiBitmap = new Bitmap(info.Width, info.Height, _cacheBitmap.RowBytes, PixelFormat.Format32bppPArgb, pixels);
             _needsFullRedraw = true;
         }
     }
@@ -1189,8 +1211,7 @@ public class UIWindow : UIWindowBase, IUIElement
         _cacheBitmap?.Dispose();
         _cacheBitmap = null;
 
-        _gdiBitmap?.Dispose();
-        _gdiBitmap = null;
+
     }
 
     private void RenderSoftwareFrameUncached(SKImageInfo info, Graphics graphics)
@@ -2079,6 +2100,15 @@ public class UIWindow : UIWindowBase, IUIElement
             {
                 e.Graphics.DrawImageUnscaled(bmp, 0, 0);
             }
+            else
+            {
+                // If cached conversion failed for any reason, fallback to uncached rendering
+                if (DebugSettings.EnableRenderLogging)
+                {
+                    DebugSettings.Log($"UIWindow: RenderSoftwareFrameToGdiBitmap returned null for size {info.Width}x{info.Height}, falling back to uncached rendering");
+                }
+                RenderSoftwareFrameUncached(info, e.Graphics);
+            }
         }
         else
         {
@@ -2171,15 +2201,41 @@ public class UIWindow : UIWindowBase, IUIElement
     private Bitmap? RenderSoftwareFrameToGdiBitmap(SKImageInfo info)
     {
         CreateOrUpdateCache(info);
-        if (_cacheSurface == null)
+        if (DebugSettings.EnableRenderLogging)
+        {
+            DebugSettings.Log($"UIWindow.RenderSoftwareFrameToGdiBitmap: enter {info.Width}x{info.Height} cacheSurface={( _cacheSurface != null ? "present" : "null") } cacheBitmap={( _cacheBitmap != null ? "present" : "null") }");
+        }
+
+        if (_cacheSurface == null || _cacheBitmap == null)
             return null;
 
-        var canvas = _cacheSurface.Canvas;
-        RenderScene(canvas, info);
-        canvas.Flush();
-        _cacheSurface.Flush();
+        lock (_softwareCacheLock)
+        {
+            var canvas = _cacheSurface.Canvas;
+            RenderScene(canvas, info);
+            canvas.Flush();
+            _cacheSurface.Flush();
 
-        return _gdiBitmap;
+            // Create a temporary GDI bitmap copy from SKBitmap pixels and return a cloned copy
+            // so that the resulting System.Drawing.Bitmap owns its pixel data (no pointer into SKBitmap).
+            try
+            {
+                var pixels = _cacheBitmap.GetPixels();
+                using var wrapper = new Bitmap(info.Width, info.Height, _cacheBitmap.RowBytes, PixelFormat.Format32bppPArgb, pixels);
+                var copy = new Bitmap(wrapper);
+                return copy;
+            }
+            catch (Exception ex)
+            {
+                // If something went wrong copying the SKBitmap pixel block (rare, may be due to native race),
+                // return null so caller can fall back to uncached rendering instead of crashing the process.
+                if (DebugSettings.EnableRenderLogging)
+                {
+                    DebugSettings.Log($"UIWindow: RenderSoftwareFrameToGdiBitmap failed to copy pixels ({info.Width}x{info.Height}): {ex}");
+                }
+                return null;
+            }
+        }
     }
 
     private void RenderScene(SKCanvas canvas, SKImageInfo info)
@@ -2878,6 +2934,10 @@ public class UIWindow : UIWindowBase, IUIElement
     {
         base.OnShown(e);
         CalcSystemBoxPos();
+        
+        // Trigger initial layout with current DPI
+        InvalidateMeasureRecursive();
+        PerformLayout();
     }
 
     private void UpdateTabRects()
@@ -2998,8 +3058,6 @@ public class UIWindow : UIWindowBase, IUIElement
             _cacheBitmap = null;
             _cacheSurface?.Dispose();
             _cacheSurface = null;
-            _gdiBitmap?.Dispose();
-            _gdiBitmap = null;
         }
         base.Dispose(disposing);
     }
