@@ -1,9 +1,8 @@
-﻿
-using System.Collections.Generic;
-using System;
-using SDUI.Controls;
+﻿using System;
 using System.Collections;
+using System.Collections.Generic;
 using SDUI.Collections;
+using SDUI.Controls;
 
 internal class ListViewGroupItemCollection : ListViewItemCollection.IInnerList
 {
@@ -15,9 +14,9 @@ internal class ListViewGroupItemCollection : ListViewItemCollection.IInnerList
         _group = group;
     }
 
-    public int Count => Items.Count;
-
     private List<ListViewItem> Items => _items ??= new List<ListViewItem>();
+
+    public int Count => Items.Count;
 
     public bool OwnerIsVirtualListView => _group.ListView is not null && _group.ListView.VirtualMode;
 
@@ -48,44 +47,39 @@ internal class ListViewGroupItemCollection : ListViewItemCollection.IInnerList
 
     public void AddRange(ListViewItem[] items)
     {
-        for (int i = 0; i < items.Length; i++)
-        {
-            CheckListViewItem(items[i]);
-        }
+        for (var i = 0; i < items.Length; i++) CheckListViewItem(items[i]);
 
         Items.AddRange(items);
 
-        for (int i = 0; i < items.Length; i++)
-        {
-            MoveToGroup(items[i], _group);
-        }
-    }
-
-    private void CheckListViewItem(ListViewItem item)
-    {
-        if (item.ListView is not null && item.ListView != _group.ListView)
-        {
-            throw new ArgumentException(nameof(item));
-        }
+        for (var i = 0; i < items.Length; i++) MoveToGroup(items[i], _group);
     }
 
     public void Clear()
     {
-        for (int i = 0; i < Count; i++)
-        {
-            MoveToGroup(this[i], null);
-        }
+        for (var i = 0; i < Count; i++) MoveToGroup(this[i], null);
 
         Items.Clear();
     }
 
-    public bool Contains(ListViewItem item) => Items.Contains(item);
+    public bool Contains(ListViewItem item)
+    {
+        return Items.Contains(item);
+    }
 
-    public void CopyTo(Array dest, int index) => ((ICollection)Items).CopyTo(dest, index);
+    public void CopyTo(Array dest, int index)
+    {
+        ((ICollection)Items).CopyTo(dest, index);
+    }
 
-    public IEnumerator GetEnumerator() => Items.GetEnumerator();
+    public IEnumerator GetEnumerator()
+    {
+        return Items.GetEnumerator();
+    }
 
-    public int IndexOf(ListViewItem item) => Items.IndexOf(item);
+    public int IndexOf(ListViewItem item)
+    {
+        return Items.IndexOf(item);
+    }
 
     public ListViewItem Insert(int index, ListViewItem item)
     {
@@ -94,17 +88,6 @@ internal class ListViewGroupItemCollection : ListViewItemCollection.IInnerList
         MoveToGroup(item, _group);
         Items.Insert(index, item);
         return item;
-    }
-
-    private static void MoveToGroup(ListViewItem item, ListViewGroup? newGroup)
-    {
-        ListViewGroup? oldGroup = item.Group;
-        if (oldGroup != newGroup)
-        {
-            item._group = newGroup;
-            oldGroup?.Items.Remove(item);
-            UpdateNativeListViewItem(item);
-        }
     }
 
     public void Remove(ListViewItem item)
@@ -118,7 +101,26 @@ internal class ListViewGroupItemCollection : ListViewItemCollection.IInnerList
         }
     }
 
-    public void RemoveAt(int index) => Remove(this[index]);
+    public void RemoveAt(int index)
+    {
+        Remove(this[index]);
+    }
+
+    private void CheckListViewItem(ListViewItem item)
+    {
+        if (item.ListView is not null && item.ListView != _group.ListView) throw new ArgumentException(nameof(item));
+    }
+
+    private static void MoveToGroup(ListViewItem item, ListViewGroup? newGroup)
+    {
+        var oldGroup = item.Group;
+        if (oldGroup != newGroup)
+        {
+            item._group = newGroup;
+            oldGroup?.Items.Remove(item);
+            UpdateNativeListViewItem(item);
+        }
+    }
 
     private static void UpdateNativeListViewItem(ListViewItem item)
     {

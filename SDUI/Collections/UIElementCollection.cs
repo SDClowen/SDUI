@@ -1,7 +1,8 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using SDUI.Controls;
 
 namespace SDUI.Collections;
 
@@ -23,15 +24,9 @@ public class UIElementCollection : IList<UIElementBase>
             var oldItem = _items[index];
             if (oldItem != value)
             {
-                if (oldItem != null)
-                {
-                    _owner.OnControlRemoved(new UIElementEventArgs(oldItem));
-                }
+                if (oldItem != null) _owner.OnControlRemoved(new UIElementEventArgs(oldItem));
                 _items[index] = value;
-                if (value != null)
-                {
-                    _owner.OnControlAdded(new UIElementEventArgs(value));
-                }
+                if (value != null) _owner.OnControlAdded(new UIElementEventArgs(value));
             }
         }
     }
@@ -48,26 +43,32 @@ public class UIElementCollection : IList<UIElementBase>
         _owner.OnControlAdded(new UIElementEventArgs(item));
     }
 
-    public void AddRange(UIElementBase[] items)
-    {
-        foreach (var item in items)
-            this.Add(item);
-    }
-
     public void Clear()
     {
         var itemsToRemove = _items.ToList();
         _items.Clear();
-        foreach (var item in itemsToRemove)
-        {
-            _owner.OnControlRemoved(new UIElementEventArgs(item));
-        }
+        foreach (var item in itemsToRemove) _owner.OnControlRemoved(new UIElementEventArgs(item));
     }
 
-    public bool Contains(UIElementBase item) => _items.Contains(item);
-    public void CopyTo(UIElementBase[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
-    public IEnumerator<UIElementBase> GetEnumerator() => _items.GetEnumerator();
-    public int IndexOf(UIElementBase item) => _items.IndexOf(item);
+    public bool Contains(UIElementBase item)
+    {
+        return _items.Contains(item);
+    }
+
+    public void CopyTo(UIElementBase[] array, int arrayIndex)
+    {
+        _items.CopyTo(array, arrayIndex);
+    }
+
+    public IEnumerator<UIElementBase> GetEnumerator()
+    {
+        return _items.GetEnumerator();
+    }
+
+    public int IndexOf(UIElementBase item)
+    {
+        return _items.IndexOf(item);
+    }
 
     public void Insert(int index, UIElementBase item)
     {
@@ -84,10 +85,7 @@ public class UIElementCollection : IList<UIElementBase>
             return false;
 
         var result = _items.Remove(item);
-        if (result)
-        {
-            _owner.OnControlRemoved(new UIElementEventArgs(item));
-        }
+        if (result) _owner.OnControlRemoved(new UIElementEventArgs(item));
         return result;
     }
 
@@ -98,5 +96,14 @@ public class UIElementCollection : IList<UIElementBase>
         _owner.OnControlRemoved(new UIElementEventArgs(item));
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
+
+    public void AddRange(UIElementBase[] items)
+    {
+        foreach (var item in items)
+            Add(item);
+    }
 }

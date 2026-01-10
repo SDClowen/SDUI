@@ -1,25 +1,32 @@
-﻿using SDUI.Helpers;
-using System;
+﻿using System;
 using System.Drawing;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
-using System.Linq;
+using SDUI.Helpers;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Controls;
 
 public class UIWindowBase : Form
 {
-    protected bool enableFullDraggable;
-    private int dwmMargin = 1;
-    private bool right = false;
-    private Point location;
-    private bool _mouseInClient;
-    
+    private const int htLeft = 10;
+    private const int htRight = 11;
+    private const int htTop = 12;
+    private const int htTopLeft = 13;
+    private const int htTopRight = 14;
+    private const int htBottom = 15;
+    private const int htBottomLeft = 16;
+    private const int htBottomRight = 17;
+
     private FocusManager? _focusManager;
+    private bool _mouseInClient;
+    protected bool enableFullDraggable;
+    private Point location;
+    private bool right = false;
 
     /// <summary>
-    /// Modern focus manager for keyboard navigation
+    ///     Modern focus manager for keyboard navigation
     /// </summary>
     public FocusManager FocusManager
     {
@@ -30,30 +37,27 @@ public class UIWindowBase : Form
                 _focusManager = new FocusManager(this);
                 _focusManager.RefreshFocusableElements();
             }
+
             return _focusManager;
         }
     }
 
     /// <summary>
-    /// Indicates whether this window has completed its Load phase.
+    ///     Indicates whether this window has completed its Load phase.
     /// </summary>
-    public bool IsLoaded { get; private set; } = false;
+    public bool IsLoaded { get; private set; }
 
     // Z-order için yeni özellikler
 
-    public int DwmMargin
-    {
-        get => dwmMargin;
-        set => dwmMargin = value;
-    }
+    public int DwmMargin { get; set; } = 1;
 
     /// <summary>
-    /// Get DPI
+    ///     Get DPI
     /// </summary>
     public float DPI => DeviceDpi / 96.0f;
 
     /// <summary>
-    /// Has aero enabled by windows <c>true</c>; otherwise <c>false</c>
+    ///     Has aero enabled by windows <c>true</c>; otherwise <c>false</c>
     /// </summary>
     private bool _aeroEnabled
     {
@@ -61,40 +65,13 @@ public class UIWindowBase : Form
         {
             if (Environment.OSVersion.Version.Major >= 6)
             {
-                int enabled = 0;
+                var enabled = 0;
                 DwmIsCompositionEnabled(ref enabled);
                 return enabled == 1;
             }
 
             return false;
         }
-    }
-
-    public UIWindowBase()
-    {
-
-    }
-
-    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-    {
-        // Handle keyboard navigation with focus manager
-        if (msg.Msg == 256 || msg.Msg == 260)
-        {
-            var keyArgs = new KeyEventArgs(keyData);
-            if (FocusManager.ProcessKeyNavigation(keyArgs))
-                return true;
-                
-            if (keyData == Keys.Escape)
-                Close();
-        }
-
-        return base.ProcessCmdKey(ref msg, keyData);
-    }
-
-    protected void DragForm(IntPtr handle)
-    {
-        ReleaseCapture();
-        SendMessage(handle, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, 0);
     }
 
     protected override CreateParams CreateParams
@@ -126,6 +103,28 @@ public class UIWindowBase : Form
         }
     }
 
+    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+    {
+        // Handle keyboard navigation with focus manager
+        if (msg.Msg == 256 || msg.Msg == 260)
+        {
+            var keyArgs = new KeyEventArgs(keyData);
+            if (FocusManager.ProcessKeyNavigation(keyArgs))
+                return true;
+
+            if (keyData == Keys.Escape)
+                Close();
+        }
+
+        return base.ProcessCmdKey(ref msg, keyData);
+    }
+
+    protected void DragForm(IntPtr handle)
+    {
+        ReleaseCapture();
+        SendMessage(handle, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, 0);
+    }
+
     protected override void OnLoad(EventArgs e)
     {
         base.OnLoad(e);
@@ -137,11 +136,9 @@ public class UIWindowBase : Form
         IsLoaded = true;
 
         // Ensure all child elements receive Load before the window is shown
-        foreach (var c in this.Controls)
-        {
+        foreach (var c in Controls)
             if (c is UIElementBase child)
                 child.EnsureLoadedRecursively();
-        }
 
         // Otherwise, it will not be applied.
         if (StartPosition == FormStartPosition.CenterScreen)
@@ -159,23 +156,13 @@ public class UIWindowBase : Form
             return;
 
         // Unload all child elements now the window is closed
-        foreach (var c in this.Controls)
-        {
+        foreach (var c in Controls)
             if (c is UIElementBase child)
                 child.EnsureUnloadedRecursively();
-        }
 
         IsLoaded = false;
     }
 
-    private const int htLeft = 10;
-    private const int htRight = 11;
-    private const int htTop = 12;
-    private const int htTopLeft = 13;
-    private const int htTopRight = 14;
-    private const int htBottom = 15;
-    private const int htBottomLeft = 16;
-    private const int htBottomRight = 17;
     protected override void WndProc(ref Message m)
     {
         if (DesignMode)
@@ -187,69 +174,77 @@ public class UIWindowBase : Form
         switch (m.Msg)
         {
             case WM_NCHITTEST:
+            {
+                if (WindowState != FormWindowState.Maximized)
                 {
-                    if (WindowState != FormWindowState.Maximized)
+                    var gripDist = 10;
+
+                    var pt = PointToClient(Cursor.Position);
+
+                    var clientSize = ClientSize;
+                    ///allow resize on the lower right corner
+                    if (pt.X >= clientSize.Width - gripDist && pt.Y >= clientSize.Height - gripDist &&
+                        clientSize.Height >= gripDist)
                     {
-                        int gripDist = 10;
-
-                        var pt = PointToClient(Cursor.Position);
-
-                        Size clientSize = ClientSize;
-                        ///allow resize on the lower right corner
-                        if (pt.X >= clientSize.Width - gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htBottomLeft : htBottomRight);
-                            return;
-                        }
-                        ///allow resize on the lower left corner
-                        if (pt.X <= gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htBottomRight : htBottomLeft);
-                            return;
-                        }
-                        ///allow resize on the upper right corner
-                        if (pt.X <= gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htTopRight : htTopLeft);
-                            return;
-                        }
-                        ///allow resize on the upper left corner
-                        if (pt.X >= clientSize.Width - gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)(IsMirrored ? htTopLeft : htTopRight);
-                            return;
-                        }
-                        ///allow resize on the top border
-                        if (pt.Y <= 2 && clientSize.Height >= 2)
-                        {
-                            m.Result = (IntPtr)htTop;
-                            return;
-                        }
-                        ///allow resize on the bottom border
-                        if (pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)htBottom;
-                            return;
-                        }
-                        ///allow resize on the left border
-                        if (pt.X <= gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)htLeft;
-                            return;
-                        }
-                        ///allow resize on the right border
-                        if (pt.X >= clientSize.Width - gripDist && clientSize.Height >= gripDist)
-                        {
-                            m.Result = (IntPtr)htRight;
-                            return;
-                        }
+                        m.Result = IsMirrored ? htBottomLeft : htBottomRight;
+                        return;
                     }
 
-                    if ((int)m.Result == HTCLIENT)     // drag the form
-                        m.Result = (IntPtr)HTCAPTION;
+                    ///allow resize on the lower left corner
+                    if (pt.X <= gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = IsMirrored ? htBottomRight : htBottomLeft;
+                        return;
+                    }
 
-                    break;
+                    ///allow resize on the upper right corner
+                    if (pt.X <= gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = IsMirrored ? htTopRight : htTopLeft;
+                        return;
+                    }
+
+                    ///allow resize on the upper left corner
+                    if (pt.X >= clientSize.Width - gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = IsMirrored ? htTopLeft : htTopRight;
+                        return;
+                    }
+
+                    ///allow resize on the top border
+                    if (pt.Y <= 2 && clientSize.Height >= 2)
+                    {
+                        m.Result = htTop;
+                        return;
+                    }
+
+                    ///allow resize on the bottom border
+                    if (pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = htBottom;
+                        return;
+                    }
+
+                    ///allow resize on the left border
+                    if (pt.X <= gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = htLeft;
+                        return;
+                    }
+
+                    ///allow resize on the right border
+                    if (pt.X >= clientSize.Width - gripDist && clientSize.Height >= gripDist)
+                    {
+                        m.Result = htRight;
+                        return;
+                    }
                 }
+
+                if ((int)m.Result == HTCLIENT) // drag the form
+                    m.Result = HTCAPTION;
+
+                break;
+            }
             case WM_NCCALCSIZE:
 
                 var handle = Handle;
@@ -258,16 +253,13 @@ public class UIWindowBase : Form
                 if (lpwp.HWND == IntPtr.Zero)
                     return;
 
-                if ((lpwp.flags & (SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOREDRAW)) != 0)
-                {
-                    return;
-                }
+                if ((lpwp.flags & (SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOREDRAW)) != 0) return;
                 // TEMPORARY CODE
                 // if (OS.IsAppThemed ()) {
                 // OS.InvalidateRect (handle, null, true);
                 // return result;
                 // }
-                int bits = GetWindowLong(handle, WindowLongIndexFlags.GWL_STYLE).ToInt32();
+                var bits = GetWindowLong(handle, WindowLongIndexFlags.GWL_STYLE).ToInt32();
                 if ((bits & TCS_MULTILINE) != 0)
                 {
                     InvalidateRect(handle, new Rect(), true);
@@ -278,37 +270,35 @@ public class UIWindowBase : Form
                 SetRect(rect, 0, 0, lpwp.cx, lpwp.cy);
 
                 SendMessage(handle, WM_NCCALCSIZE, 0, ref rect);
-                int newWidth = rect.Right - rect.Left;
-                int newHeight = rect.Bottom - rect.Top;
+                var newWidth = rect.Right - rect.Left;
+                var newHeight = rect.Bottom - rect.Top;
                 GetClientRect(handle, ref rect);
-                int oldWidth = rect.Right - rect.Left;
-                int oldHeight = rect.Bottom - rect.Top;
-                if (newWidth == oldWidth && newHeight == oldHeight)
-                {
-                    return;
-                }
+                var oldWidth = rect.Right - rect.Left;
+                var oldHeight = rect.Bottom - rect.Top;
+                if (newWidth == oldWidth && newHeight == oldHeight) return;
                 var inset = new Rect();
                 SendMessage(handle, TCM_ADJUSTRECT, 0, ref inset);
                 int marginX = -inset.Right, marginY = -inset.Bottom;
                 if (newWidth != oldWidth)
                 {
-                    int left = oldWidth;
+                    var left = oldWidth;
                     if (newWidth < oldWidth)
                         left = newWidth;
                     SetRect(rect, left - marginX, 0, newWidth, newHeight);
                     InvalidateRect(handle, rect, true);
                 }
+
                 if (newHeight != oldHeight)
                 {
-                    int bottom = oldHeight;
+                    var bottom = oldHeight;
                     if (newHeight < oldHeight)
                         bottom = newHeight;
                     if (newWidth < oldWidth)
                         oldWidth -= marginX;
                     SetRect(rect, 0, bottom - marginY, oldWidth, newHeight);
                     InvalidateRect(handle, rect, true);
-
                 }
+
                 return;
         }
 
@@ -322,35 +312,34 @@ public class UIWindowBase : Form
         if (DesignMode)
             return;
 
-        WindowsHelper.ApplyRoundCorner(this.Handle);
+        WindowsHelper.ApplyRoundCorner(Handle);
 
         if (_aeroEnabled)
         {
             var v = 2;
 
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
-            var margins = new MARGINS()
+            var margins = new MARGINS
             {
-                Bottom = dwmMargin,
-                Left = dwmMargin,
-                Right = dwmMargin,
-                Top = dwmMargin
+                Bottom = DwmMargin,
+                Left = DwmMargin,
+                Right = DwmMargin,
+                Top = DwmMargin
             };
 
-            DwmExtendFrameIntoClientArea(this.Handle, ref margins);
+            DwmExtendFrameIntoClientArea(Handle, ref margins);
         }
 
-        SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0, SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOOWNERZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
+        SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0,
+            SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOMOVE |
+            SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOOWNERZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
 
         // Ensure child elements receive the correct initial DPI now that the window handle is available.
         // Use InitializeDpi on first load to set DPI without scaling (design-time sizes are for 96 DPI)
         try
         {
             float windowDpi = DpiHelper.GetDpiForWindowInternal(Handle);
-            foreach (var child in Controls.OfType<UIElementBase>())
-            {
-                child.InitializeDpi(windowDpi);
-            }
+            foreach (var child in Controls.OfType<UIElementBase>()) child.InitializeDpi(windowDpi);
         }
         catch
         {
@@ -376,9 +365,8 @@ public class UIWindowBase : Form
                 Handle,
                 DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
                 ref flag,
-                 Marshal.SizeOf<int>());
+                Marshal.SizeOf<int>());
         }
-
     }
 
     protected override void OnDpiChanged(DpiChangedEventArgs e)
@@ -387,8 +375,8 @@ public class UIWindowBase : Form
     }
 
     /// <summary>
-    /// Request that the window capture mouse input for the specified element.
-    /// Default implementation does nothing; derived window classes may override to provide capture semantics.
+    ///     Request that the window capture mouse input for the specified element.
+    ///     Default implementation does nothing; derived window classes may override to provide capture semantics.
     /// </summary>
     protected internal virtual void SetMouseCapture(UIElementBase element)
     {
@@ -396,8 +384,8 @@ public class UIWindowBase : Form
     }
 
     /// <summary>
-    /// Release mouse capture previously set for the specified element.
-    /// Default implementation does nothing; derived window classes may override to provide capture semantics.
+    ///     Release mouse capture previously set for the specified element.
+    ///     Default implementation does nothing; derived window classes may override to provide capture semantics.
     /// </summary>
     protected internal virtual void ReleaseMouseCapture(UIElementBase element)
     {

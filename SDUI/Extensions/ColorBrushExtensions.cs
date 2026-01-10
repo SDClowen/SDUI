@@ -8,7 +8,7 @@ public static class ColorExtentions
     {
         var value = 0;
 
-        double luminance = (0.299 * color.R + 0.587 * color.G + 0.114 * color.B) / 255;
+        var luminance = (0.299 * color.R + 0.587 * color.G + 0.114 * color.B) / 255;
 
         if (luminance > 0.5)
             value = 0; // bright colors - black font
@@ -19,31 +19,33 @@ public static class ColorExtentions
     }
 
     /// <summary>
-    /// Creates color with corrected brightness.
+    ///     Creates color with corrected brightness.
     /// </summary>
     /// <param name="color">Color to correct.</param>
-    /// <param name="correctionFactor">The brightness correction factor. Must be between -1 and 1. 
-    /// Negative values produce darker colors.</param>
+    /// <param name="correctionFactor">
+    ///     The brightness correction factor. Must be between -1 and 1.
+    ///     Negative values produce darker colors.
+    /// </param>
     /// <returns>
-    /// Corrected <see cref="Color"/> structure.
+    ///     Corrected <see cref="Color" /> structure.
     /// </returns>
     public static Color Brightness(this Color color, float correctionFactor)
     {
         // brightnessChange: -1.0 (dark) ... 0 (nothing change) ... +1.0 (light)
-        RgbToHsl(color.R / 255f, color.G / 255f, color.B / 255f, out float h, out float s, out float l);
+        RgbToHsl(color.R / 255f, color.G / 255f, color.B / 255f, out var h, out var s, out var l);
 
         l = Math.Clamp(l + correctionFactor, 0, 1);
 
-        Color rgb = HslToRgb(h, s, l);
+        var rgb = HslToRgb(h, s, l);
         return Color.FromArgb(color.A, rgb.R, rgb.G, rgb.B);
     }
 
     // RGB (0–1) → HSL (0–1)
-    static void RgbToHsl(float r, float g, float b, out float h, out float s, out float l)
+    private static void RgbToHsl(float r, float g, float b, out float h, out float s, out float l)
     {
-        float max = Math.Max(r, Math.Max(g, b));
-        float min = Math.Min(r, Math.Min(g, b));
-        float delta = max - min;
+        var max = Math.Max(r, Math.Max(g, b));
+        var min = Math.Min(r, Math.Min(g, b));
+        var delta = max - min;
 
         l = (max + min) / 2;
 
@@ -62,7 +64,7 @@ public static class ColorExtentions
     }
 
     // HSL (0–1) → RGB (0–255)
-    static Color HslToRgb(float h, float s, float l)
+    private static Color HslToRgb(float h, float s, float l)
     {
         float HueToRgb(float p, float q, float t)
         {
@@ -76,16 +78,16 @@ public static class ColorExtentions
 
         if (s == 0)
         {
-            byte gray = (byte)Math.Round(l * 255);
+            var gray = (byte)Math.Round(l * 255);
             return Color.FromArgb(gray, gray, gray);
         }
 
-        float q = l < 0.5f ? l * (1 + s) : l + s - l * s;
-        float p = 2 * l - q;
+        var q = l < 0.5f ? l * (1 + s) : l + s - l * s;
+        var p = 2 * l - q;
 
-        float r = HueToRgb(p, q, h + 1f / 3);
-        float g = HueToRgb(p, q, h);
-        float b = HueToRgb(p, q, h - 1f / 3);
+        var r = HueToRgb(p, q, h + 1f / 3);
+        var g = HueToRgb(p, q, h);
+        var b = HueToRgb(p, q, h - 1f / 3);
 
         return Color.FromArgb(
             (byte)Math.Clamp(r * 255, 0, 255),
@@ -95,16 +97,16 @@ public static class ColorExtentions
     }
 
     /// <summary>
-    /// Is the color dark <c>true</c>; otherwise <c>false</c>
+    ///     Is the color dark <c>true</c>; otherwise <c>false</c>
     /// </summary>
     /// <param name="color">The color</param>
     public static bool IsDark(this Color color)
     {
-        return (384 - color.R - color.G - color.B) > 0;
+        return 384 - color.R - color.G - color.B > 0;
     }
 
     /// <summary>
-    /// Set alpha value for this color
+    ///     Set alpha value for this color
     /// </summary>
     /// <param name="color">The color</param>
     /// <param name="alpha">The alpha</param>
@@ -116,7 +118,7 @@ public static class ColorExtentions
     }
 
     /// <summary>
-    /// Removes the alpha component of a color.
+    ///     Removes the alpha component of a color.
     /// </summary>
     /// <param name="color"></param>
     /// <returns></returns>
@@ -127,11 +129,11 @@ public static class ColorExtentions
 
     public static Color BlendWith(this Color backgroundColor, Color frontColor, double blend)
     {
-        double ratio = blend / 255d;
-        double invRatio = 1d - ratio;
-        int r = (int)((backgroundColor.R * invRatio) + (frontColor.R * ratio));
-        int g = (int)((backgroundColor.G * invRatio) + (frontColor.G * ratio));
-        int b = (int)((backgroundColor.B * invRatio) + (frontColor.B * ratio));
+        var ratio = blend / 255d;
+        var invRatio = 1d - ratio;
+        var r = (int)(backgroundColor.R * invRatio + frontColor.R * ratio);
+        var g = (int)(backgroundColor.G * invRatio + frontColor.G * ratio);
+        var b = (int)(backgroundColor.B * invRatio + frontColor.B * ratio);
         return Color.FromArgb(Math.Abs(frontColor.A - backgroundColor.A), r, g, b);
     }
 
@@ -150,18 +152,24 @@ public static class ColorExtentions
         return new SolidBrush(Color.FromArgb(alpha > 255 ? 255 : alpha, ColorTranslator.FromHtml(htmlColor)));
     }
 
-    public static Pen Pen(this string htmlColor, int alpha = 255, float size = 1, LineCap startCap = LineCap.Custom, LineCap endCap = LineCap.Custom)
+    public static Pen Pen(this string htmlColor, int alpha = 255, float size = 1, LineCap startCap = LineCap.Custom,
+        LineCap endCap = LineCap.Custom)
     {
-        return new Pen(Color.FromArgb(alpha > 255 ? 255 : alpha, ColorTranslator.FromHtml(htmlColor)), size) { StartCap = startCap, EndCap = endCap };
+        return new Pen(Color.FromArgb(alpha > 255 ? 255 : alpha, ColorTranslator.FromHtml(htmlColor)), size)
+            { StartCap = startCap, EndCap = endCap };
     }
 
-    public static Brush GlowBrush(Color centerColor, Color[] surroundColor, PointF point, GraphicsPath gp, WrapMode wrapMode = WrapMode.Clamp)
+    public static Brush GlowBrush(Color centerColor, Color[] surroundColor, PointF point, GraphicsPath gp,
+        WrapMode wrapMode = WrapMode.Clamp)
     {
-        return new PathGradientBrush(gp) { CenterColor = centerColor, SurroundColors = surroundColor, FocusScales = point, WrapMode = wrapMode };
+        return new PathGradientBrush(gp)
+            { CenterColor = centerColor, SurroundColors = surroundColor, FocusScales = point, WrapMode = wrapMode };
     }
 
-    public static Brush GlowBrush(Color centerColor, Color[] surroundColor, PointF[] point, WrapMode wrapMode = WrapMode.Clamp)
+    public static Brush GlowBrush(Color centerColor, Color[] surroundColor, PointF[] point,
+        WrapMode wrapMode = WrapMode.Clamp)
     {
-        return new PathGradientBrush(point) { CenterColor = centerColor, SurroundColors = surroundColor, WrapMode = wrapMode };
+        return new PathGradientBrush(point)
+            { CenterColor = centerColor, SurroundColors = surroundColor, WrapMode = wrapMode };
     }
 }

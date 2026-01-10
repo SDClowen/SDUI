@@ -1,16 +1,15 @@
-using SkiaSharp;
 using System.Drawing;
-using SDUI.Extensions;
+using SkiaSharp;
 
 namespace SDUI.Helpers;
 
 /// <summary>
-/// Modern elevation system for Material Design 3 style depth
+///     Modern elevation system for Material Design 3 style depth
 /// </summary>
 public static class ElevationHelper
 {
     /// <summary>
-    /// Draws elevation shadow and tint for a surface
+    ///     Draws elevation shadow and tint for a surface
     /// </summary>
     public static void DrawElevation(SKCanvas canvas, SKRect bounds, float cornerRadius, int elevation)
     {
@@ -24,11 +23,11 @@ public static class ElevationHelper
         // Draw shadow
         using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur / 2))
         using (var shadowPaint = new SKPaint
-        {
-            IsAntialias = true,
-            Color = shadowColor.ToSKColor(),
-            MaskFilter = shadowMaskFilter
-        })
+               {
+                   IsAntialias = true,
+                   Color = shadowColor.ToSKColor(),
+                   MaskFilter = shadowMaskFilter
+               })
         {
             var shadowBounds = new SKRect(
                 bounds.Left,
@@ -53,7 +52,7 @@ public static class ElevationHelper
     }
 
     /// <summary>
-    /// Draws a smooth gradient overlay for glassmorphism effect
+    ///     Draws a smooth gradient overlay for glassmorphism effect
     /// </summary>
     public static void DrawGlassEffect(SKCanvas canvas, SKRect bounds, float cornerRadius, float opacity = 0.1f)
     {
@@ -80,7 +79,7 @@ public static class ElevationHelper
     }
 
     /// <summary>
-    /// Draws modern ripple effect at specified position
+    ///     Draws modern ripple effect at specified position
     /// </summary>
     public static void DrawRipple(SKCanvas canvas, SKPoint center, float radius, float progress, Color color)
     {
@@ -95,7 +94,7 @@ public static class ElevationHelper
     }
 
     /// <summary>
-    /// Creates a smooth state layer for hover/focus/press states
+    ///     Creates a smooth state layer for hover/focus/press states
     /// </summary>
     public static void DrawStateLayer(SKCanvas canvas, SKRect bounds, float cornerRadius, Color stateColor)
     {

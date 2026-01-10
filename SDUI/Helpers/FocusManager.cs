@@ -1,20 +1,21 @@
-using SDUI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using SDUI.Controls;
+using SkiaSharp;
 
 namespace SDUI.Helpers;
 
 /// <summary>
-/// Modern focus management system with proper keyboard navigation
+///     Modern focus management system with proper keyboard navigation
 /// </summary>
 public class FocusManager
 {
-    private UIElementBase? _currentFocus;
-    private readonly UIWindowBase _window;
     private readonly List<UIElementBase> _focusableElements = new();
+    private readonly UIWindowBase _window;
+    private UIElementBase? _currentFocus;
     private bool _isNavigating;
 
     public FocusManager(UIWindowBase window)
@@ -23,7 +24,7 @@ public class FocusManager
     }
 
     /// <summary>
-    /// Current focused element
+    ///     Current focused element
     /// </summary>
     public UIElementBase? FocusedElement
     {
@@ -41,21 +42,18 @@ public class FocusManager
     public event EventHandler<FocusChangedEventArgs>? FocusChanged;
 
     /// <summary>
-    /// Refreshes the list of focusable elements
+    ///     Refreshes the list of focusable elements
     /// </summary>
     public void RefreshFocusableElements()
     {
         _focusableElements.Clear();
-        
+
         // Collect from window's controls
-        foreach (var control in _window.Controls.OfType<UIElementBase>())
-        {
-            CollectFromElement(control);
-        }
-        
+        foreach (var control in _window.Controls.OfType<UIElementBase>()) CollectFromElement(control);
+
         _focusableElements.Sort((a, b) =>
         {
-            int tabCompare = a.TabIndex.CompareTo(b.TabIndex);
+            var tabCompare = a.TabIndex.CompareTo(b.TabIndex);
             if (tabCompare != 0) return tabCompare;
 
             // Deterministic tiebreaker when many controls share the default TabIndex (0).
@@ -63,10 +61,10 @@ public class FocusManager
             var aLoc = _window.PointToClient(a.PointToScreen(Point.Empty));
             var bLoc = _window.PointToClient(b.PointToScreen(Point.Empty));
 
-            int yCompare = aLoc.Y.CompareTo(bLoc.Y);
+            var yCompare = aLoc.Y.CompareTo(bLoc.Y);
             if (yCompare != 0) return yCompare;
 
-            int xCompare = aLoc.X.CompareTo(bLoc.X);
+            var xCompare = aLoc.X.CompareTo(bLoc.X);
             if (xCompare != 0) return xCompare;
 
             return a.ZOrder.CompareTo(b.ZOrder);
@@ -75,23 +73,16 @@ public class FocusManager
 
     private void CollectFromElement(UIElementBase element)
     {
-        if (element.Visible && element.Enabled && element.TabStop && element.CanSelect)
-        {
-            _focusableElements.Add(element);
-        }
+        if (element.Visible && element.Enabled && element.TabStop && element.CanSelect) _focusableElements.Add(element);
 
         // Recursive for nested containers
         if (element is IUIElement uiElement)
-        {
             foreach (var child in uiElement.Controls.OfType<UIElementBase>())
-            {
                 CollectFromElement(child);
-            }
-        }
     }
 
     /// <summary>
-    /// Sets focus to specific element
+    ///     Sets focus to specific element
     /// </summary>
     public bool SetFocus(UIElementBase? element)
     {
@@ -133,7 +124,7 @@ public class FocusManager
     }
 
     /// <summary>
-    /// Navigate to next focusable element
+    ///     Navigate to next focusable element
     /// </summary>
     public bool FocusNext(bool reverse = false)
     {
@@ -145,23 +136,19 @@ public class FocusManager
             RefreshFocusableElements();
             if (_focusableElements.Count == 0) return false;
 
-            int currentIndex = _currentFocus != null
+            var currentIndex = _currentFocus != null
                 ? _focusableElements.IndexOf(_currentFocus)
                 : -1;
 
             int nextIndex;
             if (reverse)
-            {
                 nextIndex = currentIndex > 0
                     ? currentIndex - 1
                     : _focusableElements.Count - 1;
-            }
             else
-            {
                 nextIndex = currentIndex < _focusableElements.Count - 1
                     ? currentIndex + 1
                     : 0;
-            }
 
             return SetFocus(_focusableElements[nextIndex]);
         }
@@ -172,7 +159,7 @@ public class FocusManager
     }
 
     /// <summary>
-    /// Focus first element
+    ///     Focus first element
     /// </summary>
     public bool FocusFirst()
     {
@@ -181,7 +168,7 @@ public class FocusManager
     }
 
     /// <summary>
-    /// Focus last element
+    ///     Focus last element
     /// </summary>
     public bool FocusLast()
     {
@@ -190,14 +177,14 @@ public class FocusManager
     }
 
     /// <summary>
-    /// Handle keyboard navigation
+    ///     Handle keyboard navigation
     /// </summary>
     public bool ProcessKeyNavigation(KeyEventArgs e)
     {
         switch (e.KeyCode)
         {
             case Keys.Tab:
-                bool handled = FocusNext(e.Shift);
+                var handled = FocusNext(e.Shift);
                 e.Handled = handled;
                 return handled;
 
@@ -216,6 +203,7 @@ public class FocusManager
                     e.Handled = true;
                     return true;
                 }
+
                 break;
         }
 
@@ -223,7 +211,7 @@ public class FocusManager
     }
 
     /// <summary>
-    /// Ensures focused element is visible by scrolling containers
+    ///     Ensures focused element is visible by scrolling containers
     /// </summary>
     private void EnsureVisible(UIElementBase element)
     {
@@ -246,20 +234,20 @@ public class FocusManager
     }
 
     /// <summary>
-    /// Draw focus indicator for the current element
+    ///     Draw focus indicator for the current element
     /// </summary>
-    public void DrawFocusIndicator(SkiaSharp.SKCanvas canvas, Rectangle bounds, float cornerRadius)
+    public void DrawFocusIndicator(SKCanvas canvas, Rectangle bounds, float cornerRadius)
     {
-        using var paint = new SkiaSharp.SKPaint
+        using var paint = new SKPaint
         {
             IsAntialias = true,
             Color = ColorScheme.Primary.ToSKColor(),
             IsStroke = true,
             StrokeWidth = 2f,
-            PathEffect = SkiaSharp.SKPathEffect.CreateDash(new[] { 4f, 2f }, 0)
+            PathEffect = SKPathEffect.CreateDash(new[] { 4f, 2f }, 0)
         };
 
-        var rect = new SkiaSharp.SKRect(
+        var rect = new SKRect(
             bounds.Left - 2,
             bounds.Top - 2,
             bounds.Right + 2,
@@ -272,12 +260,12 @@ public class FocusManager
 
 public class FocusChangedEventArgs : EventArgs
 {
-    public UIElementBase? OldFocus { get; }
-    public UIElementBase? NewFocus { get; }
-
     public FocusChangedEventArgs(UIElementBase? oldFocus, UIElementBase? newFocus)
     {
         OldFocus = oldFocus;
         NewFocus = newFocus;
     }
+
+    public UIElementBase? OldFocus { get; }
+    public UIElementBase? NewFocus { get; }
 }

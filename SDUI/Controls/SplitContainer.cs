@@ -1,35 +1,29 @@
-using SkiaSharp;
 using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class SplitContainer : UIElementBase
 {
-    private Orientation _orientation = Orientation.Vertical;
-    private int _splitterWidth = 6;
-    private int _splitterDistance = 0; // 0 means auto-center until first layout
-    private int _panel1MinSize = 30;
-    private int _panel2MinSize = 30;
-    private bool _dragging = false;
+    private bool _dragging;
     private Point _dragStart;
     private int _initialDistance;
-
-    private readonly Panel _panel1;
-    private readonly Panel _panel2;
-
-    public event EventHandler? SplitterMoving;
-    public event EventHandler? SplitterMoved;
+    private Orientation _orientation = Orientation.Vertical;
+    private int _panel1MinSize = 30;
+    private int _panel2MinSize = 30;
+    private int _splitterDistance; // 0 means auto-center until first layout
+    private int _splitterWidth = 6;
 
     public SplitContainer()
     {
-        _panel1 = new Panel { BackColor = Color.Transparent };
-        _panel2 = new Panel { BackColor = Color.Transparent };
+        Panel1 = new Panel { BackColor = Color.Transparent };
+        Panel2 = new Panel { BackColor = Color.Transparent };
 
-        Controls.Add(_panel1);
-        Controls.Add(_panel2);
+        Controls.Add(Panel1);
+        Controls.Add(Panel2);
 
         // make keyboard focusable
         TabStop = true;
@@ -88,11 +82,12 @@ public class SplitContainer : UIElementBase
         set => _panel2MinSize = Math.Max(0, value);
     }
 
-    [Browsable(false)]
-    public Panel Panel1 => _panel1;
+    [Browsable(false)] public Panel Panel1 { get; }
 
-    [Browsable(false)]
-    public Panel Panel2 => _panel2;
+    [Browsable(false)] public Panel Panel2 { get; }
+
+    public event EventHandler? SplitterMoving;
+    public event EventHandler? SplitterMoved;
 
     internal override void OnSizeChanged(EventArgs e)
     {
@@ -106,25 +101,27 @@ public class SplitContainer : UIElementBase
         canvas.Clear(SKColors.Transparent);
 
         var splitter = GetSplitterRect();
-        using var paint = new SKPaint { IsAntialias = true, Color = ColorScheme.BorderColor.ToSKColor(), Style = SKPaintStyle.Fill };
+        using var paint = new SKPaint
+            { IsAntialias = true, Color = ColorScheme.BorderColor.ToSKColor(), Style = SKPaintStyle.Fill };
         canvas.DrawRect(new SKRect(splitter.X, splitter.Y, splitter.Right, splitter.Bottom), paint);
 
         // draw a small grabber
-        using var grab = new SKPaint { IsAntialias = true, Color = ColorScheme.OnSurface.ToSKColor(), Style = SKPaintStyle.Fill };
+        using var grab = new SKPaint
+            { IsAntialias = true, Color = ColorScheme.OnSurface.ToSKColor(), Style = SKPaintStyle.Fill };
         if (Orientation == Orientation.Vertical)
         {
-            float lineX = splitter.X + splitter.Width / 2f;
-            float centerY = splitter.Y + splitter.Height / 2f;
-            float gap = 6 * ScaleFactor;
-            float lineHeight = Math.Min(12 * ScaleFactor, splitter.Height - 6);
+            var lineX = splitter.X + splitter.Width / 2f;
+            var centerY = splitter.Y + splitter.Height / 2f;
+            var gap = 6 * ScaleFactor;
+            var lineHeight = Math.Min(12 * ScaleFactor, splitter.Height - 6);
             canvas.DrawRoundRect(lineX - 1.5f, centerY - lineHeight / 2f, 3, lineHeight, 1.5f, 1.5f, grab);
         }
         else
         {
-            float lineY = splitter.Y + splitter.Height / 2f;
-            float centerX = splitter.X + splitter.Width / 2f;
-            float gap = 6 * ScaleFactor;
-            float lineWidth = Math.Min(12 * ScaleFactor, splitter.Width - 6);
+            var lineY = splitter.Y + splitter.Height / 2f;
+            var centerX = splitter.X + splitter.Width / 2f;
+            var gap = 6 * ScaleFactor;
+            var lineWidth = Math.Min(12 * ScaleFactor, splitter.Width - 6);
             canvas.DrawRoundRect(centerX - lineWidth / 2f, lineY - 1.5f, lineWidth, 3, 1.5f, 1.5f, grab);
         }
 
@@ -135,13 +132,13 @@ public class SplitContainer : UIElementBase
     {
         if (Orientation == Orientation.Vertical)
         {
-            int dist = _splitterDistance <= 0 ? Width / 2 : _splitterDistance;
+            var dist = _splitterDistance <= 0 ? Width / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Width - Panel2MinSize - SplitterWidth));
             return new Rectangle(dist, 0, SplitterWidth, Height);
         }
         else
         {
-            int dist = _splitterDistance <= 0 ? Height / 2 : _splitterDistance;
+            var dist = _splitterDistance <= 0 ? Height / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Height - Panel2MinSize - SplitterWidth));
             return new Rectangle(0, dist, Width, SplitterWidth);
         }
@@ -151,20 +148,20 @@ public class SplitContainer : UIElementBase
     {
         if (Orientation == Orientation.Vertical)
         {
-            int dist = _splitterDistance <= 0 ? Width / 2 : _splitterDistance;
+            var dist = _splitterDistance <= 0 ? Width / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Width - Panel2MinSize - SplitterWidth));
 
-            _panel1.Bounds = new Rectangle(0, 0, dist, Height);
-            _panel2.Bounds = new Rectangle(dist + SplitterWidth, 0, Width - (dist + SplitterWidth), Height);
+            Panel1.Bounds = new Rectangle(0, 0, dist, Height);
+            Panel2.Bounds = new Rectangle(dist + SplitterWidth, 0, Width - (dist + SplitterWidth), Height);
             _splitterDistance = dist; // store the clamped value
         }
         else
         {
-            int dist = _splitterDistance <= 0 ? Height / 2 : _splitterDistance;
+            var dist = _splitterDistance <= 0 ? Height / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Height - Panel2MinSize - SplitterWidth));
 
-            _panel1.Bounds = new Rectangle(0, 0, Width, dist);
-            _panel2.Bounds = new Rectangle(0, dist + SplitterWidth, Width, Height - (dist + SplitterWidth));
+            Panel1.Bounds = new Rectangle(0, 0, Width, dist);
+            Panel2.Bounds = new Rectangle(0, dist + SplitterWidth, Width, Height - (dist + SplitterWidth));
             _splitterDistance = dist; // store the clamped value
         }
 
@@ -179,7 +176,9 @@ public class SplitContainer : UIElementBase
         {
             _dragging = true;
             _dragStart = e.Location;
-            _initialDistance = _splitterDistance <= 0 ? (Orientation == Orientation.Vertical ? Width / 2 : Height / 2) : _splitterDistance;
+            _initialDistance = _splitterDistance <= 0
+                ? Orientation == Orientation.Vertical ? Width / 2 : Height / 2
+                : _splitterDistance;
         }
     }
 
@@ -189,8 +188,8 @@ public class SplitContainer : UIElementBase
         var splitter = GetSplitterRect();
         if (_dragging)
         {
-            int delta = Orientation == Orientation.Vertical ? e.X - _dragStart.X : e.Y - _dragStart.Y;
-            int newDist = _initialDistance + delta;
+            var delta = Orientation == Orientation.Vertical ? e.X - _dragStart.X : e.Y - _dragStart.Y;
+            var newDist = _initialDistance + delta;
             // clamp
             if (Orientation == Orientation.Vertical)
                 newDist = Math.Max(Panel1MinSize, Math.Min(newDist, Width - Panel2MinSize - SplitterWidth));
@@ -203,12 +202,15 @@ public class SplitContainer : UIElementBase
                 LayoutPanels();
                 SplitterMoving?.Invoke(this, EventArgs.Empty);
             }
+
             Cursor = Orientation == Orientation.Vertical ? Cursors.SizeWE : Cursors.SizeNS;
             return;
         }
 
         // hover cursor only when over splitter
-        Cursor = splitter.Contains(e.Location) ? (Orientation == Orientation.Vertical ? Cursors.SizeWE : Cursors.SizeNS) : Cursors.Default;
+        Cursor = splitter.Contains(e.Location)
+            ? Orientation == Orientation.Vertical ? Cursors.SizeWE : Cursors.SizeNS
+            : Cursors.Default;
     }
 
     internal override void OnMouseUp(MouseEventArgs e)

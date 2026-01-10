@@ -1,14 +1,14 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
+using SDUI.Controls;
 
 namespace SDUI;
 
 public class UILayoutEventArgs : EventArgs
 {
-    public UIElementBase AffectedElement { get; }
-
     public UILayoutEventArgs(UIElementBase affectedElement)
     {
         AffectedElement = affectedElement;
     }
+
+    public UIElementBase AffectedElement { get; }
 }

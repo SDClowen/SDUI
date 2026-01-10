@@ -6,17 +6,18 @@ namespace System.Windows.Forms;
 public static class TextBoxBaseExtensions
 {
     /// <summary>
-    /// Sync lock object
+    ///     Sync lock object
     /// </summary>
-    private static object _lock = new object();
+    private static readonly object _lock = new();
 
     /// <summary>
-    /// Append string to type in the text controls
+    ///     Append string to type in the text controls
     /// </summary>
     /// <param name="value">The TextBoxBase</param>
-    /// <param name="str">The string to type in the <seealso cref="TextBoxBase"/></param>
+    /// <param name="str">The string to type in the <seealso cref="TextBoxBase" /></param>
     /// <param name="time">The time</param>
-    public static void Write(this TextBoxBase value, string str, bool time = true, bool writeToFile = false, string filePath = "")
+    public static void Write(this TextBoxBase value, string str, bool time = true, bool writeToFile = false,
+        string filePath = "")
     {
         var stringBuilder = new StringBuilder();
         if (time)
@@ -32,23 +33,25 @@ public static class TextBoxBaseExtensions
         });
 
         if (writeToFile)
-        {
             lock (_lock)
             {
                 if (!Directory.Exists(filePath))
                     Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
                 using (var stream = File.AppendText(filePath))
+                {
                     stream.Write(stringBuilder.ToString());
+                }
             }
-        }
     }
 
-    public static void AppendText(this SDUI.Controls.TextBox value, string text) {
+    public static void AppendText(this SDUI.Controls.TextBox value, string text)
+    {
         value.Text += text;
     }
 
-    public static void Write(this SDUI.Controls.TextBox value, string str, bool time = true, bool writeToFile = false, string filePath = "")
+    public static void Write(this SDUI.Controls.TextBox value, string str, bool time = true, bool writeToFile = false,
+        string filePath = "")
     {
         var stringBuilder = new StringBuilder();
         if (time)
@@ -61,20 +64,20 @@ public static class TextBoxBaseExtensions
         value.ScrollToCaret();
 
         if (writeToFile)
-        {
             lock (_lock)
             {
                 if (!Directory.Exists(filePath))
                     Directory.CreateDirectory(Path.GetDirectoryName(filePath));
 
                 using (var stream = File.AppendText(filePath))
+                {
                     stream.Write(stringBuilder.ToString());
+                }
             }
-        }
     }
 
     /// <summary>
-    /// Run action a required thread on controls
+    ///     Run action a required thread on controls
     /// </summary>
     /// <param name="target">The target</param>
     /// <param name="action">The action</param>

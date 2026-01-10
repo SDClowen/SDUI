@@ -1,29 +1,34 @@
-using SkiaSharp;
 using System;
 using System.Runtime.InteropServices;
+using SkiaSharp;
 
 namespace SDUI.Rendering;
 
 internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
 {
-    public RenderBackend Backend => RenderBackend.OpenGL;
+    private const uint PFD_DRAW_TO_WINDOW = 0x00000004;
+    private const uint PFD_SUPPORT_OPENGL = 0x00000020;
+    private const uint PFD_DOUBLEBUFFER = 0x00000001;
+    private const byte PFD_TYPE_RGBA = 0;
+    private const sbyte PFD_MAIN_PLANE = 0;
+    private GRGlInterface? _glInterface;
 
-    public GRContext? GrContext => _grContext;
-
-    public bool IsSkiaGpuActive => _grContext != null && _surface != null;
-
-    private nint _hwnd;
     private nint _hdc;
+    private int _height;
     private nint _hglrc;
 
-    private GRContext? _grContext;
-    private GRGlInterface? _glInterface;
+    private nint _hwnd;
 
     private GRBackendRenderTarget? _renderTarget;
     private SKSurface? _surface;
 
     private int _width;
-    private int _height;
+
+    public bool IsSkiaGpuActive => GrContext != null && _surface != null;
+
+    public GRContext? GrContext { get; private set; }
+
+    public RenderBackend Backend => RenderBackend.OpenGL;
 
     public void Initialize(nint hwnd)
     {
@@ -48,26 +53,9 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         if (_glInterface == null)
             throw new InvalidOperationException("GRGlInterface.Create returned null.");
 
-        _grContext = GRContext.CreateGl(_glInterface);
-        if (_grContext == null)
+        GrContext = GRContext.CreateGl(_glInterface);
+        if (GrContext == null)
             throw new InvalidOperationException("GRContext.CreateGl returned null.");
-    }
-
-    private static void TryEnableVSync()
-    {
-        try
-        {
-            var proc = wglGetProcAddress("wglSwapIntervalEXT");
-            if (proc == 0)
-                return;
-
-            var swapInterval = Marshal.GetDelegateForFunctionPointer<wglSwapIntervalEXTDelegate>(proc);
-            _ = swapInterval(1);
-        }
-        catch
-        {
-            // ignore
-        }
     }
 
     public void Resize(int width, int height)
@@ -86,7 +74,7 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         _renderTarget?.Dispose();
         _renderTarget = null;
 
-        if (_grContext == null)
+        if (GrContext == null)
             return;
 
         // Assume default framebuffer (0) and RGBA8.
@@ -95,7 +83,7 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         _renderTarget = new GRBackendRenderTarget(width, height, 0, 8, framebufferInfo);
 
         _surface = SKSurface.Create(
-            _grContext,
+            GrContext,
             _renderTarget,
             GRSurfaceOrigin.BottomLeft,
             SKColorType.Rgba8888,
@@ -114,7 +102,7 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
             return;
 
         Resize(width, height);
-        if (_surface == null || _grContext == null)
+        if (_surface == null || GrContext == null)
             return;
 
         var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
@@ -123,15 +111,15 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         draw(canvas, info);
 
         canvas.Flush();
-        _grContext.Flush();
-        _grContext.Submit();
+        GrContext.Flush();
+        GrContext.Submit();
 
         SwapBuffers(_hdc);
     }
 
     public void TrimCaches()
     {
-        _grContext?.PurgeResources();
+        GrContext?.PurgeResources();
     }
 
     public void Dispose()
@@ -142,8 +130,8 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         _renderTarget?.Dispose();
         _renderTarget = null;
 
-        _grContext?.Dispose();
-        _grContext = null;
+        GrContext?.Dispose();
+        GrContext = null;
 
         _glInterface?.Dispose();
         _glInterface = null;
@@ -164,6 +152,23 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         _hwnd = 0;
     }
 
+    private static void TryEnableVSync()
+    {
+        try
+        {
+            var proc = wglGetProcAddress("wglSwapIntervalEXT");
+            if (proc == 0)
+                return;
+
+            var swapInterval = Marshal.GetDelegateForFunctionPointer<wglSwapIntervalEXTDelegate>(proc);
+            _ = swapInterval(1);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
     private static void SetupPixelFormat(nint hdc)
     {
         var pfd = new PIXELFORMATDESCRIPTOR
@@ -175,16 +180,43 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
             cColorBits = 32,
             cDepthBits = 24,
             cStencilBits = 8,
-            iLayerType = PFD_MAIN_PLANE,
+            iLayerType = PFD_MAIN_PLANE
         };
 
-        int pixelFormat = ChoosePixelFormat(hdc, ref pfd);
+        var pixelFormat = ChoosePixelFormat(hdc, ref pfd);
         if (pixelFormat == 0)
             throw new InvalidOperationException("ChoosePixelFormat failed.");
 
         if (!SetPixelFormat(hdc, pixelFormat, ref pfd))
             throw new InvalidOperationException("SetPixelFormat failed.");
     }
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern nint GetDC(nint hWnd);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern int ReleaseDC(nint hWnd, nint hDC);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    private static extern int ChoosePixelFormat(nint hdc, ref PIXELFORMATDESCRIPTOR ppfd);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    private static extern bool SetPixelFormat(nint hdc, int iPixelFormat, ref PIXELFORMATDESCRIPTOR ppfd);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    private static extern bool SwapBuffers(nint hdc);
+
+    [DllImport("opengl32.dll", SetLastError = true)]
+    private static extern nint wglCreateContext(nint hdc);
+
+    [DllImport("opengl32.dll", SetLastError = true)]
+    private static extern bool wglDeleteContext(nint hglrc);
+
+    [DllImport("opengl32.dll", SetLastError = true)]
+    private static extern bool wglMakeCurrent(nint hdc, nint hglrc);
+
+    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
+    private static extern nint wglGetProcAddress(string lpszProc);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct PIXELFORMATDESCRIPTOR
@@ -216,39 +248,6 @@ internal sealed class OpenGlWindowRenderer : IWindowRenderer, IGpuWindowRenderer
         public uint dwVisibleMask;
         public uint dwDamageMask;
     }
-
-    private const uint PFD_DRAW_TO_WINDOW = 0x00000004;
-    private const uint PFD_SUPPORT_OPENGL = 0x00000020;
-    private const uint PFD_DOUBLEBUFFER = 0x00000001;
-    private const byte PFD_TYPE_RGBA = 0;
-    private const sbyte PFD_MAIN_PLANE = 0;
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern nint GetDC(nint hWnd);
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern int ReleaseDC(nint hWnd, nint hDC);
-
-    [DllImport("gdi32.dll", SetLastError = true)]
-    private static extern int ChoosePixelFormat(nint hdc, ref PIXELFORMATDESCRIPTOR ppfd);
-
-    [DllImport("gdi32.dll", SetLastError = true)]
-    private static extern bool SetPixelFormat(nint hdc, int iPixelFormat, ref PIXELFORMATDESCRIPTOR ppfd);
-
-    [DllImport("gdi32.dll", SetLastError = true)]
-    private static extern bool SwapBuffers(nint hdc);
-
-    [DllImport("opengl32.dll", SetLastError = true)]
-    private static extern nint wglCreateContext(nint hdc);
-
-    [DllImport("opengl32.dll", SetLastError = true)]
-    private static extern bool wglDeleteContext(nint hglrc);
-
-    [DllImport("opengl32.dll", SetLastError = true)]
-    private static extern bool wglMakeCurrent(nint hdc, nint hglrc);
-
-    [DllImport("opengl32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
-    private static extern nint wglGetProcAddress(string lpszProc);
 
     [UnmanagedFunctionPointer(CallingConvention.Winapi)]
     private delegate int wglSwapIntervalEXTDelegate(int interval);

@@ -5,8 +5,8 @@ namespace SDUI.Collections;
 
 public class ObjectPool<T>
 {
-    private readonly ConcurrentBag<T> _objects;
     private readonly Func<T> _objectGenerator;
+    private readonly ConcurrentBag<T> _objects;
 
     public ObjectPool(Func<T> objectGenerator)
     {
@@ -14,7 +14,10 @@ public class ObjectPool<T>
         _objectGenerator = objectGenerator ?? throw new ArgumentNullException(nameof(objectGenerator));
     }
 
-    public T Get() => _objects.TryTake(out T item) ? item : _objectGenerator();
+    public T Get()
+    {
+        return _objects.TryTake(out var item) ? item : _objectGenerator();
+    }
 
     public void Return(T item)
     {

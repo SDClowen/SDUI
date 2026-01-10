@@ -14,7 +14,7 @@ public partial class MainWindow : UIWindow
 
 #if DEBUG
         // Enable lightweight render logging for diagnostics when running in Debug builds.
-        DebugSettings.EnableRenderLogging = true;
+        DebugSettings.EnableRenderLogging = false;
         DebugSettings.Log("MainWindow: Render logging enabled (Debug build)");
 #endif
 

@@ -1,35 +1,75 @@
-﻿using SDUI.Animation;
+﻿using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Windows.Forms;
+using SDUI.Animation;
 using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
-using System;
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
 public class Button : UIElementBase, IButtonControl
 {
-    [Category("Appearance")]
-    public Image Image { get; set; }
+    private readonly AnimationManager animationManager;
+    private readonly AnimationManager hoverAnimationManager;
+    private readonly AnimationManager pressAnimationManager;
 
-    [Category("Appearance")]
-    public Color Color { get; set; } = Color.Transparent;
+    private SKImage _cachedImage;
 
-    private int _mouseState = 0;
-    private SizeF _textSize;
+    private int _elevation = 1;
 
-    [Category("Behavior")]
-    public DialogResult DialogResult { get; set; }
+    private int _mouseState;
+    private bool _needsRedraw = true;
 
-    [Category("Behavior")]
-    public bool IsDefault { get; set; }
-
-    [Category("Behavior")]
-    public bool IsCancel { get; set; }
+    private int _radius = 12;
+    private Point? _rippleCenter;
 
     private float _shadowDepth = 4f;
+    private SizeF _textSize;
+
+    public Button()
+    {
+        TabStop = true;
+
+        // Ripple animasyonu - her tıklamada yeni başlar
+        animationManager = new AnimationManager(true)
+        {
+            Increment = 0.05,
+            AnimationType = AnimationType.EaseOut,
+            InterruptAnimation = true
+        };
+
+        // Hover animasyonu - smooth geçişler
+        hoverAnimationManager = new AnimationManager(true)
+        {
+            Increment = 0.10,
+            AnimationType = AnimationType.EaseInOut,
+            InterruptAnimation = true
+        };
+
+        hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
+        animationManager.OnAnimationProgress += sender => Invalidate();
+
+        pressAnimationManager = new AnimationManager(true)
+        {
+            Increment = 0.18,
+            AnimationType = AnimationType.EaseInOut,
+            InterruptAnimation = true
+        };
+        pressAnimationManager.OnAnimationProgress += sender => Invalidate();
+    }
+
+    [Category("Appearance")] public Image Image { get; set; }
+
+    [Category("Appearance")] public Color Color { get; set; } = Color.Transparent;
+
+    [Category("Behavior")] public bool IsDefault { get; set; }
+
+    [Category("Behavior")] public bool IsCancel { get; set; }
+
     [Category("Appearance")]
     public float ShadowDepth
     {
@@ -44,7 +84,6 @@ public class Button : UIElementBase, IButtonControl
         }
     }
 
-    private int _radius = 12;
     [Category("Appearance")]
     public int Radius
     {
@@ -59,7 +98,6 @@ public class Button : UIElementBase, IButtonControl
         }
     }
 
-    private int _elevation = 1;
     [Category("Appearance")]
     public int Elevation
     {
@@ -74,51 +112,23 @@ public class Button : UIElementBase, IButtonControl
         }
     }
 
-    private readonly AnimationManager animationManager;
-    private readonly AnimationManager hoverAnimationManager;
-    private readonly AnimationManager pressAnimationManager;
+    [Category("Behavior")] public DialogResult DialogResult { get; set; }
 
-    private SKImage _cachedImage;
-    private bool _needsRedraw = true;
-    private Point? _rippleCenter;
+    public void NotifyDefault(bool value)
+    {
+        //throw new NotImplementedException();
+    }
+
+    void IButtonControl.PerformClick()
+    {
+        PerformClick();
+    }
 
     private void InvalidateCache()
     {
         _needsRedraw = true;
         _cachedImage?.Dispose();
         _cachedImage = null;
-    }
-
-    public Button()
-    {
-        TabStop = true;
-
-        // Ripple animasyonu - her tıklamada yeni başlar
-        animationManager = new AnimationManager(singular: true)
-        {
-            Increment = 0.05,
-            AnimationType = AnimationType.EaseOut,
-            InterruptAnimation = true
-        };
-
-        // Hover animasyonu - smooth geçişler
-        hoverAnimationManager = new AnimationManager(singular: true)
-        {
-            Increment = 0.10,
-            AnimationType = AnimationType.EaseInOut,
-            InterruptAnimation = true
-        };
-
-        hoverAnimationManager.OnAnimationProgress += sender => Invalidate();
-        animationManager.OnAnimationProgress += sender => Invalidate();
-
-        pressAnimationManager = new AnimationManager(singular: true)
-        {
-            Increment = 0.18,
-            AnimationType = AnimationType.EaseInOut,
-            InterruptAnimation = true
-        };
-        pressAnimationManager.OnAnimationProgress += sender => Invalidate();
     }
 
     internal override void OnTextChanged(EventArgs e)
@@ -128,20 +138,18 @@ public class Button : UIElementBase, IButtonControl
         using (var paint = new SKPaint())
         {
             paint.TextSize = Font.Size.PtToPx(this);
-            paint.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
+            paint.Typeface = FontManager.GetSKTypeface(Font);
             var metrics = paint.FontMetrics;
             _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
         }
+
         if (AutoSize)
             Size = GetPreferredSize(Size.Empty);
     }
 
     public override void OnClick(EventArgs e)
     {
-        if (DialogResult != DialogResult.None && FindForm() is Form form)
-        {
-            form.DialogResult = DialogResult;
-        }
+        if (DialogResult != DialogResult.None && FindForm() is Form form) form.DialogResult = DialogResult;
         base.OnClick(e);
     }
 
@@ -152,6 +160,7 @@ public class Button : UIElementBase, IButtonControl
             PerformClick();
             e.Handled = true;
         }
+
         base.OnKeyDown(e);
     }
 
@@ -213,12 +222,12 @@ public class Button : UIElementBase, IButtonControl
         var rippleProgress = (float)animationManager.GetProgress();
 
         var baseRect = new SKRect(0, 0, Width, Height);
-        
+
         // Add padding for elevation shadow
         // We use the base elevation for padding to prevent the button from being too small.
         var elevationOffset = ColorScheme.GetElevationOffset(_elevation);
         var elevationBlur = ColorScheme.GetElevationBlur(_elevation);
-        
+
         // Calculate padding needed for the shadow
         // We add a small buffer (1px) to avoid hard clipping
         var hPadding = Math.Max(elevationOffset, elevationBlur / 2) + 1;
@@ -240,16 +249,14 @@ public class Button : UIElementBase, IButtonControl
             if (pressProgress > 0) currentElevation += 1;
             else if (hoverProgress > 0) currentElevation += 1;
         }
+
         currentElevation = Math.Min(currentElevation, 5);
 
         // Draw elevation shadow
-        if (Enabled && currentElevation > 0)
-        {
-            ElevationHelper.DrawElevation(canvas, bodyRect, _radius, currentElevation);
-        }
+        if (Enabled && currentElevation > 0) ElevationHelper.DrawElevation(canvas, bodyRect, _radius, currentElevation);
 
         DrawButton(canvas, bodyRect, hoverProgress, pressProgress);
-        
+
         // Draw ripple effect
         if (rippleProgress > 0 && rippleProgress < 1 && _rippleCenter.HasValue)
         {
@@ -266,6 +273,7 @@ public class Button : UIElementBase, IButtonControl
                     rippleProgress,
                     ColorScheme.Primary.Alpha(100));
             }
+
             canvas.Restore();
         }
 
@@ -280,18 +288,16 @@ public class Button : UIElementBase, IButtonControl
             : ColorScheme.Primary.ToSKColor();
 
         if (!Enabled)
-        {
             // Material Design 3 Disabled State: OnSurface 12%
             fillColor = ColorScheme.OnSurface.Alpha(30).ToSKColor();
-        }
 
         // Draw base fill
         using (var fillPaint = new SKPaint
-        {
-            Color = fillColor,
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        })
+               {
+                   Color = fillColor,
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Fill
+               })
         {
             canvas.DrawRoundRect(bodyRect, _radius, _radius, fillPaint);
         }
@@ -299,7 +305,7 @@ public class Button : UIElementBase, IButtonControl
         // Draw state layer (hover/press)
         if (Enabled)
         {
-            Color stateLayerColor = Color.Transparent;
+            var stateLayerColor = Color.Transparent;
             if (pressProgress > 0)
                 stateLayerColor = ColorScheme.StateLayerPressed;
             else if (hoverProgress > 0)
@@ -333,7 +339,7 @@ public class Button : UIElementBase, IButtonControl
         }
 
         // Icon drawing
-        float contentStartX = bodyRect.Left + 16f;
+        var contentStartX = bodyRect.Left + 16f;
         if (Image != null)
         {
             var imageSize = 20;
@@ -346,13 +352,14 @@ public class Button : UIElementBase, IButtonControl
             if (string.IsNullOrEmpty(Text))
                 imageRect.X = (int)(bodyRect.Left + (bodyRect.Width - imageSize) / 2f);
 
-            using (var stream = new System.IO.MemoryStream())
+            using (var stream = new MemoryStream())
             {
-                Image.Save(stream, System.Drawing.Imaging.ImageFormat.Png);
+                Image.Save(stream, ImageFormat.Png);
                 stream.Position = 0;
                 using var skImage = SKImage.FromEncodedData(SKData.Create(stream));
                 canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y, imageRect.Width, imageRect.Height));
             }
+
             contentStartX += imageSize + 8f;
         }
 
@@ -362,7 +369,7 @@ public class Button : UIElementBase, IButtonControl
             var textColor = Color != Color.Transparent
                 ? ColorScheme.OnPrimary.ToSKColor()
                 : ColorScheme.OnPrimary.ToSKColor();
-                
+
             if (!Enabled)
                 textColor = ColorScheme.OnSurface.Alpha(80).ToSKColor();
 
@@ -375,13 +382,13 @@ public class Button : UIElementBase, IButtonControl
             using var font = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
             };
 
             var textWidth = font.MeasureText(Text);
-            var textX = Image == null 
+            var textX = Image == null
                 ? bodyRect.Left + (bodyRect.Width - textWidth) / 2f
                 : contentStartX;
             var textY = bodyRect.Top + (bodyRect.Height + font.Metrics.CapHeight) / 2f;
@@ -399,7 +406,7 @@ public class Button : UIElementBase, IButtonControl
         {
             using var hoverPaint = new SKPaint
             {
-                Color = accentSk.WithAlpha((byte)(Math.Clamp(hoverProgress * 90f, 0f, 120f))),
+                Color = accentSk.WithAlpha((byte)Math.Clamp(hoverProgress * 90f, 0f, 120f)),
                 IsAntialias = true
             };
             canvas.DrawRoundRect(bodyRect, _radius, _radius, hoverPaint);
@@ -407,8 +414,7 @@ public class Button : UIElementBase, IButtonControl
 
         // Ripple efekti
         if (animationManager.IsAnimating())
-        {
-            for (int i = 0; i < animationManager.GetAnimationCount(); i++)
+            for (var i = 0; i < animationManager.GetAnimationCount(); i++)
             {
                 var animationValue = animationManager.GetProgress(i);
                 var animationSource = animationManager.GetSource(i);
@@ -435,7 +441,6 @@ public class Button : UIElementBase, IButtonControl
                 canvas.DrawOval(rippleRect, ripplePaint);
                 canvas.Restore();
             }
-        }
     }
 
     private static void RestartAnimation(AnimationManager engine, AnimationDirection direction, Point? source = null)
@@ -454,18 +459,14 @@ public class Button : UIElementBase, IButtonControl
         engine.SetProgress(startProgress);
 
         if (source.HasValue)
-        {
             engine.StartNewAnimation(direction, source.Value);
-        }
         else
-        {
             engine.StartNewAnimation(direction);
-        }
     }
 
     public override Size GetPreferredSize(Size proposedSize)
     {
-        int extra = 16;
+        var extra = 16;
 
         if (Image != null)
             extra += 24 + 4;
@@ -473,7 +474,7 @@ public class Button : UIElementBase, IButtonControl
         using (var font = new SKFont())
         {
             font.Size = Font.Size * 1.5f;
-            font.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
+            font.Typeface = FontManager.GetSKTypeface(Font);
             _textSize = new SizeF(font.MeasureText(Text), font.Metrics.Descent - font.Metrics.Ascent);
         }
 
@@ -487,6 +488,7 @@ public class Button : UIElementBase, IButtonControl
             _cachedImage?.Dispose();
             _cachedImage = null;
         }
+
         base.Dispose(disposing);
     }
 
@@ -512,15 +514,5 @@ public class Button : UIElementBase, IButtonControl
     {
         InvalidateCache();
         base.OnSizeChanged(e);
-    }
-
-    public void NotifyDefault(bool value)
-    {
-        //throw new NotImplementedException();
-    }
-
-    void IButtonControl.PerformClick()
-    {
-        PerformClick();
     }
 }

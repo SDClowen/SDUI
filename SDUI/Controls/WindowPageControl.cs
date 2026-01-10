@@ -3,76 +3,78 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace SDUI.Controls
+namespace SDUI.Controls;
+
+public class WindowPageControl : UIElementBase
 {
-    public class WindowPageControl : UIElementBase
+    private EventHandler<int> _onSelectedIndexChanged;
+
+    private int _selectedIndex = -1;
+
+    public WindowPageControl()
     {
-        private EventHandler<int> _onSelectedIndexChanged;
+        BackColor = Color.Transparent;
+    }
 
-        public event EventHandler<int> SelectedIndexChanged
+    public int SelectedIndex
+    {
+        get => _selectedIndex;
+        set
         {
-            add => _onSelectedIndexChanged += value;
-            remove => _onSelectedIndexChanged -= value;
-        }
+            var sys = Stopwatch.StartNew();
 
-        private int _selectedIndex = -1;
-        public int SelectedIndex
-        {
-            get => _selectedIndex;
-            set
+            if (_selectedIndex == value)
+                return;
+
+            if (Controls.Count > 0)
             {
-                var sys = Stopwatch.StartNew();
+                if (value < 0)
+                    value = Controls.Count - 1;
 
-                if (_selectedIndex == value)
-                    return;
-
-                if (Controls.Count > 0)
-                {
-                    if (value < 0)
-                        value = Controls.Count - 1;
-
-                    if (value > Controls.Count - 1)
-                        value = 0;
-                }
-                else
-                    value = -1;
-
-                var previousSelectedIndex = _selectedIndex;
-                _selectedIndex = value;
-                _onSelectedIndexChanged?.Invoke(this, previousSelectedIndex);
-
-                for (int i = 0; i < Controls.Count; i++)
-                    Controls[i].Visible = i == _selectedIndex;
-
-                Debug.WriteLine($"Index: {_selectedIndex} Finished: {sys.ElapsedMilliseconds} ms");
+                if (value > Controls.Count - 1)
+                    value = 0;
             }
+            else
+            {
+                value = -1;
+            }
+
+            var previousSelectedIndex = _selectedIndex;
+            _selectedIndex = value;
+            _onSelectedIndexChanged?.Invoke(this, previousSelectedIndex);
+
+            for (var i = 0; i < Controls.Count; i++)
+                Controls[i].Visible = i == _selectedIndex;
+
+            Debug.WriteLine($"Index: {_selectedIndex} Finished: {sys.ElapsedMilliseconds} ms");
         }
+    }
 
-        public int Count => Controls.Count;
+    public int Count => Controls.Count;
 
-        public WindowPageControl()
-        {
-            BackColor = Color.Transparent;
-        }
+    public event EventHandler<int> SelectedIndexChanged
+    {
+        add => _onSelectedIndexChanged += value;
+        remove => _onSelectedIndexChanged -= value;
+    }
 
-        internal override void OnControlAdded(UIElementEventArgs e)
-        {
-            base.OnControlAdded(e);
+    internal override void OnControlAdded(UIElementEventArgs e)
+    {
+        base.OnControlAdded(e);
 
-            e.Element.Dock = DockStyle.Fill;
-            e.Element.BackColor = Color.Transparent;
-            e.Element.Visible = Controls.Count == 1;
+        e.Element.Dock = DockStyle.Fill;
+        e.Element.BackColor = Color.Transparent;
+        e.Element.Visible = Controls.Count == 1;
 
-            if (Controls.Count == 1)
-                _selectedIndex = 0;
-        }
+        if (Controls.Count == 1)
+            _selectedIndex = 0;
+    }
 
-        internal override void OnControlRemoved(UIElementEventArgs e)
-        {
-            base.OnControlRemoved(e);
+    internal override void OnControlRemoved(UIElementEventArgs e)
+    {
+        base.OnControlRemoved(e);
 
-            if (Controls.Count == 0)
-                _selectedIndex = -1;
-        }
+        if (Controls.Count == 0)
+            _selectedIndex = -1;
     }
 }

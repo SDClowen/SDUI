@@ -54,7 +54,8 @@ public static class RectangleExtensions
         return path;
     }
 
-    public static GraphicsPath Radius(this RectangleF bounds, float topLeft = 0, float topRight = 0, float bottomLeft = 0, float bottomRight = 0)
+    public static GraphicsPath Radius(this RectangleF bounds, float topLeft = 0, float topRight = 0,
+        float bottomLeft = 0, float bottomRight = 0)
     {
         var diameter1 = topLeft * 2;
         var diameter2 = topRight * 2;
@@ -69,60 +70,46 @@ public static class RectangleExtensions
 
         // top left arc  
         if (topLeft == 0)
-        {
             path.AddLine(arc1.Location, arc1.Location);
-        }
         else
-        {
             path.AddArc(arc1, 180, 90);
-        }
 
         // top right arc  
         arc2.X = bounds.Right - diameter2;
         if (topRight == 0)
-        {
             path.AddLine(arc2.Location, arc2.Location);
-        }
         else
-        {
             path.AddArc(arc2, 270, 90);
-        }
 
         // bottom right arc  
 
         arc3.X = bounds.Right - diameter3;
         arc3.Y = bounds.Bottom - diameter3;
         if (bottomLeft == 0)
-        {
             path.AddLine(arc3.Location, arc3.Location);
-        }
         else
-        {
             path.AddArc(arc3, 0, 90);
-        }
 
         // bottom left arc 
         arc4.X = bounds.Right - diameter4;
         arc4.Y = bounds.Bottom - diameter4;
         arc4.X = bounds.Left;
         if (bottomRight == 0)
-        {
             path.AddLine(arc4.Location, arc4.Location);
-        }
         else
-        {
             path.AddArc(arc4, 90, 90);
-        }
 
         path.CloseFigure();
         return path;
     }
-    public static GraphicsPath Radius(this RectangleF bounds, int topLeft = 0, int topRight = 0, int bottomLeft = 0, int bottomRight = 0)
+
+    public static GraphicsPath Radius(this RectangleF bounds, int topLeft = 0, int topRight = 0, int bottomLeft = 0,
+        int bottomRight = 0)
     {
-        int diameter1 = topLeft * 2;
-        int diameter2 = topRight * 2;
-        int diameter3 = bottomLeft * 2;
-        int diameter4 = bottomRight * 2;
+        var diameter1 = topLeft * 2;
+        var diameter2 = topRight * 2;
+        var diameter3 = bottomLeft * 2;
+        var diameter4 = bottomRight * 2;
 
         var arc1 = new RectangleF(bounds.Location, new SizeF(diameter1, diameter1));
         var arc2 = new RectangleF(bounds.Location, new SizeF(diameter2, diameter2));
@@ -132,50 +119,34 @@ public static class RectangleExtensions
 
         // top left arc  
         if (topLeft == 0)
-        {
             path.AddLine(arc1.Location, arc1.Location);
-        }
         else
-        {
             path.AddArc(arc1, 180, 90);
-        }
 
         // top right arc  
         arc2.X = bounds.Right - diameter2;
         if (topRight == 0)
-        {
             path.AddLine(arc2.Location, arc2.Location);
-        }
         else
-        {
             path.AddArc(arc2, 270, 90);
-        }
 
         // bottom right arc  
 
         arc3.X = bounds.Right - diameter3;
         arc3.Y = bounds.Bottom - diameter3;
         if (bottomLeft == 0)
-        {
             path.AddLine(arc3.Location, arc3.Location);
-        }
         else
-        {
             path.AddArc(arc3, 0, 90);
-        }
 
         // bottom left arc 
         arc4.X = bounds.Right - diameter4;
         arc4.Y = bounds.Bottom - diameter4;
         arc4.X = bounds.Left;
         if (bottomRight == 0)
-        {
             path.AddLine(arc4.Location, arc4.Location);
-        }
         else
-        {
             path.AddArc(arc4, 90, 90);
-        }
 
         path.CloseFigure();
         return path;
@@ -188,7 +159,7 @@ public static class RectangleExtensions
 
     public static RectangleF ToRectangleF(this Rectangle rect)
     {
-        return (RectangleF)rect;
+        return rect;
     }
 
     public static bool InRect(this Point point, Rectangle rect)

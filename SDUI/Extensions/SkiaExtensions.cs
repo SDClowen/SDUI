@@ -1,79 +1,80 @@
-﻿using SkiaSharp;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
+using SDUI.Helpers;
+using SkiaSharp;
 
 public static class SkiaExtensions
 {
     // System.Drawing.Point*
 
-    public static SKPoint ToSKPoint(this System.Drawing.PointF point)
+    public static SKPoint ToSKPoint(this PointF point)
     {
         return new SKPoint(point.X, point.Y);
     }
 
-    public static SKPointI ToSKPoint(this System.Drawing.Point point)
+    public static SKPointI ToSKPoint(this Point point)
     {
         return new SKPointI(point.X, point.Y);
     }
 
-    public static System.Drawing.PointF ToDrawingPoint(this SKPoint point)
+    public static PointF ToDrawingPoint(this SKPoint point)
     {
-        return new System.Drawing.PointF(point.X, point.Y);
+        return new PointF(point.X, point.Y);
     }
 
-    public static System.Drawing.Point ToDrawingPoint(this SKPointI point)
+    public static Point ToDrawingPoint(this SKPointI point)
     {
-        return new System.Drawing.Point(point.X, point.Y);
+        return new Point(point.X, point.Y);
     }
 
     // System.Drawing.Rectangle*
 
-    public static SKRect ToSKRect(this System.Drawing.RectangleF rect)
+    public static SKRect ToSKRect(this RectangleF rect)
     {
         return new SKRect(rect.Left, rect.Top, rect.Right, rect.Bottom);
     }
 
-    public static SKRectI ToSKRect(this System.Drawing.Rectangle rect)
+    public static SKRectI ToSKRect(this Rectangle rect)
     {
         return new SKRectI(rect.Left, rect.Top, rect.Right, rect.Bottom);
     }
 
-    public static System.Drawing.RectangleF ToDrawingRect(this SKRect rect)
+    public static RectangleF ToDrawingRect(this SKRect rect)
     {
-        return System.Drawing.RectangleF.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
+        return RectangleF.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
     }
 
-    public static System.Drawing.Rectangle ToDrawingRect(this SKRectI rect)
+    public static Rectangle ToDrawingRect(this SKRectI rect)
     {
-        return System.Drawing.Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
+        return Rectangle.FromLTRB(rect.Left, rect.Top, rect.Right, rect.Bottom);
     }
 
     // System.Drawing.Size*
 
-    public static SKSize ToSKSize(this System.Drawing.SizeF size)
+    public static SKSize ToSKSize(this SizeF size)
     {
         return new SKSize(size.Width, size.Height);
     }
 
-    public static SKSizeI ToSKSize(this System.Drawing.Size size)
+    public static SKSizeI ToSKSize(this Size size)
     {
         return new SKSizeI(size.Width, size.Height);
     }
 
-    public static System.Drawing.SizeF ToDrawingSize(this SKSize size)
+    public static SizeF ToDrawingSize(this SKSize size)
     {
-        return new System.Drawing.SizeF(size.Width, size.Height);
+        return new SizeF(size.Width, size.Height);
     }
 
-    public static System.Drawing.Size ToDrawingSize(this SKSizeI size)
+    public static Size ToDrawingSize(this SKSizeI size)
     {
-        return new System.Drawing.Size(size.Width, size.Height);
+        return new Size(size.Width, size.Height);
     }
 
     // System.Drawing.Bitmap
 
-    public static System.Drawing.Bitmap ToBitmap(this SKPicture picture, SKSizeI dimensions)
+    public static Bitmap ToBitmap(this SKPicture picture, SKSizeI dimensions)
     {
         using (var image = SKImage.FromPicture(picture, dimensions))
         {
@@ -81,12 +82,13 @@ public static class SkiaExtensions
         }
     }
 
-    public static System.Drawing.Bitmap ToBitmap(this SKImage skiaImage)
+    public static Bitmap ToBitmap(this SKImage skiaImage)
     {
         // TODO: maybe keep the same color types where we can, instead of just going to the platform default
 
-        var bitmap = new System.Drawing.Bitmap(skiaImage.Width, skiaImage.Height, System.Drawing.Imaging.PixelFormat.Format32bppPArgb);
-        var data = bitmap.LockBits(new System.Drawing.Rectangle(0, 0, bitmap.Width, bitmap.Height), System.Drawing.Imaging.ImageLockMode.WriteOnly, bitmap.PixelFormat);
+        var bitmap = new Bitmap(skiaImage.Width, skiaImage.Height, PixelFormat.Format32bppPArgb);
+        var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.WriteOnly,
+            bitmap.PixelFormat);
 
         // copy
         using (var pixmap = new SKPixmap(new SKImageInfo(data.Width, data.Height), data.Scan0, data.Stride))
@@ -98,7 +100,7 @@ public static class SkiaExtensions
         return bitmap;
     }
 
-    public static System.Drawing.Bitmap ToBitmap(this SKBitmap skiaBitmap)
+    public static Bitmap ToBitmap(this SKBitmap skiaBitmap)
     {
         using (var pixmap = skiaBitmap.PeekPixels())
         using (var image = SKImage.FromPixels(pixmap))
@@ -109,7 +111,7 @@ public static class SkiaExtensions
         }
     }
 
-    public static System.Drawing.Bitmap ToBitmap(this SKPixmap pixmap)
+    public static Bitmap ToBitmap(this SKPixmap pixmap)
     {
         using (var image = SKImage.FromPixels(pixmap))
         {
@@ -117,7 +119,7 @@ public static class SkiaExtensions
         }
     }
 
-    public static SKBitmap ToSKBitmap(this System.Drawing.Bitmap bitmap)
+    public static SKBitmap ToSKBitmap(this Bitmap bitmap)
     {
         // TODO: maybe keep the same color types where we can, instead of just going to the platform default
 
@@ -127,10 +129,11 @@ public static class SkiaExtensions
         {
             bitmap.ToSKPixmap(pixmap);
         }
+
         return skiaBitmap;
     }
 
-    public static SKImage ToSKImage(this System.Drawing.Bitmap bitmap)
+    public static SKImage ToSKImage(this Bitmap bitmap)
     {
         // TODO: maybe keep the same color types where we can, instead of just going to the platform default
 
@@ -140,21 +143,23 @@ public static class SkiaExtensions
         {
             bitmap.ToSKPixmap(pixmap);
         }
+
         return image;
     }
 
-    public static void ToSKPixmap(this System.Drawing.Bitmap bitmap, SKPixmap pixmap)
+    public static void ToSKPixmap(this Bitmap bitmap, SKPixmap pixmap)
     {
         // TODO: maybe keep the same color types where we can, instead of just going to the platform default
 
         if (pixmap.ColorType == SKImageInfo.PlatformColorType)
         {
             var info = pixmap.Info;
-            using (var tempBitmap = new System.Drawing.Bitmap(info.Width, info.Height, info.RowBytes, System.Drawing.Imaging.PixelFormat.Format32bppPArgb, pixmap.GetPixels()))
-            using (var gr = System.Drawing.Graphics.FromImage(tempBitmap))
+            using (var tempBitmap = new Bitmap(info.Width, info.Height, info.RowBytes, PixelFormat.Format32bppPArgb,
+                       pixmap.GetPixels()))
+            using (var gr = Graphics.FromImage(tempBitmap))
             {
                 // Clear graphic to prevent display artifacts with transparent bitmaps					
-                gr.Clear(System.Drawing.Color.Transparent);
+                gr.Clear(Color.Transparent);
 
                 gr.DrawImageUnscaled(bitmap, 0, 0);
             }
@@ -175,9 +180,12 @@ public static class SkiaExtensions
     {
         using (var bitmap = new Bitmap(image))
         {
-            var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly, PixelFormat.Format32bppPArgb);
+            var data = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width, bitmap.Height), ImageLockMode.ReadOnly,
+                PixelFormat.Format32bppPArgb);
             var skBitmap = new SKBitmap();
-            skBitmap.InstallPixels(new SKImageInfo(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Premul), data.Scan0, data.Stride);
+            skBitmap.InstallPixels(
+                new SKImageInfo(bitmap.Width, bitmap.Height, SKColorType.Bgra8888, SKAlphaType.Premul), data.Scan0,
+                data.Stride);
             bitmap.UnlockBits(data);
             return skBitmap.Copy();
         }
@@ -185,26 +193,26 @@ public static class SkiaExtensions
 
     // System.Drawing.Color
 
-    public static SKColor ToSKColor(this System.Drawing.Color color)
+    public static SKColor ToSKColor(this Color color)
     {
-        return (SKColor)(uint)color.ToArgb();
+        return (uint)color.ToArgb();
     }
 
-    public static System.Drawing.Color ToDrawingColor(this SKColor color)
+    public static Color ToDrawingColor(this SKColor color)
     {
-        return System.Drawing.Color.FromArgb((int)(uint)color);
+        return Color.FromArgb((int)(uint)color);
     }
 
-    public static SKFont ToSKFont(this System.Drawing.Font drawingFont)
+    public static SKFont ToSKFont(this Font drawingFont)
     {
         if (drawingFont == null)
             throw new ArgumentNullException(nameof(drawingFont));
 
         // Extract the font family and style
-        string fontFamily = drawingFont.FontFamily.Name;
-        SKFontStyleWeight weight = SKFontStyleWeight.Normal;
-        SKFontStyleWidth width = SKFontStyleWidth.Normal;
-        SKFontStyleSlant slant = SKFontStyleSlant.Upright;
+        var fontFamily = drawingFont.FontFamily.Name;
+        var weight = SKFontStyleWeight.Normal;
+        var width = SKFontStyleWidth.Normal;
+        var slant = SKFontStyleSlant.Upright;
 
         // Map styles
         if (drawingFont.Bold)
@@ -213,12 +221,11 @@ public static class SkiaExtensions
             slant = SKFontStyleSlant.Italic;
 
         // Create the SKTypeface
-        SKTypeface typeface = SDUI.Helpers.FontManager.GetSKTypeface(drawingFont);
+        var typeface = FontManager.GetSKTypeface(drawingFont);
 
         // Create the SKFont
-        SKFont skFont = new SKFont(typeface, (float)drawingFont.Size);
+        var skFont = new SKFont(typeface, drawingFont.Size);
 
         return skFont;
     }
-
 }

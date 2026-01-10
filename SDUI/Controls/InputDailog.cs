@@ -13,41 +13,20 @@ public partial class InputDialog : UIWindow
     }
 
     /// <summary>
-    /// Gets the value.
+    ///     Form input type
     /// </summary>
-    /// <value>
-    /// The value.
-    /// </value>
-    public object Value { get; private set; }
+    private readonly InputType _inputType;
 
     /// <summary>
-    /// Gets the selector.
-    /// </summary>
-    /// <value>
-    /// The selector.
-    /// </value>
-    public ComboBox Selector => comboBox;
-
-    /// <summary>
-    /// Gets the selector.
-    /// </summary>
-    /// <value>
-    /// The selector.
-    /// </value>
-    public NumUpDown Numeric => numValue;
-
-    /// <summary>
-    /// Form input type
-    /// </summary>
-    private InputType _inputType;
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="InputDialog"/> class.
+    ///     Initializes a new instance of the <see cref="InputDialog" /> class.
     /// </summary>
     /// <param name="title">The title.</param>
     /// <param name="message">The message.</param>
-    /// <param name="selector">If you want to active the selector instead of textbox <c>true</c>; otherwise <c>false</c></param>
-    public InputDialog(string formTitle, string title, string message, InputType inputType = InputType.Textbox, object defaultValue = null)
+    /// <param name="selector">
+    ///     If you want to active the selector instead of textbox <c>true</c>; otherwise <c>false</c>
+    /// </param>
+    public InputDialog(string formTitle, string title, string message, InputType inputType = InputType.Textbox,
+        object defaultValue = null)
     {
         InitializeComponent();
         BackColor = ColorScheme.BackColor;
@@ -97,20 +76,48 @@ public partial class InputDialog : UIWindow
     }
 
     /// <summary>
-    /// Show the dialog
+    ///     Gets the value.
+    /// </summary>
+    /// <value>
+    ///     The value.
+    /// </value>
+    public object Value { get; private set; }
+
+    /// <summary>
+    ///     Gets the selector.
+    /// </summary>
+    /// <value>
+    ///     The selector.
+    /// </value>
+    public ComboBox Selector => comboBox;
+
+    /// <summary>
+    ///     Gets the selector.
+    /// </summary>
+    /// <value>
+    ///     The selector.
+    /// </value>
+    public NumUpDown Numeric => numValue;
+
+    /// <summary>
+    ///     Show the dialog
     /// </summary>
     /// <param name="title">The title content</param>
     /// <param name="message">The dialog message</param>
-    /// <param name="selector">If you want to active the selector instead of textbox <c>true</c>; otherwise <c>false</c></param>
-    /// <returns>The <seealso cref="DialogResult"/></returns>
+    /// <param name="selector">
+    ///     If you want to active the selector instead of textbox <c>true</c>; otherwise <c>false</c>
+    /// </param>
+    /// <returns>The <seealso cref="DialogResult" /></returns>
     public static DialogResult Show(string formTitle, string title, string message, InputType inputType)
-        => new InputDialog(formTitle, title, message, inputType).ShowDialog();
+    {
+        return new InputDialog(formTitle, title, message, inputType).ShowDialog();
+    }
 
     /// <summary>
-    /// Handles the Click event of the btnOK control.
+    ///     Handles the Click event of the btnOK control.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="EventArgs"/> instance containing the event data.</param>
+    /// <param name="e">The <see cref="EventArgs" /> instance containing the event data.</param>
     private void btnOK_Click(object sender, EventArgs e)
     {
         object value = null;
@@ -124,8 +131,6 @@ public partial class InputDialog : UIWindow
                 break;
             case InputType.Numeric:
                 value = numValue.Value;
-                break;
-            default:
                 break;
         }
 
@@ -141,11 +146,11 @@ public partial class InputDialog : UIWindow
     }
 
     /// <summary>
-    /// Handles the KeyDown event of the txtValue control.
+    ///     Handles the KeyDown event of the txtValue control.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="KeyEventArgs"/> instance containing the event data.</param>
-    private void TxtValue_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+    /// <param name="e">The <see cref="KeyEventArgs" /> instance containing the event data.</param>
+    private void TxtValue_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.KeyCode == Keys.Enter)
         {
@@ -155,10 +160,10 @@ public partial class InputDialog : UIWindow
     }
 
     /// <summary>
-    /// Handles the FormClosing event of the form control.
+    ///     Handles the FormClosing event of the form control.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="KeyEventArgs"/> instance containing the event data.</param>
+    /// <param name="e">The <see cref="KeyEventArgs" /> instance containing the event data.</param>
     private void InputDialog_FormClosing(object sender, FormClosingEventArgs e)
     {
         if (DialogResult == DialogResult.Retry)
@@ -166,10 +171,10 @@ public partial class InputDialog : UIWindow
     }
 
     /// <summary>
-    /// Handles the KeyUp event of the numValue control.
+    ///     Handles the KeyUp event of the numValue control.
     /// </summary>
     /// <param name="sender">The source of the event.</param>
-    /// <param name="e">The <see cref="KeyEventArgs"/> instance containing the event data.</param>
+    /// <param name="e">The <see cref="KeyEventArgs" /> instance containing the event data.</param>
     private void numValue_KeyUp(object sender, KeyEventArgs e)
     {
         if (e.KeyCode != Keys.Enter)

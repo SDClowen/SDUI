@@ -1,14 +1,14 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
+using SDUI.Controls;
 
 namespace SDUI;
 
 public class UIElementEventArgs : EventArgs
 {
-    public IUIElement Element { get; }
-
     public UIElementEventArgs(IUIElement element)
     {
         Element = element;
     }
+
+    public IUIElement Element { get; }
 }

@@ -1,15 +1,24 @@
-using SkiaSharp;
-using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Linq;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class Panel : UIElementBase
 {
+    private Padding _border;
+
+    private Color _borderColor = Color.Transparent;
     private int _radius = 10;
+
+    private float _shadowDepth = 4;
+
+    public Panel()
+    {
+        BackColor = Color.Transparent;
+    }
+
     [Category("Appearance")]
     public int Radius
     {
@@ -24,7 +33,6 @@ public class Panel : UIElementBase
         }
     }
 
-    private Padding _border;
     [Category("Appearance")]
     public Padding Border
     {
@@ -39,7 +47,6 @@ public class Panel : UIElementBase
         }
     }
 
-    private Color _borderColor = Color.Transparent;
     [Category("Appearance")]
     public Color BorderColor
     {
@@ -54,7 +61,6 @@ public class Panel : UIElementBase
         }
     }
 
-    private float _shadowDepth = 4;
     [Category("Appearance")]
     public float ShadowDepth
     {
@@ -69,11 +75,6 @@ public class Panel : UIElementBase
         }
     }
 
-    public Panel()
-    {
-        BackColor = Color.Transparent;
-    }
-
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
@@ -85,10 +86,10 @@ public class Panel : UIElementBase
             // Shadow needs space. 
             // dx=_shadowDepth, dy=_shadowDepth, sigma=3 (approx 9px blur spread)
             // We need to shrink the content rect so the shadow fits.
-            float blur = 3f;
-            float margin = 2f; // minimal margin
-            float rightBottomMargin = _shadowDepth + blur + margin;
-            
+            var blur = 3f;
+            var margin = 2f; // minimal margin
+            var rightBottomMargin = _shadowDepth + blur + margin;
+
             rect = new SKRect(margin, margin, Width - rightBottomMargin, Height - rightBottomMargin);
         }
 
@@ -112,7 +113,6 @@ public class Panel : UIElementBase
             };
             try
             {
-
                 if (_radius > 0)
                 {
                     using var path = new SKPath();
@@ -124,7 +124,9 @@ public class Panel : UIElementBase
                     canvas.DrawRect(rect, shadowPaint);
                 }
             }
-            catch { }
+            catch
+            {
+            }
         }
 
         // Panel arka planı
@@ -136,7 +138,6 @@ public class Panel : UIElementBase
         };
         try
         {
-
             if (_radius > 0)
             {
                 using var path = new SKPath();
@@ -148,11 +149,12 @@ public class Panel : UIElementBase
                 canvas.DrawRect(rect, paint);
             }
         }
-        catch { }
+        catch
+        {
+        }
 
         // Kenarlık çizimi
         if (_border.All > 0 || _border.Left > 0 || _border.Top > 0 || _border.Right > 0 || _border.Bottom > 0)
-        {
             try
             {
                 paint.Color = borderColor.ToSKColor();
@@ -252,12 +254,12 @@ public class Panel : UIElementBase
                     }
                 }
             }
-            catch { }
-        }
+            catch
+            {
+            }
 
         // Debug çerçevesi
         if (ColorScheme.DrawDebugBorders)
-        {
             try
             {
                 paint.Color = SKColors.Red;
@@ -266,8 +268,9 @@ public class Panel : UIElementBase
                 paint.IsAntialias = true;
                 canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
             }
-            catch { }
-        }
+            catch
+            {
+            }
 
         // Alt elementleri render et
         base.OnPaint(e);

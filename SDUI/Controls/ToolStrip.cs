@@ -2,8 +2,4 @@
 
 public class ToolStrip : MenuStrip
 {
-    public ToolStrip()
-    {
-        
-    }
 }

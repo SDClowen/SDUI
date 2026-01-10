@@ -9,14 +9,15 @@ using System.Windows.Forms;
 
 namespace SDUI.Helpers;
 
-using static System.Math;
+using static Math;
+
 public static class DropShadow
 {
-    const int CHANNELS = 4;
-    const int InflateMultiple = 2;//单边外延radius的倍数
+    private const int CHANNELS = 4;
+    private const int InflateMultiple = 2; //单边外延radius的倍数
 
     /// <summary>
-    /// 获取阴影边界。供外部定位阴影用
+    ///     获取阴影边界。供外部定位阴影用
     /// </summary>
     /// <param name="path">形状</param>
     /// <param name="radius">模糊半径</param>
@@ -31,7 +32,7 @@ public static class DropShadow
     }
 
     /// <summary>
-    /// 获取阴影边界
+    ///     获取阴影边界
     /// </summary>
     /// <param name="source">原边界</param>
     /// <param name="radius">模糊半径</param>
@@ -43,26 +44,20 @@ public static class DropShadow
     }
 
     /// <summary>
-    /// 创建阴影图片
+    ///     创建阴影图片
     /// </summary>
     /// <param name="path">阴影形状</param>
     /// <param name="color">阴影颜色</param>
     /// <param name="radius">模糊半径</param>
     public static Bitmap Create(GraphicsPath path, Color color, int radius = 5)
     {
-        var bounds = GetBounds(path, radius, out Rectangle pathBounds, out int inflate);
+        var bounds = GetBounds(path, radius, out var pathBounds, out var inflate);
         var shadow = new Bitmap(bounds.Width, bounds.Height);
 
         // Flat UI mode: skip generating shadows (still return correct-sized bitmap)
-        if (global::SDUI.ColorScheme.FlatDesign)
-        {
-            return shadow;
-        }
+        if (ColorScheme.FlatDesign) return shadow;
 
-        if (color.A == 0)
-        {
-            return shadow;
-        }
+        if (color.A == 0) return shadow;
 
         //将形状用color色画在阴影区中心
         Graphics g = null;
@@ -72,8 +67,8 @@ public static class DropShadow
         try
         {
             matrix = new Matrix();
-            matrix.Translate(-pathBounds.X + inflate, -pathBounds.Y + inflate);//先清除形状原有偏移再向中心偏移
-            pathCopy = (GraphicsPath)path.Clone();                             //基于形状副本操作
+            matrix.Translate(-pathBounds.X + inflate, -pathBounds.Y + inflate); //先清除形状原有偏移再向中心偏移
+            pathCopy = (GraphicsPath)path.Clone(); //基于形状副本操作
             pathCopy.Transform(matrix);
 
             brush = new SolidBrush(color);
@@ -91,15 +86,13 @@ public static class DropShadow
             matrix?.Dispose();
         }
 
-        if (radius <= 0)
-        {
-            return shadow;
-        }
+        if (radius <= 0) return shadow;
 
         BitmapData data = null;
         try
         {
-            data = shadow.LockBits(new Rectangle(0, 0, shadow.Width, shadow.Height), ImageLockMode.ReadWrite, PixelFormat.Format32bppArgb);
+            data = shadow.LockBits(new Rectangle(0, 0, shadow.Width, shadow.Height), ImageLockMode.ReadWrite,
+                PixelFormat.Format32bppArgb);
 
             //两次方框模糊就能达到不错的效果
             //var boxes = DetermineBoxes(radius, 3);
@@ -117,7 +110,7 @@ public static class DropShadow
     }
 
     /// <summary>
-    /// 方框模糊
+    ///     方框模糊
     /// </summary>
     /// <param name="data">图像内存数据</param>
     /// <param name="radius">模糊半径</param>
@@ -131,7 +124,7 @@ public static class DropShadow
 #if UNSAFE //unsafe项目下请定义编译条件：UNSAFE
             IntPtr p1 = data1.Scan0;
 #else
-        byte[] p1 = new byte[data.Stride * data.Height];
+        var p1 = new byte[data.Stride * data.Height];
         Marshal.Copy(data.Scan0, p1, 0, p1.Length);
 #endif
         //色值处理
@@ -139,18 +132,16 @@ public static class DropShadow
         //这样在混合时才能合出基于color的颜色（只是透明度不同），
         //否则它是与RGB(0,0,0)合，就会得到乌黑的渣特技
         byte R = color.R, G = color.G, B = color.B;
-        for (int i = 3; i < p1.Length; i += 4)
-        {
+        for (var i = 3; i < p1.Length; i += 4)
             if (p1[i] == 0)
             {
                 p1[i - 1] = R;
                 p1[i - 2] = G;
                 p1[i - 3] = B;
             }
-        }
 
-        byte[] p2 = new byte[p1.Length];
-        int radius2 = 2 * radius + 1;
+        var p2 = new byte[p1.Length];
+        var radius2 = 2 * radius + 1;
         int First, Last, Sum;
         int stride = data.Stride,
             width = data.Width,
@@ -159,30 +150,31 @@ public static class DropShadow
         //只处理Alpha通道
 
         //横向
-        for (int r = 0; r < height; r++)
+        for (var r = 0; r < height; r++)
         {
-            int start = r * stride;
-            int left = start;
-            int right = start + radius * CHANNELS;
+            var start = r * stride;
+            var left = start;
+            var right = start + radius * CHANNELS;
 
             First = p1[start + 3];
             Last = p1[start + stride - 1];
             Sum = (radius + 1) * First;
 
-            for (int column = 0; column < radius; column++)
-            {
-                Sum += p1[start + column * CHANNELS + 3];
-            }
+            for (var column = 0; column < radius; column++) Sum += p1[start + column * CHANNELS + 3];
             for (var column = 0; column <= radius; column++, right += CHANNELS, start += CHANNELS)
             {
                 Sum += p1[right + 3] - First;
                 p2[start + 3] = (byte)(Sum / radius2);
             }
-            for (var column = radius + 1; column < width - radius; column++, left += CHANNELS, right += CHANNELS, start += CHANNELS)
+
+            for (var column = radius + 1;
+                 column < width - radius;
+                 column++, left += CHANNELS, right += CHANNELS, start += CHANNELS)
             {
                 Sum += p1[right + 3] - p1[left + 3];
                 p2[start + 3] = (byte)(Sum / radius2);
             }
+
             for (var column = width - radius; column < width; column++, left += CHANNELS, start += CHANNELS)
             {
                 Sum += Last - p1[left + 3];
@@ -191,31 +183,30 @@ public static class DropShadow
         }
 
         //纵向
-        for (int column = 0; column < width; column++)
+        for (var column = 0; column < width; column++)
         {
-            int start = column * CHANNELS;
-            int top = start;
-            int bottom = start + radius * stride;
+            var start = column * CHANNELS;
+            var top = start;
+            var bottom = start + radius * stride;
 
             First = p2[start + 3];
             Last = p2[start + (height - 1) * stride + 3];
             Sum = (radius + 1) * First;
 
-            for (int row = 0; row < radius; row++)
-            {
-                Sum += p2[start + row * stride + 3];
-            }
-            for (int row = 0; row <= radius; row++, bottom += stride, start += stride)
+            for (var row = 0; row < radius; row++) Sum += p2[start + row * stride + 3];
+            for (var row = 0; row <= radius; row++, bottom += stride, start += stride)
             {
                 Sum += p2[bottom + 3] - First;
                 p1[start + 3] = (byte)(Sum / radius2);
             }
-            for (int row = radius + 1; row < height - radius; row++, top += stride, bottom += stride, start += stride)
+
+            for (var row = radius + 1; row < height - radius; row++, top += stride, bottom += stride, start += stride)
             {
                 Sum += p2[bottom + 3] - p2[top + 3];
                 p1[start + 3] = (byte)(Sum / radius2);
             }
-            for (int row = height - radius; row < height; row++, top += stride, start += stride)
+
+            for (var row = height - radius; row < height; row++, top += stride, start += stride)
             {
                 Sum += Last - p2[top + 3];
                 p1[start + 3] = (byte)(Sum / radius2);
@@ -246,24 +237,12 @@ public static class DropShadow
 
 public static class ShadowUtils
 {
-    public interface IShadowController
-    {
-        bool ShouldShowShadow();
-    }
-    enum RenderSide
-    {
-        Top,
-        Bottom,
-        Left,
-        Right
-    }
+    private static readonly RenderSide[] VisibleTop = { RenderSide.Bottom /*, RenderSide.Top*/ };
+    private static readonly RenderSide[] VisibleBottom = { RenderSide.Top /*, RenderSide.Bottom*/ };
+    private static readonly RenderSide[] VisibleLeft = { RenderSide.Right };
+    private static readonly RenderSide[] VisibleRight = { RenderSide.Left };
 
-    static RenderSide[] VisibleTop = { RenderSide.Bottom/*, RenderSide.Top*/ };
-    static RenderSide[] VisibleBottom = { RenderSide.Top/*, RenderSide.Bottom*/ };
-    static RenderSide[] VisibleLeft = { RenderSide.Right };
-    static RenderSide[] VisibleRight = { RenderSide.Left };
-
-    static bool IsVisible(RenderSide side, DockStyle st)
+    private static bool IsVisible(RenderSide side, DockStyle st)
     {
         switch (st)
         {
@@ -278,50 +257,57 @@ public static class ShadowUtils
             case DockStyle.Fill:
                 return false;
         }
+
         return true;
     }
 
 
     public static void DrawShadow(Graphics G, Color c, Rectangle r, int d, DockStyle st = DockStyle.None)
     {
-        Color[] colors = GetColorVector(c, d).ToArray();
+        var colors = GetColorVector(c, d).ToArray();
 
         if (IsVisible(RenderSide.Top, st))
-            for (int i = 1; i < d; i++)
-            {
+            for (var i = 1; i < d; i++)
                 //TOP
-                using (Pen pen = new Pen(colors[i], 1f))
-                    G.DrawLine(pen, new Point(r.Left - Max(i - 1, 0), r.Top - i), new Point(r.Right + Max(i - 1, 0), r.Top - i));
-            }
+                using (var pen = new Pen(colors[i], 1f))
+                {
+                    G.DrawLine(pen, new Point(r.Left - Max(i - 1, 0), r.Top - i),
+                        new Point(r.Right + Max(i - 1, 0), r.Top - i));
+                }
 
         if (IsVisible(RenderSide.Bottom, st))
-            for (int i = 0; i < d; i++)
-            {
+            for (var i = 0; i < d; i++)
                 //BOTTOM
-                using (Pen pen = new Pen(colors[i], 1f))
-                    G.DrawLine(pen, new Point(r.Left - Max(i - 1, 0), r.Bottom + i), new Point(r.Right + i, r.Bottom + i));
-            }
+                using (var pen = new Pen(colors[i], 1f))
+                {
+                    G.DrawLine(pen, new Point(r.Left - Max(i - 1, 0), r.Bottom + i),
+                        new Point(r.Right + i, r.Bottom + i));
+                }
+
         if (IsVisible(RenderSide.Left, st))
-            for (int i = 1; i < d; i++)
-            {
+            for (var i = 1; i < d; i++)
                 //LEFT
-                using (Pen pen = new Pen(colors[i], 1f))
+                using (var pen = new Pen(colors[i], 1f))
+                {
                     G.DrawLine(pen, new Point(r.Left - i, r.Top - i), new Point(r.Left - i, r.Bottom + i));
-            }
+                }
+
         if (IsVisible(RenderSide.Right, st))
-            for (int i = 0; i < d; i++)
-            {
+            for (var i = 0; i < d; i++)
                 //RIGHT
-                using (Pen pen = new Pen(colors[i], 1f))
-                    G.DrawLine(pen, new Point(r.Right + i, r.Top - i), new Point(r.Right + i, r.Bottom + Max(i - 1, 0)));
-            }
+                using (var pen = new Pen(colors[i], 1f))
+                {
+                    G.DrawLine(pen, new Point(r.Right + i, r.Top - i),
+                        new Point(r.Right + i, r.Bottom + Max(i - 1, 0)));
+                }
     }
 
     //Code taken and adapted from StackOverflow (https://stackoverflow.com/a/13653167).
     //All credits go to Marino Šimić (https://stackoverflow.com/users/610204/marino-%c5%a0imi%c4%87).
-    public static void DrawRoundedRectangle(this Graphics gfx, Rectangle bounds, int cornerRadius, Pen drawPen, Color fillColor)
+    public static void DrawRoundedRectangle(this Graphics gfx, Rectangle bounds, int cornerRadius, Pen drawPen,
+        Color fillColor)
     {
-        int strokeOffset = Convert.ToInt32(Ceiling(drawPen.Width));
+        var strokeOffset = Convert.ToInt32(Ceiling(drawPen.Width));
         bounds = Rectangle.Inflate(bounds, -strokeOffset, -strokeOffset);
 
         var gfxPath = new GraphicsPath();
@@ -329,16 +315,18 @@ public static class ShadowUtils
         {
             gfxPath.AddArc(bounds.X, bounds.Y, cornerRadius, cornerRadius, 180, 90);
             gfxPath.AddArc(bounds.X + bounds.Width - cornerRadius, bounds.Y, cornerRadius, cornerRadius, 270, 90);
-            gfxPath.AddArc(bounds.X + bounds.Width - cornerRadius, bounds.Y + bounds.Height - cornerRadius, cornerRadius,
-                           cornerRadius, 0, 90);
+            gfxPath.AddArc(bounds.X + bounds.Width - cornerRadius, bounds.Y + bounds.Height - cornerRadius,
+                cornerRadius,
+                cornerRadius, 0, 90);
             gfxPath.AddArc(bounds.X, bounds.Y + bounds.Height - cornerRadius, cornerRadius, cornerRadius, 90, 90);
         }
         else
         {
             gfxPath.AddRectangle(bounds);
         }
+
         gfxPath.CloseAllFigures();
-        using (SolidBrush brush = new SolidBrush(fillColor))
+        using (var brush = new SolidBrush(fillColor))
         {
             gfx.FillPath(brush, gfxPath);
             if (drawPen != Pens.Transparent)
@@ -349,12 +337,14 @@ public static class ShadowUtils
                 pen.Dispose();
             }
         }
+
         gfxPath.Dispose();
     }
 
     //Code taken and adapted from StackOverflow (https://stackoverflow.com/a/13653167).
     //All credits go to Marino Šimić (https://stackoverflow.com/users/610204/marino-%c5%a0imi%c4%87).
-    public static void DrawOutsetShadow(Graphics g, Color shadowColor, int hShadow, int vShadow, int blur, int spread, Control control)
+    public static void DrawOutsetShadow(Graphics g, Color shadowColor, int hShadow, int vShadow, int blur, int spread,
+        Control control)
     {
         var rOuter = Rectangle.Inflate(control.Bounds, blur / 2, blur / 2);
         var rInner = Rectangle.Inflate(control.Bounds, blur / 2, blur / 2);
@@ -372,12 +362,12 @@ public static class ShadowUtils
         do
         {
             var transparency = (rOuter.Height - rInner.Height) / (double)(blur * 2 + spread * 2);
-            var color = Color.FromArgb(((int)(200 * (transparency * transparency))), shadowColor);
+            var color = Color.FromArgb((int)(200 * (transparency * transparency)), shadowColor);
             var rOutput = rInner;
             rOutput.Offset(-originalOuter.Left, -originalOuter.Top);
             g2.DrawRoundedRectangle(rOutput, 5, Pens.Transparent, color);
             rInner.Inflate(1, 1);
-            currentBlur = (int)((double)blur * (1 - (transparency * transparency)));
+            currentBlur = (int)(blur * (1 - transparency * transparency));
         } while (rOuter.Contains(rInner));
 
         g2.Flush();
@@ -390,44 +380,57 @@ public static class ShadowUtils
 
     //Code taken and adapted from https://stackoverflow.com/a/25741405
     //All credits go to TaW (https://stackoverflow.com/users/3152130/taw)
-    static List<Color> GetColorVector(Color fc, int depth)
+    private static List<Color> GetColorVector(Color fc, int depth)
     {
-        List<Color> cv = new List<Color>();
-        int baseC = 65;
+        var cv = new List<Color>();
+        var baseC = 65;
         float div = baseC / depth;
-        for (int d = 1; d <= depth; d++)
+        for (var d = 1; d <= depth; d++)
         {
             cv.Add(Color.FromArgb(Max(0, baseC), fc));
             baseC -= (int)div;
         }
+
         return cv;
     }
 
 
     //Code taken and adapted from https://stackoverflow.com/a/25741405
     //All credits go to TaW (https://stackoverflow.com/users/3152130/taw)
-    static GraphicsPath GetRectPath(Rectangle R)
+    private static GraphicsPath GetRectPath(Rectangle R)
     {
-        byte[] fm = new byte[3];
-        for (int b = 0; b < 3; b++) fm[b] = 1;
-        List<Point> points = new List<Point>
-            {
-                new Point(R.Left, R.Bottom),
-                new Point(R.Right, R.Bottom),
-                new Point(R.Right, R.Top)
-            };
+        var fm = new byte[3];
+        for (var b = 0; b < 3; b++) fm[b] = 1;
+        var points = new List<Point>
+        {
+            new(R.Left, R.Bottom),
+            new(R.Right, R.Bottom),
+            new(R.Right, R.Top)
+        };
         return new GraphicsPath(points.ToArray(), fm);
     }
 
     public static void CreateDropShadow(this Control ctrl)
     {
         if (ctrl.Parent != null)
-        {
             ctrl.Parent.Paint += (s, e) =>
             {
-                if (ctrl.Parent != null && ctrl.Visible && (!(ctrl is IShadowController) || ((IShadowController)ctrl).ShouldShowShadow()))
+                if (ctrl.Parent != null && ctrl.Visible &&
+                    (!(ctrl is IShadowController) || ((IShadowController)ctrl).ShouldShowShadow()))
                     DrawShadow(e.Graphics, Color.Black, ctrl.Bounds, 7, ctrl.Dock);
             };
-        }
+    }
+
+    public interface IShadowController
+    {
+        bool ShouldShowShadow();
+    }
+
+    private enum RenderSide
+    {
+        Top,
+        Bottom,
+        Left,
+        Right
     }
 }

@@ -1,16 +1,37 @@
-﻿using SDUI.Extensions;
-using SDUI.Helpers;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using SDUI.Extensions;
+using SDUI.Helpers;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class Label : UIElementBase
 {
+    private readonly SKColor[] _gradient = new SKColor[2];
     private bool _autoEllipsis;
+
+    private bool _autoSize;
+
+    private BorderStyle _borderStyle = BorderStyle.None;
+
+    private bool _gradientAnimation;
+
+    private ContentAlignment _textAlign = ContentAlignment.TopLeft;
+
+    private bool _useMnemonic = true;
+
+    public float Angle = 45;
+
+    public Label()
+    {
+        // Varsayılan gradient renkleri
+        _gradient[0] = Color.Gray.ToSKColor();
+        _gradient[1] = Color.Black.ToSKColor();
+    }
+
     public bool AutoEllipsis
     {
         get => _autoEllipsis;
@@ -21,7 +42,6 @@ public class Label : UIElementBase
         }
     }
 
-    private bool _autoSize = false;
     public bool AutoSize
     {
         get => _autoSize;
@@ -33,7 +53,6 @@ public class Label : UIElementBase
         }
     }
 
-    private ContentAlignment _textAlign = ContentAlignment.TopLeft;
     public ContentAlignment TextAlign
     {
         get => _textAlign;
@@ -44,7 +63,6 @@ public class Label : UIElementBase
         }
     }
 
-    private bool _useMnemonic = true;
     public bool UseMnemonic
     {
         get => _useMnemonic;
@@ -55,7 +73,6 @@ public class Label : UIElementBase
         }
     }
 
-    private BorderStyle _borderStyle = BorderStyle.None;
     public BorderStyle BorderStyle
     {
         get => _borderStyle;
@@ -66,10 +83,8 @@ public class Label : UIElementBase
         }
     }
 
-    public float Angle = 45;
     public bool ApplyGradient { get; set; }
 
-    private bool _gradientAnimation;
     public bool GradientAnimation
     {
         get => _gradientAnimation;
@@ -80,23 +95,15 @@ public class Label : UIElementBase
         }
     }
 
-    private SKColor[] _gradient = new SKColor[2];
     public Color[] Gradient
     {
-        get => new Color[] { _gradient[0].ToColor(), _gradient[1].ToColor() };
+        get => new[] { _gradient[0].ToColor(), _gradient[1].ToColor() };
         set
         {
             _gradient[0] = value[0].ToSKColor();
             _gradient[1] = value[1].ToSKColor();
             Invalidate();
         }
-    }
-
-    public Label()
-    {
-        // Varsayılan gradient renkleri
-        _gradient[0] = Color.Gray.ToSKColor();
-        _gradient[1] = Color.Black.ToSKColor();
     }
 
     internal override void OnTextChanged(EventArgs e)
@@ -118,17 +125,15 @@ public class Label : UIElementBase
         using var font = new SKFont
         {
             Size = Font.Size.PtToPx(this),
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
+            Typeface = FontManager.GetSKTypeface(Font)
         };
 
         var lines = Text.Split('\n');
         float maxWidth = 0;
 
         foreach (var line in lines)
-        {
             // Measure advance width; more stable than bounds for layout.
             maxWidth = Math.Max(maxWidth, font.MeasureText(line));
-        }
 
         // Use line spacing (ascent+descent+leading) so the control height won't
         // under-estimate and clip descenders.
@@ -209,7 +214,7 @@ public class Label : UIElementBase
         using var font = new SKFont
         {
             Size = Font.Size.PtToPx(this),
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+            Typeface = FontManager.GetSKTypeface(Font),
             Subpixel = true,
             Edging = SKFontEdging.SubpixelAntialias
         };
@@ -224,7 +229,7 @@ public class Label : UIElementBase
             using var shader = SKShader.CreateLinearGradient(
                 new SKPoint(0, 0),
                 new SKPoint((float)(Width * Math.Cos(Angle * Math.PI / 180)),
-                          (float)(Height * Math.Sin(Angle * Math.PI / 180))),
+                    (float)(Height * Math.Sin(Angle * Math.PI / 180))),
                 _gradient,
                 null,
                 SKShaderTileMode.Clamp);
@@ -246,7 +251,7 @@ public class Label : UIElementBase
         {
             float measuredWidth;
             long count = font.BreakText(text, availableWidth, out measuredWidth);
-            
+
             if (count == 0) break;
 
             var line = text.Substring(0, (int)count);
@@ -259,13 +264,14 @@ public class Label : UIElementBase
             {
                 text = text.Substring((int)count).TrimStart();
             }
+
             lines.Add(line);
         }
 
         // Dikey hizalama: padding'li alan içinde hizala.
         var availableHeight = Height - Padding.Vertical;
         var textBlockHeight = lines.Count * lineHeight;
-        float yOffset = TextAlign switch
+        var yOffset = TextAlign switch
         {
             ContentAlignment.MiddleLeft or ContentAlignment.MiddleCenter or ContentAlignment.MiddleRight
                 => Padding.Top + Math.Max(0, (availableHeight - textBlockHeight) / 2),
@@ -284,11 +290,10 @@ public class Label : UIElementBase
         };
 
         // Her satırı çiz
-        float baselineOffset = -font.Metrics.Ascent;
-        for (int i = 0; i < lines.Count; i++)
-        {
-            TextRenderingHelper.DrawText(canvas, lines[i], xPos, yOffset + baselineOffset + (i * lineHeight), skTextAlign, font, textPaint);
-        }
+        var baselineOffset = -font.Metrics.Ascent;
+        for (var i = 0; i < lines.Count; i++)
+            TextRenderingHelper.DrawText(canvas, lines[i], xPos, yOffset + baselineOffset + i * lineHeight, skTextAlign,
+                font, textPaint);
     }
 
     private string CreateEllipsisText(string text, float maxWidth, SKFont font)

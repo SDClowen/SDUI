@@ -1,22 +1,35 @@
-﻿using SDUI.Animation;
-using SDUI.Extensions;
-using SDUI.Helpers;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using SDUI.Animation;
+using SDUI.Extensions;
+using SDUI.Helpers;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class ToggleButton : UIElementBase
 {
     private readonly AnimationManager animationManager;
+    private bool _checked;
     private Point _mouseLocation;
     private int _mouseState;
-    private bool _checked;
 
-    private Rectangle LocalRect => new Rectangle(0, 0, Width, Height); // local koordinatlar
+    public ToggleButton()
+    {
+        MinimumSize = new Size(56, 22);
+        animationManager = new AnimationManager
+        {
+            AnimationType = AnimationType.EaseInOut,
+            Increment = 0.06,
+            Singular = true,
+            InterruptAnimation = true
+        };
+        animationManager.OnAnimationProgress += _ => Invalidate();
+    }
+
+    private Rectangle LocalRect => new(0, 0, Width, Height); // local koordinatlar
 
     [Browsable(true)]
     public override string Text
@@ -40,19 +53,10 @@ public class ToggleButton : UIElementBase
     }
 
     public event EventHandler CheckedChanged;
-    protected virtual void OnCheckedChanged(EventArgs e) => CheckedChanged?.Invoke(this, e);
 
-    public ToggleButton()
+    protected virtual void OnCheckedChanged(EventArgs e)
     {
-        MinimumSize = new Size(56, 22);
-        animationManager = new()
-        {
-            AnimationType = AnimationType.EaseInOut,
-            Increment = 0.06,
-            Singular = true,
-            InterruptAnimation = true
-        };
-        animationManager.OnAnimationProgress += _ => Invalidate();
+        CheckedChanged?.Invoke(this, e);
     }
 
     // UIElementBase olayları Windows Forms standart eventleri yayınlamıyor olabilir.
@@ -92,10 +96,7 @@ public class ToggleButton : UIElementBase
     internal override void OnMouseUp(MouseEventArgs e)
     {
         base.OnMouseUp(e);
-        if (_mouseState == 2)
-        {
-            _mouseState = 1;
-        }
+        if (_mouseState == 2) _mouseState = 1;
     }
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)
@@ -104,8 +105,8 @@ public class ToggleButton : UIElementBase
         var canvas = e.Surface.Canvas;
         canvas.Clear();
 
-        int toggleSize = Height - 3;
-        float radius = Height / 2f - 1;
+        var toggleSize = Height - 3;
+        var radius = Height / 2f - 1;
         var textWidth = 0f;
 
         if (!string.IsNullOrEmpty(Text))
@@ -113,7 +114,7 @@ public class ToggleButton : UIElementBase
             using var font = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
             };
@@ -136,54 +137,56 @@ public class ToggleButton : UIElementBase
 
         using (var shadowFilter = SKImageFilter.CreateDropShadow(0, 1, 2, 2, SKColors.Black.WithAlpha(20)))
         using (var shadowPaint = new SKPaint
-        {
-            Color = SKColors.Black.WithAlpha(20),
-            ImageFilter = shadowFilter,
-            IsAntialias = true,
-            FilterQuality = SKFilterQuality.High,
-            Style = SKPaintStyle.Fill
-        })
+               {
+                   Color = SKColors.Black.WithAlpha(20),
+                   ImageFilter = shadowFilter,
+                   IsAntialias = true,
+                   FilterQuality = SKFilterQuality.High,
+                   Style = SKPaintStyle.Fill
+               })
         {
             var shadowRect = new SKRect(0, 0, toggleWidth, Height - 1);
             canvas.DrawRoundRect(shadowRect, radius, radius, shadowPaint);
         }
 
         using (var paint = new SKPaint
-        {
-            IsAntialias = true,
-            FilterQuality = SKFilterQuality.High,
-            Style = SKPaintStyle.Fill
-        })
+               {
+                   IsAntialias = true,
+                   FilterQuality = SKFilterQuality.High,
+                   Style = SKPaintStyle.Fill
+               })
         {
             var rect = new SKRect(0, 0, toggleWidth, Height - 1);
             paint.Color = Checked
                 ? ColorScheme.BackColor2.ToSKColor().InterpolateColor(ColorScheme.AccentColor.ToSKColor(), progress)
-                : ColorScheme.AccentColor.ToSKColor().InterpolateColor(ColorScheme.BackColor2.ToSKColor(), 1 - progress);
+                : ColorScheme.AccentColor.ToSKColor()
+                    .InterpolateColor(ColorScheme.BackColor2.ToSKColor(), 1 - progress);
             canvas.DrawRoundRect(rect, radius, radius, paint);
 
             paint.Style = SKPaintStyle.Stroke;
             paint.StrokeWidth = 1;
             paint.Color = Checked
                 ? ColorScheme.BorderColor.ToSKColor().InterpolateColor(ColorScheme.AccentColor.ToSKColor(), progress)
-                : ColorScheme.AccentColor.ToSKColor().InterpolateColor(ColorScheme.BorderColor.ToSKColor(), 1 - progress);
+                : ColorScheme.AccentColor.ToSKColor()
+                    .InterpolateColor(ColorScheme.BorderColor.ToSKColor(), 1 - progress);
             canvas.DrawRoundRect(rect, radius, radius, paint);
         }
 
         using (var thumbShadowFilter = SKImageFilter.CreateDropShadow(0, 1, 2, 1, SKColors.Black.WithAlpha(40)))
         using (var paint = new SKPaint
+               {
+                   Color = SKColors.White,
+                   IsAntialias = true,
+                   FilterQuality = SKFilterQuality.High,
+                   Style = SKPaintStyle.Fill,
+                   ImageFilter = thumbShadowFilter
+               })
         {
-            Color = SKColors.White,
-            IsAntialias = true,
-            FilterQuality = SKFilterQuality.High,
-            Style = SKPaintStyle.Fill,
-            ImageFilter = thumbShadowFilter
-        })
-        {
-            float padding = 2f;
-            float circleRadius = (toggleSize - padding * 2) / 2f;
-            float startX = padding + circleRadius;
-            float endX = toggleWidth - padding - circleRadius;
-            float x = startX + (endX - startX) * progress;
+            var padding = 2f;
+            var circleRadius = (toggleSize - padding * 2) / 2f;
+            var startX = padding + circleRadius;
+            var endX = toggleWidth - padding - circleRadius;
+            var x = startX + (endX - startX) * progress;
             canvas.DrawCircle(x, Height / 2f, circleRadius, paint);
         }
 

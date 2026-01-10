@@ -1,17 +1,23 @@
-﻿using SDUI.Extensions;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.Drawing;
-using SDUI.Helpers;
 using System.Windows.Forms;
+using SDUI.Extensions;
+using SDUI.Helpers;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class GroupBox : UIElementBase
 {
-    private int _shadowDepth = 4;
     private int _radius = 10;
+    private int _shadowDepth = 4;
     private ContentAlignment _textAlign = ContentAlignment.MiddleCenter;
+
+    public GroupBox()
+    {
+        BackColor = Color.Transparent;
+        Padding = new Padding(3, 8, 3, 3);
+    }
 
     public ContentAlignment TextAlign
     {
@@ -45,12 +51,6 @@ public class GroupBox : UIElementBase
         }
     }
 
-    public GroupBox()
-    {
-        this.BackColor = Color.Transparent;
-        this.Padding = new Padding(3, 8, 3, 3);
-    }
-
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         base.OnPaint(e);
@@ -78,28 +78,28 @@ public class GroupBox : UIElementBase
         // Başlık ölçüleri (padding uygulanmış genişlik)
         var titleHeight = Font.Height + 7;
         float titleX = Padding.Left;
-        float titleWidth = Math.Max(0, rect.Width - Padding.Horizontal);
+        var titleWidth = Math.Max(0, rect.Width - Padding.Horizontal);
         var titleRect = new SKRect(titleX, 0, titleX + titleWidth, titleHeight);
 
         // Gölge çizimi
         using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, _shadowDepth / 2f))
         using (var paint = new SKPaint
-        {
-            Color = SKColors.Black.WithAlpha(20),
-            IsAntialias = true,
-            MaskFilter = shadowMaskFilter
-        })
+               {
+                   Color = SKColors.Black.WithAlpha(20),
+                   IsAntialias = true,
+                   MaskFilter = shadowMaskFilter
+               })
         {
             canvas.DrawRoundRect(shadowRect, _radius, _radius, paint);
         }
 
         // Arka plan çizimi
         using (var paint = new SKPaint
-        {
-            Color = ColorScheme.BackColor2.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        })
+               {
+                   Color = ColorScheme.BackColor2.ToSKColor(),
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Fill
+               })
         {
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
@@ -110,23 +110,23 @@ public class GroupBox : UIElementBase
 
         // Başlık çizgisi
         using (var paint = new SKPaint
-        {
-            Color = ColorScheme.BorderColor.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1
-        })
+               {
+                   Color = ColorScheme.BorderColor.ToSKColor(),
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Stroke,
+                   StrokeWidth = 1
+               })
         {
             canvas.DrawLine(titleRect.Left, titleRect.Height - 1, titleRect.Right, titleRect.Height - 1, paint);
         }
 
         // Başlık arka plan (hafif)
         using (var paint = new SKPaint
-        {
-            Color = ColorScheme.BackColor2.ToSKColor().WithAlpha(15),
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        })
+               {
+                   Color = ColorScheme.BackColor2.ToSKColor().WithAlpha(15),
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Fill
+               })
         {
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
@@ -139,7 +139,7 @@ public class GroupBox : UIElementBase
             using var font = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Typeface = FontManager.GetSKTypeface(Font),
                 Edging = SKFontEdging.SubpixelAntialias
             };
 
@@ -150,7 +150,7 @@ public class GroupBox : UIElementBase
             };
 
             var textWidth = font.MeasureText(Text);
-            float textY = titleRect.Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
+            var textY = titleRect.Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
             float textX;
 
             switch (TextAlign)
@@ -172,12 +172,12 @@ public class GroupBox : UIElementBase
 
         // Çerçeve çizimi
         using (var paint = new SKPaint
-        {
-            Color = ColorScheme.BorderColor.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1
-        })
+               {
+                   Color = ColorScheme.BorderColor.ToSKColor(),
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Stroke,
+                   StrokeWidth = 1
+               })
         {
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
@@ -201,8 +201,8 @@ public class GroupBox : UIElementBase
         }
 
         // Title height for offset
-        int titleHeight = Font.Height + 7;
-        
+        var titleHeight = Font.Height + 7;
+
         // Apply padding and title offset to child bounds
         var clientRect = new Rectangle(
             Padding.Left,
@@ -219,7 +219,7 @@ public class GroupBox : UIElementBase
                 continue;
             LayoutEngine.Perform(control, clientRect, ref remaining);
         }
-        
+
         Invalidate();
     }
 }

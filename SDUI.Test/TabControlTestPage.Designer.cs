@@ -38,8 +38,8 @@ namespace SDUI.Demo
             this.multiPageControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.multiPageControl.Location = new System.Drawing.Point(0, 0);
             this.multiPageControl.Name = "multiPageControl";
-            this.multiPageControl.RenderNewPageButton = true;
-            this.multiPageControl.RenderPageClose = true;
+            this.multiPageControl.RenderNewPageButton = false;
+            this.multiPageControl.RenderPageClose = false;
             this.multiPageControl.RenderPageIcon = false;
             this.multiPageControl.SelectedIndex = -1;
             this.multiPageControl.BorderColor = Color.Red;

@@ -4,64 +4,56 @@ using System.ComponentModel;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using SkiaSharp;
-using SDUI.Extensions;
 using SDUI.Animation;
+using SDUI.Extensions;
+using SDUI.Helpers;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class ContextMenuStrip : MenuStrip
 {
     internal const float ShadowMargin = 7f; // Shadow için ekstra alan (daha subtle)
-
-    private UIElementBase _sourceElement;
-    private bool _isOpen;
-    private UIWindow _ownerWindow;
-    private bool _autoClose = true;
-    private MouseEventHandler _ownerMouseDownHandler;
-    private EventHandler _ownerDeactivateHandler;
-    private KeyEventHandler _ownerKeyDownHandler;
-    private bool _ownerPreviousKeyPreview;
-    private MenuItem _hoveredItem;
+    private const int MaxIconCacheEntries = 256;
+    private const float CheckMarginWidth = 22f;
     private readonly AnimationManager _fadeInAnimation;
+
+    private readonly Dictionary<Bitmap, SKBitmap> _iconCache = new();
     private readonly Dictionary<MenuItem, AnimationManager> _itemHoverAnims = new();
+    private readonly SKMaskFilter?[] _shadowMaskFilters = new SKMaskFilter?[2];
+
+    private readonly SKPaint?[] _shadowPaints = new SKPaint?[2];
+    private SKPaint? _arrowPaint;
 
     // Cached Skia resources (avoid per-frame allocations)
     private SKPaint? _bgPaint;
     private SKPaint? _borderPaint;
-    private SKPaint? _separatorPaint;
-    private SKPaint? _hoverPaint;
-    private SKPaint? _iconPaint;
-    private SKPaint? _textPaint;
-    private SKPaint? _arrowPaint;
     private SKPath? _chevronPath;
 
-    private readonly SKPaint?[] _shadowPaints = new SKPaint?[2];
-    private readonly SKMaskFilter?[] _shadowMaskFilters = new SKMaskFilter?[2];
-
     private SKFont? _defaultSkFont;
-    private Font? _defaultSkFontSource;
     private int _defaultSkFontDpi;
-
-    private readonly Dictionary<Bitmap, SKBitmap> _iconCache = new();
-    private const int MaxIconCacheEntries = 256;
+    private Font? _defaultSkFontSource;
+    private MenuItem _hoveredItem;
+    private SKPaint? _hoverPaint;
+    private SKPaint? _iconPaint;
+    private EventHandler _ownerDeactivateHandler;
+    private KeyEventHandler _ownerKeyDownHandler;
+    private MouseEventHandler _ownerMouseDownHandler;
+    private bool _ownerPreviousKeyPreview;
+    private UIWindow _ownerWindow;
+    private SKPaint? _separatorPaint;
 
     private bool _showCheckMargin = true;
     private bool _showImageMargin = true;
-    private const float CheckMarginWidth = 22f;
 
-    [Category("Layout")][DefaultValue(true)] public bool ShowCheckMargin { get => _showCheckMargin; set { if (_showCheckMargin == value) return; _showCheckMargin = value; Invalidate(); } }
-    [Category("Layout")][DefaultValue(true)] public bool ShowImageMargin { get => _showImageMargin; set { if (_showImageMargin == value) return; _showImageMargin = value; Invalidate(); } }
-
-    public event CancelEventHandler Opening;
-    public event CancelEventHandler Closing;
+    private SKPaint? _textPaint;
 
     public ContextMenuStrip()
     {
         Visible = false;
         AutoSize = false;
         TabStop = false;
-        Orientation = SDUI.Orientation.Vertical;
+        Orientation = Orientation.Vertical;
 
         // Dikey (dropdown) menü öğeleri için biraz daha yüksek satır
         // ve daha ferah padding.
@@ -78,15 +70,51 @@ public class ContextMenuStrip : MenuStrip
         _fadeInAnimation.OnAnimationProgress += _ => Invalidate();
     }
 
-    [Category("Behavior")][DefaultValue(true)] public bool AutoClose { get => _autoClose; set => _autoClose = value; }
-    [Browsable(false)] public bool IsOpen => _isOpen;
-    [Browsable(false)] public UIElementBase SourceElement => _sourceElement;
+    [Category("Layout")]
+    [DefaultValue(true)]
+    public bool ShowCheckMargin
+    {
+        get => _showCheckMargin;
+        set
+        {
+            if (_showCheckMargin == value) return;
+            _showCheckMargin = value;
+            Invalidate();
+        }
+    }
 
-    public Size MeasurePreferredSize() => GetPrefSize();
+    [Category("Layout")]
+    [DefaultValue(true)]
+    public bool ShowImageMargin
+    {
+        get => _showImageMargin;
+        set
+        {
+            if (_showImageMargin == value) return;
+            _showImageMargin = value;
+            Invalidate();
+        }
+    }
+
+    [Category("Behavior")]
+    [DefaultValue(true)]
+    public bool AutoClose { get; set; } = true;
+
+    [Browsable(false)] public bool IsOpen { get; private set; }
+
+    [Browsable(false)] public UIElementBase SourceElement { get; private set; }
+
+    public event CancelEventHandler Opening;
+    public event CancelEventHandler Closing;
+
+    public Size MeasurePreferredSize()
+    {
+        return GetPrefSize();
+    }
 
     public void Show(UIElementBase element, Point location)
     {
-        if (_isOpen) return;
+        if (IsOpen) return;
         var owner = ResolveOwner(element);
         if (owner == null) return;
 
@@ -96,7 +124,7 @@ public class ContextMenuStrip : MenuStrip
         if (canceling.Cancel)
             return;
 
-        _sourceElement = element;
+        SourceElement = element;
         _ownerWindow = owner;
 
         if (!_ownerWindow.Controls.Contains(this))
@@ -120,41 +148,49 @@ public class ContextMenuStrip : MenuStrip
                 {
                     try
                     {
-                        this.BringToFront();
+                        BringToFront();
                         uiw.BringToFront(this);
                         uiw.Invalidate();
                     }
-                    catch { }
+                    catch
+                    {
+                    }
                 }));
             }
-            catch { }
+            catch
+            {
+            }
         }
+
         AttachHandlers();
 
         _fadeInAnimation.SetProgress(0);
         _fadeInAnimation.StartNewAnimation(AnimationDirection.In);
 
         _ownerWindow.Invalidate();
-        _isOpen = true;
+        IsOpen = true;
     }
 
-    public void Show(Point location) => Show(null, location);
+    public void Show(Point location)
+    {
+        Show(null, location);
+    }
 
     public new void Hide()
     {
-        if (!_isOpen) return;
+        if (!IsOpen) return;
 
         var canceling = new CancelEventArgs();
         Closing?.Invoke(this, canceling);
         if (canceling.Cancel)
             return;
-        
+
         DetachHandlers();
         Visible = false;
         _ownerWindow?.Invalidate();
         _ownerWindow = null;
-        _sourceElement = null;
-        _isOpen = false;
+        SourceElement = null;
+        IsOpen = false;
     }
 
     private void PositionDropDown(Point screenLocation)
@@ -166,18 +202,18 @@ public class ContextMenuStrip : MenuStrip
         var client = _ownerWindow.ClientRectangle;
 
         const int MARGIN = 8;
-        int maxWidth = client.Width - MARGIN * 2;
-        int maxHeight = client.Height - MARGIN * 2;
+        var maxWidth = client.Width - MARGIN * 2;
+        var maxHeight = client.Height - MARGIN * 2;
 
         size.Width = Math.Min(size.Width, maxWidth);
         size.Height = Math.Min(size.Height, maxHeight);
 
-        int targetX = windowLocation.X;
-        int targetY = windowLocation.Y;
+        var targetX = windowLocation.X;
+        var targetY = windowLocation.Y;
 
         if (targetX + size.Width > client.Right - MARGIN)
         {
-            int leftPos = targetX - size.Width - MARGIN;
+            var leftPos = targetX - size.Width - MARGIN;
             if (leftPos >= client.Left + MARGIN)
                 targetX = leftPos;
             else
@@ -186,7 +222,7 @@ public class ContextMenuStrip : MenuStrip
 
         if (targetY + size.Height > client.Bottom - MARGIN)
         {
-            int topPos = targetY - size.Height;
+            var topPos = targetY - size.Height;
             if (topPos >= client.Top + MARGIN)
                 targetY = topPos;
             else
@@ -208,6 +244,7 @@ public class ContextMenuStrip : MenuStrip
             if (element.ParentWindow is UIWindow pw) return pw;
             if (element.FindForm() is UIWindow fw) return fw;
         }
+
         if (Form.ActiveForm is UIWindow aw) return aw;
         return Application.OpenForms.OfType<UIWindow>().FirstOrDefault();
     }
@@ -234,18 +271,36 @@ public class ContextMenuStrip : MenuStrip
         _ownerWindow.KeyPreview = _ownerPreviousKeyPreview;
     }
 
-    private void OnOwnerMouseDown(object sender, MouseEventArgs e) { if (!_isOpen || !_autoClose) return; if (!Bounds.Contains(e.Location)) Hide(); }
-    private void OnOwnerDeactivate(object sender, EventArgs e) { if (!_isOpen || !_autoClose) return; Hide(); }
-    private void OnOwnerKeyDown(object sender, KeyEventArgs e) { if (!_isOpen || !_autoClose) return; if (e.KeyCode == Keys.Escape) { Hide(); e.Handled = true; } }
+    private void OnOwnerMouseDown(object sender, MouseEventArgs e)
+    {
+        if (!IsOpen || !AutoClose) return;
+        if (!Bounds.Contains(e.Location)) Hide();
+    }
+
+    private void OnOwnerDeactivate(object sender, EventArgs e)
+    {
+        if (!IsOpen || !AutoClose) return;
+        Hide();
+    }
+
+    private void OnOwnerKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!IsOpen || !AutoClose) return;
+        if (e.KeyCode == Keys.Escape)
+        {
+            Hide();
+            e.Handled = true;
+        }
+    }
 
     private Size GetPrefSize()
     {
         const float MinContentWidth = 180f; // Minimum içerik genişliği
-        
+
         // İçerik genişlik/yükseklik hesabı (shadow hariç)
-        float contentWidth = ItemPadding * 2;
-        float contentHeight = ItemPadding; // Üst padding
-        
+        var contentWidth = ItemPadding * 2;
+        var contentHeight = ItemPadding; // Üst padding
+
         foreach (var item in Items)
         {
             // Respect MenuItem.Visible — skip hidden items from size calculations
@@ -268,10 +323,10 @@ public class ContextMenuStrip : MenuStrip
 
         // En alttaki öğenin border ile kesilmemesi için ekstra alan yok,
         // çünkü son item'dan sonra zaten ItemPadding var.
-        
+
         // Shadow için her yönden ekstra alan ekle
-        float totalWidth = contentWidth + ShadowMargin * 2;
-        float totalHeight = contentHeight + ShadowMargin * 2;
+        var totalWidth = contentWidth + ShadowMargin * 2;
+        var totalHeight = contentHeight + ShadowMargin * 2;
 
         return new Size((int)Math.Ceiling(totalWidth), (int)Math.Ceiling(totalHeight));
     }
@@ -279,7 +334,7 @@ public class ContextMenuStrip : MenuStrip
     internal override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
-        float y = ShadowMargin + ItemPadding;
+        var y = ShadowMargin + ItemPadding;
         _hoveredItem = null;
         foreach (var item in Items)
         {
@@ -291,22 +346,35 @@ public class ContextMenuStrip : MenuStrip
 
             var w = Width - ShadowMargin * 2 - ItemPadding * 2;
             var r = new RectangleF(ShadowMargin + ItemPadding, y, w, ItemHeight);
-            if (r.Contains(e.Location)) { _hoveredItem = item; break; }
+            if (r.Contains(e.Location))
+            {
+                _hoveredItem = item;
+                break;
+            }
+
             y += ItemHeight + ItemPadding;
         }
+
         Invalidate();
     }
 
-    internal override void OnMouseLeave(EventArgs e) { base.OnMouseLeave(e); _hoveredItem = null; Invalidate(); }
+    internal override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _hoveredItem = null;
+        Invalidate();
+    }
 
     private AnimationManager EnsureItemHoverAnim(MenuItem item)
     {
         if (!_itemHoverAnims.TryGetValue(item, out var engine))
         {
-            engine = new AnimationManager { Increment = 0.25, AnimationType = AnimationType.EaseOut, Singular = true, InterruptAnimation = true };
+            engine = new AnimationManager
+                { Increment = 0.25, AnimationType = AnimationType.EaseOut, Singular = true, InterruptAnimation = true };
             engine.OnAnimationProgress += _ => Invalidate();
             _itemHoverAnims[item] = engine;
         }
+
         return engine;
     }
 
@@ -319,8 +387,8 @@ public class ContextMenuStrip : MenuStrip
 
         EnsureSkiaCaches();
 
-        float fadeProgress = (float)_fadeInAnimation.GetProgress();
-        byte fadeAlpha = (byte)(fadeProgress * 255);
+        var fadeProgress = (float)_fadeInAnimation.GetProgress();
+        var fadeAlpha = (byte)(fadeProgress * 255);
         const float CORNER_RADIUS = 10f;
 
         // İçerik alanı (shadow margin kadar içeride)
@@ -333,10 +401,10 @@ public class ContextMenuStrip : MenuStrip
         // Multi-layer shadow system (extra subtle)
         canvas.Save();
         EnsureShadowResources();
-        for (int i = 0; i < 2; i++)
+        for (var i = 0; i < 2; i++)
         {
-            float offsetY = 0.75f + i * 0.85f;
-            byte shadowAlpha = (byte)((8 - i * 3) * fadeProgress);
+            var offsetY = 0.75f + i * 0.85f;
+            var shadowAlpha = (byte)((8 - i * 3) * fadeProgress);
 
             var shadowPaint = _shadowPaints[i]!;
             shadowPaint.Color = SKColors.Black.WithAlpha(shadowAlpha);
@@ -346,6 +414,7 @@ public class ContextMenuStrip : MenuStrip
             canvas.DrawRoundRect(contentRect, CORNER_RADIUS, CORNER_RADIUS, shadowPaint);
             canvas.Restore();
         }
+
         canvas.Restore();
 
         // High-quality background
@@ -361,7 +430,7 @@ public class ContextMenuStrip : MenuStrip
             contentRect.Bottom - 0.5f);
         canvas.DrawRoundRect(borderRect, CORNER_RADIUS, CORNER_RADIUS, _borderPaint);
 
-        float y = contentRect.Top + ItemPadding;
+        var y = contentRect.Top + ItemPadding;
 
         foreach (var item in Items)
         {
@@ -389,22 +458,22 @@ public class ContextMenuStrip : MenuStrip
                 contentRect.Left + ItemPadding + w,
                 y + ItemHeight);
 
-            bool isHovered = item == _hoveredItem;
+            var isHovered = item == _hoveredItem;
             var anim = EnsureItemHoverAnim(item);
 
             if (isHovered) anim.StartNewAnimation(AnimationDirection.In);
             else anim.StartNewAnimation(AnimationDirection.Out);
 
-            float hoverProgress = (float)anim.GetProgress();
+            var hoverProgress = (float)anim.GetProgress();
 
             if (hoverProgress > 0.001f || isHovered)
             {
-                byte hoverAlpha = (byte)(Math.Max(180, 180 + 70 * hoverProgress));
+                var hoverAlpha = (byte)Math.Max(180, 180 + 70 * hoverProgress);
                 _hoverPaint!.Color = HoverBackColor.ToSKColor().WithAlpha((byte)(fadeAlpha * hoverAlpha / 255f));
                 canvas.DrawRoundRect(itemRect, 7, 7, _hoverPaint);
             }
 
-            float textX = itemRect.Left + 12;
+            var textX = itemRect.Left + 12;
 
             // Reserve space for check mark if enabled
             if (ShowCheckMargin)
@@ -413,7 +482,7 @@ public class ContextMenuStrip : MenuStrip
                 {
                     var cx = itemRect.Left + 12 + CheckMarginWidth / 2f;
                     var cy = itemRect.MidY;
-                    float s = Math.Min(8f, ItemHeight / 3f);
+                    var s = Math.Min(8f, ItemHeight / 3f);
                     _arrowPaint!.Color = MenuForeColor.ToSKColor().WithAlpha(fadeAlpha);
                     var chk = new SKPath();
                     chk.MoveTo(cx - s, cy);
@@ -422,6 +491,7 @@ public class ContextMenuStrip : MenuStrip
                     canvas.DrawPath(chk, _arrowPaint);
                     chk.Dispose();
                 }
+
                 textX += CheckMarginWidth;
             }
 
@@ -434,8 +504,11 @@ public class ContextMenuStrip : MenuStrip
                     var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
                     var iconBitmap = GetCachedIconBitmap(item.Icon);
                     _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
-                    canvas.DrawBitmap(iconBitmap, new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height), _iconPaint);
+                    canvas.DrawBitmap(iconBitmap,
+                        new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height),
+                        _iconPaint);
                 }
+
                 textX += imageAreaWidth;
             }
             else
@@ -445,14 +518,18 @@ public class ContextMenuStrip : MenuStrip
                     var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
                     var iconBitmap = GetCachedIconBitmap(item.Icon);
                     _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
-                    canvas.DrawBitmap(iconBitmap, new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height), _iconPaint);
+                    canvas.DrawBitmap(iconBitmap,
+                        new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height),
+                        _iconPaint);
                     textX += ImageScalingSize.Width + 8;
                 }
             }
 
             var hoverFore = !HoverForeColor.IsEmpty
                 ? HoverForeColor
-                : (HoverBackColor.IsEmpty ? MenuForeColor : HoverBackColor.Determine());
+                : HoverBackColor.IsEmpty
+                    ? MenuForeColor
+                    : HoverBackColor.Determine();
             var textColor = isHovered ? hoverFore : MenuForeColor;
 
             var font = GetDefaultSkFont();
@@ -462,9 +539,9 @@ public class ContextMenuStrip : MenuStrip
 
             if (ShowSubmenuArrow && item.HasDropDown)
             {
-                float chevronSize = 5f;
-                float chevronX = itemRect.Right - 14;
-                float chevronY = itemRect.MidY;
+                var chevronSize = 5f;
+                var chevronX = itemRect.Right - 14;
+                var chevronY = itemRect.MidY;
 
                 _arrowPaint!.Color = textColor.ToSKColor().WithAlpha(fadeAlpha);
                 _chevronPath!.Reset();
@@ -481,12 +558,17 @@ public class ContextMenuStrip : MenuStrip
     private void EnsureSkiaCaches()
     {
         _bgPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
-        _borderPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1, FilterQuality = SKFilterQuality.High };
+        _borderPaint ??= new SKPaint
+            { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1, FilterQuality = SKFilterQuality.High };
         _separatorPaint ??= new SKPaint { IsAntialias = true, StrokeWidth = 1 };
         _hoverPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
         _iconPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
         _textPaint ??= new SKPaint { IsAntialias = true };
-        _arrowPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1.2f, StrokeCap = SKStrokeCap.Round, StrokeJoin = SKStrokeJoin.Round };
+        _arrowPaint ??= new SKPaint
+        {
+            IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1.2f, StrokeCap = SKStrokeCap.Round,
+            StrokeJoin = SKStrokeJoin.Round
+        };
         _chevronPath ??= new SKPath();
     }
 
@@ -529,36 +611,35 @@ public class ContextMenuStrip : MenuStrip
     {
         if (item is MenuItemSeparator) return 20f;
 
-        float w = base.MeasureItemWidth(item);
+        var w = base.MeasureItemWidth(item);
 
         if (ShowCheckMargin)
             w += CheckMarginWidth;
 
         if (ShowImageMargin)
-        {
             if (!(ShowIcons && item.Icon != null))
                 w += ImageScalingSize.Width + 8;
-        }
 
         return w;
     }
 
     private SKFont GetDefaultSkFont()
     {
-        int dpi = DeviceDpi > 0 ? DeviceDpi : 96;
+        var dpi = DeviceDpi > 0 ? DeviceDpi : 96;
         if (_defaultSkFont == null || !ReferenceEquals(_defaultSkFontSource, Font) || _defaultSkFontDpi != dpi)
         {
             _defaultSkFont?.Dispose();
             _defaultSkFont = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font),
+                Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
             };
             _defaultSkFontSource = Font;
             _defaultSkFontDpi = dpi;
         }
+
         return _defaultSkFont;
     }
 
@@ -586,12 +667,13 @@ public class ContextMenuStrip : MenuStrip
             _chevronPath?.Dispose();
             _chevronPath = null;
 
-            for (int i = 0; i < _shadowPaints.Length; i++)
+            for (var i = 0; i < _shadowPaints.Length; i++)
             {
                 _shadowPaints[i]?.Dispose();
                 _shadowPaints[i] = null;
             }
-            for (int i = 0; i < _shadowMaskFilters.Length; i++)
+
+            for (var i = 0; i < _shadowMaskFilters.Length; i++)
             {
                 _shadowMaskFilters[i]?.Dispose();
                 _shadowMaskFilters[i] = null;
@@ -601,6 +683,7 @@ public class ContextMenuStrip : MenuStrip
                 pair.Value.Dispose();
             _iconCache.Clear();
         }
+
         base.Dispose(disposing);
     }
 }

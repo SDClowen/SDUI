@@ -11,6 +11,7 @@ public class RequiredFieldValidationRule : ValidationRule
             errorMessage = ErrorMessage ?? "Bu alan boş bırakılamaz.";
             return false;
         }
+
         errorMessage = string.Empty;
         return true;
     }

@@ -1,12 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
-using System.Drawing.Design;
 using System.Runtime.Serialization;
-using System;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
@@ -16,35 +15,43 @@ public partial class ListViewItem : ICloneable
     private const int MaxSubItems = 4096;
 
     private static readonly BitVector32.Section s_stateSelectedSection = BitVector32.CreateSection(1);
-    private static readonly BitVector32.Section s_stateImageMaskSet = BitVector32.CreateSection(1, s_stateSelectedSection);
-    private static readonly BitVector32.Section s_stateWholeRowOneStyleSection = BitVector32.CreateSection(1, s_stateImageMaskSet);
-    private static readonly BitVector32.Section s_savedStateImageIndexSection = BitVector32.CreateSection(15, s_stateWholeRowOneStyleSection);
-    private static readonly BitVector32.Section s_subItemCountSection = BitVector32.CreateSection(MaxSubItems, s_savedStateImageIndexSection);
 
-    private int _indentCount;
-    private Point _position = new(-1, -1);
+    private static readonly BitVector32.Section s_stateImageMaskSet =
+        BitVector32.CreateSection(1, s_stateSelectedSection);
 
-    internal ListView? _listView;
+    private static readonly BitVector32.Section s_stateWholeRowOneStyleSection =
+        BitVector32.CreateSection(1, s_stateImageMaskSet);
+
+    private static readonly BitVector32.Section s_savedStateImageIndexSection =
+        BitVector32.CreateSection(15, s_stateWholeRowOneStyleSection);
+
+    private static readonly BitVector32.Section s_subItemCountSection =
+        BitVector32.CreateSection(MaxSubItems, s_savedStateImageIndexSection);
+
+    private readonly Point _position = new(-1, -1);
+
+    private AccessibleObject? _accessibilityObject;
+    private View _accessibilityObjectView;
 
     internal ListViewGroup? _group;
     private string? _groupName;
+    private ListViewItemImageIndexer? _imageIndexer;
 
-    private ListViewSubItemCollection? _listViewSubItemCollection;
-    private List<ListViewSubItem> _subItems = new();
+    private int _indentCount;
 
     // we stash the last index we got as a seed to GetDisplayIndex.
     private int _lastIndex = -1;
 
-    // An ID unique relative to a given list view that comctl uses to identify items.
-    internal int ID = -1;
+    internal ListView? _listView;
+
+    private ListViewSubItemCollection? _listViewSubItemCollection;
 
     private BitVector32 _state;
-    private SDUI.Controls.ListViewItemImageIndexer? _imageIndexer;
+    private List<ListViewSubItem> _subItems = new();
     private string _toolTipText = string.Empty;
-    private object? _userData;
 
-    private System.Windows.Forms.AccessibleObject? _accessibilityObject;
-    private System.Windows.Forms.View _accessibilityObjectView;
+    // An ID unique relative to a given list view that comctl uses to identify items.
+    internal int ID = -1;
 
     public ListViewItem()
     {
@@ -54,7 +61,7 @@ public partial class ListViewItem : ICloneable
     }
 
     /// <summary>
-    ///  Creates a ListViewItem object from an Stream.
+    ///     Creates a ListViewItem object from an Stream.
     /// </summary>
     protected ListViewItem(SerializationInfo info, StreamingContext context)
         : this()
@@ -85,10 +92,7 @@ public partial class ListViewItem : ICloneable
         if (items is not null && items.Length > 0)
         {
             _subItems.EnsureCapacity(items.Length);
-            for (int i = 0; i < items.Length; i++)
-            {
-                _subItems.Add(new ListViewSubItem(this, items[i]));
-            }
+            for (var i = 0; i < items.Length; i++) _subItems.Add(new ListViewSubItem(this, items[i]));
 
             SubItemCount = items.Length;
         }
@@ -111,7 +115,7 @@ public partial class ListViewItem : ICloneable
         SubItemCount = subItems.Length;
 
         // Update the owner of these subitems
-        for (int i = 0; i < subItems.Length; i++)
+        for (var i = 0; i < subItems.Length; i++)
         {
             ArgumentNullException.ThrowIfNull(subItems[i], nameof(subItems));
 
@@ -150,7 +154,8 @@ public partial class ListViewItem : ICloneable
         Group = group;
     }
 
-    public ListViewItem(string[]? items, int imageIndex, Color foreColor, Color backColor, Font? font, ListViewGroup? group)
+    public ListViewItem(string[]? items, int imageIndex, Color foreColor, Color backColor, Font? font,
+        ListViewGroup? group)
         : this(items, imageIndex, foreColor, backColor, font)
     {
         Group = group;
@@ -176,10 +181,7 @@ public partial class ListViewItem : ICloneable
         if (items is not null && items.Length > 0)
         {
             _subItems = new List<ListViewSubItem>(items.Length);
-            for (int i = 0; i < items.Length; i++)
-            {
-                _subItems.Add(new ListViewSubItem(this, items[i]));
-            }
+            for (var i = 0; i < items.Length; i++) _subItems.Add(new ListViewSubItem(this, items[i]));
 
             SubItemCount = items.Length;
         }
@@ -202,7 +204,7 @@ public partial class ListViewItem : ICloneable
         SubItemCount = subItems.Length;
 
         // Update the owner of these subitems
-        for (int i = 0; i < subItems.Length; i++)
+        for (var i = 0; i < subItems.Length; i++)
         {
             ArgumentNullException.ThrowIfNull(subItems[i], nameof(subItems));
 
@@ -223,7 +225,8 @@ public partial class ListViewItem : ICloneable
         Group = group;
     }
 
-    public ListViewItem(string[]? items, string? imageKey, Color foreColor, Color backColor, Font? font, ListViewGroup? group)
+    public ListViewItem(string[]? items, string? imageKey, Color foreColor, Color backColor, Font? font,
+        ListViewGroup? group)
         : this(items, imageKey, foreColor, backColor, font)
     {
         Group = group;
@@ -235,25 +238,22 @@ public partial class ListViewItem : ICloneable
         Group = group;
     }
 
-    internal virtual System.Windows.Forms.AccessibleObject AccessibilityObject
+    internal virtual AccessibleObject AccessibilityObject
     {
         get
         {
-            ListView owningListView = _listView ?? Group?.ListView;
+            var owningListView = _listView ?? Group?.ListView;
             if (_accessibilityObject is null || owningListView.View != _accessibilityObjectView)
-            {
                 _accessibilityObjectView = owningListView.View;
-                //_accessibilityObject = _accessibilityObjectView switch
-                //{
-                //    System.Windows.Forms.View.Details => new ListViewItemDetailsAccessibleObject(this),
-                //    View.LargeIcon => new ListViewItemLargeIconAccessibleObject(this),
-                //    View.List => new ListViewItemListAccessibleObject(this),
-                //    View.SmallIcon => new ListViewItemSmallIconAccessibleObject(this),
-                //    View.Tile => new ListViewItemTileAccessibleObject(this),
-                //    _ => throw new Exception()
-                //};
-            }
-
+            //_accessibilityObject = _accessibilityObjectView switch
+            //{
+            //    System.Windows.Forms.View.Details => new ListViewItemDetailsAccessibleObject(this),
+            //    View.LargeIcon => new ListViewItemLargeIconAccessibleObject(this),
+            //    View.List => new ListViewItemListAccessibleObject(this),
+            //    View.SmallIcon => new ListViewItemSmallIconAccessibleObject(this),
+            //    View.Tile => new ListViewItemTileAccessibleObject(this),
+            //    _ => throw new Exception()
+            //};
             return _accessibilityObject;
         }
     }
@@ -261,8 +261,8 @@ public partial class ListViewItem : ICloneable
     private bool IsAccessibilityObjectCreated => _accessibilityObject is not null;
 
     /// <summary>
-    ///  The font that this item will be displayed in. If its value is null, it will be displayed
-    ///  using the global font for the ListView control that hosts it.
+    ///     The font that this item will be displayed in. If its value is null, it will be displayed
+    ///     using the global font for the ListView control that hosts it.
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Color BackColor
@@ -271,38 +271,28 @@ public partial class ListViewItem : ICloneable
         {
             if (SubItemCount == 0)
             {
-                if (_listView is not null)
-                {
-                    return _listView.BackColor;
-                }
+                if (_listView is not null) return _listView.BackColor;
 
                 return SystemColors.Window;
             }
-            else
-            {
-                return _subItems[0].BackColor;
-            }
+
+            return _subItems[0].BackColor;
         }
         set => SubItems[0].BackColor = value;
     }
 
     /// <summary>
-    ///  Returns the ListViewItem's bounding rectangle, including subitems. The bounding rectangle is empty if
-    ///  the ListViewItem has not been added to a ListView control.
+    ///     Returns the ListViewItem's bounding rectangle, including subitems. The bounding rectangle is empty if
+    ///     the ListViewItem has not been added to a ListView control.
     /// </summary>
     [Browsable(false)]
     public Rectangle Bounds
     {
         get
         {
-            if (_listView is not null)
-            {
-                return _listView.GetItemRect(Index);
-            }
-            else
-            {
-                return default;
-            }
+            if (_listView is not null) return _listView.GetItemRect(Index);
+
+            return default;
         }
     }
 
@@ -322,12 +312,8 @@ public partial class ListViewItem : ICloneable
                     // the setter for StateImageIndex calls ItemChecked handler
                     // thus need to verify validity of the listView again
                     if (_listView is not null && !_listView.UseCompatibleStateImageBehavior)
-                    {
                         if (!_listView.CheckBoxes)
-                        {
                             _listView.UpdateSavedCheckedItems(this, value);
-                        }
-                    }
                 }
                 else
                 {
@@ -338,7 +324,7 @@ public partial class ListViewItem : ICloneable
     }
 
     /// <summary>
-    ///  Returns the focus state of the ListViewItem.
+    ///     Returns the focus state of the ListViewItem.
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     [Browsable(false)]
@@ -348,7 +334,6 @@ public partial class ListViewItem : ICloneable
         {
             if (_listView is not null && _listView.IsHandleCreated)
             {
-                
             }
 
             return false;
@@ -358,7 +343,6 @@ public partial class ListViewItem : ICloneable
         {
             if (_listView is not null && _listView.IsHandleCreated)
             {
-               
             }
         }
     }
@@ -370,17 +354,12 @@ public partial class ListViewItem : ICloneable
         {
             if (SubItemCount == 0)
             {
-                if (_listView is not null)
-                {
-                    return _listView.Font;
-                }
+                if (_listView is not null) return _listView.Font;
 
                 return Control.DefaultFont;
             }
-            else
-            {
-                return _subItems[0].Font;
-            }
+
+            return _subItems[0].Font;
         }
         set => SubItems[0].Font = value;
     }
@@ -391,22 +370,14 @@ public partial class ListViewItem : ICloneable
         {
             if (SubItemCount == 0)
             {
-                if (_listView is not null)
-                {
-                    return _listView.ForeColor;
-                }
+                if (_listView is not null) return _listView.ForeColor;
 
                 return SystemColors.WindowText;
             }
-            else
-            {
-                return _subItems[0].ForeColor;
-            }
+
+            return _subItems[0].ForeColor;
         }
-        set
-        {
-            SubItems[0].ForeColor = value;
-        }
+        set => SubItems[0].ForeColor = value;
     }
 
     [DefaultValue(null)]
@@ -419,13 +390,9 @@ public partial class ListViewItem : ICloneable
             if (_group != value)
             {
                 if (value is not null)
-                {
                     value.Items.Add(this);
-                }
                 else
-                {
                     _group!.Items.Remove(this);
-                }
             }
 
             Debug.Assert(_group == value, "BUG: group member variable wasn't updated!");
@@ -436,36 +403,32 @@ public partial class ListViewItem : ICloneable
     }
 
     /// <summary>
-    ///  Returns the ListViewItem's currently set image index
+    ///     Returns the ListViewItem's currently set image index
     /// </summary>
     [Localizable(true)]
     [RefreshProperties(RefreshProperties.Repaint)]
     public int ImageIndex
     {
-        get
-        {
-            return ImageList is null || ImageIndexer.Index < ImageList.Images.Count
+        get =>
+            ImageList is null || ImageIndexer.Index < ImageList.Images.Count
                 ? ImageIndexer.Index
                 : ImageList.Images.Count - 1;
-        }
         set
         {
             if (ImageIndexer.Index == value)
                 return;
-                
+
             ImageIndexer.Index = value;
 
             if (_listView is not null && _listView.IsHandleCreated)
-            {
-                _listView.SetItemImage(Index, imageIndex: ImageIndexer.ActualIndex);
-            }
+                _listView.SetItemImage(Index, ImageIndexer.ActualIndex);
         }
     }
 
-    internal SDUI.Controls.ListViewItemImageIndexer ImageIndexer => _imageIndexer ??= new(this);
+    internal ListViewItemImageIndexer ImageIndexer => _imageIndexer ??= new ListViewItemImageIndexer(this);
 
     /// <summary>
-    ///  Returns the ListViewItem's currently set image index
+    ///     Returns the ListViewItem's currently set image index
     /// </summary>
     [Localizable(true)]
     public string ImageKey
@@ -475,13 +438,11 @@ public partial class ListViewItem : ICloneable
         {
             if (ImageIndexer.Key == value)
                 return;
-                
+
             ImageIndexer.Key = value;
 
             if (_listView is not null && _listView.IsHandleCreated)
-            {
                 _listView.SetItemImage(Index, ImageIndexer.ActualIndex);
-            }
         }
     }
 
@@ -491,7 +452,6 @@ public partial class ListViewItem : ICloneable
         get
         {
             if (_listView is not null)
-            {
                 switch (_listView.View)
                 {
                     case View.LargeIcon:
@@ -502,7 +462,6 @@ public partial class ListViewItem : ICloneable
                     case View.List:
                         return _listView.SmallImageList;
                 }
-            }
 
             return null;
         }
@@ -521,15 +480,13 @@ public partial class ListViewItem : ICloneable
             {
                 _indentCount = value;
                 if (_listView is not null && _listView.IsHandleCreated)
-                {
                     _listView.SetItemIndentCount(Index, _indentCount);
-                }
             }
         }
     }
 
     /// <summary>
-    ///  Returns ListViewItem's current index in the listview, or -1 if it has not been added to a ListView control.
+    ///     Returns ListViewItem's current index in the listview, or -1 if it has not been added to a ListView control.
     /// </summary>
     [Browsable(false)]
     public int Index
@@ -540,29 +497,24 @@ public partial class ListViewItem : ICloneable
             {
                 // if the list is virtual, the ComCtrl control does not keep any information
                 // about any list view items, so we use our cache instead.
-                if (!_listView.VirtualMode)
-                {
-                    _lastIndex = _listView.GetDisplayIndex(this, _lastIndex);
-                }
+                if (!_listView.VirtualMode) _lastIndex = _listView.GetDisplayIndex(this, _lastIndex);
 
                 return _lastIndex;
             }
-            else
-            {
-                return -1;
-            }
+
+            return -1;
         }
     }
 
     /// <summary>
-    ///  Returns the ListView control that holds this ListViewItem. May be null if no
-    ///  control has been assigned yet.
+    ///     Returns the ListView control that holds this ListViewItem. May be null if no
+    ///     control has been assigned yet.
     /// </summary>
     [Browsable(false)]
     public ListView? ListView => _listView;
 
     /// <summary>
-    ///  Name associated with this ListViewItem
+    ///     Name associated with this ListViewItem
     /// </summary>
     [Localizable(true)]
     [Browsable(false)]
@@ -572,33 +524,26 @@ public partial class ListViewItem : ICloneable
     {
         get
         {
-            if (SubItemCount == 0)
-            {
-                return string.Empty;
-            }
-            else
-            {
-                return _subItems[0].Name;
-            }
+            if (SubItemCount == 0) return string.Empty;
+
+            return _subItems[0].Name;
         }
         set => SubItems[0].Name = value;
     }
 
     /// <summary>
-    ///  Accessor for our state bit vector.
+    ///     Accessor for our state bit vector.
     /// </summary>
     private int SavedStateImageIndex
     {
-        get
-        {
+        get =>
             // State goes from zero to 15, but we need a negative
             // number, so we store + 1.
-            return _state[s_savedStateImageIndexSection] - 1;
-        }
+            _state[s_savedStateImageIndexSection] - 1;
         set
         {
             // flag whether we've set a value.
-            _state[s_stateImageMaskSet] = (value == -1 ? 0 : 1);
+            _state[s_stateImageMaskSet] = value == -1 ? 0 : 1;
 
             // push in the actual value
             _state[s_savedStateImageIndexSection] = value + 1;
@@ -606,16 +551,13 @@ public partial class ListViewItem : ICloneable
     }
 
     /// <summary>
-    ///  Treats the ListViewItem as a row of strings, and returns an array of those strings
+    ///     Treats the ListViewItem as a row of strings, and returns an array of those strings
     /// </summary>
     [Browsable(false)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public bool Selected
     {
-        get
-        {
-            return StateSelected;
-        }
+        get => StateSelected;
         set
         {
             if (_listView is not null && _listView.IsHandleCreated)
@@ -646,19 +588,16 @@ public partial class ListViewItem : ICloneable
             {
             }
 
-            if (_listView is not null && _listView.IsHandleCreated)
-            {
-                _state[s_stateImageMaskSet] = (value == -1 ? 0 : 1);
-            }
+            if (_listView is not null && _listView.IsHandleCreated) _state[s_stateImageMaskSet] = value == -1 ? 0 : 1;
 
             SavedStateImageIndex = value;
         }
     }
 
-    internal bool StateImageSet => (_state[s_stateImageMaskSet] != 0);
+    internal bool StateImageSet => _state[s_stateImageMaskSet] != 0;
 
     /// <summary>
-    ///  Accessor for our state bit vector.
+    ///     Accessor for our state bit vector.
     /// </summary>
     internal bool StateSelected
     {
@@ -667,7 +606,7 @@ public partial class ListViewItem : ICloneable
     }
 
     /// <summary>
-    ///  Accessor for our state bit vector.
+    ///     Accessor for our state bit vector.
     /// </summary>
     private int SubItemCount // Do NOT rename (binary serialization).
     {
@@ -687,20 +626,16 @@ public partial class ListViewItem : ICloneable
                 _state[s_subItemCountSection] = 1;
             }
 
-            return _listViewSubItemCollection ??= new(this);
+            return _listViewSubItemCollection ??= new ListViewSubItemCollection(this);
         }
     }
 
     [DefaultValue(null)]
     [TypeConverter(typeof(StringConverter))]
-    public object? Tag
-    {
-        get => _userData;
-        set => _userData = value;
-    }
+    public object? Tag { get; set; }
 
     /// <summary>
-    ///  Text associated with this ListViewItem
+    ///     Text associated with this ListViewItem
     /// </summary>
     [Localizable(true)]
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -709,20 +644,15 @@ public partial class ListViewItem : ICloneable
     {
         get
         {
-            if (SubItemCount == 0)
-            {
-                return string.Empty;
-            }
-            else
-            {
-                return _subItems[0].Text;
-            }
+            if (SubItemCount == 0) return string.Empty;
+
+            return _subItems[0].Text;
         }
         set => SubItems[0].Text = value;
     }
 
     /// <summary>
-    ///  Tool tip text associated with this ListViewItem
+    ///     Tool tip text associated with this ListViewItem
     /// </summary>
     [DefaultValue("")]
     [AllowNull]
@@ -747,10 +677,10 @@ public partial class ListViewItem : ICloneable
     }
 
     /// <summary>
-    ///  Whether or not the font and coloring for the ListViewItem will be used for all of its subitems.
-    ///  If true, the ListViewItem style will be used when drawing the subitems.
-    ///  If false, the ListViewItem and its subitems will be drawn in their own individual styles
-    ///  if any have been set.
+    ///     Whether or not the font and coloring for the ListViewItem will be used for all of its subitems.
+    ///     If true, the ListViewItem style will be used when drawing the subitems.
+    ///     If false, the ListViewItem and its subitems will be drawn in their own individual styles
+    ///     if any have been set.
     /// </summary>
     [DefaultValue(true)]
     public bool UseItemStyleForSubItems
@@ -759,33 +689,14 @@ public partial class ListViewItem : ICloneable
         set => _state[s_stateWholeRowOneStyleSection] = value ? 1 : 0;
     }
 
-    /// <summary>
-    ///  Initiate editing of the item's label. Only effective if LabelEdit property is true.
-    /// </summary>
-    public void BeginEdit()
-    {
-        if (Index >= 0)
-        {
-            ListView lv = ListView!;
-            if (lv.LabelEdit == false)
-            {
-            }
-
-            if (!lv.Focused)
-            {
-                lv.Focus();
-            }
-        }
-    }
-
     public virtual object Clone()
     {
-        ListViewSubItem[] clonedSubItems = new ListViewSubItem[SubItems.Count];
-        for (int index = 0; index < SubItems.Count; ++index)
+        var clonedSubItems = new ListViewSubItem[SubItems.Count];
+        for (var index = 0; index < SubItems.Count; ++index)
         {
-            ListViewSubItem subItem = SubItems[index];
+            var subItem = SubItems[index];
             clonedSubItems[index] = new ListViewSubItem(
-                owner: null,
+                null,
                 subItem.Text,
                 subItem.ForeColor,
                 subItem.BackColor,
@@ -795,22 +706,15 @@ public partial class ListViewItem : ICloneable
             };
         }
 
-        Type clonedType = GetType();
+        var clonedType = GetType();
 
         ListViewItem newItem;
         if (clonedType == typeof(ListViewItem))
-        {
             newItem = new ListViewItem(clonedSubItems, ImageIndexer.Index);
-        }
         else
-        {
             newItem = (ListViewItem)Activator.CreateInstance(clonedType)!;
-        }
 
-        foreach (ListViewSubItem subItem in clonedSubItems)
-        {
-            newItem._subItems.Add(subItem);
-        }
+        foreach (var subItem in clonedSubItems) newItem._subItems.Add(subItem);
 
         newItem.ImageIndexer.Index = ImageIndexer.Index;
         newItem.SubItemCount = SubItemCount;
@@ -819,10 +723,7 @@ public partial class ListViewItem : ICloneable
         newItem.Tag = Tag;
 
         // Only copy over the ImageKey if we're using it.
-        if (!string.IsNullOrEmpty(ImageIndexer.Key))
-        {
-            newItem.ImageIndexer.Key = ImageIndexer.Key;
-        }
+        if (!string.IsNullOrEmpty(ImageIndexer.Key)) newItem.ImageIndexer.Key = ImageIndexer.Key;
 
         newItem._indentCount = _indentCount;
         newItem.StateImageIndex = StateImageIndex;
@@ -837,35 +738,45 @@ public partial class ListViewItem : ICloneable
     }
 
     /// <summary>
-    ///  Ensure that the item is visible, scrolling the view as necessary.
+    ///     Initiate editing of the item's label. Only effective if LabelEdit property is true.
+    /// </summary>
+    public void BeginEdit()
+    {
+        if (Index >= 0)
+        {
+            var lv = ListView!;
+            if (!lv.LabelEdit)
+            {
+            }
+
+            if (!lv.Focused) lv.Focus();
+        }
+    }
+
+    /// <summary>
+    ///     Ensure that the item is visible, scrolling the view as necessary.
     /// </summary>
     public virtual void EnsureVisible()
     {
-        if (_listView is not null && _listView.IsHandleCreated)
-        {
-            _listView.EnsureVisible(Index);
-        }
+        if (_listView is not null && _listView.IsHandleCreated) _listView.EnsureVisible(Index);
     }
 
     public ListViewItem? FindNearestItem(SearchDirectionHint searchDirection)
     {
-        Rectangle r = Bounds;
-        int xCenter = r.Left + (r.Right - r.Left) / 2;
-        int yCenter = r.Top + (r.Bottom - r.Top) / 2;
+        var r = Bounds;
+        var xCenter = r.Left + (r.Right - r.Left) / 2;
+        var yCenter = r.Top + (r.Bottom - r.Top) / 2;
 
         return ListView?.FindNearestItem(searchDirection, xCenter, yCenter);
     }
 
     /// <summary>
-    ///  Returns a specific portion of the ListViewItem's bounding rectangle.
-    ///  The rectangle returned is empty if the ListViewItem has not been added to a ListView control.
+    ///     Returns a specific portion of the ListViewItem's bounding rectangle.
+    ///     The rectangle returned is empty if the ListViewItem has not been added to a ListView control.
     /// </summary>
     public Rectangle GetBounds(ItemBoundsPortion portion)
     {
-        if (_listView is not null && _listView.IsHandleCreated)
-        {
-            return _listView.GetItemRect(Index, portion);
-        }
+        if (_listView is not null && _listView.IsHandleCreated) return _listView.GetItemRect(Index, portion);
 
         return default;
     }
@@ -874,15 +785,10 @@ public partial class ListViewItem : ICloneable
     {
         if (_listView is not null && _listView.IsHandleCreated && _listView.View == View.Details)
         {
-            _listView.GetSubItemAt(x, y, out int iItem, out int iSubItem);
-            if (iItem == Index && iSubItem != -1 && iSubItem < SubItems.Count)
-            {
-                return SubItems[iSubItem];
-            }
-            else
-            {
-                return null;
-            }
+            _listView.GetSubItemAt(x, y, out var iItem, out var iSubItem);
+            if (iItem == Index && iSubItem != -1 && iSubItem < SubItems.Count) return SubItems[iSubItem];
+
+            return null;
         }
 
         return null;
@@ -893,53 +799,52 @@ public partial class ListViewItem : ICloneable
     // the index of the list view item is used in ListView::set_TopItem property
     internal void SetItemIndex(ListView listView, int index)
     {
-        Debug.Assert(listView is not null && listView.VirtualMode, "ListViewItem::SetItemIndex should be used only when the list is virtual");
+        Debug.Assert(listView is not null && listView.VirtualMode,
+            "ListViewItem::SetItemIndex should be used only when the list is virtual");
         Debug.Assert(index > -1, "can't set the index on a virtual list view item to -1");
         _listView = listView;
         _lastIndex = index;
     }
 
-    internal static bool ShouldSerializeText() => false;
+    internal static bool ShouldSerializeText()
+    {
+        return false;
+    }
 
-    private bool ShouldSerializePosition() => !_position.Equals(new Point(-1, -1));
+    private bool ShouldSerializePosition()
+    {
+        return !_position.Equals(new Point(-1, -1));
+    }
 
-    public override string ToString() => $"ListViewItem: {{{Text}}}";
+    public override string ToString()
+    {
+        return $"ListViewItem: {{{Text}}}";
+    }
 
     internal void InvalidateListView()
     {
         // The ListItem's state (or a SubItem's state) has changed, so invalidate the ListView control
-        if (_listView is not null && _listView.IsHandleCreated)
-        {
-            _listView.Invalidate();
-        }
+        if (_listView is not null && _listView.IsHandleCreated) _listView.Invalidate();
     }
 
-    internal void UpdateSubItems(int index) => UpdateSubItems(index, SubItemCount);
+    internal void UpdateSubItems(int index)
+    {
+        UpdateSubItems(index, SubItemCount);
+    }
 
     internal void UpdateSubItems(int index, int oldCount)
     {
         if (_listView is not null && _listView.IsHandleCreated)
         {
-            int subItemCount = SubItemCount;
-            int itemIndex = Index;
+            var subItemCount = SubItemCount;
+            var itemIndex = Index;
             if (index != -1)
-            {
                 _listView.SetItemText(itemIndex, index, _subItems[index].Text);
-            }
             else
-            {
-                for (int i = 0; i < subItemCount; i++)
-                {
+                for (var i = 0; i < subItemCount; i++)
                     _listView.SetItemText(itemIndex, i, _subItems[i].Text);
-                }
-            }
 
-            for (int i = subItemCount; i < oldCount; i++)
-            {
-                _listView.SetItemText(itemIndex, i, string.Empty);
-            }
+            for (var i = subItemCount; i < oldCount; i++) _listView.SetItemText(itemIndex, i, string.Empty);
         }
     }
-
-    
 }

@@ -1,9 +1,9 @@
-using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using SkiaSharp;
 using Vortice.Direct3D;
 using Vortice.Direct3D11;
 using Vortice.DXGI;
@@ -11,55 +11,54 @@ using Vortice.DXGI;
 namespace SDUI.Rendering;
 
 /// <summary>
-/// DirectX11 presenter that uses a D3D swapchain and prefers GPU-backed Skia rendering.
-/// Rendering is done with Skia; when GPU path is unavailable we fall back to a CPU-rendered bitmap
-/// and present it via a D3D upload (no GDI blit fallback).
+///     DirectX11 presenter that uses a D3D swapchain and prefers GPU-backed Skia rendering.
+///     Rendering is done with Skia; when GPU path is unavailable we fall back to a CPU-rendered bitmap
+///     and present it via a D3D upload (no GDI blit fallback).
 /// </summary>
 internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRenderer
 {
-    public RenderBackend Backend => RenderBackend.DirectX11;
+    // Lock to protect access to CPU cache resources during present/upload
+    private readonly object _cpuCacheLock = new();
+    private ID3D11Texture2D? _backBuffer;
+
+    private SKBitmap? _cacheBitmap;
+    private SKSurface? _cacheSurface;
+    private ID3D11DeviceContext? _context;
+    private int _cpuUploadHeight;
+    private ID3D11Texture2D? _cpuUploadTexture;
+    private int _cpuUploadWidth;
+
+    private ID3D11Device? _device;
+
+    private GRBackendRenderTarget? _grRenderTarget;
+    private SKSurface? _grSurface;
+    private int _height;
+
+    private nint _hwnd;
+    private ID3D11Texture2D? _presentBackBuffer;
+    private IDXGISwapChain1? _swapChain;
+
+    private bool _useCpuUploadPath;
+    private bool _useSkiaGpu;
+
+    private int _width;
 
     /// <summary>
-    /// Maximum retained bytes for the CPU backbuffer cache (SKBitmap + SKSurface).
-    /// Set to 0 (or less) to disable the limit (unlimited).
+    ///     Maximum retained bytes for the CPU backbuffer cache (SKBitmap + SKSurface).
+    ///     Set to 0 (or less) to disable the limit (unlimited).
     /// </summary>
     public static long MaxCpuBackBufferBytes { get; set; } = 24L * 1024 * 1024;
 
-    // If SkiaSharp has a D3D backend in this build, we render directly to the swapchain backbuffer.
-    // Otherwise we fall back to the CPU upload (D3D) path.
-    public GRContext? GrContext => _grContext;
-
-    public bool IsSkiaGpuActive => _useSkiaGpu && _grContext != null && _grSurface != null;
-
-    private nint _hwnd;
-
-    private ID3D11Device? _device;
-    private ID3D11DeviceContext? _context;
-    private IDXGISwapChain1? _swapChain;
+    public bool IsSkiaGpuActive => _useSkiaGpu && GrContext != null && _grSurface != null;
 
 
     public string? LastInitError { get; private set; }
 
-    private GRContext? _grContext;
-    private GRBackendRenderTarget? _grRenderTarget;
-    private SKSurface? _grSurface;
-    private ID3D11Texture2D? _backBuffer;
-    private bool _useSkiaGpu;
+    // If SkiaSharp has a D3D backend in this build, we render directly to the swapchain backbuffer.
+    // Otherwise we fall back to the CPU upload (D3D) path.
+    public GRContext? GrContext { get; private set; }
 
-    private bool _useCpuUploadPath;
-    private int _cpuUploadWidth;
-    private int _cpuUploadHeight;
-    private ID3D11Texture2D? _cpuUploadTexture;
-    private ID3D11Texture2D? _presentBackBuffer;
-
-    private SKBitmap? _cacheBitmap;
-    private SKSurface? _cacheSurface;
-
-    // Lock to protect access to CPU cache resources during present/upload
-    private readonly object _cpuCacheLock = new();
-
-    private int _width;
-    private int _height;
+    public RenderBackend Backend => RenderBackend.DirectX11;
 
     public void Initialize(nint hwnd)
     {
@@ -74,7 +73,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             FeatureLevel.Level_11_1,
             FeatureLevel.Level_11_0,
             FeatureLevel.Level_10_1,
-            FeatureLevel.Level_10_0,
+            FeatureLevel.Level_10_0
         };
 
         try
@@ -93,7 +92,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         {
             // Create a normal swapchain; we will prefer GPU path when available
             // and fall back to CPU upload (D3D texture) when not.
-            _swapChain = CreateSwapChainForHwnd(width: 1, height: 1, gdiCompatible: false);
+            _swapChain = CreateSwapChainForHwnd(1, 1, false);
         }
         catch (Exception ex)
         {
@@ -109,17 +108,198 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         // Only purge GPU resources; do not dispose CPU/GDI resources here to avoid invalid state.
         try
         {
-            if (_grContext == null)
+            if (GrContext == null)
             {
-                System.Diagnostics.Debug.WriteLine("[DX11 TrimCaches] _grContext is null");
+                Debug.WriteLine("[DX11 TrimCaches] _grContext is null");
                 return;
             }
-            _grContext.PurgeResources();
+
+            GrContext.PurgeResources();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[DX11 TrimCaches] Exception: {ex}");
+            Debug.WriteLine($"[DX11 TrimCaches] Exception: {ex}");
         }
+    }
+
+    public void Resize(int width, int height)
+    {
+        if (_swapChain == null)
+            return;
+
+        width = Math.Max(1, width);
+        height = Math.Max(1, height);
+
+        if (_width == width && _height == height)
+            return;
+
+        _width = width;
+        _height = height;
+
+        _grSurface?.Dispose();
+        _grSurface = null;
+        _grRenderTarget?.Dispose();
+        _grRenderTarget = null;
+        _backBuffer?.Dispose();
+        _backBuffer = null;
+
+        _presentBackBuffer?.Dispose();
+        _presentBackBuffer = null;
+        _cpuUploadTexture?.Dispose();
+        _cpuUploadTexture = null;
+        _cpuUploadWidth = 0;
+        _cpuUploadHeight = 0;
+
+        _cacheSurface?.Dispose();
+        _cacheSurface = null;
+        _cacheBitmap?.Dispose();
+        _cacheBitmap = null;
+
+        // If GPU init was attempted and later disabled, we may still have a flip-model swapchain.
+        // Ensure we have a swapchain and CPU cache resources for the CPU upload path.
+        if (!_useSkiaGpu && EnsureCpuSwapChain(width, height))
+            return;
+
+        try
+        {
+            // ResizeBuffers flags must be 0; the GDI-compatible flag is specified at creation time.
+            _swapChain.ResizeBuffers(0, width, height, Format.Unknown, SwapChainFlags.None);
+        }
+        catch (Exception ex)
+        {
+            LastInitError = $"ResizeBuffers failed: {ex.Message}";
+            throw;
+        }
+
+        if (_useSkiaGpu && GrContext != null)
+        {
+            TryCreateSkiaBackBufferSurface(width, height);
+            return;
+        }
+
+        // Prefer the D3D upload path; if we already switched to upload mode, ensure CPU cache resources.
+        if (_useCpuUploadPath)
+        {
+            CreateCpuCacheResources(width, height);
+            return;
+        }
+
+        try
+        {
+            CreateCpuCacheResources(width, height);
+        }
+        catch (Exception ex)
+        {
+            LastInitError = $"CPU cache init failed: {ex.Message}";
+
+            _cacheSurface?.Dispose();
+            _cacheSurface = null;
+            _cacheBitmap?.Dispose();
+            _cacheBitmap = null;
+            // If CPU cache creation fails, we will fall back to per-frame uncached rendering.
+        }
+    }
+
+    public void Render(int width, int height, Action<SKCanvas, SKImageInfo> draw)
+    {
+        if (_swapChain == null)
+            return;
+
+        Resize(width, height);
+
+        if (_useSkiaGpu && _grSurface != null && GrContext != null)
+        {
+            var gpuInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul,
+                SKColorSpace.CreateSrgb());
+            draw(_grSurface.Canvas, gpuInfo);
+            _grSurface.Canvas.Flush();
+            GrContext.Flush();
+            GrContext.Submit();
+            _swapChain.Present(1, PresentFlags.None);
+            return;
+        }
+
+        // #####################
+        var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
+
+        // If we have a cached CPU backbuffer (within MaxCpuBackBufferBytes), use it.
+        if (_cacheSurface != null && _cacheBitmap != null)
+            lock (_cpuCacheLock)
+            {
+                draw(_cacheSurface.Canvas, info);
+                _cacheSurface.Canvas.Flush();
+
+                // Prefer D3D upload path for presenting CPU-rendered cache.
+                try
+                {
+                    PresentFromCpuCacheViaD3D11Upload(_cacheBitmap, width, height);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    LastInitError = $"D3D11 upload present failed: {ex.Message}; falling back to per-frame rendering.";
+                    DisposeCpuCacheResources();
+                    // Fall through to per-frame temporary rendering below.
+                }
+            }
+
+        // Otherwise render into a temporary buffer per frame to keep resident memory low.
+        using var tempBitmap = new SKBitmap(info);
+        var pixels = tempBitmap.GetPixels();
+        using var tempSurface = SKSurface.Create(info, pixels, tempBitmap.RowBytes);
+        if (tempSurface == null)
+            return;
+
+        draw(tempSurface.Canvas, info);
+        tempSurface.Canvas.Flush();
+
+        try
+        {
+            PresentFromCpuCacheViaD3D11Upload(tempBitmap, width, height);
+        }
+        catch (Exception ex)
+        {
+            LastInitError = $"D3D11 upload present failed: {ex.Message}; no fallback available for this frame.";
+        }
+        // #####################
+    }
+
+    public void Dispose()
+    {
+        _grSurface?.Dispose();
+        _grSurface = null;
+
+        _grRenderTarget?.Dispose();
+        _grRenderTarget = null;
+
+        _backBuffer?.Dispose();
+        _backBuffer = null;
+
+        _presentBackBuffer?.Dispose();
+        _presentBackBuffer = null;
+
+        _cpuUploadTexture?.Dispose();
+        _cpuUploadTexture = null;
+
+        GrContext?.Dispose();
+        GrContext = null;
+
+        _cacheSurface?.Dispose();
+        _cacheSurface = null;
+
+        _cacheBitmap?.Dispose();
+        _cacheBitmap = null;
+
+        _swapChain?.Dispose();
+        _swapChain = null;
+
+        _context?.Dispose();
+        _context = null;
+
+        _device?.Dispose();
+        _device = null;
+
+        _hwnd = 0;
     }
 
     private IDXGISwapChain1 CreateSwapChainForHwnd(int width, int height, bool gdiCompatible)
@@ -152,7 +332,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
                 Scaling = Scaling.Stretch,
                 SwapEffect = SwapEffect.Discard,
                 AlphaMode = AlphaMode.Ignore,
-                Flags = SwapChainFlags.GdiCompatible,
+                Flags = SwapChainFlags.GdiCompatible
             }
             : new SwapChainDescription1
             {
@@ -166,7 +346,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
                 Scaling = Scaling.None,
                 SwapEffect = SwapEffect.FlipDiscard,
                 AlphaMode = AlphaMode.Ignore,
-                Flags = SwapChainFlags.None,
+                Flags = SwapChainFlags.None
             };
 
         var sc = factory.CreateSwapChainForHwnd(_device, _hwnd, desc);
@@ -178,11 +358,10 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
     {
         // Ensure a swapchain exists for CPU upload path (non-GDI flip model).
         if (_swapChain == null)
-        {
             try
             {
                 _swapChain?.Dispose();
-                _swapChain = CreateSwapChainForHwnd(width, height, gdiCompatible: false);
+                _swapChain = CreateSwapChainForHwnd(width, height, false);
                 // Create or refresh CPU cache resources
                 CreateCpuCacheResources(width, height);
                 return true;
@@ -192,7 +371,6 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
                 LastInitError = $"Failed to recreate CPU swapchain: {ex.Message}";
                 throw;
             }
-        }
 
         return false;
     }
@@ -264,7 +442,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         if (_device == null || _context == null || _swapChain == null)
             throw new InvalidOperationException("D3D device/context/swapchain is not initialized.");
 
-        if (_cpuUploadTexture != null && _presentBackBuffer != null && _cpuUploadWidth == width && _cpuUploadHeight == height)
+        if (_cpuUploadTexture != null && _presentBackBuffer != null && _cpuUploadWidth == width &&
+            _cpuUploadHeight == height)
             return;
 
         _presentBackBuffer?.Dispose();
@@ -285,7 +464,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             Usage = ResourceUsage.Dynamic,
             BindFlags = BindFlags.None,
             CPUAccessFlags = CpuAccessFlags.Write,
-            MiscFlags = ResourceOptionFlags.None,
+            MiscFlags = ResourceOptionFlags.None
         };
 
         _cpuUploadTexture = _device.CreateTexture2D(desc);
@@ -295,48 +474,47 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
     private unsafe void PresentFromCpuCacheViaD3D11Upload(SKBitmap srcBitmap, int width, int height)
     {
-            if (_context == null || _swapChain == null || srcBitmap == null)
-                return;
+        if (_context == null || _swapChain == null || srcBitmap == null)
+            return;
 
-            EnsureCpuUploadResources(width, height);
-            if (_cpuUploadTexture == null || _presentBackBuffer == null)
-                return;
+        EnsureCpuUploadResources(width, height);
+        if (_cpuUploadTexture == null || _presentBackBuffer == null)
+            return;
 
-            lock (_cpuCacheLock)
+        lock (_cpuCacheLock)
+        {
+            var mapped = _context.Map(_cpuUploadTexture, 0, MapMode.WriteDiscard);
+            try
             {
-                var mapped = _context.Map(_cpuUploadTexture, 0, MapMode.WriteDiscard, Vortice.Direct3D11.MapFlags.None);
-                try
-                {
-                    // Defensive guard: re-check srcBitmap and pixel pointer
-                    var pixelsPtr = srcBitmap.GetPixels();
-                    if (pixelsPtr == IntPtr.Zero)
-                        return;
+                // Defensive guard: re-check srcBitmap and pixel pointer
+                var pixelsPtr = srcBitmap.GetPixels();
+                if (pixelsPtr == IntPtr.Zero)
+                    return;
 
-                    var srcBase = (byte*)pixelsPtr.ToPointer();
-                    var dstBase = (byte*)mapped.DataPointer.ToPointer();
+                var srcBase = (byte*)pixelsPtr.ToPointer();
+                var dstBase = (byte*)mapped.DataPointer.ToPointer();
 
-                    var srcStride = srcBitmap.RowBytes;
-                    var dstStride = mapped.RowPitch;
-                    var rowBytes = width * 4;
+                var srcStride = srcBitmap.RowBytes;
+                var dstStride = mapped.RowPitch;
+                var rowBytes = width * 4;
 
-                    for (var y = 0; y < height; y++)
-                    {
-                        Buffer.MemoryCopy(srcBase + (y * srcStride), dstBase + (y * dstStride), dstStride, rowBytes);
-                    }
-                }
-                finally
-                {
-                    _context.Unmap(_cpuUploadTexture, 0);
-                }
-
-                _context.CopyResource(_presentBackBuffer, _cpuUploadTexture);
-                _swapChain.Present(1, PresentFlags.None);
+                for (var y = 0; y < height; y++)
+                    Buffer.MemoryCopy(srcBase + y * srcStride, dstBase + y * dstStride, dstStride, rowBytes);
             }
-        }
+            finally
+            {
+                _context.Unmap(_cpuUploadTexture, 0);
+            }
 
-    private static (ID3D11Device device, ID3D11DeviceContext context) CreateDeviceWithFallback(DeviceCreationFlags flags, FeatureLevel[] featureLevels)
+            _context.CopyResource(_presentBackBuffer, _cpuUploadTexture);
+            _swapChain.Present(1, PresentFlags.None);
+        }
+    }
+
+    private static (ID3D11Device device, ID3D11DeviceContext context) CreateDeviceWithFallback(
+        DeviceCreationFlags flags, FeatureLevel[] featureLevels)
     {
-        var errors = new List<Exception>(capacity: 2);
+        var errors = new List<Exception>(2);
 
         // Try real hardware first.
         if (TryCreateDevice(DriverType.Hardware, flags, featureLevels, out var device, out var context, out var error))
@@ -355,7 +533,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         {
             FeatureLevel.Level_9_3,
             FeatureLevel.Level_9_2,
-            FeatureLevel.Level_9_1,
+            FeatureLevel.Level_9_1
         }).Distinct().ToArray();
 
         if (TryCreateDevice(DriverType.Warp, flags, wideFeatureLevels, out device, out context, out error))
@@ -408,7 +586,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
             // SkiaSharp D3D backend APIs are not available in all builds; use reflection.
             var skiaAsm = typeof(GRContext).Assembly;
-            var backendContextType = skiaAsm.GetType("SkiaSharp.GRD3DBackendContext", throwOnError: false);
+            var backendContextType = skiaAsm.GetType("SkiaSharp.GRD3DBackendContext", false);
             if (backendContextType == null)
                 return false;
 
@@ -424,7 +602,9 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             SetPropertyIfExists(backendContext, "Queue", contextPtr);
 
             var create = typeof(GRContext).GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m => m.Name == "CreateDirect3D" && m.GetParameters().Length >= 1 && m.GetParameters()[0].ParameterType == backendContextType);
+                .FirstOrDefault(m =>
+                    m.Name == "CreateDirect3D" && m.GetParameters().Length >= 1 &&
+                    m.GetParameters()[0].ParameterType == backendContextType);
 
             if (create == null)
                 return false;
@@ -436,12 +616,12 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             if (gr == null)
                 return false;
 
-            _grContext = gr;
+            GrContext = gr;
             return true;
         }
         catch
         {
-            _grContext = null;
+            GrContext = null;
             return false;
         }
     }
@@ -455,7 +635,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         try
         {
             if (prop.PropertyType == typeof(IntPtr) || prop.PropertyType == typeof(nint))
-                prop.SetValue(target, (IntPtr)value);
+                prop.SetValue(target, value);
             else if (prop.PropertyType == typeof(long))
                 prop.SetValue(target, (long)value);
             else if (prop.PropertyType == typeof(ulong))
@@ -467,128 +647,53 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         }
     }
 
-    public void Resize(int width, int height)
-    {
-        if (_swapChain == null)
-            return;
-
-        width = Math.Max(1, width);
-        height = Math.Max(1, height);
-
-        if (_width == width && _height == height)
-            return;
-
-        _width = width;
-        _height = height;
-
-        _grSurface?.Dispose();
-        _grSurface = null;
-        _grRenderTarget?.Dispose();
-        _grRenderTarget = null;
-        _backBuffer?.Dispose();
-        _backBuffer = null;
-
-        _presentBackBuffer?.Dispose();
-        _presentBackBuffer = null;
-        _cpuUploadTexture?.Dispose();
-        _cpuUploadTexture = null;
-        _cpuUploadWidth = 0;
-        _cpuUploadHeight = 0;
-
-        _cacheSurface?.Dispose();
-        _cacheSurface = null;
-        _cacheBitmap?.Dispose();
-        _cacheBitmap = null;
-
-        // If GPU init was attempted and later disabled, we may still have a flip-model swapchain.
-        // Ensure we have a swapchain and CPU cache resources for the CPU upload path.
-        if (!_useSkiaGpu && EnsureCpuSwapChain(width, height))
-            return;
-
-        try
-        {
-            // ResizeBuffers flags must be 0; the GDI-compatible flag is specified at creation time.
-            _swapChain.ResizeBuffers(0, width, height, Format.Unknown, SwapChainFlags.None);
-        }
-        catch (Exception ex)
-        {
-            LastInitError = $"ResizeBuffers failed: {ex.Message}";
-            throw;
-        }
-
-        if (_useSkiaGpu && _grContext != null)
-        {
-            TryCreateSkiaBackBufferSurface(width, height);
-            return;
-        }
-
-        // Prefer the D3D upload path; if we already switched to upload mode, ensure CPU cache resources.
-        if (_useCpuUploadPath)
-        {
-            CreateCpuCacheResources(width, height);
-            return;
-        }
-
-        try
-        {
-            CreateCpuCacheResources(width, height);
-        }
-        catch (Exception ex)
-        {
-            LastInitError = $"CPU cache init failed: {ex.Message}";
-
-            _cacheSurface?.Dispose();
-            _cacheSurface = null;
-            _cacheBitmap?.Dispose();
-            _cacheBitmap = null;
-            // If CPU cache creation fails, we will fall back to per-frame uncached rendering.
-        }
-    }
-
     private void TryCreateSkiaBackBufferSurface(int width, int height)
     {
         try
         {
-            if (_swapChain == null || _grContext == null)
+            if (_swapChain == null || GrContext == null)
                 return;
 
             _backBuffer = _swapChain.GetBuffer<ID3D11Texture2D>(0);
             var skiaAsm = typeof(GRContext).Assembly;
-            var texInfoType = skiaAsm.GetType("SkiaSharp.GRD3DTextureInfo", throwOnError: false);
+            var texInfoType = skiaAsm.GetType("SkiaSharp.GRD3DTextureInfo", false);
             if (texInfoType == null)
                 throw new MissingMemberException("SkiaSharp.GRD3DTextureInfo not found.");
 
-            var texInfo = Activator.CreateInstance(texInfoType) ?? throw new InvalidOperationException("Failed to create GRD3DTextureInfo.");
+            var texInfo = Activator.CreateInstance(texInfoType) ??
+                          throw new InvalidOperationException("Failed to create GRD3DTextureInfo.");
             SetPropertyIfExists(texInfo, "Texture", _backBuffer.NativePointer);
             SetPropertyIfExists(texInfo, "Resource", _backBuffer.NativePointer);
 
             // Some Skia builds require a DXGI format value.
             var formatProp = texInfoType.GetProperty("Format", BindingFlags.Public | BindingFlags.Instance);
             if (formatProp != null && formatProp.CanWrite)
-            {
                 try
                 {
                     var dxgiFormat = (int)Format.B8G8R8A8_UNorm;
                     if (formatProp.PropertyType == typeof(int)) formatProp.SetValue(texInfo, dxgiFormat);
                     else if (formatProp.PropertyType == typeof(uint)) formatProp.SetValue(texInfo, (uint)dxgiFormat);
                 }
-                catch { }
-            }
+                catch
+                {
+                }
 
             // Create a backend render target wrapping the swapchain buffer.
             var ctor = typeof(GRBackendRenderTarget).GetConstructors(BindingFlags.Public | BindingFlags.Instance)
                 .FirstOrDefault(c =>
                 {
                     var p = c.GetParameters();
-                    return p.Length == 5 && p[0].ParameterType == typeof(int) && p[1].ParameterType == typeof(int) && p[4].ParameterType == texInfoType;
+                    return p.Length == 5 && p[0].ParameterType == typeof(int) && p[1].ParameterType == typeof(int) &&
+                           p[4].ParameterType == texInfoType;
                 });
 
             if (ctor == null)
-                throw new MissingMemberException("GRBackendRenderTarget ctor(width,height,samples,stencil,GRD3DTextureInfo) not found.");
+                throw new MissingMemberException(
+                    "GRBackendRenderTarget ctor(width,height,samples,stencil,GRD3DTextureInfo) not found.");
 
-            _grRenderTarget = (GRBackendRenderTarget)ctor.Invoke(new object[] { width, height, 1, 8, texInfo });
+            _grRenderTarget = (GRBackendRenderTarget)ctor.Invoke(new[] { width, height, 1, 8, texInfo });
             _grSurface = SKSurface.Create(
-                _grContext,
+                GrContext,
                 _grRenderTarget,
                 GRSurfaceOrigin.TopLeft,
                 SKColorType.Bgra8888,
@@ -610,109 +715,5 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             if (EnsureCpuSwapChain(width, height))
                 return;
         }
-    }
-
-    public void Render(int width, int height, Action<SKCanvas, SKImageInfo> draw)
-    {
-        if (_swapChain == null)
-            return;
-
-        Resize(width, height);
-
-        if (_useSkiaGpu && _grSurface != null && _grContext != null)
-        {
-            var gpuInfo = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
-            draw(_grSurface.Canvas, gpuInfo);
-            _grSurface.Canvas.Flush();
-            _grContext.Flush();
-            _grContext.Submit();
-            _swapChain.Present(1, PresentFlags.None);
-            return;
-        }
-
-        // #####################
-        var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
-
-        // If we have a cached CPU backbuffer (within MaxCpuBackBufferBytes), use it.
-        if (_cacheSurface != null && _cacheBitmap != null)
-        {
-                lock (_cpuCacheLock)
-                {
-                    draw(_cacheSurface.Canvas, info);
-                    _cacheSurface.Canvas.Flush();
-
-                    // Prefer D3D upload path for presenting CPU-rendered cache.
-                    try
-                    {
-                        PresentFromCpuCacheViaD3D11Upload(_cacheBitmap, width, height);
-                        return;
-                    }
-                    catch (Exception ex)
-                    {
-                        LastInitError = $"D3D11 upload present failed: {ex.Message}; falling back to per-frame rendering.";
-                        DisposeCpuCacheResources();
-                        // Fall through to per-frame temporary rendering below.
-                    }
-                }
-        }
-        // Otherwise render into a temporary buffer per frame to keep resident memory low.
-        using var tempBitmap = new SKBitmap(info);
-        var pixels = tempBitmap.GetPixels();
-        using var tempSurface = SKSurface.Create(info, pixels, tempBitmap.RowBytes);
-        if (tempSurface == null)
-            return;
-
-        draw(tempSurface.Canvas, info);
-        tempSurface.Canvas.Flush();
-
-        try
-        {
-            PresentFromCpuCacheViaD3D11Upload(tempBitmap, width, height);
-            return;
-        }
-        catch (Exception ex)
-        {
-            LastInitError = $"D3D11 upload present failed: {ex.Message}; no fallback available for this frame.";
-            return;
-        }
-        // #####################
-    }
-
-    public void Dispose()
-    {
-        _grSurface?.Dispose();
-        _grSurface = null;
-
-        _grRenderTarget?.Dispose();
-        _grRenderTarget = null;
-
-        _backBuffer?.Dispose();
-        _backBuffer = null;
-
-        _presentBackBuffer?.Dispose();
-        _presentBackBuffer = null;
-
-        _cpuUploadTexture?.Dispose();
-        _cpuUploadTexture = null;
-
-        _grContext?.Dispose();
-        _grContext = null;
-
-        _cacheSurface?.Dispose();
-        _cacheSurface = null;
-
-        _cacheBitmap?.Dispose();
-        _cacheBitmap = null;
-
-        _swapChain?.Dispose();
-        _swapChain = null;
-
-        _context?.Dispose();
-        _context = null;
-
-        _device?.Dispose();
-        _device = null;
-
-        _hwnd = 0;
     }
 }

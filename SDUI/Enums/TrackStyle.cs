@@ -1,4 +1,5 @@
 ﻿namespace SDUI;
+
 public enum TrackStyle
 {
     Simple,

@@ -1,9 +1,8 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SDUI.Controls;
 
 namespace SDUI.Collections;
 
@@ -11,7 +10,7 @@ public class UIWindowElementCollection : IList<UIElementBase>
 {
     private readonly List<UIElementBase> _items = new(32);
     private readonly UIWindow _owner;
-    private int _maxZOrder = 0;
+    private int _maxZOrder;
 
     public UIWindowElementCollection(UIWindow owner)
     {
@@ -32,21 +31,16 @@ public class UIWindowElementCollection : IList<UIElementBase>
                     if (oldItem != null)
                     {
                         oldItem.Parent = null;
-                        if (_owner.FocusedElement == oldItem)
-                        {
-                            _owner.FocusedElement = null;
-                        }
+                        if (_owner.FocusedElement == oldItem) _owner.FocusedElement = null;
                     }
+
                     _items[index] = value;
                     if (value != null)
                     {
                         value.Parent = _owner;
                         _maxZOrder++;
                         value.ZOrder = _maxZOrder;
-                        if (_owner.FocusedElement == null && value.TabStop)
-                        {
-                            _owner.FocusedElement = value;
-                        }
+                        if (_owner.FocusedElement == null && value.TabStop) _owner.FocusedElement = value;
                     }
                 }
                 finally
@@ -73,10 +67,7 @@ public class UIWindowElementCollection : IList<UIElementBase>
             item.ZOrder = _maxZOrder;
             _items.Add(item);
 
-            if (_owner.FocusedElement == null && item.TabStop)
-            {
-                _owner.FocusedElement = item;
-            }
+            if (_owner.FocusedElement == null && item.TabStop) _owner.FocusedElement = item;
         }
         finally
         {
@@ -94,10 +85,7 @@ public class UIWindowElementCollection : IList<UIElementBase>
             foreach (var item in itemsToRemove)
             {
                 item.Parent = null;
-                if (_owner.FocusedElement == item)
-                {
-                    _owner.FocusedElement = null;
-                }
+                if (_owner.FocusedElement == item) _owner.FocusedElement = null;
             }
         }
         finally
@@ -106,10 +94,25 @@ public class UIWindowElementCollection : IList<UIElementBase>
         }
     }
 
-    public bool Contains(UIElementBase item) => _items.Contains(item);
-    public void CopyTo(UIElementBase[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
-    public IEnumerator<UIElementBase> GetEnumerator() => _items.GetEnumerator();
-    public int IndexOf(UIElementBase item) => _items.IndexOf(item);
+    public bool Contains(UIElementBase item)
+    {
+        return _items.Contains(item);
+    }
+
+    public void CopyTo(UIElementBase[] array, int arrayIndex)
+    {
+        _items.CopyTo(array, arrayIndex);
+    }
+
+    public IEnumerator<UIElementBase> GetEnumerator()
+    {
+        return _items.GetEnumerator();
+    }
+
+    public int IndexOf(UIElementBase item)
+    {
+        return _items.IndexOf(item);
+    }
 
     public void Insert(int index, UIElementBase item)
     {
@@ -124,10 +127,7 @@ public class UIWindowElementCollection : IList<UIElementBase>
             item.ZOrder = _maxZOrder;
             _items.Insert(index, item);
 
-            if (_owner.FocusedElement == null && item.TabStop)
-            {
-                _owner.FocusedElement = item;
-            }
+            if (_owner.FocusedElement == null && item.TabStop) _owner.FocusedElement = item;
         }
         finally
         {
@@ -147,11 +147,9 @@ public class UIWindowElementCollection : IList<UIElementBase>
             if (result)
             {
                 item.Parent = null;
-                if (_owner.FocusedElement == item)
-                {
-                    _owner.FocusedElement = null;
-                }
+                if (_owner.FocusedElement == item) _owner.FocusedElement = null;
             }
+
             return result;
         }
         finally
@@ -168,10 +166,7 @@ public class UIWindowElementCollection : IList<UIElementBase>
             var item = _items[index];
             _items.RemoveAt(index);
             item.Parent = null;
-            if (_owner.FocusedElement == item)
-            {
-                _owner.FocusedElement = null;
-            }
+            if (_owner.FocusedElement == item) _owner.FocusedElement = null;
         }
         finally
         {
@@ -179,5 +174,8 @@ public class UIWindowElementCollection : IList<UIElementBase>
         }
     }
 
-    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return GetEnumerator();
+    }
 }

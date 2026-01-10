@@ -1,6 +1,4 @@
 using SkiaSharp;
-using System;
-using System.Drawing;
 
 namespace SDUI.Controls;
 
@@ -8,7 +6,7 @@ namespace SDUI.Controls;
 public partial class ListView
 {
     /// <summary>
-    /// Enhanced DrawRow method with icon drawing support
+    ///     Enhanced DrawRow method with icon drawing support
     /// </summary>
     private void DrawRowWithIcon(SKCanvas canvas, ListViewItem row, float y, bool isGroupItem = false)
     {
@@ -20,7 +18,7 @@ public partial class ListView
         textPaint.Color = ColorScheme.OnSurface.ToSKColor();
 
         SKFont rowFont = null;
-        bool disposeRowFont = false;
+        var disposeRowFont = false;
         if (row.Font == null || ReferenceEquals(row.Font, Font))
         {
             rowFont = GetDefaultSkFont();
@@ -32,8 +30,8 @@ public partial class ListView
         }
 
         // Row background is expensive; only draw when needed (selection/explicit custom backcolor).
-        bool hasCustomBack = row.SubItems.Count > 0 && row.SubItems[0].CustomBackColor;
-        bool shouldFillBackground = row.StateSelected || hasCustomBack;
+        var hasCustomBack = row.SubItems.Count > 0 && row.SubItems[0].CustomBackColor;
+        var shouldFillBackground = row.StateSelected || hasCustomBack;
         var rect = new SKRect(0, y, Width, y + RowHeight);
         if (shouldFillBackground)
         {
@@ -43,30 +41,29 @@ public partial class ListView
             canvas.DrawRect(rect, backPaint);
         }
 
-        float iconSize = GetIconSize();
+        var iconSize = GetIconSize();
         var textOffset = -_horizontalScrollOffset;
-        
+
         // Draw icon if available (first column only)
-        bool iconDrawn = false;
+        var iconDrawn = false;
         if (Columns.Count > 0)
-        {
             try
             {
                 DrawItemIcon(canvas, row, textOffset + 5, y, iconSize);
                 iconDrawn = (SmallImageList != null || LargeImageList != null) &&
-                           ((!string.IsNullOrEmpty(row.ImageKey) && 
-                             ((SmallImageList?.Images.ContainsKey(row.ImageKey) ?? false) || 
-                              (LargeImageList?.Images.ContainsKey(row.ImageKey) ?? false))) ||
-                            (row.ImageIndex >= 0 && row.ImageIndex < (SmallImageList?.Images.Count ?? LargeImageList?.Images.Count ?? 0)));
+                            ((!string.IsNullOrEmpty(row.ImageKey) &&
+                              ((SmallImageList?.Images.ContainsKey(row.ImageKey) ?? false) ||
+                               (LargeImageList?.Images.ContainsKey(row.ImageKey) ?? false))) ||
+                             (row.ImageIndex >= 0 && row.ImageIndex <
+                                 (SmallImageList?.Images.Count ?? LargeImageList?.Images.Count ?? 0)));
             }
             catch
             {
                 // Icon drawing failed, continue without icon
             }
-        }
 
         var x = textOffset;
-        int i = 0;
+        var i = 0;
         // skip columns left of viewport
         while (i < Columns.Count && x + Columns[i].Width <= 0)
         {
@@ -84,14 +81,11 @@ public partial class ListView
 
             // Vertical centering using font metrics from SKFont
             var fm = rowFont.Metrics;
-            float textY = y + (RowHeight - (fm.Descent - fm.Ascent)) / 2f - fm.Ascent;
+            var textY = y + (RowHeight - (fm.Descent - fm.Ascent)) / 2f - fm.Ascent;
 
             // For the first column, add icon offset if icon was drawn
-            float textX = x + 5;
-            if (i == 0 && iconDrawn)
-            {
-                textX += iconSize + 5; // Icon size + padding
-            }
+            var textX = x + 5;
+            if (i == 0 && iconDrawn) textX += iconSize + 5; // Icon size + padding
 
             DrawTextCompat(canvas, row.SubItems[i].Text ?? string.Empty, textX, textY, rowFont, textPaint.Color);
             x += Columns[i].Width;

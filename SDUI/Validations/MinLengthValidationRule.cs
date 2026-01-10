@@ -13,6 +13,7 @@ public class MinLengthValidationRule : ValidationRule
             errorMessage = ErrorMessage ?? $"Bu alan en az {MinLength} karakter olmalıdır.";
             return false;
         }
+
         errorMessage = string.Empty;
         return true;
     }

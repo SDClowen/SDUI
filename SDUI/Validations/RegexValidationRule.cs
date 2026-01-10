@@ -1,4 +1,5 @@
-﻿using SDUI.Controls;
+﻿using System.Text.RegularExpressions;
+using SDUI.Controls;
 
 namespace SDUI.Validations;
 
@@ -8,11 +9,12 @@ public class RegexValidationRule : ValidationRule
 
     public override bool Validate(UIElementBase element, out string errorMessage)
     {
-        if (!System.Text.RegularExpressions.Regex.IsMatch(element.Text, Pattern))
+        if (!Regex.IsMatch(element.Text, Pattern))
         {
             errorMessage = ErrorMessage ?? "Geçersiz format.";
             return false;
         }
+
         errorMessage = string.Empty;
         return true;
     }

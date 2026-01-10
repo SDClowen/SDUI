@@ -1,24 +1,24 @@
-﻿using Microsoft.Win32;
-using System;
+﻿using System;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Windows.Forms.VisualStyles;
+using Microsoft.Win32;
 using static SDUI.NativeMethods;
 
 namespace SDUI.Helpers;
 
 /// <summary>
-/// Provides helper functions for platform management
+///     Provides helper functions for platform management
 /// </summary>
 public static class WindowsHelper
 {
     /// <summary>
-    /// This operating system build info
+    ///     This operating system build info
     /// </summary>
     public static OSVERSIONINFOEX BuildInfo;
 
     /// <summary>
-    /// Initializes the <see cref="WindowsHelper"/> class.
+    ///     Initializes the <see cref="WindowsHelper" /> class.
     /// </summary>
     static WindowsHelper()
     {
@@ -30,9 +30,11 @@ public static class WindowsHelper
         if (RtlGetVersion(ref version) != NTSTATUS.STATUS_SUCCESS)
             return;
 
-        IsSeven = version.MajorVersion == 6 && version.MinorVersion == 1 && (version.BuildNumber >= 7600 && version.BuildNumber <= 7601);
-        IsEight = version.MajorVersion == 6 && version.MinorVersion >= 2 && (version.BuildNumber >= 9200 && version.BuildNumber <= 9999);
-        IsTen = version.MajorVersion == 10 && (version.BuildNumber >= 10240 && version.BuildNumber <= 20000);
+        IsSeven = version.MajorVersion == 6 && version.MinorVersion == 1 && version.BuildNumber >= 7600 &&
+                  version.BuildNumber <= 7601;
+        IsEight = version.MajorVersion == 6 && version.MinorVersion >= 2 && version.BuildNumber >= 9200 &&
+                  version.BuildNumber <= 9999;
+        IsTen = version.MajorVersion == 10 && version.BuildNumber >= 10240 && version.BuildNumber <= 20000;
         IsEleven = version.BuildNumber >= 22000;
         IsModern = IsTen || IsEleven;
         VisualStylesEnabled = VisualStyleInformation.IsEnabledByUser;
@@ -41,87 +43,83 @@ public static class WindowsHelper
         SystemEvents.UserPreferenceChanged += (s, e) =>
         {
             var vsEnabled = VisualStyleInformation.IsEnabledByUser;
-            if (vsEnabled != VisualStylesEnabled)
-            {
-                VisualStylesEnabled = vsEnabled;
-                //Maybe raise an event here
-            }
+            if (vsEnabled != VisualStylesEnabled) VisualStylesEnabled = vsEnabled;
+            //Maybe raise an event here
         };
     }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 7.
+    ///     Returns a value indicating whether the Operating System is Windows 7.
     /// </summary>
     /// <value>
-    ///   <c>true</c> if the Operating System is Windows 7; otherwise, <c>false</c>.
+    ///     <c>true</c> if the Operating System is Windows 7; otherwise, <c>false</c>.
     /// </value>
     public static bool IsSeven { get; private set; }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 8.
+    ///     Returns a value indicating whether the Operating System is Windows 8.
     /// </summary>
     /// <value>
-    ///   <c>true</c> if the Operating System is Windows 8; otherwise, <c>false</c>.
+    ///     <c>true</c> if the Operating System is Windows 8; otherwise, <c>false</c>.
     /// </value>
     public static bool IsEight { get; private set; }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 10.
+    ///     Returns a value indicating whether the Operating System is Windows 10.
     /// </summary>
     /// <value>
-    ///   <c>true</c> if the Operating System is Windows 10; otherwise, <c>false</c>.
+    ///     <c>true</c> if the Operating System is Windows 10; otherwise, <c>false</c>.
     /// </value>
-    public static bool IsTen { get; private set; }
+    public static bool IsTen { get; }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 11.
+    ///     Returns a value indicating whether the Operating System is Windows 11.
     /// </summary>
     /// <value>
-    ///   <c>true</c> if the Operating System is Windows 11; otherwise, <c>false</c>.
+    ///     <c>true</c> if the Operating System is Windows 11; otherwise, <c>false</c>.
     /// </value>
-    public static bool IsEleven { get; private set; }
+    public static bool IsEleven { get; }
 
     /// <summary>
-    /// Returns a value indicating whether the Operating System is Windows 11.
+    ///     Returns a value indicating whether the Operating System is Windows 11.
     /// </summary>
     /// <value>
-    ///   <c>true</c> if the Operating System is Windows 10 or higher; otherwise, <c>false</c>.
+    ///     <c>true</c> if the Operating System is Windows 10 or higher; otherwise, <c>false</c>.
     /// </value>
     public static bool IsModern { get; private set; }
 
     /// <summary>
-    /// Returns a value indicating whether Visual Styles are enabled.
+    ///     Returns a value indicating whether Visual Styles are enabled.
     /// </summary>
     /// <value>
-    /// <c>true</c> if Visual Styles are enabled; otherwise, <c>false</c>.
+    ///     <c>true</c> if Visual Styles are enabled; otherwise, <c>false</c>.
     /// </value>
     public static bool VisualStylesEnabled { get; private set; }
 
     /// <summary>
-    /// Is the dark theme activated in the operating system <c>true</c>; otherwise <c>false</c>
+    ///     Is the dark theme activated in the operating system <c>true</c>; otherwise <c>false</c>
     /// </summary>
     /// <returns></returns>
     public static bool IsDark()
     {
-        int value = 1;
+        var value = 1;
         if (IsTen || IsEleven)
-        {
             try
             {
-                var personalize = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
+                var personalize =
+                    "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
                 value = (int)Registry.GetValue(personalize, "AppsUseLightTheme", 1);
             }
             catch
             {
                 return false;
             }
-        }
 
         return value == 0;
     }
 
     /// <summary>
-    /// Set native app theme for this application
+    ///     Set native app theme for this application
     /// </summary>
     /// <param name="handle">The window handle</param>
     /// <param name="isDark">Is dark <c>true</c> otherwise <c>false</c></param>
@@ -134,14 +132,12 @@ public static class WindowsHelper
                 attribute = DWMWINDOWATTRIBUTE.DWMWA_USE_IMMERSIVE_DARK_MODE;
 
             if (enabled)
-            {
                 SetWindowTheme(handle, "DarkMode_Explorer", null);
-                //System.Windows.Forms.MessageBox.Show("Dark mode activated");
-            }
+            //System.Windows.Forms.MessageBox.Show("Dark mode activated");
             else
                 SetWindowTheme(handle, "Explorer", null);
 
-            int useImmersiveDarkMode = enabled ? 1 : 0;
+            var useImmersiveDarkMode = enabled ? 1 : 0;
 
             //AllowDarkModeForWindow(handle, true);
             //return true;
@@ -152,7 +148,7 @@ public static class WindowsHelper
     }
 
     /// <summary>
-    /// Apply round corner to the hWnd
+    ///     Apply round corner to the hWnd
     /// </summary>
     /// <param name="hWnd">The control hwnd</param>
     public static void ApplyRoundCorner(IntPtr hWnd)
@@ -166,11 +162,11 @@ public static class WindowsHelper
     }
 
     /// <summary>
-    /// Apply border color to the hWnd control
+    ///     Apply border color to the hWnd control
     /// </summary>
     /// <param name="hWnd">The control</param>
     /// <param name="color">The color</param>
-    public static void ApplyBorderColor(IntPtr hWnd, System.Drawing.Color color)
+    public static void ApplyBorderColor(IntPtr hWnd, Color color)
     {
         var pvAttribute = ColorTranslator.ToOle(color);
         var dwAttribute = DWMWINDOWATTRIBUTE.DWMWA_BORDER_COLOR;

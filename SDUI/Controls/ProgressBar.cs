@@ -1,14 +1,39 @@
-﻿using SDUI.Extensions;
+﻿using System.Drawing;
+using System.Drawing.Drawing2D;
+using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
-using System.Drawing;
-using System.Drawing.Drawing2D;
 
 namespace SDUI.Controls;
 
 public class ProgressBar : UIElementBase
 {
-    private long _value = 0;
+    private bool _drawHatch;
+
+    private Color[] _gradient = new Color[2];
+
+    private HatchStyle _hatchType = HatchStyle.Percent10;
+
+    private long _maximum = 100;
+
+    private float _maxPercentShowValue = 100;
+
+    private int _percentIndices = 2;
+
+    private int _radius = 4;
+
+    private bool _showAsPercent;
+
+    private bool _showValue;
+    private long _value;
+
+    public ProgressBar()
+    {
+        BackColor = Color.Transparent;
+        // Modern gradient with Primary color
+        _gradient = new[] { ColorScheme.Primary, ColorScheme.PrimaryContainer };
+    }
+
     public long Value
     {
         get => _value;
@@ -19,7 +44,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private long _maximum = 100;
     public long Maximum
     {
         get => _maximum;
@@ -30,7 +54,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private Color[] _gradient = new Color[2];
     public Color[] Gradient
     {
         get => _gradient;
@@ -41,7 +64,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private bool _showAsPercent = false;
     public bool ShowAsPercent
     {
         get => _showAsPercent;
@@ -52,7 +74,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private int _percentIndices = 2;
     public int PercentIndices
     {
         get => _percentIndices;
@@ -63,7 +84,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private float _maxPercentShowValue = 100;
     public float MaxPercentShowValue
     {
         get => _maxPercentShowValue;
@@ -74,7 +94,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private bool _showValue = false;
     public bool ShowValue
     {
         get => _showValue;
@@ -85,7 +104,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private int _radius = 4;
     public int Radius
     {
         get => _radius;
@@ -96,7 +114,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private bool _drawHatch = false;
     public bool DrawHatch
     {
         get => _drawHatch;
@@ -107,7 +124,6 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    private HatchStyle _hatchType = HatchStyle.Percent10;
     public HatchStyle HatchType
     {
         get => _hatchType;
@@ -118,31 +134,24 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    public ProgressBar()
-    {
-        BackColor = Color.Transparent;
-        // Modern gradient with Primary color
-        _gradient = new[] { ColorScheme.Primary, ColorScheme.PrimaryContainer };
-    }
-
     public override void OnPaint(SKPaintSurfaceEventArgs e)
     {
         base.OnPaint(e);
         var canvas = e.Surface.Canvas;
         canvas.Clear();
 
-        var intValue = ((_value / (float)_maximum) * Width);
-        var percent = ((100.0f * Value) / Maximum);
+        var intValue = _value / (float)_maximum * Width;
+        var percent = 100.0f * Value / Maximum;
 
         var rect = new SKRect(0, 0, Width, Height);
 
         // Modern background with SurfaceContainerHigh
         using (var paint = new SKPaint
-        {
-            Color = ColorScheme.SurfaceContainerHigh.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        })
+               {
+                   Color = ColorScheme.SurfaceContainerHigh.ToSKColor(),
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Fill
+               })
         {
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
@@ -161,11 +170,11 @@ public class ProgressBar : UIElementBase
                 SKShaderTileMode.Clamp);
 
             using (var paint = new SKPaint
-            {
-                Shader = shader,
-                IsAntialias = true,
-                Style = SKPaintStyle.Fill
-            })
+                   {
+                       Shader = shader,
+                       IsAntialias = true,
+                       Style = SKPaintStyle.Fill
+                   })
             {
                 canvas.DrawRoundRect(progressRect, _radius, _radius, paint);
             }
@@ -188,12 +197,12 @@ public class ProgressBar : UIElementBase
 
         // Modern subtle border with Outline color
         using (var paint = new SKPaint
-        {
-            Color = ColorScheme.OutlineVariant.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1
-        })
+               {
+                   Color = ColorScheme.OutlineVariant.ToSKColor(),
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Stroke,
+                   StrokeWidth = 1
+               })
         {
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
@@ -219,33 +228,33 @@ public class ProgressBar : UIElementBase
 
             // Gölge metni
             using (var paint = new SKPaint
-            {
-                Color = shadowColor,
-                IsAntialias = true
-            })
+                   {
+                       Color = shadowColor,
+                       IsAntialias = true
+                   })
             using (var font = new SKFont
+                   {
+                       Size = Font.Size.PtToPx(this),
+                       Typeface = FontManager.GetSKTypeface(Font)
+                   })
             {
-                Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            })
-            {
-                float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
+                var textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                 TextRenderingHelper.DrawText(canvas, text, Width / 2f + 1, textY + 1, SKTextAlign.Center, font, paint);
             }
 
             // Ana metin
             using (var paint = new SKPaint
-            {
-                Color = textColor,
-                IsAntialias = true
-            })
+                   {
+                       Color = textColor,
+                       IsAntialias = true
+                   })
             using (var font = new SKFont
+                   {
+                       Size = Font.Size.PtToPx(this),
+                       Typeface = FontManager.GetSKTypeface(Font)
+                   })
             {
-                Size = Font.Size.PtToPx(this),
-                Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font)
-            })
-            {
-                float textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
+                var textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                 TextRenderingHelper.DrawText(canvas, text, Width / 2f, textY, SKTextAlign.Center, font, paint);
             }
         }

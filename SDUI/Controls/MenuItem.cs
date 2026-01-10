@@ -1,43 +1,51 @@
-using SDUI.Enums;
-using SDUI.Extensions;
-using SkiaSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using SDUI.Extensions;
+using SDUI.Helpers;
+using SkiaSharp;
+using CheckState = SDUI.Enums.CheckState;
 
 namespace SDUI.Controls;
 
 public class MenuItem
 {
-    public object Tag { get; set; }
-    private readonly List<MenuItem> _dropDownItems = new();
-    private string _text = string.Empty;
-    private string _name = string.Empty;
+    private bool _autoSize = true;
+    private Color _backColor = Color.Empty;
+    private bool _checkOnClick;
+
+    private CheckState _checkState = CheckState.Unchecked;
+    private bool _enabled = true;
+    private Font _font;
+    private Color _foreColor = Color.Empty;
     private Bitmap _icon;
     private Image _image;
     private Color _imageTransparentColor = Color.Empty;
-    private Keys _shortcutKeys = Keys.None;
     private bool _isSeparator;
-    private Size _size;
-    private Color _foreColor = Color.Empty;
-    private Color _backColor = Color.Empty;
-    private bool _enabled = true;
-    private bool _visible = true;
-    private Font _font;
-    private ContentAlignment _textAlign = ContentAlignment.MiddleLeft;
+    private string _name = string.Empty;
     private Padding _padding = new(3);
-    private bool _autoSize = true;
+    private Keys _shortcutKeys = Keys.None;
     private bool _showSubmenuArrow = true;
-    
+    private Size _size;
+    private string _text = string.Empty;
+    private ContentAlignment _textAlign = ContentAlignment.MiddleLeft;
+    private bool _visible = true;
+
+    public MenuItem(string text = "", Bitmap icon = null)
+    {
+        _text = text;
+        _icon = icon;
+        UpdateSize();
+    }
+
+    public object Tag { get; set; }
+
     /// <summary>
-    /// TODO!
+    ///     TODO!
     /// </summary>
     public ToolStripItemAlignment Alignment { get; set; } = ToolStripItemAlignment.Left;
-    
-    private Enums.CheckState _checkState = Enums.CheckState.Unchecked;
-    private bool _checkOnClick;
 
     [Category("Behavior")]
     [DefaultValue(false)]
@@ -52,23 +60,20 @@ public class MenuItem
     }
 
     [Category("Appearance")]
-    [DefaultValue(typeof(Enums.CheckState), "Unchecked")]
-    public Enums.CheckState CheckState
+    [DefaultValue(typeof(CheckState), "Unchecked")]
+    public CheckState CheckState
     {
         get => _checkState;
         set
         {
             if (_checkState == value) return;
-            var oldChecked = _checkState == Enums.CheckState.Checked;
+            var oldChecked = _checkState == CheckState.Checked;
             _checkState = value;
-            var newChecked = _checkState == Enums.CheckState.Checked;
-            
+            var newChecked = _checkState == CheckState.Checked;
+
             Parent?.Invalidate();
-            
-            if (oldChecked != newChecked)
-            {
-                CheckedChanged?.Invoke(this, EventArgs.Empty);
-            }
+
+            if (oldChecked != newChecked) CheckedChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -76,8 +81,8 @@ public class MenuItem
     [DefaultValue(false)]
     public bool Checked
     {
-        get => _checkState == Enums.CheckState.Checked;
-        set => CheckState = value ? Enums.CheckState.Checked : Enums.CheckState.Unchecked;
+        get => _checkState == CheckState.Checked;
+        set => CheckState = value ? CheckState.Checked : CheckState.Unchecked;
     }
 
     public string Text
@@ -297,16 +302,10 @@ public class MenuItem
         }
     }
 
-    public bool HasDropDown => _dropDownItems.Count > 0;
-    public List<MenuItem> DropDownItems => _dropDownItems;
-    internal MenuStrip Parent { get; set; }
+    public bool HasDropDown => DropDownItems.Count > 0;
+    public List<MenuItem> DropDownItems { get; } = new();
 
-    public MenuItem(string text = "", Bitmap icon = null)
-    {
-        _text = text;
-        _icon = icon;
-        UpdateSize();
-    }
+    internal MenuStrip Parent { get; set; }
 
     private void UpdateSize()
     {
@@ -315,14 +314,14 @@ public class MenuItem
         using var paint = new SKPaint
         {
             TextSize = (Font ?? Parent.Font).Size.PtToPx(Parent),
-            Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font ?? Parent.Font)
+            Typeface = FontManager.GetSKTypeface(Font ?? Parent.Font)
         };
 
         var textBounds = new SKRect();
         paint.MeasureText(Text, ref textBounds);
 
-        int width = (int)textBounds.Width + Padding.Horizontal;
-        int height = (int)textBounds.Height + Padding.Vertical;
+        var width = (int)textBounds.Width + Padding.Horizontal;
+        var height = (int)textBounds.Height + Padding.Vertical;
 
         if (Icon != null || Image != null)
         {
@@ -332,10 +331,7 @@ public class MenuItem
             height = Math.Max(height, imageHeight + Padding.Vertical);
         }
 
-        if (HasDropDown && ShowSubmenuArrow)
-        {
-            width += 12; // Ok işareti için ekstra genişlik
-        }
+        if (HasDropDown && ShowSubmenuArrow) width += 12; // Ok işareti için ekstra genişlik
 
         if (ShortcutKeys != Keys.None)
         {
@@ -356,28 +352,22 @@ public class MenuItem
     public void AddDropDownItem(MenuItem item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
-        _dropDownItems.Add(item);
+        DropDownItems.Add(item);
         Parent?.Invalidate();
     }
 
     public void RemoveDropDownItem(MenuItem item)
     {
         if (item == null) throw new ArgumentNullException(nameof(item));
-        if (_dropDownItems.Remove(item))
-        {
-            Parent?.Invalidate();
-        }
+        if (DropDownItems.Remove(item)) Parent?.Invalidate();
     }
 
     internal void OnClick()
     {
         if (!Enabled) return;
-        
-        if (CheckOnClick)
-        {
-            CheckState = CheckState == Enums.CheckState.Checked ? Enums.CheckState.Unchecked : Enums.CheckState.Checked;
-        }
-        
+
+        if (CheckOnClick) CheckState = CheckState == CheckState.Checked ? CheckState.Unchecked : CheckState.Checked;
+
         Click?.Invoke(this, EventArgs.Empty);
     }
 
@@ -388,8 +378,8 @@ public class MenuItem
 public class MenuItemSeparator : MenuItem
 {
     private float _height = 2f;
-    private float _margin = 4f;
     private Color _lineColor = Color.FromArgb(100, 100, 100);
+    private float _margin = 4f;
     private Color _shadowColor = Color.FromArgb(50, 50, 50);
 
     public MenuItemSeparator()
@@ -448,7 +438,8 @@ public class MenuItemSeparator : MenuItem
 
 public static class MenuStripExtensions
 {
-    public static MenuItem AddMenuItem(this MenuStrip menu, string text, EventHandler onClick = null, Keys shortcut = Keys.None)
+    public static MenuItem AddMenuItem(this MenuStrip menu, string text, EventHandler onClick = null,
+        Keys shortcut = Keys.None)
     {
         var item = new MenuItem(text);
         if (onClick != null)
@@ -457,7 +448,8 @@ public static class MenuStripExtensions
         return item;
     }
 
-    public static MenuItem AddMenuItem(this MenuItem parent, string text, EventHandler onClick = null, Keys shortcut = Keys.None)
+    public static MenuItem AddMenuItem(this MenuItem parent, string text, EventHandler onClick = null,
+        Keys shortcut = Keys.None)
     {
         var item = new MenuItem(text);
         if (onClick != null)

@@ -1,45 +1,19 @@
-﻿using Microsoft.VisualBasic;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using System.Runtime.Serialization;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
 public partial class ListViewItem
 {
-    public partial class ListViewSubItem
+    public class ListViewSubItem
     {
-        private class SubItemStyle
-        {
-            public Color backColor = Color.Empty; // Do NOT rename (binary serialization).
-            public Font? font; // Do NOT rename (binary serialization).
-            public Color foreColor = Color.Empty; // Do NOT rename (binary serialization).
-        }
+        [NonSerialized] private AccessibleObject? _accessibilityObject;
 
-        [NonSerialized]
-        internal ListViewItem? _owner;
-#pragma warning disable IDE1006
-        private string? text;  // Do NOT rename (binary serialization).
-
-        [OptionalField(VersionAdded = 2)]
-        private string? name = null;  // Do NOT rename (binary serialization).
-
-        private SubItemStyle? style;  // Do NOT rename (binary serialization).
-
-        [OptionalField(VersionAdded = 2)]
-        private object? userData;  // Do NOT rename (binary serialization).
-#pragma warning restore IDE1006
-
-        [NonSerialized]
-        private AccessibleObject? _accessibilityObject;
+        [NonSerialized] internal ListViewItem? _owner;
 
         public ListViewSubItem()
         {
@@ -67,10 +41,7 @@ public partial class ListViewItem
         {
             get
             {
-                if (_accessibilityObject is null && _owner is not null)
-                {
-                    _accessibilityObject = null;
-                }
+                if (_accessibilityObject is null && _owner is not null) _accessibilityObject = null;
 
                 return _accessibilityObject;
             }
@@ -80,10 +51,7 @@ public partial class ListViewItem
         {
             get
             {
-                if (style is not null && style.backColor != Color.Empty)
-                {
-                    return style.backColor;
-                }
+                if (style is not null && style.backColor != Color.Empty) return style.backColor;
 
                 return _owner?._listView?.BackColor ?? Color.Transparent;
             }
@@ -105,39 +73,17 @@ public partial class ListViewItem
             get
             {
                 if (_owner?._listView is not null && _owner._listView.IsHandleCreated)
-                {
                     return _owner._listView.GetSubItemRect(_owner.Index, _owner.SubItems.IndexOf(this));
-                }
-                else
-                {
-                    return Rectangle.Empty;
-                }
+
+                return Rectangle.Empty;
             }
         }
 
-        internal bool CustomBackColor
-        {
-            get
-            {
-                return style is not null && !style.backColor.IsEmpty;
-            }
-        }
+        internal bool CustomBackColor => style is not null && !style.backColor.IsEmpty;
 
-        internal bool CustomFont
-        {
-            get
-            {
-                return style is not null && style.font is not null;
-            }
-        }
+        internal bool CustomFont => style is not null && style.font is not null;
 
-        internal bool CustomForeColor
-        {
-            get
-            {
-                return style is not null && !style.foreColor.IsEmpty;
-            }
-        }
+        internal bool CustomForeColor => style is not null && !style.foreColor.IsEmpty;
 
         internal bool CustomStyle => style is not null;
 
@@ -145,10 +91,7 @@ public partial class ListViewItem
         {
             get
             {
-                if (style is not null && style.font is not null)
-                {
-                    return style.font;
-                }
+                if (style is not null && style.font is not null) return style.font;
 
                 return _owner?._listView?.Font ?? Control.DefaultFont;
             }
@@ -168,10 +111,7 @@ public partial class ListViewItem
         {
             get
             {
-                if (style is not null && style.foreColor != Color.Empty)
-                {
-                    return style.foreColor;
-                }
+                if (style is not null && style.foreColor != Color.Empty) return style.foreColor;
 
                 return _owner?._listView?.ForeColor ?? ColorScheme.ForeColor;
             }
@@ -189,11 +129,8 @@ public partial class ListViewItem
 
         internal int Index => _owner is null ? -1 : _owner.SubItems.IndexOf(this);
 
-        public object? Tag
-        {
-            get => userData;
-            set => userData = value;
-        }
+        [field: OptionalField(VersionAdded = 2)]
+        public object? Tag { get; set; }
 
         [Localizable(true)]
         [AllowNull]
@@ -204,7 +141,7 @@ public partial class ListViewItem
             {
                 if (text == value)
                     return;
-                    
+
                 text = value;
                 _owner?.UpdateSubItems(Index);
             }
@@ -231,7 +168,7 @@ public partial class ListViewItem
         private void OnDeserialized(StreamingContext ctx)
         {
             name = null;
-            userData = null;
+            Tag = null;
         }
 
         [OnSerializing]
@@ -258,6 +195,24 @@ public partial class ListViewItem
             }
         }
 
-        public override string ToString() => $"ListViewSubItem: {{{Text}}}";
+        public override string ToString()
+        {
+            return $"ListViewSubItem: {{{Text}}}";
+        }
+
+        private class SubItemStyle
+        {
+            public Color backColor = Color.Empty; // Do NOT rename (binary serialization).
+            public Font? font; // Do NOT rename (binary serialization).
+            public Color foreColor = Color.Empty; // Do NOT rename (binary serialization).
+        }
+#pragma warning disable IDE1006
+        private string? text; // Do NOT rename (binary serialization).
+
+        [OptionalField(VersionAdded = 2)] private string? name; // Do NOT rename (binary serialization).
+
+        private SubItemStyle? style; // Do NOT rename (binary serialization).
+
+#pragma warning restore IDE1006
     }
 }

@@ -1,7 +1,7 @@
-﻿using SDUI.Controls;
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using SDUI.Controls;
 
 namespace SDUI.Collections;
 
@@ -28,20 +28,74 @@ public class ArrangedElementCollection : IList
 
     internal virtual IUIElement this[int index] => InnerList[index];
 
+    void IList.Clear()
+    {
+        ((IList)InnerList).Clear();
+    }
+
+    bool IList.IsFixedSize => ((IList)InnerList).IsFixedSize;
+
+    bool IList.Contains(object? value)
+    {
+        return ((IList)InnerList).Contains(value);
+    }
+
+    public virtual bool IsReadOnly => ((IList)InnerList).IsReadOnly;
+
+    void IList.RemoveAt(int index)
+    {
+        ((IList)InnerList).RemoveAt(index);
+    }
+
+    void IList.Remove(object? value)
+    {
+        ((IList)InnerList).Remove(value);
+    }
+
+    int IList.Add(object? value)
+    {
+        return ((IList)InnerList).Add(value);
+    }
+
+    int IList.IndexOf(object? value)
+    {
+        return ((IList)InnerList).IndexOf(value);
+    }
+
+    void IList.Insert(int index, object? value)
+    {
+        throw new NotSupportedException();
+    }
+
+    object? IList.this[int index]
+    {
+        get => InnerList[index];
+        set => throw new NotSupportedException();
+    }
+
+    public virtual int Count => InnerList.Count;
+
+    object ICollection.SyncRoot => ((ICollection)InnerList).SyncRoot;
+
+    public void CopyTo(Array array, int index)
+    {
+        ((ICollection)InnerList).CopyTo(array, index);
+    }
+
+    bool ICollection.IsSynchronized => ((ICollection)InnerList).IsSynchronized;
+
+    public virtual IEnumerator GetEnumerator()
+    {
+        return InnerList.GetEnumerator();
+    }
+
     public override bool Equals(object? obj)
     {
-        if (!(obj is ArrangedElementCollection other) || Count != other.Count)
-        {
-            return false;
-        }
+        if (!(obj is ArrangedElementCollection other) || Count != other.Count) return false;
 
-        for (int i = 0; i < Count; i++)
-        {
+        for (var i = 0; i < Count; i++)
             if (InnerList[i] != other.InnerList[i])
-            {
                 return false;
-            }
-        }
 
         return true;
     }
@@ -49,20 +103,17 @@ public class ArrangedElementCollection : IList
     public override int GetHashCode()
     {
         HashCode hash = default;
-        foreach (object o in InnerList)
-        {
-            hash.Add(o);
-        }
+        foreach (object o in InnerList) hash.Add(o);
 
         return hash.ToHashCode();
     }
 
     /// <summary>
-    ///  Repositions a element in this list.
+    ///     Repositions a element in this list.
     /// </summary>
     private protected void MoveElement(IUIElement element, int fromIndex, int toIndex)
     {
-        int delta = toIndex - fromIndex;
+        var delta = toIndex - fromIndex;
 
         switch (delta)
         {
@@ -100,7 +151,8 @@ public class ArrangedElementCollection : IList
         InnerList[toIndex] = element;
     }
 
-    private static void Copy(ArrangedElementCollection sourceList, int sourceIndex, ArrangedElementCollection destinationList, int destinationIndex, int length)
+    private static void Copy(ArrangedElementCollection sourceList, int sourceIndex,
+        ArrangedElementCollection destinationList, int destinationIndex, int length)
     {
         if (sourceIndex < destinationIndex)
         {
@@ -111,50 +163,12 @@ public class ArrangedElementCollection : IList
             destinationIndex += length;
 
             for (; length > 0; length--)
-            {
                 destinationList.InnerList[--destinationIndex] = sourceList.InnerList[--sourceIndex];
-            }
         }
         else
         {
             for (; length > 0; length--)
-            {
                 destinationList.InnerList[destinationIndex++] = sourceList.InnerList[sourceIndex++];
-            }
         }
     }
-
-    void IList.Clear() => ((IList)InnerList).Clear();
-
-    bool IList.IsFixedSize => ((IList)InnerList).IsFixedSize;
-
-    bool IList.Contains(object? value) => ((IList)InnerList).Contains(value);
-
-    public virtual bool IsReadOnly => ((IList)InnerList).IsReadOnly;
-
-    void IList.RemoveAt(int index) => ((IList)InnerList).RemoveAt(index);
-
-    void IList.Remove(object? value) => ((IList)InnerList).Remove(value);
-
-    int IList.Add(object? value) => ((IList)InnerList).Add(value);
-
-    int IList.IndexOf(object? value) => ((IList)InnerList).IndexOf(value);
-
-    void IList.Insert(int index, object? value) => throw new NotSupportedException();
-
-    object? IList.this[int index]
-    {
-        get => InnerList[index];
-        set => throw new NotSupportedException();
-    }
-
-    public virtual int Count => InnerList.Count;
-
-    object ICollection.SyncRoot => ((ICollection)InnerList).SyncRoot;
-
-    public void CopyTo(Array array, int index) => ((ICollection)InnerList).CopyTo(array, index);
-
-    bool ICollection.IsSynchronized => ((ICollection)InnerList).IsSynchronized;
-
-    public virtual IEnumerator GetEnumerator() => InnerList.GetEnumerator();
 }

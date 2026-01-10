@@ -1,5 +1,5 @@
-using SkiaSharp;
 using System.Drawing;
+using SkiaSharp;
 
 namespace SDUI.Extensions;
 
@@ -17,10 +17,10 @@ public static class ColorExtensions
 
     public static SKColor InterpolateColor(this SKColor start, SKColor end, float progress)
     {
-        byte r = (byte)(start.Red + (end.Red - start.Red) * progress);
-        byte g = (byte)(start.Green + (end.Green - start.Green) * progress);
-        byte b = (byte)(start.Blue + (end.Blue - start.Blue) * progress);
-        byte a = (byte)(start.Alpha + (end.Alpha - start.Alpha) * progress);
+        var r = (byte)(start.Red + (end.Red - start.Red) * progress);
+        var g = (byte)(start.Green + (end.Green - start.Green) * progress);
+        var b = (byte)(start.Blue + (end.Blue - start.Blue) * progress);
+        var a = (byte)(start.Alpha + (end.Alpha - start.Alpha) * progress);
         return new SKColor(r, g, b, a);
     }
 }

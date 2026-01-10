@@ -1,4 +1,5 @@
 ﻿namespace SDUI;
+
 public enum ValueDivisor
 {
     By1 = 1,

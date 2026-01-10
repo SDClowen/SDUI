@@ -1,11 +1,16 @@
-﻿using SkiaSharp;
-using System.Drawing;
+﻿using System.Drawing;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class Separator : UIElementBase
 {
-    private bool _isVertical = false;
+    private bool _isVertical;
+
+    public Separator()
+    {
+        Size = new Size(120, 6);
+    }
 
     public bool IsVertical
     {
@@ -15,11 +20,6 @@ public class Separator : UIElementBase
             _isVertical = value;
             Invalidate();
         }
-    }
-
-    public Separator()
-    {
-        this.Size = new Size(120, 6);
     }
 
     public override void OnPaint(SKPaintSurfaceEventArgs e)

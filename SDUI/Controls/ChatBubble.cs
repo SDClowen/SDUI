@@ -1,21 +1,31 @@
-﻿using SDUI.Extensions;
-using SDUI.Helpers;
-using SkiaSharp;
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
+using SDUI.Extensions;
+using SDUI.Helpers;
+using SkiaSharp;
 
 namespace SDUI.Controls;
 
 public class ChatBubble : UIElementBase
 {
-    private SizeF _textSize;
-
-    [Category("Appearance")]
-    public Color Color { get; set; } = ColorScheme.PrimaryColor;
+    private bool _isIncoming = true;
 
     private float _radius = 12f;
+
+    private float _tailSize = 8f;
+    private SizeF _textSize;
+
+    public ChatBubble()
+    {
+        MinimumSize = new Size(32, 32);
+        TextAlign = ContentAlignment.MiddleLeft;
+        Padding = new Padding(12);
+    }
+
+    [Category("Appearance")] public Color Color { get; set; } = ColorScheme.PrimaryColor;
+
     [Category("Appearance")]
     public float Radius
     {
@@ -30,7 +40,6 @@ public class ChatBubble : UIElementBase
         }
     }
 
-    private float _tailSize = 8f;
     [Category("Appearance")]
     public float TailSize
     {
@@ -45,7 +54,6 @@ public class ChatBubble : UIElementBase
         }
     }
 
-    private bool _isIncoming = true;
     [Category("Appearance")]
     public bool IsIncoming
     {
@@ -60,23 +68,17 @@ public class ChatBubble : UIElementBase
         }
     }
 
-    public ChatBubble()
-    {
-        MinimumSize = new Size(32, 32);
-        TextAlign = ContentAlignment.MiddleLeft;
-        Padding = new Padding(12);
-    }
-
     internal override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
         using (var paint = new SKPaint())
         {
             paint.TextSize = Font.Size.PtToPx(this);
-            paint.Typeface = SDUI.Helpers.FontManager.GetSKTypeface(Font);
+            paint.Typeface = FontManager.GetSKTypeface(Font);
             var metrics = paint.FontMetrics;
             _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
         }
+
         if (AutoSize)
             Size = GetPreferredSize(Size.Empty);
     }
@@ -116,6 +118,7 @@ public class ChatBubble : UIElementBase
             tailPoints[1] = new SKPoint(Width, Height / 2);
             tailPoints[2] = new SKPoint(Width - _tailSize, Height / 2 + _tailSize);
         }
+
         bubblePath.MoveTo(tailPoints[0]);
         bubblePath.LineTo(tailPoints[1]);
         bubblePath.LineTo(tailPoints[2]);
@@ -123,11 +126,11 @@ public class ChatBubble : UIElementBase
 
         // Baloncuğu çiz
         using (var paint = new SKPaint
-        {
-            Color = Color.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Fill
-        })
+               {
+                   Color = Color.ToSKColor(),
+                   IsAntialias = true,
+                   Style = SKPaintStyle.Fill
+               })
         {
             canvas.DrawPath(bubblePath, paint);
         }
@@ -135,7 +138,8 @@ public class ChatBubble : UIElementBase
         // Text çizimi
         using (var textPaint = canvas.CreateTextPaint(Font, ForeColor, this, TextAlign))
         {
-            var x = textPaint.GetTextX(Width - Padding.Horizontal - (_tailSize * 2), textPaint.MeasureText(Text), TextAlign);
+            var x = textPaint.GetTextX(Width - Padding.Horizontal - _tailSize * 2, textPaint.MeasureText(Text),
+                TextAlign);
             var y = textPaint.GetTextY(Height - Padding.Vertical, TextAlign);
 
             // Text pozisyonunu tail'e göre ayarla
@@ -143,7 +147,7 @@ public class ChatBubble : UIElementBase
 
             if (AutoEllipsis)
             {
-                var maxWidth = Width - Padding.Horizontal - (_tailSize * 2);
+                var maxWidth = Width - Padding.Horizontal - _tailSize * 2;
                 canvas.DrawTextWithEllipsis(Text, textPaint, x, y, maxWidth);
             }
             else

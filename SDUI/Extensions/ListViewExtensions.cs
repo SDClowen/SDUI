@@ -1,27 +1,29 @@
 ﻿using System.Linq;
+using SDUI.Controls;
 
 namespace SDUI;
 
 public static class ListViewExtensions
 {
     /// <summary>
-    /// Move the selected items by <seealso cref="MoveDirection"/>
+    ///     Move the selected items by <seealso cref="MoveDirection" />
     /// </summary>
     /// <param name="sender">The ListView</param>
     /// <param name="direction">The move direction</param>
-    public static void MoveSelectedItems(this Controls.ListView sender, MoveDirection direction)
+    public static void MoveSelectedItems(this ListView sender, MoveDirection direction)
     {
         var valid = sender.SelectedItems.Count > 0 &&
-                    ((direction == MoveDirection.Down && (sender.SelectedItems[sender.SelectedItems.Count - 1].Index < sender.Items.Count - 1))
-                    || (direction == MoveDirection.Up && (sender.SelectedItems[0].Index > 0)));
+                    ((direction == MoveDirection.Down && sender.SelectedItems[sender.SelectedItems.Count - 1].Index <
+                         sender.Items.Count - 1)
+                     || (direction == MoveDirection.Up && sender.SelectedItems[0].Index > 0));
 
         if (valid)
         {
             var firstIndex = sender.SelectedItems[0].Index;
-            var selectedItems = sender.SelectedItems.Cast<Controls.ListViewItem>().ToList();
+            var selectedItems = sender.SelectedItems.ToList();
 
 
-            for (int i = 0; i < sender.SelectedIndices.Count; i++)
+            for (var i = 0; i < sender.SelectedIndices.Count; i++)
                 sender.Items.RemoveAt(sender.SelectedIndices[i]);
 
 

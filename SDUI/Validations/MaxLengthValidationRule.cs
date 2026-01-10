@@ -13,6 +13,7 @@ public class MaxLengthValidationRule : ValidationRule
             errorMessage = ErrorMessage ?? $"Bu alan en fazla {MaxLength} karakter olmalıdır.";
             return false;
         }
+
         errorMessage = string.Empty;
         return true;
     }
