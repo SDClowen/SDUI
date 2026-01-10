@@ -234,19 +234,6 @@ namespace SDUI.Controls
                 if (_size == newSize) return;
                 _size = newSize;
                 OnSizeChanged(EventArgs.Empty);
-
-                // Parent'a bildir - but not during layout to prevent recursion
-                if (!_isPerformingLayout && !_isArranging)
-                {
-                    if (Parent is UIWindowBase parentWindow)
-                    {
-                        parentWindow.PerformLayout();
-                    }
-                    else if (Parent is UIElementBase parentElement)
-                    {
-                        parentElement.PerformLayout();
-                    }
-                }
             }
         }
 
@@ -1644,7 +1631,21 @@ namespace SDUI.Controls
             
             // Don't trigger layout during arrange/layout operation to prevent infinite recursion
             if (!_isPerformingLayout && !_isArranging)
-                PerformLayout();
+            {
+                // If this control has children, layout them within new size
+                if (_controls.Count > 0)
+                    PerformLayout();
+                
+                // Notify parent that child size changed - parent may need to re-layout
+                if (Parent is UIWindowBase parentWindow)
+                {
+                    parentWindow.PerformLayout();
+                }
+                else if (Parent is UIElementBase parentElement)
+                {
+                    parentElement.PerformLayout();
+                }
+            }
             
             Invalidate();
         }
@@ -2470,7 +2471,6 @@ namespace SDUI.Controls
                     continue;
 
                 LayoutEngine.Perform(control, clientArea, ref remainingArea);
-                control.PerformLayout();
             }
 
             var afterBounds = _controls.Cast<UIElementBase>().Select(c => c.Bounds).ToArray();

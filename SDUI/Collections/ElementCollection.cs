@@ -55,39 +55,37 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         try
         {
-        InnerList.Add(value);
+            InnerList.Add(value);
 
             value.Parent = Owner;
             value.OnCreateControl();
 
-        if (value.TabIndex == -1)
-        {
-            int nextTabIndex = 0;
-                for (int c = 0; c < Count - 1; c++)
+            if (value.TabIndex == -1)
             {
-                int t = this[c].TabIndex;
-                if (nextTabIndex <= t)
+                int nextTabIndex = 0;
+                for (int c = 0; c < Count - 1; c++)
                 {
-                    nextTabIndex = t + 1;
+                    int t = this[c].TabIndex;
+                    if (nextTabIndex <= t)
+                    {
+                        nextTabIndex = t + 1;
+                    }
                 }
+
+                value.TabIndex = nextTabIndex;
             }
 
-            value.TabIndex = nextTabIndex;
-        }
+            _maxZOrder++;
+            value.ZOrder = _maxZOrder;
 
-                        _maxZOrder++;
-                        value.ZOrder = _maxZOrder;
-
-                        if (Owner.FocusedElement == null && value.TabStop)
-                        {
-                            Owner.FocusedElement = value;
+            if (Owner.FocusedElement == null && value.TabStop)
+            {
+                Owner.FocusedElement = value;
             }
-
-            value.PerformLayout();
         }
         finally
         {
-            Owner.ResumeLayout(false);
+            Owner.ResumeLayout(true);
         }
 
         if (Owner is UIElementBase control)
@@ -271,7 +269,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
             return;
         }
 
-            InnerList.Remove(value);
+        InnerList.Remove(value);
 
         if (Owner.FocusedElement == value)
         {
@@ -280,11 +278,12 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         value.Parent = null;
 
-            if (Owner is UIElementBase control)
+        if (Owner is UIElementBase control)
         {
-                control.OnControlRemoved(new UIElementEventArgs(value));
+            control.OnControlRemoved(new UIElementEventArgs(value));
         }
 
+        Owner.PerformLayout();
         Owner.Invalidate();
     }
 

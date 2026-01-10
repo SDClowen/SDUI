@@ -284,7 +284,6 @@ public class FlowLayoutPanel : UIElementBase
 
     protected override void OnLayout(UILayoutEventArgs e)
     {
-        base.OnLayout(e);
         if (_isLayouting) return;
 
         _isLayouting = true;

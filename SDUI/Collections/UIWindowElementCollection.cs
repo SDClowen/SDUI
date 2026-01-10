@@ -26,26 +26,33 @@ public class UIWindowElementCollection : IList<UIElementBase>
             var oldItem = _items[index];
             if (oldItem != value)
             {
-                if (oldItem != null)
+                _owner.SuspendLayout();
+                try
                 {
-                    oldItem.Parent = null;
-                    if (_owner.FocusedElement == oldItem)
+                    if (oldItem != null)
                     {
-                        _owner.FocusedElement = null;
+                        oldItem.Parent = null;
+                        if (_owner.FocusedElement == oldItem)
+                        {
+                            _owner.FocusedElement = null;
+                        }
+                    }
+                    _items[index] = value;
+                    if (value != null)
+                    {
+                        value.Parent = _owner;
+                        _maxZOrder++;
+                        value.ZOrder = _maxZOrder;
+                        if (_owner.FocusedElement == null && value.TabStop)
+                        {
+                            _owner.FocusedElement = value;
+                        }
                     }
                 }
-                _items[index] = value;
-                if (value != null)
+                finally
                 {
-                    value.Parent = _owner;
-                    _maxZOrder++;
-                    value.ZOrder = _maxZOrder;
-                    if (_owner.FocusedElement == null && value.TabStop)
-                    {
-                        _owner.FocusedElement = value;
-                    }
+                    _owner.ResumeLayout(true);
                 }
-                _owner.PerformLayout();
             }
         }
     }
@@ -58,32 +65,45 @@ public class UIWindowElementCollection : IList<UIElementBase>
         if (item == null)
             throw new ArgumentNullException(nameof(item));
 
-        item.Parent = _owner;
-        _maxZOrder++;
-        item.ZOrder = _maxZOrder;
-        _items.Add(item);
-
-        if (_owner.FocusedElement == null && item.TabStop)
+        _owner.SuspendLayout();
+        try
         {
-            _owner.FocusedElement = item;
-        }
+            item.Parent = _owner;
+            _maxZOrder++;
+            item.ZOrder = _maxZOrder;
+            _items.Add(item);
 
-        _owner.PerformLayout();
+            if (_owner.FocusedElement == null && item.TabStop)
+            {
+                _owner.FocusedElement = item;
+            }
+        }
+        finally
+        {
+            _owner.ResumeLayout(true);
+        }
     }
 
     public void Clear()
     {
-        var itemsToRemove = _items.ToList();
-        _items.Clear();
-        foreach (var item in itemsToRemove)
+        _owner.SuspendLayout();
+        try
         {
-            item.Parent = null;
-            if (_owner.FocusedElement == item)
+            var itemsToRemove = _items.ToList();
+            _items.Clear();
+            foreach (var item in itemsToRemove)
             {
-                _owner.FocusedElement = null;
+                item.Parent = null;
+                if (_owner.FocusedElement == item)
+                {
+                    _owner.FocusedElement = null;
+                }
             }
         }
-        _owner.PerformLayout();
+        finally
+        {
+            _owner.ResumeLayout(true);
+        }
     }
 
     public bool Contains(UIElementBase item) => _items.Contains(item);
@@ -96,17 +116,23 @@ public class UIWindowElementCollection : IList<UIElementBase>
         if (item == null)
             throw new ArgumentNullException(nameof(item));
 
-        item.Parent = _owner;
-        _maxZOrder++;
-        item.ZOrder = _maxZOrder;
-        _items.Insert(index, item);
-
-        if (_owner.FocusedElement == null && item.TabStop)
+        _owner.SuspendLayout();
+        try
         {
-            _owner.FocusedElement = item;
-        }
+            item.Parent = _owner;
+            _maxZOrder++;
+            item.ZOrder = _maxZOrder;
+            _items.Insert(index, item);
 
-        _owner.PerformLayout();
+            if (_owner.FocusedElement == null && item.TabStop)
+            {
+                _owner.FocusedElement = item;
+            }
+        }
+        finally
+        {
+            _owner.ResumeLayout(true);
+        }
     }
 
     public bool Remove(UIElementBase item)
@@ -114,29 +140,43 @@ public class UIWindowElementCollection : IList<UIElementBase>
         if (item == null)
             return false;
 
-        var result = _items.Remove(item);
-        if (result)
+        _owner.SuspendLayout();
+        try
         {
+            var result = _items.Remove(item);
+            if (result)
+            {
+                item.Parent = null;
+                if (_owner.FocusedElement == item)
+                {
+                    _owner.FocusedElement = null;
+                }
+            }
+            return result;
+        }
+        finally
+        {
+            _owner.ResumeLayout(true);
+        }
+    }
+
+    public void RemoveAt(int index)
+    {
+        _owner.SuspendLayout();
+        try
+        {
+            var item = _items[index];
+            _items.RemoveAt(index);
             item.Parent = null;
             if (_owner.FocusedElement == item)
             {
                 _owner.FocusedElement = null;
             }
-            _owner.PerformLayout();
         }
-        return result;
-    }
-
-    public void RemoveAt(int index)
-    {
-        var item = _items[index];
-        _items.RemoveAt(index);
-        item.Parent = null;
-        if (_owner.FocusedElement == item)
+        finally
         {
-            _owner.FocusedElement = null;
+            _owner.ResumeLayout(true);
         }
-        _owner.PerformLayout();
     }
 
     System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();

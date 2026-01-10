@@ -210,37 +210,41 @@ namespace SDUI
             var anchor = control.Anchor;
             var location = control.Location;
 
-            // Calculate distances from edges (used for anchoring)
+            // WinForms anchor behavior: distances are relative to clientArea (parent's client area)
+            // Calculate initial distances from edges
             int left = location.X;
             int top = location.Y;
             int right = clientArea.Width - (location.X + finalSize.Width);
             int bottom = clientArea.Height - (location.Y + finalSize.Height);
 
-            // Adjust size based on anchors
+            // Adjust position and size based on anchors
+            // Default anchor is Top,Left - control stays at fixed position
             if ((anchor & AnchorStyles.Left) != 0 && (anchor & AnchorStyles.Right) != 0)
             {
-                // Anchored to both left and right: stretch horizontally
+                // Anchored to both left and right: stretch horizontally, maintain distances
                 finalSize.Width = Math.Max(0, clientArea.Width - left - right);
             }
-            else if ((anchor & AnchorStyles.Right) != 0)
+            else if ((anchor & AnchorStyles.Right) != 0 && (anchor & AnchorStyles.Left) == 0)
             {
-                // Anchored to right only: adjust X position
+                // Anchored to right only: maintain right distance, adjust X position
                 location.X = Math.Max(0, clientArea.Width - right - finalSize.Width);
             }
+            // else: Left only or no horizontal anchor - keep location.X as is
 
             if ((anchor & AnchorStyles.Top) != 0 && (anchor & AnchorStyles.Bottom) != 0)
             {
-                // Anchored to both top and bottom: stretch vertically
+                // Anchored to both top and bottom: stretch vertically, maintain distances
                 finalSize.Height = Math.Max(0, clientArea.Height - top - bottom);
             }
-            else if ((anchor & AnchorStyles.Bottom) != 0)
+            else if ((anchor & AnchorStyles.Bottom) != 0 && (anchor & AnchorStyles.Top) == 0)
             {
-                // Anchored to bottom only: adjust Y position
+                // Anchored to bottom only: maintain bottom distance, adjust Y position
                 location.Y = Math.Max(0, clientArea.Height - bottom - finalSize.Height);
             }
+            // else: Top only or no vertical anchor - keep location.Y as is
 
-            // Arrange the control at its final position
-            control.Arrange(new Rectangle(location, finalSize));
+            // Arrange the control at its final position (margin already included in available area calculations)
+            control.Arrange(new Rectangle(location.X, location.Y, Math.Max(0, finalSize.Width), Math.Max(0, finalSize.Height)));
         }
     }
 }

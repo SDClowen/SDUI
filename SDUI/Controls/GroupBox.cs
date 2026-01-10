@@ -192,12 +192,13 @@ public class GroupBox : UIElementBase
         return preferredSize;
     }
 
-    public override void PerformLayout()
+    protected override void OnLayout(UILayoutEventArgs e)
     {
-        base.PerformLayout();
-
         if (Controls.Count == 0)
+        {
+            base.OnLayout(e);
             return;
+        }
 
         // Title height for offset
         int titleHeight = Font.Height + 7;
@@ -212,6 +213,13 @@ public class GroupBox : UIElementBase
 
         // Use LayoutEngine to layout children within client area
         var remaining = clientRect;
-        LayoutEngine.Perform(this, clientRect, ref remaining);
+        foreach (UIElementBase control in Controls)
+        {
+            if (!control.Visible)
+                continue;
+            LayoutEngine.Perform(control, clientRect, ref remaining);
+        }
+        
+        Invalidate();
     }
 }

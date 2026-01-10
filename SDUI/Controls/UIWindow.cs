@@ -723,7 +723,7 @@ public class UIWindow : UIWindowBase, IUIElement
 
     public new IUIElement Parent { get; set; }
 
-    private bool _layoutSuspended;
+    private int _layoutSuspendCount;
     private readonly Dictionary<string, SKPaint> _paintCache = new();
     private SKBitmap _cacheBitmap;
     private SKSurface _cacheSurface;
@@ -2991,6 +2991,9 @@ public class UIWindow : UIWindowBase, IUIElement
 
     public new void PerformLayout()
     {
+        if (_layoutSuspendCount > 0)
+            return;
+
         foreach (UIElementBase element in Controls)
             element.PerformLayout();
 
@@ -3017,7 +3020,7 @@ public class UIWindow : UIWindowBase, IUIElement
 
     private void InvalidateElement(UIElementBase element)
     {
-        if (_layoutSuspended) return;
+        if (_layoutSuspendCount > 0) return;
 
         element.InvalidateRenderTree();
 
@@ -3032,13 +3035,15 @@ public class UIWindow : UIWindowBase, IUIElement
 
     public new void SuspendLayout()
     {
-        _layoutSuspended = true;
+        _layoutSuspendCount++;
     }
 
     public new void ResumeLayout(bool performLayout)
     {
-        _layoutSuspended = false;
-        if (performLayout)
+        if (_layoutSuspendCount > 0)
+            _layoutSuspendCount--;
+
+        if (performLayout && _layoutSuspendCount == 0)
         {
             _needsFullRedraw = true;
             PerformLayout();
