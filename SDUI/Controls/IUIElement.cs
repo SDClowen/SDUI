@@ -1,7 +1,7 @@
-using System.Drawing;
-using System.Windows.Forms;
 using SDUI.Collections;
 using SkiaSharp;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
@@ -27,14 +27,14 @@ public interface IUIElement
     int ZOrder { get; set; }
     int TabIndex { get; set; }
     bool TabStop { get; set; }
+    int LayoutSuspendCount { get; set; }
+    bool _childControlsNeedAnchorLayout { get; set; }
+    bool _forceAnchorCalculations { get; set; }
+    Rectangle DisplayRectangle { get; }
 
     void Render(SKCanvas canvas);
     void Invalidate();
     void Refresh();
-    void PerformLayout();
-    void SuspendLayout();
-    void ResumeLayout();
-    void ResumeLayout(bool performLayout);
     void UpdateZOrder();
     void BringToFront();
     void OnCreateControl();

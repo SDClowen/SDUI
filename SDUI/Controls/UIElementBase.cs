@@ -7,17 +7,20 @@ using System.Runtime.InteropServices;
 using System.Windows.Forms;
 using SDUI.Collections;
 using SDUI.Helpers;
+using SDUI.Layout;
 using SDUI.Validations;
 using SkiaSharp;
 
 namespace SDUI.Controls;
 
-public abstract class UIElementBase : IUIElement, IDisposable
+public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDisposable
 {
     private static readonly object s_renderCacheLock = new();
     private static readonly LinkedList<UIElementBase> s_renderCacheLru = new();
     private static long s_totalCachedElementBytes;
     private static int s_globalLayoutPassId;
+    public bool _childControlsNeedAnchorLayout { get; set; }
+    public bool _forceAnchorCalculations { get; set; }
 
     // Layout pass tracking for Measure/Arrange caching
     private Size? _cachedMeasure;
@@ -36,6 +39,9 @@ public abstract class UIElementBase : IUIElement, IDisposable
     // Use a counter to support nested SuspendLayout/ResumeLayout like WinForms.
     // When > 0 layout is suspended; when it reaches 0 we allow layouts again.
     protected int _layoutSuspendCount;
+
+    public int LayoutSuspendCount { get => _layoutSuspendCount; set => _layoutSuspendCount = value; }
+
     private IUIElement _parent;
 
     public bool IsHandleCreated;
@@ -44,6 +50,8 @@ public abstract class UIElementBase : IUIElement, IDisposable
     {
         IsDesignMode = LicenseManager.UsageMode == LicenseUsageMode.Designtime;
         Controls = new ElementCollection(this);
+        Properties = new();
+
         _font = new Font("Segoe UI", 9f);
         _cursor = Cursors.Default;
         _currentDpi = DpiHelper.GetSystemDpi();
@@ -153,7 +161,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
         }
     }
 
-    [Browsable(false)] 
+    [Browsable(false)]
     public ElementCollection Controls { get; }
 
     public void BeginInvoke(Delegate method)
@@ -411,6 +419,12 @@ public abstract class UIElementBase : IUIElement, IDisposable
             Size = value.Size;
         }
     }
+
+    /// <summary>
+    ///  Retrieves our internal property storage object. If you have a property
+    ///  whose value is not always set, you should store it in here to save space.
+    /// </summary>
+    public PropertyStore Properties { get; }
 
     public Rectangle ClientRectangle => new(0, 0, Size.Width, Size.Height);
 
@@ -1119,6 +1133,32 @@ public abstract class UIElementBase : IUIElement, IDisposable
 
     #region Virtual Methods
 
+    internal Size ApplySizeConstraints(Size proposedSize)
+    {
+        return ApplyBoundsConstraints(0, 0, proposedSize.Width, proposedSize.Height).Size;
+    }
+
+    internal virtual Rectangle ApplyBoundsConstraints(int suggestedX, int suggestedY, int proposedWidth, int proposedHeight)
+    {
+        // COMPAT: in Everett we would allow you to set negative values in pre-handle mode
+        // in Whidbey, if you've set Min/Max size we will constrain you to 0,0. Everett apps didnt
+        // have min/max size on control, which is why this works.
+        if (MaximumSize != Size.Empty || MinimumSize != Size.Empty)
+        {
+            Size maximumSize = LayoutUtils.ConvertZeroToUnbounded(MaximumSize);
+            Rectangle newBounds = new(suggestedX, suggestedY, 0, 0)
+            {
+                // Clip the size to maximum and inflate it to minimum as necessary.
+                Size = LayoutUtils.IntersectSizes(new Size(proposedWidth, proposedHeight), maximumSize)
+            };
+            newBounds.Size = LayoutUtils.UnionSizes(newBounds.Size, MinimumSize);
+
+            return newBounds;
+        }
+
+        return new Rectangle(suggestedX, suggestedY, proposedWidth, proposedHeight);
+    }
+
     public virtual void OnPaint(SKPaintSurfaceEventArgs e)
     {
     }
@@ -1468,7 +1508,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
                                 {
                                     raw.Dispose();
                                     _renderSnapshot = SKImage.FromEncodedData(encoded);
-                                    
+
                                     if (DebugSettings.EnableRenderLogging)
                                         DebugSettings.Log(
                                             $"UIElementBase: Rasterized GPU snapshot via encode/decode for element {GetType().Name} ({Width}x{Height})");
@@ -1478,7 +1518,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
                             {
                                 // Encoding failed, keep raw snapshot
                                 _renderSnapshot = raw;
-                                
+
                                 if (DebugSettings.EnableRenderLogging)
                                     DebugSettings.Log(
                                         $"UIElementBase: GPU snapshot encoding failed for element {GetType().Name} ({Width}x{Height}), using raw GPU snapshot");
@@ -1488,7 +1528,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
                         {
                             // Encoding failed, keep raw snapshot
                             _renderSnapshot = raw;
-                            
+
                             if (DebugSettings.EnableRenderLogging)
                                 DebugSettings.Log(
                                     $"UIElementBase: GPU snapshot encoding exception for element {GetType().Name}: {encodeEx.Message}");
@@ -1539,7 +1579,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
                 lock (_renderLock)
                 {
                     var snapshot = RenderSnapshot();
-                    
+
                     // Snapshot null veya dispose edilmiş mi kontrol et
                     if (snapshot == null || snapshot.Handle == IntPtr.Zero)
                         return;
@@ -1556,7 +1596,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
                 if (DebugSettings.EnableRenderLogging)
                     DebugSettings.Log(
                         $"UIElementBase: Render failed for element {GetType().Name} ({Width}x{Height}): {ex.GetType().Name} - {ex.Message}");
-                
+
                 try
                 {
                     RenderUncached(targetCanvas);
@@ -1612,6 +1652,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
         get => ZOrder;
         set => ZOrder = value;
     }
+    public bool IsAncestorSiteInDesignMode { get; internal set; }
 
     protected virtual void AdjustSize()
     {
@@ -2440,7 +2481,13 @@ public abstract class UIElementBase : IUIElement, IDisposable
         }
     }
 
-    public virtual void PerformLayout(UIElementBase affectedElement)
+    public virtual void PerformLayout(UIElementBase affectedElement, string? propertyName)
+    {
+        var args = new UILayoutEventArgs(affectedElement, propertyName);
+        PerformLayout(args);
+    }
+
+    public virtual void PerformLayout(UILayoutEventArgs args)
     {
         if (_layoutSuspendCount > 0)
             return;
@@ -2451,7 +2498,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
         try
         {
             IsPerformingLayout = true;
-            OnLayout(new UILayoutEventArgs(affectedElement));
+            OnLayout(args);
         }
         finally
         {
@@ -2475,7 +2522,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
             if (!control.Visible)
                 continue;
 
-            LayoutEngine.Perform(control, clientArea, ref remainingArea);
+            PerformDefaultLayout(control, clientArea, ref remainingArea);
         }
     }
 

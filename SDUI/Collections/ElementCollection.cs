@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using SDUI.Controls;
+using SDUI.Layout;
+using SDUI.Layout;
 
 namespace SDUI.Collections;
 
@@ -102,7 +104,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
     public virtual void Clear()
     {
-        Owner.SuspendLayout();
+        (Owner as IArrangedElement)?.SuspendLayout();
 
         try
         {
@@ -110,7 +112,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         }
         finally
         {
-            Owner.ResumeLayout();
+            (Owner as IArrangedElement)?.ResumeLayout();
         }
     }
 
@@ -140,7 +142,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         // Remove the new control from its old parent (if any)
         value.Parent?.Controls.Remove(value);
 
-        Owner.SuspendLayout();
+        (Owner as IArrangedElement)?.SuspendLayout();
 
         try
         {
@@ -168,7 +170,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         }
         finally
         {
-            Owner.ResumeLayout(true);
+            (Owner as IArrangedElement)?.ResumeLayout(true);
         }
 
         if (Owner is UIElementBase control) control.OnControlAdded(new UIElementEventArgs(value));
@@ -181,14 +183,14 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         if (controls.Length > 0)
         {
-            Owner.SuspendLayout();
+            (Owner as IArrangedElement)?.SuspendLayout();
             try
             {
                 for (var i = 0; i < controls.Length; ++i) Add(controls[i]);
             }
             finally
             {
-                Owner.ResumeLayout(true);
+                (Owner as IArrangedElement)?.ResumeLayout(true);
             }
         }
     }
@@ -302,7 +304,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         if (Owner is UIElementBase control) control.OnControlRemoved(new UIElementEventArgs(value));
 
-        Owner.PerformLayout();
+        (Owner as IArrangedElement)?.PerformLayout();
         Owner.Invalidate();
     }
 

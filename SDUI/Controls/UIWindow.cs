@@ -1,4 +1,11 @@
-ï»¿using System;
+using SDUI.Animation;
+using SDUI.Collections;
+using SDUI.Extensions;
+using SDUI.Helpers;
+using SDUI.Layout;
+using SDUI.Rendering;
+using SkiaSharp;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -7,16 +14,10 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Windows.Forms;
-using SDUI.Animation;
-using SDUI.Collections;
-using SDUI.Extensions;
-using SDUI.Helpers;
-using SDUI.Rendering;
-using SkiaSharp;
 
 namespace SDUI.Controls;
 
-public class UIWindow : UIWindowBase, IUIElement
+public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 {
     public enum TabDesingMode
     {
@@ -833,6 +834,9 @@ public class UIWindow : UIWindowBase, IUIElement
     }
 
     public new IUIElement Parent { get; set; }
+    public int LayoutSuspendCount { get; set; }
+    public bool _childControlsNeedAnchorLayout { get; set; }
+    public bool _forceAnchorCalculations { get; set; }
 
     public new void Invalidate()
     {
@@ -1161,7 +1165,7 @@ public class UIWindow : UIWindowBase, IUIElement
 
     private static MouseEventArgs CreateChildMouseEvent(MouseEventArgs source, UIElementBase element)
     {
-        // Kaynak koordinatÄ± pencere tabanlÄ±; elementi pencere tabanlÄ± dikdÃ¶rtgene Ã§evir
+        // Kaynak koordinatý pencere tabanlý; elementi pencere tabanlý dikdörtgene çevir
         var elementWindowRect = GetWindowRelativeBoundsStatic(element);
         return new MouseEventArgs(
             source.Button,
@@ -1527,7 +1531,7 @@ public class UIWindow : UIWindowBase, IUIElement
             Focus();
 
         var elementClicked = false;
-        // Z-order'a gÃ¶re tersten kontrol et (Ã¼stteki elementten baÅŸla)
+        // Z-order'a göre tersten kontrol et (üstteki elementten baþla)
         BuildHitTestList(true);
         for (var i = 0; i < _hitTestElements.Count; i++)
         {
@@ -1564,9 +1568,9 @@ public class UIWindow : UIWindowBase, IUIElement
                     FocusedElement = element;
             }
 
-            // TÄ±klanan elementi en Ã¼ste getir
+            // Týklanan elementi en üste getir
             BringToFront(element);
-            break; // Ä°lk tÄ±klanan elementten sonra diÄŸerlerini kontrol etmeye gerek yok
+            break; // Ýlk týklanan elementten sonra diðerlerini kontrol etmeye gerek yok
         }
 
         if (!elementClicked)
@@ -1606,7 +1610,7 @@ public class UIWindow : UIWindowBase, IUIElement
         base.OnMouseDoubleClick(e);
 
         var elementClicked = false;
-        // Z-order'a gÃ¶re tersten kontrol et (Ã¼stteki elementten baÅŸla)
+        // Z-order'a göre tersten kontrol et (üstteki elementten baþla)
         BuildHitTestList(true);
         for (var i = 0; i < _hitTestElements.Count; i++)
         {
@@ -1618,9 +1622,9 @@ public class UIWindow : UIWindowBase, IUIElement
 
             var localEvent = CreateChildMouseEvent(e, element);
             element.OnMouseDoubleClick(localEvent);
-            // TÄ±klanan elementi en Ã¼ste getir
+            // Týklanan elementi en üste getir
             BringToFront(element);
-            break; // Ä°lk tÄ±klanan elementten sonra diÄŸerlerini kontrol etmeye gerek yok
+            break; // Ýlk týklanan elementten sonra diðerlerini kontrol etmeye gerek yok
         }
 
         if (!elementClicked)
@@ -1684,7 +1688,7 @@ public class UIWindow : UIWindowBase, IUIElement
 
         animationSource = e.Location;
 
-        // Z-order'a gÃ¶re tersten kontrol et
+        // Z-order'a göre tersten kontrol et
         var elementClicked = false;
         UIElementBase? hitElement = null;
         BuildHitTestList(true);
@@ -1867,7 +1871,7 @@ public class UIWindow : UIWindowBase, IUIElement
 
         UIElementBase hoveredElement = null;
 
-        // Z-order'a gÃ¶re tersten kontrol et
+        // Z-order'a göre tersten kontrol et
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder)
                      .Where(el => el.Visible && el.Enabled))
             if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
@@ -1875,7 +1879,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 hoveredElement = element;
                 var localEvent = CreateChildMouseEvent(e, element);
                 element.OnMouseMove(localEvent);
-                break; // Ä°lk hover edilen elementten sonra diÄŸerlerini kontrol etmeye gerek yok
+                break; // Ýlk hover edilen elementten sonra diðerlerini kontrol etmeye gerek yok
             }
 
         // Cursor should reflect the deepest hovered child (e.g., TextBox -> IBeam)
@@ -1916,7 +1920,7 @@ public class UIWindow : UIWindowBase, IUIElement
     {
         base.OnMouseEnter(e);
 
-        // Z-order'a gÃ¶re tersten kontrol et
+        // Z-order'a göre tersten kontrol et
         foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder)
                      .Where(el => el.Visible && el.Enabled))
         {
@@ -1933,35 +1937,35 @@ public class UIWindow : UIWindowBase, IUIElement
     {
         base.OnMouseWheel(e);
 
-        // Mouse pozisyonunu window client koordinatlarÄ±na Ã§evir
+        // Mouse pozisyonunu window client koordinatlarýna çevir
         var mousePos = PointToClient(MousePosition);
 
-        // Recursive olarak doÄŸru child'Ä± bul ve wheel olayÄ±nÄ± ilet
+        // Recursive olarak doðru child'ý bul ve wheel olayýný ilet
         if (PropagateMouseWheel(Controls.OfType<UIElementBase>(), mousePos, e))
-            return; // Event iÅŸlendi
+            return; // Event iþlendi
     }
 
     /// <summary>
-    ///     Recursive olarak child elementlere mouse wheel olayÄ±nÄ± iletir
+    ///     Recursive olarak child elementlere mouse wheel olayýný iletir
     /// </summary>
     private bool PropagateMouseWheel(IEnumerable<UIElementBase> elements, Point windowMousePos, MouseEventArgs e)
     {
-        // Z-order'a gÃ¶re tersten kontrol et - en Ã¼stteki element Ã¶nce
+        // Z-order'a göre tersten kontrol et - en üstteki element önce
         foreach (var element in elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
         {
             var elementBounds = GetWindowRelativeBoundsStatic(element);
             if (!elementBounds.Contains(windowMousePos))
                 continue;
 
-            // Ã–nce bu elementin child'larÄ±nÄ± kontrol et (daha spesifik -> daha genel)
+            // Önce bu elementin child'larýný kontrol et (daha spesifik -> daha genel)
             if (element.Controls != null && element.Controls.Count > 0)
             {
                 var childElements = element.Controls.OfType<UIElementBase>();
                 if (PropagateMouseWheel(childElements, windowMousePos, e))
-                    return true; // Child iÅŸledi
+                    return true; // Child iþledi
             }
 
-            // Child iÅŸlemediyse bu elemente gÃ¶nder
+            // Child iþlemediyse bu elemente gönder
             var localEvent = new MouseEventArgs(
                 e.Button,
                 e.Clicks,
@@ -1970,10 +1974,10 @@ public class UIWindow : UIWindowBase, IUIElement
                 e.Delta);
 
             element.OnMouseWheel(localEvent);
-            return true; // Event iÅŸlendi
+            return true; // Event iþlendi
         }
 
-        return false; // HiÃ§bir element iÅŸlemedi
+        return false; // Hiçbir element iþlemedi
     }
 
     private void ShowMaximize(bool IsOnMoving = false)
@@ -2065,7 +2069,7 @@ public class UIWindow : UIWindowBase, IUIElement
         // and processed in reverse (children.Count - 1 down to 0)
         for (var i = Controls.Count - 1; i >= 0; i--)
             if (Controls[i] is UIElementBase control && control.Visible)
-                SDUI.LayoutEngine.Perform(control, clientArea, ref remainingArea);
+                PerformDefaultLayout(control, clientArea, ref remainingArea);
     }
 
     protected override void OnPaint(PaintEventArgs e)
@@ -2323,7 +2327,7 @@ public class UIWindow : UIWindowBase, IUIElement
         var foreColor = ColorScheme.ForeColor.ToSKColor();
         var hoverColor = ColorScheme.BorderColor.ToSKColor();
 
-        // Arka planÄ± temizle
+        // Arka planý temizle
         canvas.Clear(ColorScheme.BackColor.ToSKColor());
 
         if (FullDrawHatch)
@@ -2362,13 +2366,13 @@ public class UIWindow : UIWindowBase, IUIElement
             hoverColor = foreColor.WithAlpha(20);
         }
 
-        // BaÅŸlÄ±k alanÄ± dÄ±ÅŸÄ±ndaki iÃ§eriÄŸi tema arkaplanÄ± ile doldur
+        // Baþlýk alaný dýþýndaki içeriði tema arkaplaný ile doldur
         using (var contentBgPaint = new SKPaint { Color = ColorScheme.BackColor.ToSKColor() })
         {
             canvas.DrawRect(0, _titleHeightDPI, Width, Math.Max(0, Height - _titleHeightDPI), contentBgPaint);
         }
 
-        // Kontrol dÃ¼ÄŸmeleri Ã§izimi
+        // Kontrol düðmeleri çizimi
         if (controlBox)
         {
             var closeHoverColor = new SKColor(232, 17, 35);
@@ -2391,7 +2395,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 StrokeCap = SKStrokeCap.Round
             };
 
-            // Ã‡arpÄ± iÅŸareti
+            // Çarpý iþareti
             var centerX = _controlBoxRect.Left + _controlBoxRect.Width / 2;
             var centerY = _controlBoxRect.Top + _controlBoxRect.Height / 2;
             var size = 5 * DPI;
@@ -2498,7 +2502,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 minPaint);
         }
 
-        // Extend Box Ã§izimi
+        // Extend Box çizimi
         if (ExtendBox)
         {
             var color = foreColor;
@@ -2552,7 +2556,7 @@ public class UIWindow : UIWindowBase, IUIElement
                 extendPaint);
         }
 
-        // Form Menu veya Icon Ã§izimi
+        // Form Menu veya Icon çizimi
         var faviconSize = 16 * DPI;
         if (showMenuInsteadOfIcon)
         {
@@ -2600,7 +2604,7 @@ public class UIWindow : UIWindowBase, IUIElement
             }
         }
 
-        // Form baÅŸlÄ±ÄŸÄ± Ã§izimi
+        // Form baþlýðý çizimi
         if (_windowPageControl == null || _windowPageControl.Count == 0)
         {
             using var font = new SKFont
@@ -2626,7 +2630,7 @@ public class UIWindow : UIWindowBase, IUIElement
             TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
-        // Tab kontrollerinin Ã§izimi
+        // Tab kontrollerinin çizimi
         if (_windowPageControl != null && _windowPageControl.Count > 0)
         {
             if (!pageAreaAnimationManager.IsAnimating() || pageRect == null ||

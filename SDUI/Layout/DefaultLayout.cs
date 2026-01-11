@@ -1,11 +1,13 @@
 
+using SDUI.Controls;
+using System;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
 
-namespace System.Windows.Forms.Layout;
+namespace SDUI.Layout;
  
 internal partial class DefaultLayout : LayoutEngine
 {
@@ -148,7 +150,7 @@ internal partial class DefaultLayout : LayoutEngine
     private static Rectangle GetAnchorDestination(IArrangedElement element, Rectangle displayRect, bool measureOnly)
     {
         // Container can not be null since we AnchorControls takes a non-null container.
-        return UseAnchorLayoutV2(element)
+        return true
             ? ComputeAnchoredBoundsV2(element, displayRect)
             : ComputeAnchoredBounds(element, displayRect, measureOnly);
     }
@@ -334,17 +336,6 @@ internal partial class DefaultLayout : LayoutEngine
         return new Rectangle(left, top, right - left, bottom - top);
     }
  
-    /// <summary>
-    ///  Determines if AnchorLayoutV2 should be used to compute anchors of the element
-    ///  and to layout anchored children controls with V2 version.
-    /// </summary>
-    internal static bool UseAnchorLayoutV2(IArrangedElement element)
-    {
-        // AnchorLayoutV2  only supports Control types. If the feature is disabled or
-        // the element is not of Control type, use the original layout method.
-        return AppContextSwitches.AnchorLayoutV2 && element is Control;
-    }
- 
     private static void LayoutAnchoredControls(IArrangedElement container)
     {
         Rectangle displayRectangle = container.DisplayRectangle;
@@ -515,7 +506,7 @@ internal partial class DefaultLayout : LayoutEngine
             element.SetBounds(newElementBounds, BoundsSpecified.None);
  
 #if DEBUG
-            Control control = (Control)element;
+            var control = (UIElementBase)element;
             newElementBounds.Size = control.ApplySizeConstraints(newElementBounds.Size);
  
             // This usually happens when a Control overrides its SetBoundsCore or sets size during OnResize
@@ -661,7 +652,7 @@ internal partial class DefaultLayout : LayoutEngine
             preferredSizeForAnchoring = GetAnchorPreferredSize(container);
  
             Padding containerPadding;
-            if (container is Control control)
+            if (container is UIElementBase control)
             {
                 // Calling this will respect Control.DefaultPadding.
                 containerPadding = control.Padding;
@@ -682,26 +673,6 @@ internal partial class DefaultLayout : LayoutEngine
         return CommonProperties.GetAutoSize(container);
     }
  
-    private static void UpdateAnchorsIteratively(Control control)
-    {
-        UpdateAnchorInfoV2(control);
- 
-        // If control does not have child controls or control is not yet ready to compute anchors, skip iterating over child controls.
-        if (!control._childControlsNeedAnchorLayout || control.Parent?._childControlsNeedAnchorLayout == true)
-        {
-            return;
-        }
- 
-        // Compute anchors if any child controls require it.
-        ControlCollection controls = control.Controls;
-        for (int i = 0; i < controls.Count; i++)
-        {
-            UpdateAnchorsIteratively(controls[i]);
-        }
- 
-        return;
-    }
- 
     /// <summary>
     ///  Updates the control's anchors information based on the control's current bounds.
     /// </summary>
@@ -711,13 +682,6 @@ internal partial class DefaultLayout : LayoutEngine
  
         if (element.Container is null)
         {
-            return;
-        }
- 
-        // If AnchorLayoutV2 switch is enabled, use V2 Layout.
-        if (UseAnchorLayoutV2(element))
-        {
-            UpdateAnchorsIteratively((Control)element);
             return;
         }
  
@@ -757,7 +721,7 @@ internal partial class DefaultLayout : LayoutEngine
         AnchorStyles anchor = GetAnchor(element);
         if (IsAnchored(anchor, AnchorStyles.Right))
         {
-            if (ScaleHelper.IsScalingRequirementMet && (anchorInfo.Right - parentWidth > 0) && (oldAnchorInfo.Right < 0))
+            if ((anchorInfo.Right - parentWidth > 0) && (oldAnchorInfo.Right < 0))
             {
                 // Parent was resized to fit its parent, or screen, we need to reuse old anchors info to prevent losing control beyond right edge.
                 anchorInfo.Right = oldAnchorInfo.Right;
@@ -785,7 +749,7 @@ internal partial class DefaultLayout : LayoutEngine
  
         if (IsAnchored(anchor, AnchorStyles.Bottom))
         {
-            if (ScaleHelper.IsScalingRequirementMet && (anchorInfo.Bottom - parentHeight > 0) && (oldAnchorInfo.Bottom < 0))
+            if ((anchorInfo.Bottom - parentHeight > 0) && (oldAnchorInfo.Bottom < 0))
             {
                 // The parent was resized to fit its parent or the screen, we need to reuse the old anchors info
                 // to prevent positioning the control beyond the bottom edge.
@@ -822,15 +786,14 @@ internal partial class DefaultLayout : LayoutEngine
     ///  https://github.com/dotnet/winforms/blob/tree/main/docs/design/anchor-layout-changes-in-net80.md for more details.
     ///  Developers may opt-out of this new behavior using switch <see cref="AppContextSwitches.AnchorLayoutV2"/>.
     /// </devdoc>
-    internal static void UpdateAnchorInfoV2(Control control)
+    internal static void UpdateAnchorInfoV2(UIElementBase control)
     {
         if (!CommonProperties.GetNeedsAnchorLayout(control))
         {
             return;
         }
  
-        Debug.Assert(AppContextSwitches.AnchorLayoutV2, $"AnchorLayoutV2 should be called only when {AppContextSwitches.AnchorLayoutV2SwitchName} is enabled.");
-        Control? parent = control.Parent;
+        var parent = control.Parent;
  
         // Check if control is ready for anchors calculation.
         if (parent is null)
@@ -934,12 +897,10 @@ internal partial class DefaultLayout : LayoutEngine
  
         if (GetDock(element) != value)
         {
-            SourceGenerated.EnumValidator.Validate(value);
- 
             bool dockNeedsLayout = CommonProperties.GetNeedsDockLayout(element);
             CommonProperties.xSetDock(element, value);
  
-            using (new LayoutTransaction(element.Container as Control, element, PropertyNames.Dock))
+            using (new LayoutTransaction(element.Container as UIElementBase, element, PropertyNames.Dock))
             {
                 // if the item is autosized, calling setbounds performs a layout, which
                 // if we haven't set the anchors info properly yet makes dock/anchors layout cranky.
@@ -977,17 +938,6 @@ internal partial class DefaultLayout : LayoutEngine
         {
             double heightFactor = factor.Height;
             double widthFactor = factor.Width;
- 
-            if (UseAnchorLayoutV2(element))
-            {
-                // AutoScaleFactor is not aligned with Window's SuggestedRectangle applied on top-level window/Form.
-                // So, compute factor with respect to the change in DisplayRectangle and apply it to scale anchors.
-                // See https://github.com/dotnet/winforms/issues/8266 for more information.
-                Rectangle displayRect = element.Container!.DisplayRectangle;
-                heightFactor = ((double)displayRect.Height) / anchorInfo.DisplayRectangle.Height;
-                widthFactor = ((double)displayRect.Width) / anchorInfo.DisplayRectangle.Width;
-                anchorInfo.DisplayRectangle = displayRect;
-            }
  
             anchorInfo.Left = (int)Math.Round(anchorInfo.Left * widthFactor);
             anchorInfo.Top = (int)Math.Round(anchorInfo.Top * heightFactor);
@@ -1092,7 +1042,7 @@ internal partial class DefaultLayout : LayoutEngine
             "Attempt to InitLayout while element has active cached bounds.");
  
         if (specified != BoundsSpecified.None &&
-            (CommonProperties.GetNeedsAnchorLayout(element) || (UseAnchorLayoutV2(element) && ((Control)element)._childControlsNeedAnchorLayout)))
+            (CommonProperties.GetNeedsAnchorLayout(element) && ((UIElementBase)element)._childControlsNeedAnchorLayout))
         {
             UpdateAnchorInfo(element);
         }
@@ -1109,7 +1059,6 @@ internal partial class DefaultLayout : LayoutEngine
     private static Size GetAnchorPreferredSize(IArrangedElement container)
     {
         Size prefSize = Size.Empty;
-        bool useV2Layout = UseAnchorLayoutV2(container);
  
         ArrangedElementCollection children = container.Children;
         for (int i = children.Count - 1; i >= 0; i--)
@@ -1137,21 +1086,9 @@ internal partial class DefaultLayout : LayoutEngine
  
                 if (IsAnchored(anchor, AnchorStyles.Right))
                 {
-                    // If we are right anchored, see what the anchors distance between our right edge and
-                    // the container is, and make sure our container is large enough to accomodate us.
-                    if (useV2Layout)
-                    {
-                        AnchorInfo? anchorInfo = GetAnchorInfo(element);
-                        Rectangle bounds = GetCachedBounds(element);
-                        prefSize.Width = Math.Max(prefSize.Width, anchorInfo is null ? bounds.Right : bounds.Right + anchorInfo.Right);
-                    }
-                    else
-                    {
-                        Rectangle anchorDest = GetAnchorDestination(element, Rectangle.Empty, measureOnly: true);
-                        prefSize.Width = anchorDest.Width < 0
-                            ? Math.Max(prefSize.Width, elementSpace.Right + anchorDest.Width)
-                            : Math.Max(prefSize.Width, anchorDest.Right);
-                    }
+                    AnchorInfo? anchorInfo = GetAnchorInfo(element);
+                    Rectangle bounds = GetCachedBounds(element);
+                    prefSize.Width = Math.Max(prefSize.Width, anchorInfo is null ? bounds.Right : bounds.Right + anchorInfo.Right);
                 }
  
                 if (IsAnchored(anchor, AnchorStyles.Bottom))
@@ -1159,18 +1096,9 @@ internal partial class DefaultLayout : LayoutEngine
                     // If we are right anchored, see what the anchors distance between our right edge and
                     // the container is, and make sure our container is large enough to accomodate us.
                     Rectangle anchorDest = GetAnchorDestination(element, Rectangle.Empty, measureOnly: true);
-                    if (useV2Layout)
-                    {
-                        AnchorInfo? anchorInfo = GetAnchorInfo(element);
-                        Rectangle bounds = GetCachedBounds(element);
-                        prefSize.Height = Math.Max(prefSize.Height, anchorInfo is null ? bounds.Bottom : bounds.Bottom + anchorInfo.Bottom);
-                    }
-                    else
-                    {
-                        prefSize.Height = anchorDest.Height < 0
-                            ? Math.Max(prefSize.Height, elementSpace.Bottom + anchorDest.Height)
-                            : Math.Max(prefSize.Height, anchorDest.Bottom);
-                    }
+                    AnchorInfo? anchorInfo = GetAnchorInfo(element);
+                    Rectangle bounds = GetCachedBounds(element);
+                    prefSize.Height = Math.Max(prefSize.Height, anchorInfo is null ? bounds.Bottom : bounds.Bottom + anchorInfo.Bottom);
                 }
             }
         }
@@ -1183,4 +1111,3 @@ internal partial class DefaultLayout : LayoutEngine
         return (anchor & desiredAnchor) == desiredAnchor;
     }
 }
-Document OutlineProject ExplorerNamespace Explorer

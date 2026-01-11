@@ -1,4 +1,4 @@
-ï»¿using System;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using SDUI.Extensions;
@@ -57,7 +57,7 @@ public class GroupBox : UIElementBase
 
         var canvas = e.Surface.Canvas;
 
-        // Debug Ã§erÃ§evesi
+        // Debug çerçevesi
         if (ColorScheme.DrawDebugBorders)
         {
             using var paint = new SKPaint
@@ -75,13 +75,13 @@ public class GroupBox : UIElementBase
         rect.Inflate(-inflate, -inflate);
         var shadowRect = rect;
 
-        // BaÅŸlÄ±k Ã¶lÃ§Ã¼leri (padding uygulanmÄ±ÅŸ geniÅŸlik)
+        // Baþlýk ölçüleri (padding uygulanmýþ geniþlik)
         var titleHeight = Font.Height + 7;
         float titleX = Padding.Left;
         var titleWidth = Math.Max(0, rect.Width - Padding.Horizontal);
         var titleRect = new SKRect(titleX, 0, titleX + titleWidth, titleHeight);
 
-        // GÃ¶lge Ã§izimi
+        // Gölge çizimi
         using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, _shadowDepth / 2f))
         using (var paint = new SKPaint
                {
@@ -93,7 +93,7 @@ public class GroupBox : UIElementBase
             canvas.DrawRoundRect(shadowRect, _radius, _radius, paint);
         }
 
-        // Arka plan Ã§izimi
+        // Arka plan çizimi
         using (var paint = new SKPaint
                {
                    Color = ColorScheme.BackColor2.ToSKColor(),
@@ -104,11 +104,11 @@ public class GroupBox : UIElementBase
             canvas.DrawRoundRect(rect, _radius, _radius, paint);
         }
 
-        // BaÅŸlÄ±k alanÄ± Ã§izimi (padding uygulanmÄ±ÅŸ sÄ±nÄ±rlar iÃ§inde)
+        // Baþlýk alaný çizimi (padding uygulanmýþ sýnýrlar içinde)
         canvas.Save();
         canvas.ClipRect(titleRect);
 
-        // BaÅŸlÄ±k Ã§izgisi
+        // Baþlýk çizgisi
         using (var paint = new SKPaint
                {
                    Color = ColorScheme.BorderColor.ToSKColor(),
@@ -120,7 +120,7 @@ public class GroupBox : UIElementBase
             canvas.DrawLine(titleRect.Left, titleRect.Height - 1, titleRect.Right, titleRect.Height - 1, paint);
         }
 
-        // BaÅŸlÄ±k arka plan (hafif)
+        // Baþlýk arka plan (hafif)
         using (var paint = new SKPaint
                {
                    Color = ColorScheme.BackColor2.ToSKColor().WithAlpha(15),
@@ -133,7 +133,7 @@ public class GroupBox : UIElementBase
 
         canvas.Restore();
 
-        // BaÅŸlÄ±k metni Ã§izimi
+        // Baþlýk metni çizimi
         if (!string.IsNullOrEmpty(Text))
         {
             using var font = new SKFont
@@ -170,7 +170,7 @@ public class GroupBox : UIElementBase
             TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
-        // Ã‡erÃ§eve Ã§izimi
+        // Çerçeve çizimi
         using (var paint = new SKPaint
                {
                    Color = ColorScheme.BorderColor.ToSKColor(),
@@ -217,7 +217,7 @@ public class GroupBox : UIElementBase
         {
             if (!control.Visible)
                 continue;
-            LayoutEngine.Perform(control, clientRect, ref remaining);
+            PerformDefaultLayout(control, clientRect, ref remaining);
         }
 
         Invalidate();

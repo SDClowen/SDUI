@@ -1,14 +1,20 @@
-﻿using System;
-using SDUI.Controls;
+﻿using SDUI.Layout;
+using System;
 
 namespace SDUI;
 
 public class UILayoutEventArgs : EventArgs
 {
-    public UILayoutEventArgs(UIElementBase affectedElement)
+    public UILayoutEventArgs(IArrangedElement affectedElement)
     {
         AffectedElement = affectedElement;
     }
+    public UILayoutEventArgs(IArrangedElement affectedElement, string property)
+    {
+        AffectedElement = affectedElement;
+        Property = property;
+    }
 
-    public UIElementBase AffectedElement { get; }
+    public IArrangedElement AffectedElement { get; }
+    public string Property { get; }
 }

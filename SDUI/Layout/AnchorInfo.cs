@@ -1,3 +1,5 @@
+using System.Drawing;
+
 namespace SDUI.Layout;
 
 /// <summary>
@@ -6,6 +8,8 @@ namespace SDUI.Layout;
 /// </summary>
 internal sealed class AnchorInfo
 {
+    public Rectangle DisplayRectangle { get; set; }
+
     /// <summary>Distance from left edge of parent's DisplayRectangle</summary>
     public int Left { get; set; }
 
