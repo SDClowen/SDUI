@@ -388,12 +388,19 @@ public class Button : UIElementBase, IButtonControl
             };
 
             var textWidth = font.MeasureText(Text);
+            
+            // Use bodyRect for text positioning (already accounts for elevation padding)
             var textX = Image == null
                 ? bodyRect.Left + (bodyRect.Width - textWidth) / 2f
                 : contentStartX;
-            var textY = bodyRect.Top + (bodyRect.Height + font.Metrics.CapHeight) / 2f;
+            
+            // Calculate text Y baseline position for vertical centering
+            // In SkiaSharp, DrawText Y coordinate is the baseline, not the top or center
+            // Ascent is negative, Descent is positive
+            var textY = bodyRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
 
-            canvas.DrawText(Text, textX, textY, font, textPaint);
+            // DrawText with font parameter - correct SkiaSharp 2.88+ API
+            canvas.DrawText(Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
     }
 

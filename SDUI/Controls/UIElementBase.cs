@@ -153,15 +153,8 @@ public abstract class UIElementBase : IUIElement, IDisposable
         }
     }
 
-    [Browsable(false)] public ElementCollection Controls { get; }
-
-    public void SetStyle(ControlStyles flag, bool value)
-    {
-    }
-
-    public void SetTopLevel(bool value)
-    {
-    }
+    [Browsable(false)] 
+    public ElementCollection Controls { get; }
 
     public void BeginInvoke(Delegate method)
     {
@@ -640,6 +633,7 @@ public abstract class UIElementBase : IUIElement, IDisposable
     }
 
     private AnchorStyles _anchor = AnchorStyles.Top | AnchorStyles.Left;
+    internal Layout.AnchorInfo? _anchorInfo;
 
     public virtual AnchorStyles Anchor
     {
@@ -650,6 +644,8 @@ public abstract class UIElementBase : IUIElement, IDisposable
                 return;
 
             _anchor = value;
+            // Reset anchor info when anchor style changes
+            _anchorInfo = null;
 
             OnAnchorChanged(EventArgs.Empty);
         }
@@ -1458,38 +1454,44 @@ public abstract class UIElementBase : IUIElement, IDisposable
                 {
                     var raw = _renderSurface.Snapshot();
 
-                    // If this element was GPU-rendered but the current global GPU context differs
-                    // (or is null), rasterize into a CPU-backed surface so future draws are safe.
-                    if (_renderTargetKind == RenderTargetKind.Gpu &&
-                        !ReferenceEquals(s_currentGpuContext, _renderGpuContext))
+                    // ALWAYS rasterize GPU snapshots to CPU to avoid cross-context access violations
+                    // Even if contexts match now, they might differ later when the snapshot is used
+                    if (_renderTargetKind == RenderTargetKind.Gpu)
                     {
-                        var info = new SKImageInfo(raw.Width, raw.Height, SKColorType.Rgba8888, SKAlphaType.Premul,
-                            SrgbColorSpace);
-                        using var rasterSurf = SKSurface.Create(info);
-                        if (rasterSurf != null)
+                        try
                         {
-                            var rc = rasterSurf.Canvas;
-                            rc.Save();
-                            rc.Clear(SKColors.Transparent);
-                            rc.DrawImage(raw, 0, 0);
-                            rc.Restore();
-                            rc.Flush();
-
-                            raw.Dispose();
-                            _renderSnapshot = rasterSurf.Snapshot();
-
-                            if (DebugSettings.EnableRenderLogging)
-                                DebugSettings.Log(
-                                    $"UIElementBase: Rasterized GPU snapshot into CPU surface for element {GetType().Name} ({Width}x{Height})");
+                            // Use encode/decode for safest GPU-to-CPU transfer
+                            var encoded = raw.Encode(SKEncodedImageFormat.Png, 100);
+                            if (encoded != null)
+                            {
+                                using (encoded)
+                                {
+                                    raw.Dispose();
+                                    _renderSnapshot = SKImage.FromEncodedData(encoded);
+                                    
+                                    if (DebugSettings.EnableRenderLogging)
+                                        DebugSettings.Log(
+                                            $"UIElementBase: Rasterized GPU snapshot via encode/decode for element {GetType().Name} ({Width}x{Height})");
+                                }
+                            }
+                            else
+                            {
+                                // Encoding failed, keep raw snapshot
+                                _renderSnapshot = raw;
+                                
+                                if (DebugSettings.EnableRenderLogging)
+                                    DebugSettings.Log(
+                                        $"UIElementBase: GPU snapshot encoding failed for element {GetType().Name} ({Width}x{Height}), using raw GPU snapshot");
+                            }
                         }
-                        else
+                        catch (Exception encodeEx)
                         {
-                            // Couldn't create raster surface; fall back to raw snapshot
+                            // Encoding failed, keep raw snapshot
                             _renderSnapshot = raw;
-
+                            
                             if (DebugSettings.EnableRenderLogging)
                                 DebugSettings.Log(
-                                    $"UIElementBase: Could not create raster surface for element {GetType().Name} ({Width}x{Height}), falling back to raw snapshot");
+                                    $"UIElementBase: GPU snapshot encoding exception for element {GetType().Name}: {encodeEx.Message}");
                         }
                     }
                     else
@@ -1510,9 +1512,14 @@ public abstract class UIElementBase : IUIElement, IDisposable
                 }
 
                 NeedsRedraw = false;
+                return _renderSnapshot;
             }
 
-        return _renderSnapshot;
+        // Return existing snapshot (still protected by lock in caller)
+        lock (_renderLock)
+        {
+            return _renderSnapshot;
+        }
     }
 
     public void Render(SKCanvas targetCanvas)
@@ -1526,50 +1533,20 @@ public abstract class UIElementBase : IUIElement, IDisposable
 
         if (ShouldUseRenderCache())
         {
-            var snapshot = RenderSnapshot();
-            // Snapshot null veya dispose edilmiş mi kontrol et
-            if (snapshot == null || snapshot.Handle == IntPtr.Zero)
-                return;
-
-            // If the cached surface was GPU-backed but the current GPU context is different (or null),
-            // avoid drawing the GPU image directly (which can crash with native access violations).
-            // Instead, create a temporary CPU-backed surface, draw the snapshot into it (readback),
-            // and draw that safe raster copy.
             try
             {
+                // Lock the entire operation to prevent snapshot disposal during use
                 lock (_renderLock)
                 {
-                    if (_renderTargetKind == RenderTargetKind.Gpu &&
-                        !ReferenceEquals(s_currentGpuContext, _renderGpuContext))
-                    {
-                        var info = new SKImageInfo(snapshot.Width, snapshot.Height, SKColorType.Rgba8888,
-                            SKAlphaType.Premul, SrgbColorSpace);
-                        using var tmpSurface = SKSurface.Create(info);
-                        if (tmpSurface != null)
-                        {
-                            var tmpCanvas = tmpSurface.Canvas;
-                            tmpCanvas.Save();
-                            tmpCanvas.Clear(SKColors.Transparent);
-                            tmpCanvas.DrawImage(snapshot, 0, 0);
-                            tmpCanvas.Restore();
-                            tmpCanvas.Flush();
+                    var snapshot = RenderSnapshot();
+                    
+                    // Snapshot null veya dispose edilmiş mi kontrol et
+                    if (snapshot == null || snapshot.Handle == IntPtr.Zero)
+                        return;
 
-                            using var raster = tmpSurface.Snapshot();
-                            targetCanvas.DrawImage(raster, Location.X, Location.Y);
-                        }
-                        else
-                        {
-                            // Fallback to uncached rendering if we couldn't create a temporary surface
-
-                            DisposeRenderResources();
-                            RenderUncached(targetCanvas);
-                        }
-                    }
-                    else
-                    {
-                        // Safe to draw directly (either CPU-backed snapshot or same GPU context)
-                        targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
-                    }
+                    // Snapshot is always CPU-backed now (rasterized in RenderSnapshot if GPU)
+                    // Safe to draw directly
+                    targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
                 }
             }
             catch (Exception ex)
@@ -1578,8 +1555,19 @@ public abstract class UIElementBase : IUIElement, IDisposable
                 DisposeRenderResources();
                 if (DebugSettings.EnableRenderLogging)
                     DebugSettings.Log(
-                        $"UIElementBase: DrawImage failed for element {GetType().Name} ({Width}x{Height}): {ex}");
-                RenderUncached(targetCanvas);
+                        $"UIElementBase: Render failed for element {GetType().Name} ({Width}x{Height}): {ex.GetType().Name} - {ex.Message}");
+                
+                try
+                {
+                    RenderUncached(targetCanvas);
+                }
+                catch (Exception fallbackEx)
+                {
+                    // Suppress any further exceptions during fallback rendering
+                    if (DebugSettings.EnableRenderLogging)
+                        DebugSettings.Log(
+                            $"UIElementBase: Fallback render also failed for element {GetType().Name}: {fallbackEx.GetType().Name} - {fallbackEx.Message}");
+                }
             }
 
             return;
@@ -2478,9 +2466,12 @@ public abstract class UIElementBase : IUIElement, IDisposable
         var clientArea = DisplayRectangle;
         var remainingArea = clientArea;
 
-        // Dock işlemleri - follow Controls collection order to match WinForms behavior.
-        foreach (UIElementBase control in Controls)
+        // WinForms dock order: Reverse z-order (last added first) in a single pass
+        // This matches WinForms DefaultLayout behavior where docking is z-order dependent
+        // and processed in reverse (children.Count - 1 down to 0)
+        for (int i = Controls.Count - 1; i >= 0; i--)
         {
+            var control = Controls[i];
             if (!control.Visible)
                 continue;
 

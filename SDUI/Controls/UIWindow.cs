@@ -2060,8 +2060,11 @@ public class UIWindow : UIWindowBase, IUIElement
 
         var remainingArea = clientArea;
 
-        for (var i = 0; i < Controls.Count; i++)
-            if (Controls[i] is UIElementBase control)
+        // WinForms dock order: Reverse z-order (last added first) in a single pass
+        // This matches WinForms DefaultLayout behavior where docking is z-order dependent
+        // and processed in reverse (children.Count - 1 down to 0)
+        for (var i = Controls.Count - 1; i >= 0; i--)
+            if (Controls[i] is UIElementBase control && control.Visible)
                 SDUI.LayoutEngine.Perform(control, clientArea, ref remainingArea);
     }
 

@@ -151,10 +151,10 @@ public class CheckBox : UIElementBase
         };
 
         var textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
-        var width = CHECKBOX_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth);
+        var width = CHECKBOX_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth) + Padding.Horizontal;
         var height = Ripple ? 30 : 20;
 
-        return new Size(width + Padding.Horizontal, height + Padding.Vertical);
+        return new Size(width, height + Padding.Vertical);
     }
 
     public override void OnCreateControl()
@@ -331,7 +331,7 @@ public class CheckBox : UIElementBase
         };
 
         float textX = boxOffset + CHECKBOX_SIZE + TEXT_PADDING;
-        var textBounds = SKRect.Create(textX, 0, Width - textX - Padding.Right, Height);
+        var textBounds = SKRect.Create(textX, Padding.Top, Width - textX - Padding.Right, Height - Padding.Vertical);
 
         canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis,
             UseMnemonic);

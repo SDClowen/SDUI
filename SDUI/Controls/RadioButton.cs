@@ -287,7 +287,7 @@ public class Radio : UIElementBase
         };
 
         float textX = boxOffset + RADIOBUTTON_SIZE + TEXT_PADDING;
-        var textBounds = SKRect.Create(textX, 0, Width - textX - Padding.Right, Height);
+        var textBounds = SKRect.Create(textX, Padding.Top, Width - textX - Padding.Right, Height - Padding.Vertical);
 
         canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis,
             UseMnemonic);

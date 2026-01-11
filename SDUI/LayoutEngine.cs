@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Windows.Forms;
 using SDUI.Controls;
+using SDUI.Layout;
 
 namespace SDUI;
 
@@ -45,210 +46,261 @@ internal static class LayoutEngine
         child.Arrange(arrangeRect);
     }
 
+    /// <summary>
+    ///     Checks if an anchor style has a specific flag set.
+    /// </summary>
+    private static bool IsAnchored(AnchorStyles anchor, AnchorStyles flag) => (anchor & flag) != 0;
+
+    /// <summary>
+    ///     Updates the control's anchor information based on its current bounds and parent display rectangle.
+    ///     This is called after a control is positioned to record its distances from parent edges.
+    ///     Matches DefaultLayout.cs UpdateAnchorInfo logic (lines 709-801).
+    /// </summary>
+    internal static void UpdateAnchorInfo(UIElementBase element, Rectangle parentDisplayRect)
+    {
+        if (element._anchorInfo == null)
+            element._anchorInfo = new AnchorInfo();
+
+        var bounds = element.Bounds;
+        var anchor = element.Anchor;
+        var anchorInfo = element._anchorInfo;
+
+        // Calculate absolute positions relative to parent DisplayRectangle
+        anchorInfo.Left = bounds.Left - parentDisplayRect.X;
+        anchorInfo.Top = bounds.Top - parentDisplayRect.Y;
+        anchorInfo.Right = bounds.Right - parentDisplayRect.X;
+        anchorInfo.Bottom = bounds.Bottom - parentDisplayRect.Y;
+
+        int parentWidth = parentDisplayRect.Width;
+        int parentHeight = parentDisplayRect.Height;
+
+        // Convert Right/Bottom to distances from parent's right/bottom edge (negative values)
+        // This matches DefaultLayout.cs UpdateAnchorInfo logic (lines 747-801)
+        if (IsAnchored(anchor, AnchorStyles.Right))
+        {
+            anchorInfo.Right -= parentWidth;
+            if (!IsAnchored(anchor, AnchorStyles.Left))
+                anchorInfo.Left -= parentWidth;
+        }
+        else if (!IsAnchored(anchor, AnchorStyles.Left))
+        {
+            // Neither left nor right: center horizontally
+            int center = parentWidth / 2;
+            anchorInfo.Right -= center;
+            anchorInfo.Left -= center;
+        }
+
+        if (IsAnchored(anchor, AnchorStyles.Bottom))
+        {
+            anchorInfo.Bottom -= parentHeight;
+            if (!IsAnchored(anchor, AnchorStyles.Top))
+                anchorInfo.Top -= parentHeight;
+        }
+        else if (!IsAnchored(anchor, AnchorStyles.Top))
+        {
+            // Neither top nor bottom: center vertically
+            int center = parentHeight / 2;
+            anchorInfo.Bottom -= center;
+            anchorInfo.Top -= center;
+        }
+    }
+
+    /// <summary>
+    ///     Computes anchored bounds for a control based on stored anchor information and current parent display rectangle.
+    ///     This is called during layout to reposition/resize anchored controls when parent size changes.
+    ///     Matches DefaultLayout.cs ComputeAnchoredBounds logic (lines 234-272).
+    /// </summary>
+    private static Rectangle ComputeAnchoredBounds(UIElementBase element, Rectangle parentDisplayRect)
+    {
+        var anchorInfo = element._anchorInfo;
+        if (anchorInfo == null)
+        {
+            // No anchor info yet - return current bounds
+            return element.Bounds;
+        }
+
+        var anchor = element.Anchor;
+        int left = anchorInfo.Left + parentDisplayRect.X;
+        int top = anchorInfo.Top + parentDisplayRect.Y;
+        int right = anchorInfo.Right + parentDisplayRect.X;
+        int bottom = anchorInfo.Bottom + parentDisplayRect.Y;
+
+        // Adjust for parent size changes - matches DefaultLayout.cs ComputeAnchoredBounds (lines 236-272)
+        if (IsAnchored(anchor, AnchorStyles.Right))
+        {
+            right += parentDisplayRect.Width;
+            if (!IsAnchored(anchor, AnchorStyles.Left))
+                left += parentDisplayRect.Width;
+        }
+        else if (!IsAnchored(anchor, AnchorStyles.Left))
+        {
+            int center = parentDisplayRect.Width / 2;
+            right += center;
+            left += center;
+        }
+
+        if (IsAnchored(anchor, AnchorStyles.Bottom))
+        {
+            bottom += parentDisplayRect.Height;
+            if (!IsAnchored(anchor, AnchorStyles.Top))
+                top += parentDisplayRect.Height;
+        }
+        else if (!IsAnchored(anchor, AnchorStyles.Top))
+        {
+            int center = parentDisplayRect.Height / 2;
+            bottom += center;
+            top += center;
+        }
+
+        // Ensure positive size
+        if (right < left) right = left;
+        if (bottom < top) bottom = top;
+
+        return new Rectangle(left, top, right - left, bottom - top);
+    }
+
     internal static void Perform(UIElementBase control, Rectangle clientArea, ref Rectangle remainingArea)
     {
         if (!control.Visible)
             return;
 
-        // Apply margin to get actual available space for this control
-        var margin = control.Margin;
-        var available = new Rectangle(
-            remainingArea.X + margin.Left,
-            remainingArea.Y + margin.Top,
-            Math.Max(0, remainingArea.Width - margin.Horizontal),
-            Math.Max(0, remainingArea.Height - margin.Vertical));
-
         switch (control.Dock)
         {
             case DockStyle.Top:
             {
-                // Measure: Width is constrained by container; height may be auto-sized.
-                Size measuredSize;
+                // Measure with width constrained to remaining width
+                Size elementSize;
                 if (control.AutoSize)
                 {
-                    measuredSize = control.Measure(new Size(available.Width, 0));
+                    elementSize = control.Measure(new Size(remainingArea.Width, 0));
                     if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
-                        measuredSize.Height = Math.Max(control.Size.Height, measuredSize.Height);
+                        elementSize.Height = Math.Max(control.Size.Height, elementSize.Height);
                 }
                 else
                 {
-                    measuredSize = new Size(available.Width, control.Size.Height);
+                    elementSize = new Size(remainingArea.Width, control.Size.Height);
                 }
 
-                // Arrange at the top of available area
-                var arrangeRect = new Rectangle(available.X, available.Y, available.Width, measuredSize.Height);
-                control.Arrange(arrangeRect);
+                // Position at top of remaining area
+                Rectangle bounds = new(remainingArea.X, remainingArea.Y, elementSize.Width, elementSize.Height);
+                control.Arrange(bounds);
 
-                // Update remaining area - shrink from top by control height + full margin
-                var consumedHeight = measuredSize.Height + margin.Top + margin.Bottom;
-                remainingArea = new Rectangle(
-                    remainingArea.X,
-                    remainingArea.Y + consumedHeight,
-                    remainingArea.Width,
-                    Math.Max(0, remainingArea.Height - consumedHeight)
-                );
-            }
+                // Update remaining area using actual bounds (control may have adjusted during Arrange)
+                remainingArea.Y += control.Bounds.Height;
+                remainingArea.Height -= control.Bounds.Height;
                 break;
+            }
 
             case DockStyle.Bottom:
             {
-                // Measure: Width is constrained by container
-                Size measuredSize;
+                // Measure with width constrained to remaining width
+                Size elementSize;
                 if (control.AutoSize)
                 {
-                    measuredSize = control.Measure(new Size(available.Width, 0));
+                    elementSize = control.Measure(new Size(remainingArea.Width, 0));
                     if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
-                        measuredSize.Height = Math.Max(control.Size.Height, measuredSize.Height);
+                        elementSize.Height = Math.Max(control.Size.Height, elementSize.Height);
                 }
                 else
                 {
-                    measuredSize = new Size(available.Width, control.Size.Height);
+                    elementSize = new Size(remainingArea.Width, control.Size.Height);
                 }
 
-                // Arrange at the bottom of remaining area
-                var consumedHeight = measuredSize.Height + margin.Top + margin.Bottom;
-                var arrangeRect = new Rectangle(
-                    available.X,
-                    remainingArea.Y + remainingArea.Height - measuredSize.Height - margin.Bottom,
-                    available.Width,
-                    measuredSize.Height);
-                control.Arrange(arrangeRect);
+                // Position at bottom of remaining area
+                Rectangle bounds = new(remainingArea.X, remainingArea.Bottom - elementSize.Height, elementSize.Width, elementSize.Height);
+                control.Arrange(bounds);
 
-                // Update remaining area - shrink from bottom
-                remainingArea = new Rectangle(
-                    remainingArea.X,
-                    remainingArea.Y,
-                    remainingArea.Width,
-                    Math.Max(0, remainingArea.Height - consumedHeight)
-                );
-            }
+                // Update remaining area using actual bounds
+                remainingArea.Height -= control.Bounds.Height;
                 break;
+            }
 
             case DockStyle.Left:
             {
-                // Measure: Height is constrained by container
-                Size measuredSize;
+                // Measure with height constrained to remaining height
+                Size elementSize;
                 if (control.AutoSize)
                 {
-                    measuredSize = control.Measure(new Size(0, available.Height));
+                    elementSize = control.Measure(new Size(0, remainingArea.Height));
                     if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
-                        measuredSize.Width = Math.Max(control.Size.Width, measuredSize.Width);
+                        elementSize.Width = Math.Max(control.Size.Width, elementSize.Width);
                 }
                 else
                 {
-                    measuredSize = new Size(control.Size.Width, available.Height);
+                    elementSize = new Size(control.Size.Width, remainingArea.Height);
                 }
 
-                // Arrange at the left of remaining area
-                var arrangeRect = new Rectangle(available.X, available.Y, measuredSize.Width, available.Height);
-                control.Arrange(arrangeRect);
+                // Position at left of remaining area
+                Rectangle bounds = new(remainingArea.X, remainingArea.Y, elementSize.Width, elementSize.Height);
+                control.Arrange(bounds);
 
-                // Update remaining area - shrink from left
-                var consumedWidth = measuredSize.Width + margin.Left + margin.Right;
-                remainingArea = new Rectangle(
-                    remainingArea.X + consumedWidth,
-                    remainingArea.Y,
-                    Math.Max(0, remainingArea.Width - consumedWidth),
-                    remainingArea.Height
-                );
-            }
+                // Update remaining area using actual bounds
+                remainingArea.X += control.Bounds.Width;
+                remainingArea.Width -= control.Bounds.Width;
                 break;
+            }
 
             case DockStyle.Right:
             {
-                // Measure: Height is constrained by container
-                Size measuredSize;
+                // Measure with height constrained to remaining height
+                Size elementSize;
                 if (control.AutoSize)
                 {
-                    measuredSize = control.Measure(new Size(0, available.Height));
+                    elementSize = control.Measure(new Size(0, remainingArea.Height));
                     if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
-                        measuredSize.Width = Math.Max(control.Size.Width, measuredSize.Width);
+                        elementSize.Width = Math.Max(control.Size.Width, elementSize.Width);
                 }
                 else
                 {
-                    measuredSize = new Size(control.Size.Width, available.Height);
+                    elementSize = new Size(control.Size.Width, remainingArea.Height);
                 }
 
-                // Arrange at the right of remaining area
-                var consumedWidth = measuredSize.Width + margin.Left + margin.Right;
-                var arrangeRect = new Rectangle(
-                    remainingArea.X + remainingArea.Width - measuredSize.Width - margin.Right,
-                    available.Y,
-                    measuredSize.Width,
-                    available.Height);
-                control.Arrange(arrangeRect);
+                // Position at right of remaining area
+                Rectangle bounds = new(remainingArea.Right - elementSize.Width, remainingArea.Y, elementSize.Width, elementSize.Height);
+                control.Arrange(bounds);
 
-                // Update remaining area - shrink from right
-                remainingArea = new Rectangle(
-                    remainingArea.X,
-                    remainingArea.Y,
-                    Math.Max(0, remainingArea.Width - consumedWidth),
-                    remainingArea.Height
-                );
-            }
+                // Update remaining area using actual bounds
+                remainingArea.Width -= control.Bounds.Width;
                 break;
+            }
 
             case DockStyle.Fill:
-                // Arrange to fill the entire available area
-                control.Arrange(new Rectangle(available.X, available.Y, available.Width, available.Height));
+                // Fill entire remaining area
+                control.Arrange(remainingArea);
                 remainingArea = new Rectangle(remainingArea.X, remainingArea.Y, 0, 0);
                 break;
         }
 
+        // Handle non-docked controls with anchors
         if (control.Dock != DockStyle.None)
             return;
 
-        // Non-docked controls: Measure if AutoSize is enabled
-        var finalSize = control.Size;
-        if (control.AutoSize)
+        // If we have stored anchor info, use it to compute bounds based on current parent size
+        if (control._anchorInfo != null)
         {
-            finalSize = control.Measure(Size.Empty);
-            if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
-            {
-                finalSize.Width = Math.Max(control.Size.Width, finalSize.Width);
-                finalSize.Height = Math.Max(control.Size.Height, finalSize.Height);
-            }
+            // Parent has been resized - recompute anchored position/size
+            Rectangle anchoredBounds = ComputeAnchoredBounds(control, clientArea);
+            control.Arrange(anchoredBounds);
         }
+        else
+        {
+            // First time seeing this anchored control - measure if needed, then store anchor info
+            var finalSize = control.Size;
+            if (control.AutoSize)
+            {
+                finalSize = control.Measure(Size.Empty);
+                if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
+                {
+                    finalSize.Width = Math.Max(control.Size.Width, finalSize.Width);
+                    finalSize.Height = Math.Max(control.Size.Height, finalSize.Height);
+                }
+            }
 
-        // Apply Anchor logic
-        var anchor = control.Anchor;
-        var location = control.Location;
-
-        // WinForms anchor behavior: distances are relative to DisplayRectangle (parent's client area minus padding)
-        // clientArea IS the DisplayRectangle, but we need its dimensions for anchor calculations
-        var displayWidth = clientArea.Width;
-        var displayHeight = clientArea.Height;
-
-        // Calculate initial distances from edges of DisplayRectangle
-        var left = location.X;
-        var top = location.Y;
-        var right = displayWidth - (location.X + finalSize.Width);
-        var bottom = displayHeight - (location.Y + finalSize.Height);
-
-        // Adjust position and size based on anchors
-        // Default anchor is Top,Left - control stays at fixed position
-        if ((anchor & AnchorStyles.Left) != 0 && (anchor & AnchorStyles.Right) != 0)
-            // Anchored to both left and right: stretch horizontally, maintain distances
-            finalSize.Width = Math.Max(0, displayWidth - left - right);
-        else if ((anchor & AnchorStyles.Right) != 0 && (anchor & AnchorStyles.Left) == 0)
-            // Anchored to right only: maintain right distance, adjust X position
-            location.X = Math.Max(0, displayWidth - right - finalSize.Width);
-        // else: Left only or no horizontal anchor - keep location.X as is
-
-        if ((anchor & AnchorStyles.Top) != 0 && (anchor & AnchorStyles.Bottom) != 0)
-            // Anchored to both top and bottom: stretch vertically, maintain distances
-            finalSize.Height = Math.Max(0, displayHeight - top - bottom);
-        else if ((anchor & AnchorStyles.Bottom) != 0 && (anchor & AnchorStyles.Top) == 0)
-            // Anchored to bottom only: maintain bottom distance, adjust Y position
-            location.Y = Math.Max(0, displayHeight - bottom - finalSize.Height);
-        // else: Top only or no vertical anchor - keep location.Y as is
-
-        // Arrange the control at its final position
-        // Location is already in parent's coordinate system (relative to parent's top-left corner)
-        control.Arrange(new Rectangle(
-            location.X,
-            location.Y,
-            Math.Max(0, finalSize.Width),
-            Math.Max(0, finalSize.Height)));
+            // Position control at its current location with final size
+            control.Arrange(new Rectangle(control.Location, finalSize));
+            
+            // Now store anchor info based on where we just placed it
+            UpdateAnchorInfo(control, clientArea);
+        }
     }
 }

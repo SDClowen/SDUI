@@ -63,7 +63,7 @@ public class TabControl : UIElementBase
         Size = new Size(500, 320);
         BackColor = ColorScheme.BackColor;
 
-        _headerBackColor = ColorScheme.OnBackground;
+        _headerBackColor = ColorScheme.BackColor2;
         _headerForeColor = ColorScheme.ForeColor;
         _selectedTabColor = ColorScheme.OnSurface;
         _selectedTabForeColor = ColorScheme.AccentColor;
@@ -432,6 +432,13 @@ public class TabControl : UIElementBase
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
+        UpdatePagesLayout();
+    }
+
+    protected override void OnLayout(UILayoutEventArgs e)
+    {
+        base.OnLayout(e);
+
         UpdatePagesLayout();
     }
 
