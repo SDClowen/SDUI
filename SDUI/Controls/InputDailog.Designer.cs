@@ -35,7 +35,7 @@ namespace SDUI.Controls
             btnCancel = new Button();
             comboBox = new ComboBox();
             numValue = new NumUpDown();
-            panel1 = new Panel();
+            panel1 = new DoubleBufferedControl();
             panel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -152,15 +152,11 @@ namespace SDUI.Controls
             // panel1
             // 
             panel1.BackColor = System.Drawing.Color.Transparent;
-            panel1.Border = new System.Windows.Forms.Padding(0, 1, 0, 0);
-            panel1.BorderColor = System.Drawing.Color.Transparent;
             panel1.Controls.Add(btnOK);
             panel1.Controls.Add(btnCancel);
             panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
             panel1.Location = new System.Drawing.Point(0, 125);
             panel1.Name = "panel1";
-            panel1.Radius = 0;
-            panel1.ShadowDepth = 4F;
             panel1.Size = new System.Drawing.Size(324, 39);
             panel1.TabIndex = 6;
             // 
@@ -199,7 +195,7 @@ namespace SDUI.Controls
         private SDUI.Controls.Button btnOK;
         private SDUI.Controls.Button btnCancel;
         private ComboBox comboBox;
-        private Panel panel1;
+        private UIElementBase panel1;
         private NumUpDown numValue;
     }
 }

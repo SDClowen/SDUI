@@ -1169,14 +1169,12 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
 
         MarkDirty();
 
-        switch (Parent)
+        // Only propagate to window if this isn't already the window
+        // This prevents cascade invalidations that kill FPS
+        if (!(this is UIWindowBase))
         {
-            case UIWindowBase window:
-                window.Invalidate();
-                break;
-            case UIElementBase element:
-                element.Invalidate();
-                break;
+            var window = GetParentWindow();
+            window?.Invalidate();
         }
     }
 
@@ -1185,6 +1183,12 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
         NeedsRedraw = true;
         _renderSnapshot?.Dispose();
         _renderSnapshot = null;
+        
+        // DEBUG: Log excessive invalidations
+        if (DebugSettings.EnableRenderLogging)
+        {
+            DebugSettings.Log($"MarkDirty called on {GetType().Name}");
+        }
     }
 
     internal void InvalidateRenderTree()
@@ -1500,38 +1504,35 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
                     {
                         try
                         {
-                            // Use encode/decode for safest GPU-to-CPU transfer
-                            var encoded = raw.Encode(SKEncodedImageFormat.Png, 100);
-                            if (encoded != null)
+                            // Use direct rasterization - MUCH faster than PNG encode/decode
+                            var rasterized = raw.ToRasterImage();
+                            if (rasterized != null)
                             {
-                                using (encoded)
-                                {
-                                    raw.Dispose();
-                                    _renderSnapshot = SKImage.FromEncodedData(encoded);
+                                raw.Dispose();
+                                _renderSnapshot = rasterized;
 
-                                    if (DebugSettings.EnableRenderLogging)
-                                        DebugSettings.Log(
-                                            $"UIElementBase: Rasterized GPU snapshot via encode/decode for element {GetType().Name} ({Width}x{Height})");
-                                }
+                                if (DebugSettings.EnableRenderLogging)
+                                    DebugSettings.Log(
+                                        $"UIElementBase: Rasterized GPU snapshot for element {GetType().Name} ({Width}x{Height})");
                             }
                             else
                             {
-                                // Encoding failed, keep raw snapshot
+                                // Rasterization failed, keep raw snapshot
                                 _renderSnapshot = raw;
 
                                 if (DebugSettings.EnableRenderLogging)
                                     DebugSettings.Log(
-                                        $"UIElementBase: GPU snapshot encoding failed for element {GetType().Name} ({Width}x{Height}), using raw GPU snapshot");
+                                        $"UIElementBase: GPU snapshot rasterization failed for element {GetType().Name} ({Width}x{Height}), using raw GPU snapshot");
                             }
                         }
-                        catch (Exception encodeEx)
+                        catch (Exception rasterEx)
                         {
-                            // Encoding failed, keep raw snapshot
+                            // Rasterization failed, keep raw snapshot
                             _renderSnapshot = raw;
 
                             if (DebugSettings.EnableRenderLogging)
                                 DebugSettings.Log(
-                                    $"UIElementBase: GPU snapshot encoding exception for element {GetType().Name}: {encodeEx.Message}");
+                                    $"UIElementBase: GPU snapshot rasterization exception for element {GetType().Name}: {rasterEx.Message}");
                         }
                     }
                     else
@@ -2062,13 +2063,15 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     internal virtual void OnPaddingChanged(EventArgs e)
     {
         PaddingChanged?.Invoke(this, e);
+        Invalidate();
     }
 
     internal virtual void OnMarginChanged(EventArgs e)
     {
         MarginChanged?.Invoke(this, e);
-        if (Parent is UIWindowBase parentWindow) parentWindow.PerformLayout();
-        else if (Parent is UIElementBase parentElement) parentElement.PerformLayout();
+        // Request parent to relayout this control on next pass
+        if (Parent != null)
+            Invalidate();
     }
 
     internal virtual void OnTabStopChanged(EventArgs e)
@@ -2084,8 +2087,8 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     internal virtual void OnAnchorChanged(EventArgs e)
     {
         AnchorChanged?.Invoke(this, e);
-        if (Parent is UIWindowBase parentWindow) parentWindow.PerformLayout();
-        else if (Parent is UIElementBase parentElement) parentElement.PerformLayout();
+        // Don't trigger parent layout - anchor changes will be picked up on next parent resize
+        // Forcing layout here causes FPS drops
     }
 
     internal virtual void OnDockChanged(EventArgs e)

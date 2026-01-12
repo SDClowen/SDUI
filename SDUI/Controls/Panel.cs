@@ -102,8 +102,8 @@ public class Panel : UIElementBase
             using var shadowFilter = SKImageFilter.CreateDropShadow(
                 _shadowDepth,
                 _shadowDepth,
-                3,
-                3,
+                0,
+                0,
                 SKColors.Black.WithAlpha(30));
             using var shadowPaint = new SKPaint
             {
