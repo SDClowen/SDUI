@@ -499,12 +499,10 @@ public class TrackBar : UIElementBase
         return paint;
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
+        base.OnPaint(canvas);
         EnsureSkiaCaches();
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
 
         var trackRect = GetTrackRect();
         var thumbRect = GetThumbRect();

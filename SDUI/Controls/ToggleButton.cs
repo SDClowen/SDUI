@@ -99,11 +99,9 @@ public class ToggleButton : UIElementBase
         if (_mouseState == 2) _mouseState = 1;
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear();
+        base.OnPaint(canvas);
 
         var toggleSize = Height - 3;
         var radius = Height / 2f - 1;

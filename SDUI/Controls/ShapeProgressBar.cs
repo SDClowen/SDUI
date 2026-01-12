@@ -174,11 +174,9 @@ public class ShapeProgressBar : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear();
+        base.OnPaint(canvas);
 
         // Antialiasing için yüksek kalite ayarı
         canvas.SetMatrix(SKMatrix.CreateScale(1.0f, 1.0f));

@@ -369,15 +369,11 @@ public class NumUpDown : UIElementBase
         UpdateButtonRects();
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        e.Surface.Canvas.Clear(SKColors.Transparent);
+        base.OnPaint(canvas);
 
-        var canvas = e.Surface.Canvas;
-        var info = e.Info;
-
-        if (info.Width <= 0 || info.Height <= 0)
+        if (Width <= 0 || Height <= 0)
             return;
 
         // Arka plan çizimi

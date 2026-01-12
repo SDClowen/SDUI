@@ -15,9 +15,6 @@ namespace SDUI.Controls;
 
 public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDisposable
 {
-    private static readonly object s_renderCacheLock = new();
-    private static readonly LinkedList<UIElementBase> s_renderCacheLru = new();
-    private static long s_totalCachedElementBytes;
     private static int s_globalLayoutPassId;
     public bool _childControlsNeedAnchorLayout { get; set; }
     public bool _forceAnchorCalculations { get; set; }
@@ -87,29 +84,8 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
         }
     }
 
-    /// <summary>
-    ///     Enables/disables per-element offscreen surface + snapshot caching.
-    ///     When disabled (or when <see cref="MaxCachedElementBytes" /> is exceeded),
-    ///     the element is rendered into a temporary surface per frame to reduce retained native memory.
-    /// </summary>
-    [Category("Performance")]
-    [DefaultValue(true)]
-    public bool UseRenderCache { get; set; } = true;
-
-    /// <summary>
-    ///     Optional per-element cap for cached render targets.
-    ///     0 means unlimited (default behavior). If set to a positive value, elements whose
-    ///     estimated pixel buffer exceeds this cap will not keep cached surfaces/snapshots.
-    /// </summary>
-    public static long MaxCachedElementBytes { get; set; } = 8L * 1024 * 1024;
-
-    /// <summary>
-    ///     Global maximum cached surface budget across all elements (in bytes).
-    ///     Set to 0 (or less) to disable global limit (unlimited).
-    /// </summary>
-    public static long MaxTotalCachedElementBytes { get; set; } = 32L * 1024 * 1024;
-
     protected bool IsDesignMode { get; }
+
     protected bool IsPerformingLayout { get; private set; }
 
     public UIWindowBase? ParentWindow
@@ -273,25 +249,6 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
             OnLocationChanged(EventArgs.Empty);
         }
     }
-
-    private SKSurface? _renderSurface;
-    private SKImageInfo _renderInfo;
-    private SKImage? _renderSnapshot;
-
-    private long _cachedSurfaceBytes;
-    private LinkedListNode<UIElementBase>? _renderCacheLruNode;
-
-    // Lock to protect concurrent access to native render resources (SKSurface, SKImage)
-    private readonly object _renderLock = new();
-
-    private enum RenderTargetKind
-    {
-        Cpu,
-        Gpu
-    }
-
-    private RenderTargetKind _renderTargetKind;
-    private GRContext? _renderGpuContext;
 
     [ThreadStatic] private static GRContext? s_currentGpuContext;
 
@@ -1159,8 +1116,10 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
         return new Rectangle(suggestedX, suggestedY, proposedWidth, proposedHeight);
     }
 
-    public virtual void OnPaint(SKPaintSurfaceEventArgs e)
+    public virtual void OnPaint(SKCanvas canvas)
     {
+
+        Paint?.Invoke(this, new SKPaintSurfaceEventArgs(canvas.Surface, default));
     }
 
     public virtual void Invalidate()
@@ -1181,8 +1140,6 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     protected void MarkDirty()
     {
         NeedsRedraw = true;
-        _renderSnapshot?.Dispose();
-        _renderSnapshot = null;
         
         // DEBUG: Log excessive invalidations
         if (DebugSettings.EnableRenderLogging)
@@ -1199,209 +1156,7 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
                 child.InvalidateRenderTree();
     }
 
-    private void DisposeRenderResources()
-    {
-        lock (_renderLock)
-        {
-            UnregisterFromGlobalRenderCache();
 
-            _renderSnapshot?.Dispose();
-            _renderSnapshot = null;
-
-            _renderSurface?.Dispose();
-            _renderSurface = null;
-            _renderInfo = SKImageInfo.Empty;
-
-            _renderTargetKind = RenderTargetKind.Cpu;
-            _renderGpuContext = null;
-        }
-    }
-
-    private static long EstimateSurfaceBytes(int width, int height)
-    {
-        if (width <= 0 || height <= 0)
-            return 0;
-
-        // Estimate: RGBA8888 => 4 bytes per pixel (conservative).
-        var bytes = (long)width * height * 4;
-        return bytes > 0 ? bytes : 0;
-    }
-
-    private void EvictRenderResources_NoGlobal()
-    {
-        // Same behavior as DisposeRenderResources, but does not touch global cache references.
-        lock (_renderLock)
-        {
-            _renderSnapshot?.Dispose();
-            _renderSnapshot = null;
-
-            _renderSurface?.Dispose();
-            _renderSurface = null;
-            _renderInfo = SKImageInfo.Empty;
-
-            _renderTargetKind = RenderTargetKind.Cpu;
-            _renderGpuContext = null;
-            NeedsRedraw = true;
-        }
-    }
-
-    private static List<UIElementBase>? CollectEvictions_NoLock(UIElementBase? exclude)
-    {
-        var maxTotal = MaxTotalCachedElementBytes;
-        if (maxTotal <= 0)
-            return null;
-
-        if (s_totalCachedElementBytes <= maxTotal)
-            return null;
-
-        List<UIElementBase>? toEvict = null;
-
-        while (s_totalCachedElementBytes > maxTotal)
-        {
-            var lruNode = s_renderCacheLru.Last;
-            if (lruNode == null)
-                break;
-
-            if (exclude != null && ReferenceEquals(lruNode.Value, exclude))
-            {
-                lruNode = lruNode.Previous;
-                if (lruNode == null)
-                    break;
-            }
-
-            var victim = lruNode.Value;
-            s_renderCacheLru.Remove(lruNode);
-
-            victim._renderCacheLruNode = null;
-
-            if (victim._cachedSurfaceBytes != 0)
-            {
-                s_totalCachedElementBytes -= victim._cachedSurfaceBytes;
-                victim._cachedSurfaceBytes = 0;
-            }
-
-            toEvict ??= new List<UIElementBase>(8);
-            toEvict.Add(victim);
-        }
-
-        return toEvict;
-    }
-
-    private void RegisterOrTouchGlobalRenderCache(long estimatedBytes)
-    {
-        if (estimatedBytes <= 0)
-            return;
-
-        List<UIElementBase>? toEvict;
-
-        lock (s_renderCacheLock)
-        {
-            if (_renderCacheLruNode == null)
-            {
-                _renderCacheLruNode = s_renderCacheLru.AddFirst(this);
-                _cachedSurfaceBytes = estimatedBytes;
-                s_totalCachedElementBytes += estimatedBytes;
-            }
-            else
-            {
-                if (_renderCacheLruNode.List != null)
-                {
-                    s_renderCacheLru.Remove(_renderCacheLruNode);
-                    s_renderCacheLru.AddFirst(_renderCacheLruNode);
-                }
-
-                if (_cachedSurfaceBytes != estimatedBytes)
-                {
-                    s_totalCachedElementBytes += estimatedBytes - _cachedSurfaceBytes;
-                    _cachedSurfaceBytes = estimatedBytes;
-                }
-            }
-
-            toEvict = CollectEvictions_NoLock(this);
-        }
-
-        if (toEvict == null)
-            return;
-
-        foreach (var victim in toEvict) victim.EvictRenderResources_NoGlobal();
-    }
-
-    private void UnregisterFromGlobalRenderCache()
-    {
-        lock (s_renderCacheLock)
-        {
-            if (_renderCacheLruNode != null && _renderCacheLruNode.List != null)
-                s_renderCacheLru.Remove(_renderCacheLruNode);
-
-            _renderCacheLruNode = null;
-
-            if (_cachedSurfaceBytes != 0)
-            {
-                s_totalCachedElementBytes -= _cachedSurfaceBytes;
-                _cachedSurfaceBytes = 0;
-            }
-        }
-    }
-
-    private bool ShouldUseRenderCache()
-    {
-        if (!UseRenderCache)
-            return false;
-
-        var maxBytes = MaxCachedElementBytes;
-        if (maxBytes <= 0)
-            return true;
-
-        // Estimate: RGBA8888 => 4 bytes per pixel.
-        var estimatedBytes = (long)Width * Height * 4;
-        return estimatedBytes > 0 && estimatedBytes <= maxBytes;
-    }
-
-    private void EnsureRenderTarget()
-    {
-        if (!ShouldUseRenderCache())
-        {
-            // Ensure we don't keep large native buffers alive when caching is disabled.
-            DisposeRenderResources();
-            return;
-        }
-
-        if (Width <= 0 || Height <= 0)
-        {
-            DisposeRenderResources();
-            return;
-        }
-
-        // sRGB color space ile yüksek kaliteli render
-        var desiredInfo = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
-
-        var gpuContext = s_currentGpuContext;
-        var desiredKind = gpuContext != null ? RenderTargetKind.Gpu : RenderTargetKind.Cpu;
-
-        lock (_renderLock)
-        {
-            if (_renderSurface != null &&
-                _renderInfo.Width == desiredInfo.Width &&
-                _renderInfo.Height == desiredInfo.Height &&
-                _renderInfo.ColorType == desiredInfo.ColorType &&
-                _renderTargetKind == desiredKind &&
-                (desiredKind == RenderTargetKind.Cpu || ReferenceEquals(_renderGpuContext, gpuContext)))
-                return;
-
-            DisposeRenderResources();
-
-            _renderTargetKind = desiredKind;
-            _renderGpuContext = gpuContext;
-
-            _renderSurface = desiredKind == RenderTargetKind.Gpu
-                ? SKSurface.Create(gpuContext!, true, desiredInfo)
-                : SKSurface.Create(desiredInfo);
-
-            _renderInfo = desiredInfo;
-            RegisterOrTouchGlobalRenderCache(EstimateSurfaceBytes(desiredInfo.Width, desiredInfo.Height));
-            MarkDirty();
-        }
-    }
 
     private SKColor ResolveBackgroundColor()
     {
@@ -1422,181 +1177,47 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
 
     private void RenderUncached(SKCanvas targetCanvas)
     {
-        // Render into a temporary surface for this frame only.
-        // This avoids retaining large native pixel buffers per element.
-        var info = new SKImageInfo(Width, Height, SKColorType.Rgba8888, SKAlphaType.Premul, SrgbColorSpace);
+        var saved = targetCanvas.Save();
 
-        var gpuContext = s_currentGpuContext;
-        var surface = gpuContext != null
-            ? SKSurface.Create(gpuContext, true, info)
-            : SKSurface.Create(info);
+        // Translate and clip to element bounds
+        targetCanvas.Translate(Location.X, Location.Y);
+        targetCanvas.ClipRect(SKRect.Create(0, 0, Width, Height));
 
-        if (surface == null)
-            return;
-
-        using (surface)
+        // Draw background
+        var bg = ResolveBackgroundColor();
+        if (bg != SKColors.Transparent)
         {
-            var canvas = surface.Canvas;
-            canvas.Save();
-            canvas.Clear(ResolveBackgroundColor());
-
-            var args = new SKPaintSurfaceEventArgs(surface, info);
-            OnPaint(args);
-            Paint?.Invoke(this, args);
-
-            RenderChildren(canvas);
-
-            canvas.Restore();
-            canvas.Flush();
-
-            using var image = surface.Snapshot();
-            targetCanvas.DrawImage(image, Location.X, Location.Y);
+            using var paint = new SKPaint { Color = bg };
+            targetCanvas.DrawRect(0, 0, Width, Height, paint);
         }
+
+        OnPaint(targetCanvas);
+        // Paint?.Invoke(this, args); 
+
+        RenderChildren(targetCanvas);
+
+        targetCanvas.RestoreToCount(saved);
     }
 
-    internal SKImage? RenderSnapshot()
-    {
-        // Disposed veya geçersiz durumları kontrol et
-        if (IsDisposed || !Visible || Width <= 0 || Height <= 0)
-        {
-            DisposeRenderResources();
-            return null;
-        }
-
-        if (DebugSettings.EnableRenderLogging)
-            DebugSettings.Log(
-                $"UIElementBase.RenderSnapshot: enter element={GetType().Name} size={Width}x{Height} renderTargetKind={_renderTargetKind} renderGpuContext={(_renderGpuContext != null ? "non-null" : "null")} currentGpuContext={(s_currentGpuContext != null ? "non-null" : "null")});");
-
-        EnsureRenderTarget();
-        if (_renderSurface == null)
-            return null;
-
-        RegisterOrTouchGlobalRenderCache(EstimateSurfaceBytes(_renderInfo.Width, _renderInfo.Height));
-
-        if (NeedsRedraw)
-            lock (_renderLock)
-            {
-                var canvas = _renderSurface.Canvas;
-                canvas.Save();
-
-                // Yüksek kaliteli render ayarları
-                canvas.Clear(ResolveBackgroundColor());
-
-                var args = new SKPaintSurfaceEventArgs(_renderSurface, _renderInfo);
-                OnPaint(args);
-                Paint?.Invoke(this, args);
-
-                RenderChildren(canvas);
-
-                canvas.Restore();
-                canvas.Flush();
-
-                // Replace snapshot with safe image; guard against GPU-backed snapshots that
-                // may be invalid when drawn in a different context (can cause access violations).
-                _renderSnapshot?.Dispose();
-                try
-                {
-                    var raw = _renderSurface.Snapshot();
-
-                    // Keep GPU snapshot for performance if we are in GPU mode.
-                    // Rasterizing to CPU readback is extremely slow and causes stalls ("rendering weak").
-                    if (_renderTargetKind == RenderTargetKind.Gpu)
-                    {
-                        // Guard against using a snapshot from a different context if context shifted?
-                        // We assume shared context through s_currentGpuContext.
-                         _renderSnapshot = raw;
-                         
-                         // If we ever need to rasterize, we should do it lazily or only when context is lost.
-                         /* 
-                        try
-                        {
-                            // Use direct rasterization - MUCH faster than PNG encode/decode
-                            var rasterized = raw.ToRasterImage();
-                            // ... 
-                         */
-                    }
-                    else
-                    {
-                        _renderSnapshot = raw;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    // Snapshot/ rasterization may fail due to transient native state; clean up and
-                    // force uncached rendering fallback next time to avoid crashing the process.
-                    DisposeRenderResources();
-                    _renderSnapshot = null;
-
-                    if (DebugSettings.EnableRenderLogging)
-                        DebugSettings.Log(
-                            $"UIElementBase: Snapshot creation/rasterization failed for element {GetType().Name} ({Width}x{Height}): {ex}");
-                }
-
-                NeedsRedraw = false;
-                return _renderSnapshot;
-            }
-
-        // Return existing snapshot (still protected by lock in caller)
-        lock (_renderLock)
-        {
-            return _renderSnapshot;
-        }
-    }
 
     public void Render(SKCanvas targetCanvas)
     {
-        // Disposed, null canvas veya geçersiz boyutları kontrol et
+        // Disposed, null canvas ve geçersiz boyutları kontrol et
         if (IsDisposed || targetCanvas == null || !Visible || Width <= 0 || Height <= 0)
         {
-            DisposeRenderResources();
             return;
         }
 
-        if (ShouldUseRenderCache())
+        try
         {
-            try
-            {
-                // Lock the entire operation to prevent snapshot disposal during use
-                lock (_renderLock)
-                {
-                    var snapshot = RenderSnapshot();
-
-                    // Snapshot null veya dispose edilmiş mi kontrol et
-                    if (snapshot == null || snapshot.Handle == IntPtr.Zero)
-                        return;
-
-                    // Snapshot is always CPU-backed now (rasterized in RenderSnapshot if GPU)
-                    // Safe to draw directly
-                    targetCanvas.DrawImage(snapshot, Location.X, Location.Y);
-                }
-            }
-            catch (Exception ex)
-            {
-                // DrawImage başarısız olursa, cache'i temizle ve uncached rendering dene
-                DisposeRenderResources();
-                if (DebugSettings.EnableRenderLogging)
-                    DebugSettings.Log(
-                        $"UIElementBase: Render failed for element {GetType().Name} ({Width}x{Height}): {ex.GetType().Name} - {ex.Message}");
-
-                try
-                {
-                    RenderUncached(targetCanvas);
-                }
-                catch (Exception fallbackEx)
-                {
-                    // Suppress any further exceptions during fallback rendering
-                    if (DebugSettings.EnableRenderLogging)
-                        DebugSettings.Log(
-                            $"UIElementBase: Fallback render also failed for element {GetType().Name}: {fallbackEx.GetType().Name} - {fallbackEx.Message}");
-                }
-            }
-
-            return;
+            RenderUncached(targetCanvas);
         }
-
-        // Önceden cache varsa, şimdi serbest bırak
-        DisposeRenderResources();
-        RenderUncached(targetCanvas);
+        catch (Exception ex)
+        {
+            if (DebugSettings.EnableRenderLogging)
+                DebugSettings.Log(
+                    $"UIElementBase: Render failed for element {GetType().Name} ({Width}x{Height}): {ex.GetType().Name} - {ex.Message}");
+        }
     }
 
     public virtual void Focus()
@@ -2410,7 +2031,6 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
             if (disposing)
             {
                 // Yönetilen kaynakları temizle
-                DisposeRenderResources();
                 _font?.Dispose();
                 _cursor?.Dispose();
             }

@@ -162,6 +162,10 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
         try
         {
+            // Release potentially bound resources ensuring ResizeBuffers succeeds
+            _context?.ClearState();
+            _context?.Flush();
+
             // ResizeBuffers flags must be 0; the GDI-compatible flag is specified at creation time.
             _swapChain.ResizeBuffers(0, width, height, Format.Unknown, SwapChainFlags.None);
         }
@@ -215,7 +219,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             _grSurface.Canvas.Flush();
             GrContext.Flush();
             GrContext.Submit();
-            _swapChain.Present(1, PresentFlags.None);
+            // Use SyncInterval 0 (no VSync) to prevent potential blocking/freezing on some systems.
+            _swapChain.Present(0, PresentFlags.None);
             return;
         }
 
@@ -507,7 +512,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             }
 
             _context.CopyResource(_presentBackBuffer, _cpuUploadTexture);
-            _swapChain.Present(1, PresentFlags.None);
+            // Use SyncInterval 0 (no VSync) to prevent potential blocking/freezing on some systems.
+            _swapChain.Present(0, PresentFlags.None);
         }
     }
 

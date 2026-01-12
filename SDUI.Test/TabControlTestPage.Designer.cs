@@ -31,7 +31,15 @@ namespace SDUI.Demo
         private void InitializeComponent()
         {
             this.multiPageControl = new SDUI.Controls.TabControl();
+            this.tabPage2 = new SDUI.Controls.TabPage();
             this.SuspendLayout();
+            tabPage2.BackColor = System.Drawing.Color.White;
+tabPage2.Location = new System.Drawing.Point(4, 28);
+tabPage2.Margin = new System.Windows.Forms.Padding(0);
+tabPage2.Name = "tabPage2";
+tabPage2.Size = new System.Drawing.Size(482, 552);
+tabPage2.TabIndex = 1;
+tabPage2.Text = "Advanced setup";
             // 
             // multiPageControl
             // 
@@ -59,5 +67,6 @@ namespace SDUI.Demo
         #endregion
 
         private Controls.TabControl multiPageControl;
+        private Controls.TabPage tabPage2;
     }
 }

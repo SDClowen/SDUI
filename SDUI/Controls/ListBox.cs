@@ -260,10 +260,8 @@ public class ListBox : UIElementBase
         Invalidate();
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        var canvas = e.Surface.Canvas;
-
         using var bgPaint = new SKPaint
         {
             Color = ColorScheme.BackColor.ToSKColor()

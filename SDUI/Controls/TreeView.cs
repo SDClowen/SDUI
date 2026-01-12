@@ -176,11 +176,15 @@ public class TreeView : UIElementBase
             { Hinting = SKFontHinting.Full, Edging = SKFontEdging.SubpixelAntialias, Subpixel = true };
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear();
+        base.OnPaint(canvas);
+        
+        if (BackColor != Color.Transparent)
+        {
+             using var bgPaint = new SKPaint { Color = BackColor.ToSKColor() };
+             canvas.DrawRect(0, 0, Width, Height, bgPaint);
+        }
 
         var font = CreateFont(Font);
         using var textPaint = new SKPaint

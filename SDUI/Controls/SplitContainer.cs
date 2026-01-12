@@ -95,10 +95,8 @@ public class SplitContainer : UIElementBase
         LayoutPanels();
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
 
         var splitter = GetSplitterRect();
         using var paint = new SKPaint
@@ -125,7 +123,7 @@ public class SplitContainer : UIElementBase
             canvas.DrawRoundRect(centerX - lineWidth / 2f, lineY - 1.5f, lineWidth, 3, 1.5f, 1.5f, grab);
         }
 
-        base.OnPaint(e);
+        base.OnPaint(canvas);
     }
 
     private Rectangle GetSplitterRect()

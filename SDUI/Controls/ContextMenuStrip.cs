@@ -378,12 +378,10 @@ public class ContextMenuStrip : MenuStrip
         return engine;
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
+        base.OnPaint(canvas);
         var bounds = ClientRectangle;
-        canvas.Clear(SKColors.Transparent);
 
         EnsureSkiaCaches();
 

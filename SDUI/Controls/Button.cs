@@ -212,10 +212,8 @@ public class Button : UIElementBase, IButtonControl
         Invalidate();
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
 
         var hoverProgress = (float)hoverAnimationManager.GetProgress();
         var pressProgress = (float)pressAnimationManager.GetProgress();

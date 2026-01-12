@@ -22,11 +22,9 @@ public class Separator : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear();
+        base.OnPaint(canvas);
 
         using var paint = new SKPaint
         {

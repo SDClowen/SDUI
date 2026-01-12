@@ -137,17 +137,21 @@ public class Radio : UIElementBase
         };
 
         var textWidth = string.IsNullOrEmpty(Text) ? 0 : font.MeasureText(Text);
-        var width = RADIOBUTTON_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth);
         var height = Ripple ? 30 : 20;
+        var fullHeight = height + Padding.Vertical;
 
-        return new Size(width + Padding.Horizontal, height + Padding.Vertical);
+        // Calculate expected box offset, matching OnSizeChanged logic
+        var boxOffset = fullHeight / 2 - (int)Math.Ceiling(RADIOBUTTON_SIZE / 2d);
+
+        // Width = boxOffset (left space) + Radio + Gap + Text + Padding + Buffer
+        var width = boxOffset + RADIOBUTTON_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
+
+        return new Size(width, fullHeight);
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear();
+        base.OnPaint(canvas);
 
         var RADIOBUTTON_CENTER = boxOffset + RADIOBUTTON_SIZE_HALF;
         var animationProgress = (float)animationManager.GetProgress();

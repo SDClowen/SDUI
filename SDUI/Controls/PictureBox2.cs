@@ -139,10 +139,10 @@ public class PictureBox2 : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(BackColor.ToSKColor());
+        if (BackColor != Color.Transparent)
+            canvas.DrawRect(0, 0, Width, Height, new SKPaint { Color = BackColor.ToSKColor() });
 
         if (_skBitmap == null)
         {
@@ -158,7 +158,7 @@ public class PictureBox2 : UIElementBase
         };
 
         canvas.DrawBitmap(_skBitmap, rect, paint);
-        base.OnPaint(e);
+        base.OnPaint(canvas);
     }
 
     private SKRect CalculateImageRect()

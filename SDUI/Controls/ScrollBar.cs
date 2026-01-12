@@ -372,11 +372,9 @@ public class ScrollBar : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
+        base.OnPaint(canvas);
 
         var visibility = _autoHide ? (float)_visibilityAnim.GetProgress() : 1f;
         if (visibility <= 0f)

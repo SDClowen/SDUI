@@ -470,12 +470,9 @@ public class ToolTip : UIElementBase
         Size = new Size(Math.Max(width, _padding * 2), Math.Max(height, _padding * 2));
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
+        base.OnPaint(canvas);
 
         EnsureSkiaCaches();
 

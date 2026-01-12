@@ -144,17 +144,24 @@ public class CheckBox : UIElementBase
 
     public override Size GetPreferredSize(Size proposedSize)
     {
-        using var paint = new SKPaint
+        using var font = new SKFont
         {
-            TextSize = Font.Size.PtToPx(this),
-            Typeface = FontManager.GetSKTypeface(Font)
+            Size = Font.Size.PtToPx(this),
+            Typeface = FontManager.GetSKTypeface(Font),
+            Edging = SKFontEdging.SubpixelAntialias
         };
 
-        var textWidth = string.IsNullOrEmpty(Text) ? 0 : paint.MeasureText(Text);
-        var width = CHECKBOX_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth) + Padding.Horizontal;
+        var textWidth = string.IsNullOrEmpty(Text) ? 0 : font.MeasureText(Text);
         var height = Ripple ? 30 : 20;
+        var fullHeight = height + Padding.Vertical;
 
-        return new Size(width, height + Padding.Vertical);
+        // Calculate expected box offset (visual centering)
+        var boxOffset = (fullHeight - CHECKBOX_SIZE) / 2;
+
+        // Width = boxOffset (left space) + CheckBox + Gap + Text + Padding + Buffer
+        var width = boxOffset + CHECKBOX_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
+
+        return new Size(width, fullHeight);
     }
 
     public override void OnCreateControl()
@@ -163,10 +170,9 @@ public class CheckBox : UIElementBase
         AttachInputHandlers();
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
+        base.OnPaint(canvas);
 
         var animationProgress = (float)animationManager.GetProgress();
         var checkboxRadius = 4f;

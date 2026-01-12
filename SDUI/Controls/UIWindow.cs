@@ -1473,9 +1473,11 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (_inExtendBox)
         {
             _inExtendBox = false;
+            // Force repaint to prevent stale background captures
+            Update();
             if (ExtendMenu != null)
                 ExtendMenu.Show(PointToScreen(new Point(Convert.ToInt32(_extendBoxRect.Left),
-                    Convert.ToInt32(_titleHeightDPI - 1))));
+                    Convert.ToInt32(_extendBoxRect.Bottom))));
             else
                 OnExtendBoxClick?.Invoke(this, EventArgs.Empty);
         }
@@ -1483,9 +1485,11 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (_inFormMenuBox)
         {
             _inFormMenuBox = false;
+            // Force repaint to prevent stale background captures
+            Update();
             if (FormMenu != null)
                 FormMenu.Show(PointToScreen(new Point(Convert.ToInt32(_formMenuRect.Left),
-                    Convert.ToInt32(_titleHeightDPI - 1))));
+                    Convert.ToInt32(_formMenuRect.Bottom))));
             else
                 OnFormMenuClick?.Invoke(this, EventArgs.Empty);
         }
@@ -2081,9 +2085,20 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
         if (!DesignMode && _renderBackend != RenderBackend.Software && _renderer != null)
         {
-            _renderer.Render(w, h, RenderScene);
-            ArmIdleMaintenance();
-            return;
+            try
+            {
+                _renderer.Render(w, h, RenderScene);
+                ArmIdleMaintenance();
+                return;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"[UIWindow] Hardware rendering failed ({ex.GetType().Name}). Falling back to Software. Error: {ex.Message}");
+                _renderer?.Dispose();
+                _renderer = null;
+                _renderBackend = RenderBackend.Software;
+                // Fall through to software rendering below...
+            }
         }
 
         var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
@@ -2258,7 +2273,9 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             canvas.Save();
             canvas.ResetMatrix();
             canvas.ClipRect(SKRect.Create(info.Width, info.Height));
-            canvas.Clear(SKColors.Transparent);
+            // Ensure we clear to an opaque color to avoid any potential transparency artifacts or ghosting
+            // from previous frames, especially in DirectX swapchains where buffer contents may be undefined.
+            canvas.Clear(ColorScheme.BackColor.ToSKColor());
             PaintSurface(canvas, info);
             canvas.Restore();
 
@@ -2282,7 +2299,6 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             var renderedCount = 0;
             var needsRedrawBefore = 0;
             var needsRedrawAfter = 0;
-            var usesCacheCount = 0;
             
             for (var i = 0; i < _frameElements.Count; i++)
             {
@@ -2292,7 +2308,6 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 
                 renderedCount++;
                 if (element.NeedsRedraw) needsRedrawBefore++;
-                if (element.UseRenderCache) usesCacheCount++;
                 
                 element.Render(canvas);
                 
@@ -2304,7 +2319,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 DrawPerfOverlay(canvas);
                 // Show render stats
                 var statsPaint = new SKPaint { Color = SKColors.Yellow, TextSize = 12, IsAntialias = true };
-                canvas.DrawText($"Rendered: {renderedCount} | Before: {needsRedrawBefore} | After: {needsRedrawAfter} | UsesCache: {usesCacheCount}", 
+                canvas.DrawText($"Rendered: {renderedCount} | Before: {needsRedrawBefore} | After: {needsRedrawAfter}", 
                     10, info.Height - 20, statsPaint);
                 statsPaint.Dispose();
             }

@@ -125,7 +125,9 @@ public class Label : UIElementBase
         using var font = new SKFont
         {
             Size = Font.Size.PtToPx(this),
-            Typeface = FontManager.GetSKTypeface(Font)
+            Typeface = FontManager.GetSKTypeface(Font),
+            Subpixel = true,
+            Edging = SKFontEdging.SubpixelAntialias
         };
 
         var lines = Text.Split('\n');
@@ -139,7 +141,8 @@ public class Label : UIElementBase
         // under-estimate and clip descenders.
         var totalHeight = lines.Length * font.Spacing;
 
-        Width = (int)Math.Ceiling(maxWidth) + Padding.Horizontal;
+        // Add a small buffer (+2) to accommodate potential subpixel anti-aliasing overflow
+        Width = (int)Math.Ceiling(maxWidth) + Padding.Horizontal + 2;
         Height = (int)Math.Ceiling(totalHeight) + Padding.Vertical;
     }
 
@@ -160,10 +163,9 @@ public class Label : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
+        base.OnPaint(canvas);
 
         if (GradientAnimation)
             Angle = Angle % 360 + 1;

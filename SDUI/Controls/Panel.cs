@@ -75,10 +75,8 @@ public class Panel : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        var canvas = e.Surface.Canvas;
-        canvas.Clear(SKColors.Transparent);
 
         var rect = new SKRect(0, 0, Width, Height);
         if (_shadowDepth > 0)
@@ -273,6 +271,6 @@ public class Panel : UIElementBase
             }
 
         // Alt elementleri render et
-        base.OnPaint(e);
+        base.OnPaint(canvas);
     }
 }

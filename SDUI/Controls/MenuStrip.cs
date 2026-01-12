@@ -425,10 +425,9 @@ public class MenuStrip : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
+        base.OnPaint(canvas);
         var bounds = ClientRectangle;
 
         // Flat modern background

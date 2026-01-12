@@ -83,10 +83,9 @@ public class ChatBubble : UIElementBase
             Size = GetPreferredSize(Size.Empty);
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
+        base.OnPaint(canvas);
 
         if (string.IsNullOrEmpty(Text))
             return;

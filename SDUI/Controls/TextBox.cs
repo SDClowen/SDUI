@@ -1357,11 +1357,10 @@ public class TextBox : UIElementBase
             }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
+        base.OnPaint(canvas);
 
-        var canvas = e.Surface.Canvas;
         var bounds = ClientRectangle;
 
         EnsureSkiaCaches();

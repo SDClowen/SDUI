@@ -32,7 +32,7 @@ public class TabControl : UIElementBase
 
     // Chrome-like styles and animation
     private Color _headerBackColor = ColorScheme.BackColor;
-    private Size _headerControlSize = new(20, 20);
+
     private Color _headerForeColor = ColorScheme.ForeColor;
     private int _headerHeight = 40;
 
@@ -218,16 +218,7 @@ public class TabControl : UIElementBase
         }
     }
 
-    public Size HeaderControlSize
-    {
-        get => _headerControlSize;
-        set
-        {
-            if (_headerControlSize == value) return;
-            _headerControlSize = value;
-            Invalidate();
-        }
-    }
+
 
     public bool RenderNewPageButton
     {
@@ -357,48 +348,96 @@ public class TabControl : UIElementBase
     {
         _tabRects.Clear();
 
-        var startX = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
-        var x = startX - _scrollOffset;
-
-        // Reserve right side for chevron (+ button moves with tabs)
-        var rightReserved = _showRightChevron ? CHEVRON_WIDTH + 4 : 0;
-        var endX = Width - rightReserved - 40;
-        var availableWidth = Math.Max(0, endX - startX);
-
+        // Dynamic metrics based on font size
+        var fontSize = 9.Topx(this);
+        
         using var font = new SKFont
         {
-            Size = 13f * ScaleFactor,
+            Size = fontSize,
             Typeface = FontManager.GetSKTypeface(Font),
         };
 
-        var minTabWidth = 120f;
-        var maxTabWidth = 400f;
+        var sidePadding = fontSize * 1.2f;
+        var closeButtonSpace = RenderPageClose ? (fontSize * 1.5f) : 0f;
 
-        // Build rectangles
+        var minTabWidth = fontSize * 6f; 
+        var maxTabWidth = fontSize * 30f;
+
+        // 1. Measure all tabs first
+        var tabWidths = new float[_pages.Count];
         var totalWidth = 0f;
+
         for (var i = 0; i < _pages.Count; i++)
         {
             var page = _pages[i];
-
-            // Measure text
-            // Text padding (16*2=32) + CloseButton (24)
+            
+            // Measure text: Text padding + CloseButton
             var textWidth = font.MeasureText(page.Text);
-            var requiredWidth = textWidth + 32 + (RenderPageClose ? 24 : 0);
+            var requiredWidth = textWidth + (sidePadding * 2) + closeButtonSpace;
 
-            var tabWidth = Math.Clamp(requiredWidth, minTabWidth, maxTabWidth);
-
-            _tabRects.Add(new RectangleF(x, 0, tabWidth, HeaderHeight));
-            x += tabWidth;
-            totalWidth += tabWidth;
+            var w = Math.Clamp(requiredWidth, minTabWidth, maxTabWidth);
+            tabWidths[i] = w;
+            totalWidth += w;
+            
+            // Add gap for all except the last one technically, 
+            // but usually gap follows every item in coordinate calculation logic
+            if (i < _pages.Count - 1)
+                totalWidth += _tabGap;
         }
 
-        // Chevron overflow detection
-        var overflow = totalWidth > availableWidth;
-        _maxScrollOffset = Math.Max(0, totalWidth - availableWidth);
-        _scrollOffset = Math.Clamp(_scrollOffset, 0, _maxScrollOffset);
+        // 2. Determine available space and chevron visibility
+        // Base reserved space: 4 (left margin) + 40 (new tab button area)
+        // Chevrons add CHEVRON_WIDTH + 4 each.
+        
+        var baseAvailableWidth = Width - 4 - 40;
+        var overflow = totalWidth > baseAvailableWidth;
 
-        _showLeftChevron = overflow && _scrollOffset > 1f;
-        _showRightChevron = overflow && _scrollOffset < _maxScrollOffset - 1f;
+        if (!overflow)
+        {
+            _showLeftChevron = false;
+            _showRightChevron = false;
+            _maxScrollOffset = 0;
+            _scrollOffset = 0;
+        }
+        else
+        {
+            // Determine Left Chevron based on current scroll
+            // Note: This relies on the previous frame's scroll offset or user input
+            _showLeftChevron = _scrollOffset > 1f;
+
+            // Determine Right Chevron
+            // We first estimate available width based on Left Chevron only
+            var leftReserved = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
+            var spaceForTabs = Width - leftReserved - 40;
+            
+            var estMaxScroll = Math.Max(0, totalWidth - spaceForTabs);
+            
+            // Check if right chevron is needed
+            // If we are not at the very end, we need right chevron
+            _showRightChevron = _scrollOffset < estMaxScroll - 1f;
+
+            // If right chevron IS shown, available space shrinks, maxScroll increases.
+            if (_showRightChevron)
+            {
+                var rightReserved = CHEVRON_WIDTH + 4;
+                spaceForTabs -= rightReserved;
+            }
+
+            // Final recalc of max scroll with accurate chevron state
+            _maxScrollOffset = Math.Max(0, totalWidth - spaceForTabs);
+            _scrollOffset = Math.Clamp(_scrollOffset, 0, _maxScrollOffset);
+        }
+
+        // 3. Generate Rects
+        var startX = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
+        var x = startX - _scrollOffset;
+
+        for (var i = 0; i < _pages.Count; i++)
+        {
+            var w = tabWidths[i];
+            _tabRects.Add(new RectangleF(x, 0, w, HeaderHeight));
+            x += w + _tabGap;
+        }
     }
 
     private void ScrollToTab(int index)
@@ -441,6 +480,37 @@ public class TabControl : UIElementBase
         }
     }
 
+    internal override void OnControlAdded(UIElementEventArgs e)
+    {
+        base.OnControlAdded(e);
+
+        if (e.Element is TabPage page && !_pages.Contains(page))
+        {
+            _pages.Add(page);
+            page.Visible = false;
+
+            if (_selectedIndex == -1)
+                SelectedIndex = 0;
+
+            Invalidate();
+        }
+    }
+
+    internal override void OnControlRemoved(UIElementEventArgs e)
+    {
+        base.OnControlRemoved(e);
+
+        if (e.Element is TabPage page && _pages.Contains(page))
+        {
+            _pages.Remove(page);
+
+            if (_selectedIndex >= _pages.Count)
+                SelectedIndex = Math.Max(-1, _pages.Count - 1);
+
+            Invalidate();
+        }
+    }
+
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
@@ -454,13 +524,12 @@ public class TabControl : UIElementBase
         UpdatePagesLayout();
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
+        base.OnPaint(canvas);
         var bounds = ClientRectangle;
 
-        canvas.Clear(BackColor.ToSKColor());
+        // canvas.Clear(BackColor.ToSKColor());
 
 
         UpdateTabRects();
@@ -532,10 +601,11 @@ public class TabControl : UIElementBase
             var hoverProgress = (float)_hoverAnims[i].GetProgress();
 
             // === TAB RECTANGLE ===
+            var fontSize = 9.Topx(this);
             var tabPadding = 1f;
-            var tabHeight = 28f;
+            var tabHeight = fontSize * 2.2f; 
             var verticalMargin = (HeaderHeight - tabHeight) / 2f;
-            var topRadius = 6f * ScaleFactor;
+            var topRadius = fontSize / 2f;
 
             var tabRect = new SKRect(
                 rect.Left + tabPadding,
@@ -641,9 +711,13 @@ public class TabControl : UIElementBase
             else
                 textColor = unselectedTextColor;
 
+            var sidePadding = fontSize * 1.2f;
+            var closeButtonSpace = RenderPageClose ? (fontSize * 1.5f) : 0f;
+            var closeSize = fontSize * 1.2f;
+
             using (var font = new SKFont
                    {
-                       Size = 13f * ScaleFactor,
+                       Size = fontSize,
                        Typeface = FontManager.GetSKTypeface(Font),
                        Subpixel = true,
                        Edging = SKFontEdging.SubpixelAntialias
@@ -655,17 +729,17 @@ public class TabControl : UIElementBase
                        IsAntialias = true
                    })
             {
-                var textX = tabRect.Left + 16;
+                var textX = tabRect.Left + sidePadding;
                 var textY = tabRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
-                var maxTextWidth = tabRect.Width - 32 - (RenderPageClose ? 24 : 0);
+                var maxTextWidth = tabRect.Width - (sidePadding * 2) - closeButtonSpace;
                 canvas.DrawTextWithEllipsis(_pages[i].Text, textX, textY, maxTextWidth, textPaint, font);
             }
 
             // === CLOSE BUTTON ===
             if (RenderPageClose && (isSelected || isHovered || i == _hoveredCloseButtonIndex) && animAlpha > 0.3f)
             {
-                var closeSize = 16f;
-                var closeX = tabRect.Right - closeSize - 8;
+                var closeRightMargin = sidePadding / 2f;
+                var closeX = tabRect.Right - closeSize - closeRightMargin;
                 var closeY = tabRect.MidY - closeSize / 2;
                 var closeRect = new SKRect(closeX, closeY, closeX + closeSize, closeY + closeSize);
                 var isCloseHovered = i == _hoveredCloseButtonIndex;
@@ -697,7 +771,7 @@ public class TabControl : UIElementBase
                     StrokeCap = SKStrokeCap.Round
                 };
 
-                var padding = 4.5f;
+                var padding = closeSize * 0.28f;
                 canvas.DrawLine(closeRect.Left + padding, closeRect.Top + padding, closeRect.Right - padding,
                     closeRect.Bottom - padding, linePaint);
                 canvas.DrawLine(closeRect.Right - padding, closeRect.Top + padding, closeRect.Left + padding,
@@ -753,9 +827,11 @@ public class TabControl : UIElementBase
         _leftChevronHovered = _showLeftChevron && leftArea.Contains(e.Location);
         _rightChevronHovered = _showRightChevron && rightArea.Contains(e.Location);
 
+        var fontSize = 9.Topx(this);
+
         if (RenderNewPageButton)
         {
-            var buttonSize = 24f;
+            var buttonSize = fontSize * 1.8f;
             float buttonX;
 
             if (_showRightChevron)
@@ -873,13 +949,15 @@ public class TabControl : UIElementBase
     private int GetCloseButtonIndexAtPoint(Point point)
     {
         if (!RenderPageClose || point.Y > HeaderHeight) return -1;
+        
+        var fontSize = 9.Topx(this);
 
         for (var i = 0; i < _tabRects.Count; i++)
         {
             var rect = _tabRects[i];
 
             var tabPadding = 1f;
-            var tabHeight = 28f;
+            var tabHeight = fontSize * 2.2f;
             var verticalMargin = (HeaderHeight - tabHeight) / 2f;
 
             var tabRect = new SKRect(
@@ -889,8 +967,10 @@ public class TabControl : UIElementBase
                 HeaderHeight - verticalMargin
             );
 
-            var closeSize = 16f;
-            var closeX = tabRect.Right - closeSize - 8;
+            var sidePadding = fontSize * 1.2f;
+            var closeRightMargin = sidePadding / 2f;
+            var closeSize = fontSize * 1.2f;
+            var closeX = tabRect.Right - closeSize - closeRightMargin;
             var closeY = tabRect.MidY - closeSize / 2;
             var closeRect = new RectangleF(closeX, closeY, closeSize, closeSize);
 
@@ -991,7 +1071,8 @@ public class TabControl : UIElementBase
     {
         if (!RenderNewPageButton) return;
 
-        var buttonSize = 24f;
+        var fontSize = 9.Topx(this);
+        var buttonSize = fontSize * 1.8f;
         float buttonX;
         var buttonY = (HeaderHeight - buttonSize) / 2f;
 
@@ -1045,7 +1126,7 @@ public class TabControl : UIElementBase
 
         var cx = buttonRect.MidX;
         var cy = buttonRect.MidY;
-        var iconSize = 6f;
+        var iconSize = fontSize * 0.45f;
         canvas.DrawLine(cx - iconSize, cy, cx + iconSize, cy, plusPaint);
         canvas.DrawLine(cx, cy - iconSize, cx, cy + iconSize, plusPaint);
     }
@@ -1078,16 +1159,15 @@ public class TabPage : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
         if (BackColor != Color.Transparent)
         {
-            var canvas = e.Surface.Canvas;
             using var bgPaint = new SKPaint { Color = BackColor.ToSKColor(), IsAntialias = true };
             canvas.DrawRect(0, 0, Width, Height, bgPaint);
         }
 
-        base.OnPaint(e);
+        base.OnPaint(canvas);
     }
 
     internal virtual void OnSelected()

@@ -346,10 +346,8 @@ public class ComboBox : UIElementBase
             return itemIndex >= 0 && itemIndex < _owner.Items.Count ? itemIndex : -1;
         }
 
-        public override void OnPaint(SKPaintSurfaceEventArgs e)
+        public override void OnPaint(SKCanvas canvas)
         {
-            var canvas = e.Surface.Canvas;
-            canvas.Clear(SKColors.Transparent);
 
             if (Width <= 0 || Height <= 0 || _owner.Items.Count == 0)
                 return;
@@ -1252,9 +1250,8 @@ public class ComboBox : UIElementBase
         _shadowMaskBlur = blur;
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        var canvas = e.Surface.Canvas;
         var rect = new SKRect(0, 0, Width, Height);
 
         var hoverProgress = (float)_hoverAnimation.GetProgress();

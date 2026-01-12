@@ -134,11 +134,9 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
-        canvas.Clear();
+        base.OnPaint(canvas);
 
         var intValue = _value / (float)_maximum * Width;
         var percent = 100.0f * Value / Maximum;

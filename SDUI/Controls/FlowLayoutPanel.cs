@@ -396,10 +396,9 @@ public class FlowLayoutPanel : UIElementBase
         }
     }
 
-    public override void OnPaint(SKPaintSurfaceEventArgs e)
+    public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(e);
-        var canvas = e.Surface.Canvas;
+        base.OnPaint(canvas);
 
 
         var rect = new SKRect(0, 0, Width, Height);
