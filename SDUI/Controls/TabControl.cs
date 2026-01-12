@@ -359,24 +359,36 @@ public class TabControl : UIElementBase
 
         var startX = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
         var x = startX - _scrollOffset;
-        var maxWidth = 200f;
-        var minWidth = 120f;
 
         // Reserve right side for chevron (+ button moves with tabs)
         var rightReserved = _showRightChevron ? CHEVRON_WIDTH + 4 : 0;
         var endX = Width - rightReserved - 40;
         var availableWidth = Math.Max(0, endX - startX);
 
-        // Calculate tab width
-        var tabWidth = _pages.Count > 0 ? availableWidth / _pages.Count : availableWidth;
-        tabWidth = Math.Clamp(tabWidth, minWidth, maxWidth);
+        using var font = new SKFont
+        {
+            Size = 13f * ScaleFactor,
+            Typeface = FontManager.GetSKTypeface(Font),
+        };
 
-        // Build rectangles - SIFIR MARGIN
+        var minTabWidth = 120f;
+        var maxTabWidth = 400f;
+
+        // Build rectangles
         var totalWidth = 0f;
         for (var i = 0; i < _pages.Count; i++)
         {
+            var page = _pages[i];
+
+            // Measure text
+            // Text padding (16*2=32) + CloseButton (24)
+            var textWidth = font.MeasureText(page.Text);
+            var requiredWidth = textWidth + 32 + (RenderPageClose ? 24 : 0);
+
+            var tabWidth = Math.Clamp(requiredWidth, minTabWidth, maxTabWidth);
+
             _tabRects.Add(new RectangleF(x, 0, tabWidth, HeaderHeight));
-            x += tabWidth; // SIFIR MARGIN - biti�ik
+            x += tabWidth;
             totalWidth += tabWidth;
         }
 

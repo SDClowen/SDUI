@@ -11,9 +11,9 @@ internal static class Program
     {
         Console.WriteLine("Program.Main: start");
         // Temporarily disable WinForms convenience helpers to avoid potential native init crashes in CI environments.
-        // Application.EnableVisualStyles();
-        // Application.SetHighDpiMode(HighDpiMode.PerMonitor | HighDpiMode.PerMonitorV2);
-        // Application.SetCompatibleTextRenderingDefault(false);
+        Application.EnableVisualStyles();
+        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2);
+        Application.SetCompatibleTextRenderingDefault(false);
         Console.WriteLine("Program.Main: about to run MainWindow");
         Application.Run(new MainWindow());
         Console.WriteLine("Program.Main: exit");

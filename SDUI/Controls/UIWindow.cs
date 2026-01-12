@@ -2233,7 +2233,25 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
     private void RenderScene(SKCanvas canvas, SKImageInfo info)
     {
-        var gr = (_renderer as IGpuWindowRenderer)?.GrContext;
+        GRContext? gr = null;
+        
+        // Only use GPU context if the renderer is actually actively using it for this frame.
+        // Prevents UIElementBase from creating GPU surfaces when we are falling back to CPU rendering
+        // (which causes slow readbacks "weak rendering" and potential access violations).
+        if (_renderer is DirectX11WindowRenderer dx && dx.IsSkiaGpuActive)
+        {
+            gr = dx.GrContext;
+        }
+        else if (_renderer is OpenGlWindowRenderer gl && gl.IsSkiaGpuActive)
+        {
+            gr = gl.GrContext;
+        }
+        else if (!(_renderer is DirectX11WindowRenderer) && !(_renderer is OpenGlWindowRenderer))
+        {
+             // Fallback for other renderers
+             gr = (_renderer as IGpuWindowRenderer)?.GrContext;
+        }
+
         var gpuScope = gr != null ? UIElementBase.PushGpuContext(gr) : null;
         try
         {
@@ -2960,29 +2978,78 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (_windowPageControl == null || _windowPageControl.Count == 0)
             return;
 
-        var tabAreaWidth = 44 * DPI;
+        var occupiedWidth = 44 * DPI;
 
         if (controlBox)
-            tabAreaWidth += _controlBoxRect.Width;
+            occupiedWidth += _controlBoxRect.Width;
 
         if (MinimizeBox)
-            tabAreaWidth += _minimizeBoxRect.Width;
+            occupiedWidth += _minimizeBoxRect.Width;
 
         if (MaximizeBox)
-            tabAreaWidth += _maximizeBoxRect.Width;
+            occupiedWidth += _maximizeBoxRect.Width;
 
         if (ExtendBox)
-            tabAreaWidth += _extendBoxRect.Width;
+            occupiedWidth += _extendBoxRect.Width;
 
+        occupiedWidth += 30 * DPI;
+
+        var availableWidth = Width - occupiedWidth;
         var maxSize = 250f * DPI;
 
-        tabAreaWidth = (Width - tabAreaWidth - 30 * DPI) / _windowPageControl.Count;
-        if (tabAreaWidth > maxSize)
-            tabAreaWidth = maxSize;
+        using var font = new SKFont
+        {
+            Size = (_drawTabIcons ? 12f : 9f).PtToPx(this),
+            Typeface = FontManager.GetSKTypeface(Font),
+            Subpixel = true,
+            Edging = SKFontEdging.SubpixelAntialias
+        };
 
-        pageRect.Add(new RectangleF(44 * DPI, 0, tabAreaWidth, _titleHeightDPI));
-        for (var i = 1; i < _windowPageControl.Count; i++)
-            pageRect.Add(new RectangleF(pageRect[i - 1].Right, 0, tabAreaWidth, _titleHeightDPI));
+        var desiredWidths = new List<float>();
+        float totalDesiredWidth = 0;
+
+        foreach (UIElementBase page in _windowPageControl.Controls)
+        {
+            var bounds = new SKRect();
+            font.MeasureText(page.Text ?? "", out bounds);
+
+            var width = bounds.Width + (20 * DPI);
+
+            if (_drawTabIcons)
+                width += 30 * DPI;
+
+            if (_tabCloseButton)
+                width += 24 * DPI;
+
+            desiredWidths.Add(width);
+            totalDesiredWidth += width;
+        }
+
+        float scale = 1.0f;
+        float extraPerTab = 0;
+
+        if (totalDesiredWidth > availableWidth && totalDesiredWidth > 0)
+        {
+            scale = availableWidth / totalDesiredWidth;
+        }
+        else if (totalDesiredWidth < availableWidth && _windowPageControl.Count > 0)
+        {
+            var extra = availableWidth - totalDesiredWidth;
+            extraPerTab = extra / _windowPageControl.Count;
+        }
+
+        var currentX = 44 * DPI;
+
+        for (int i = 0; i < desiredWidths.Count; i++)
+        {
+            var finalWidth = (desiredWidths[i] * scale) + extraPerTab;
+
+            if (finalWidth > maxSize)
+                finalWidth = maxSize;
+
+            pageRect.Add(new RectangleF(currentX, 0, finalWidth, _titleHeightDPI));
+            currentX += finalWidth;
+        }
     }
 
     internal void UpdateCursor(UIElementBase element)

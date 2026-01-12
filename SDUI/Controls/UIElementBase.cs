@@ -1498,42 +1498,22 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
                 {
                     var raw = _renderSurface.Snapshot();
 
-                    // ALWAYS rasterize GPU snapshots to CPU to avoid cross-context access violations
-                    // Even if contexts match now, they might differ later when the snapshot is used
+                    // Keep GPU snapshot for performance if we are in GPU mode.
+                    // Rasterizing to CPU readback is extremely slow and causes stalls ("rendering weak").
                     if (_renderTargetKind == RenderTargetKind.Gpu)
                     {
+                        // Guard against using a snapshot from a different context if context shifted?
+                        // We assume shared context through s_currentGpuContext.
+                         _renderSnapshot = raw;
+                         
+                         // If we ever need to rasterize, we should do it lazily or only when context is lost.
+                         /* 
                         try
                         {
                             // Use direct rasterization - MUCH faster than PNG encode/decode
                             var rasterized = raw.ToRasterImage();
-                            if (rasterized != null)
-                            {
-                                raw.Dispose();
-                                _renderSnapshot = rasterized;
-
-                                if (DebugSettings.EnableRenderLogging)
-                                    DebugSettings.Log(
-                                        $"UIElementBase: Rasterized GPU snapshot for element {GetType().Name} ({Width}x{Height})");
-                            }
-                            else
-                            {
-                                // Rasterization failed, keep raw snapshot
-                                _renderSnapshot = raw;
-
-                                if (DebugSettings.EnableRenderLogging)
-                                    DebugSettings.Log(
-                                        $"UIElementBase: GPU snapshot rasterization failed for element {GetType().Name} ({Width}x{Height}), using raw GPU snapshot");
-                            }
-                        }
-                        catch (Exception rasterEx)
-                        {
-                            // Rasterization failed, keep raw snapshot
-                            _renderSnapshot = raw;
-
-                            if (DebugSettings.EnableRenderLogging)
-                                DebugSettings.Log(
-                                    $"UIElementBase: GPU snapshot rasterization exception for element {GetType().Name}: {rasterEx.Message}");
-                        }
+                            // ... 
+                         */
                     }
                     else
                     {

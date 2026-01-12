@@ -7,7 +7,7 @@ using SDUI.AnimationEngine;
 namespace SDUI.Animation;
 
 /// <summary>
-///     Modern, optimize edilmiþ animation manager - ValueProvider tabanlý
+///     Modern, optimize edilmis animation manager - ValueProvider tabanli
 /// </summary>
 public class AnimationManager : IDisposable
 {
@@ -16,7 +16,7 @@ public class AnimationManager : IDisposable
     private Point _animationSource;
     private AnimationDirection _currentDirection;
     private bool _disposed;
-    private Timer _timer; // Lazy initialization için readonly kaldýrýldý
+    private Timer _timer; // Lazy initialization icin readonly kaldirildi
 
     public AnimationManager(bool singular = true)
     {
@@ -28,7 +28,7 @@ public class AnimationManager : IDisposable
 
         _valueProvider = new ValueProvider<double>(0, ValueFactories.DoubleFactory, EasingMethods.DefaultEase);
 
-        // Timer'ý lazy initialization ile oluþtur - handle sorununu çözer
+        // Timer'i lazy initialization ile olustur - handle sorununu cozer
         // _timer = new Timer { Interval = 16 }; // BU SATIR KALDIRILDI
         // _timer.Tick += OnTick; // BU SATIR KALDIRILDI
     }
@@ -48,7 +48,7 @@ public class AnimationManager : IDisposable
         if (_timer != null)
         {
             _timer.Stop();
-            _timer.Tick -= OnTick; // Event handler'ý kaldýr
+            _timer.Tick -= OnTick; // Event handler'i kaldir
             _timer.Dispose();
             _timer = null;
         }
@@ -59,7 +59,7 @@ public class AnimationManager : IDisposable
     public event Action<object> OnAnimationProgress;
     public event Action<object> OnAnimationFinished;
 
-    // Lazy initialization - Timer sadece gerektiðinde oluþturulur
+    // Lazy initialization - Timer sadece gerektiginde olusturulur
     private void EnsureTimer()
     {
         if (_timer != null) return;
@@ -71,8 +71,8 @@ public class AnimationManager : IDisposable
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"AnimationManager: Timer oluþturulamadý - {ex.Message}");
-            // Timer oluþturulamazsa animasyon devre dýþý býrakýlýr
+            Debug.WriteLine($"AnimationManager: Timer olusturulamadi - {ex.Message}");
+            // Timer olusturulamazsa animasyon devre disi birakilir
             _timer = null;
         }
     }
@@ -114,7 +114,7 @@ public class AnimationManager : IDisposable
 
         Running = true;
 
-        // Timer'ý lazy initialization ile oluþtur
+        // Timer'i lazy initialization ile olustur
         EnsureTimer();
 
         if (_timer != null && !_timer.Enabled)
