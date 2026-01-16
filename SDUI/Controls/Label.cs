@@ -142,8 +142,10 @@ public class Label : UIElementBase
         var totalHeight = lines.Length * font.Spacing;
 
         // Add a small buffer (+2) to accommodate potential subpixel anti-aliasing overflow
-        Width = (int)Math.Ceiling(maxWidth) + Padding.Horizontal + 2;
-        Height = (int)Math.Ceiling(totalHeight) + Padding.Vertical;
+        var hPadding = Padding.Horizontal + 2f * ScaleFactor;
+        var vPadding = Padding.Vertical;
+        Width = (int)Math.Ceiling(maxWidth + hPadding);
+        Height = (int)Math.Ceiling(totalHeight + vPadding);
     }
 
     private SKTextAlign GetSKTextAlign()
@@ -184,17 +186,18 @@ public class Label : UIElementBase
         // Kenarlık çizimi
         if (BorderStyle != BorderStyle.None)
         {
+            var strokeWidth = 1f * ScaleFactor;
             using var paint = new SKPaint
             {
                 Color = ColorScheme.BorderColor.ToSKColor(),
                 Style = SKPaintStyle.Stroke,
-                StrokeWidth = 1,
+                StrokeWidth = strokeWidth,
                 IsAntialias = true
             };
 
             if (BorderStyle == BorderStyle.FixedSingle)
             {
-                canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
+                canvas.DrawRect(0, 0, Width - strokeWidth, Height - strokeWidth, paint);
             }
             else if (BorderStyle == BorderStyle.Fixed3D)
             {

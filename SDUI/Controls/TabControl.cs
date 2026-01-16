@@ -12,7 +12,7 @@ namespace SDUI.Controls;
 
 public class TabControl : UIElementBase
 {
-    private const float CHEVRON_WIDTH = 24f;
+    private float ChevronWidth => 24f * ScaleFactor;
 
     // Add/Remove animations
     private readonly Dictionary<TabPage, AnimationManager> _addAnimations = new();
@@ -350,6 +350,7 @@ public class TabControl : UIElementBase
 
         // Dynamic metrics based on font size
         var fontSize = 9.Topx(this);
+        var margin = 4f * ScaleFactor;
         
         using var font = new SKFont
         {
@@ -360,7 +361,7 @@ public class TabControl : UIElementBase
         var sidePadding = fontSize * 1.2f;
         var closeButtonSpace = RenderPageClose ? (fontSize * 1.5f) : 0f;
 
-        var minTabWidth = fontSize * 6f; 
+        var minTabWidth = fontSize * 12f; 
         var maxTabWidth = fontSize * 30f;
 
         // 1. Measure all tabs first
@@ -386,10 +387,9 @@ public class TabControl : UIElementBase
         }
 
         // 2. Determine available space and chevron visibility
-        // Base reserved space: 4 (left margin) + 40 (new tab button area)
-        // Chevrons add CHEVRON_WIDTH + 4 each.
-        
-        var baseAvailableWidth = Width - 4 - 40;
+        var buttonSize = fontSize * 1.8f;
+        var buttonReserved = RenderNewPageButton ? (buttonSize + 12f * ScaleFactor) : 0;
+        var baseAvailableWidth = Width - margin - buttonReserved;
         var overflow = totalWidth > baseAvailableWidth;
 
         if (!overflow)
@@ -407,8 +407,8 @@ public class TabControl : UIElementBase
 
             // Determine Right Chevron
             // We first estimate available width based on Left Chevron only
-            var leftReserved = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
-            var spaceForTabs = Width - leftReserved - 40;
+            var leftReserved = _showLeftChevron ? ChevronWidth + margin : margin;
+            var spaceForTabs = Width - leftReserved - buttonReserved;
             
             var estMaxScroll = Math.Max(0, totalWidth - spaceForTabs);
             
@@ -419,7 +419,7 @@ public class TabControl : UIElementBase
             // If right chevron IS shown, available space shrinks, maxScroll increases.
             if (_showRightChevron)
             {
-                var rightReserved = CHEVRON_WIDTH + 4;
+                var rightReserved = ChevronWidth + margin;
                 spaceForTabs -= rightReserved;
             }
 
@@ -429,7 +429,7 @@ public class TabControl : UIElementBase
         }
 
         // 3. Generate Rects
-        var startX = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
+        var startX = _showLeftChevron ? ChevronWidth + margin : margin;
         var x = startX - _scrollOffset;
 
         for (var i = 0; i < _pages.Count; i++)
@@ -445,8 +445,8 @@ public class TabControl : UIElementBase
         if (index < 0 || index >= _tabRects.Count) return;
 
         var tabRect = _tabRects[index];
-        var startX = _showLeftChevron ? CHEVRON_WIDTH : 0;
-        var endX = Width - (_showRightChevron ? CHEVRON_WIDTH : 0) - 32;
+        var startX = _showLeftChevron ? ChevronWidth : 0;
+        var endX = Width - (_showRightChevron ? ChevronWidth : 0) - 32f * ScaleFactor;
 
         // Scroll if tab is not fully visible
         if (tabRect.Left < startX)
@@ -553,18 +553,21 @@ public class TabControl : UIElementBase
 
         // === TAB AREA CLIPPING ===
         canvas.Save();
-        var clipStart = _showLeftChevron ? CHEVRON_WIDTH + 4 : 4;
+        var fontSize = 9.Topx(this);
+        var margin = 4f * ScaleFactor;
+        var clipStart = _showLeftChevron ? ChevronWidth + margin : margin;
 
         float clipEnd;
         if (_showRightChevron && RenderNewPageButton)
         {
-            var buttonSize = 24f;
-            var buttonX = Width - CHEVRON_WIDTH - buttonSize - 12;
-            clipEnd = buttonX - 4;
+            var buttonSize = fontSize * 1.8f;
+            var buttonSpacing = 12f * ScaleFactor;
+            var buttonX = Width - ChevronWidth - buttonSize - buttonSpacing;
+            clipEnd = buttonX - margin;
         }
         else
         {
-            clipEnd = Width - (_showRightChevron ? CHEVRON_WIDTH + 4 : 4);
+            clipEnd = Width - (_showRightChevron ? ChevronWidth + margin : margin);
         }
 
         canvas.ClipRect(new SKRect(clipStart, 0, clipEnd, HeaderHeight));
@@ -601,7 +604,6 @@ public class TabControl : UIElementBase
             var hoverProgress = (float)_hoverAnims[i].GetProgress();
 
             // === TAB RECTANGLE ===
-            var fontSize = 9.Topx(this);
             var tabPadding = 1f;
             var tabHeight = fontSize * 2.2f; 
             var verticalMargin = (HeaderHeight - tabHeight) / 2f;
@@ -821,8 +823,8 @@ public class TabControl : UIElementBase
         var wasLeftHovered = _leftChevronHovered;
         var wasRightHovered = _rightChevronHovered;
 
-        var leftArea = new RectangleF(0, 0, CHEVRON_WIDTH, HeaderHeight);
-        var rightArea = new RectangleF(Width - CHEVRON_WIDTH, 0, CHEVRON_WIDTH, HeaderHeight);
+        var leftArea = new RectangleF(0, 0, ChevronWidth, HeaderHeight);
+        var rightArea = new RectangleF(Width - ChevronWidth, 0, ChevronWidth, HeaderHeight);
 
         _leftChevronHovered = _showLeftChevron && leftArea.Contains(e.Location);
         _rightChevronHovered = _showRightChevron && rightArea.Contains(e.Location);
@@ -836,16 +838,16 @@ public class TabControl : UIElementBase
 
             if (_showRightChevron)
             {
-                buttonX = Width - CHEVRON_WIDTH - buttonSize - 12;
+                buttonX = Width - ChevronWidth - buttonSize - 12f * ScaleFactor;
             }
             else if (_tabRects.Count > 0)
             {
                 var lastTab = _tabRects[_tabRects.Count - 1];
-                buttonX = lastTab.Right + 8f;
+                buttonX = lastTab.Right + 8f * ScaleFactor;
             }
             else
             {
-                buttonX = _showLeftChevron ? CHEVRON_WIDTH + 8 : 8;
+                buttonX = _showLeftChevron ? ChevronWidth + 8f * ScaleFactor : 8f * ScaleFactor;
             }
 
             var buttonRect = new RectangleF(buttonX, (HeaderHeight - buttonSize) / 2f, buttonSize, buttonSize);
@@ -1012,7 +1014,7 @@ public class TabControl : UIElementBase
 
         if (_showLeftChevron)
         {
-            var leftRect = new SKRect(0, 0, CHEVRON_WIDTH, HeaderHeight);
+            var leftRect = new SKRect(0, 0, ChevronWidth, HeaderHeight);
             using var bg = new SKPaint { Color = chevBg.ToSKColor(), IsAntialias = true };
             canvas.DrawRect(leftRect, bg);
 
@@ -1034,13 +1036,17 @@ public class TabControl : UIElementBase
             };
 
             var mid = new SKPoint(leftRect.MidX, leftRect.MidY);
-            canvas.DrawLine(mid.X + 4, mid.Y - 6, mid.X - 2, mid.Y, p);
-            canvas.DrawLine(mid.X - 2, mid.Y, mid.X + 4, mid.Y + 6, p);
+            var xOffsetBig = 4f * ScaleFactor;
+            var yOffset = 6f * ScaleFactor;
+            var xOffsetSmall = 2f * ScaleFactor;
+            
+            canvas.DrawLine(mid.X + xOffsetBig, mid.Y - yOffset, mid.X - xOffsetSmall, mid.Y, p);
+            canvas.DrawLine(mid.X - xOffsetSmall, mid.Y, mid.X + xOffsetBig, mid.Y + yOffset, p);
         }
 
         if (_showRightChevron)
         {
-            var rightRect = new SKRect(bounds.Width - CHEVRON_WIDTH, 0, bounds.Width, HeaderHeight);
+            var rightRect = new SKRect(bounds.Width - ChevronWidth, 0, bounds.Width, HeaderHeight);
             using var bg2 = new SKPaint { Color = chevBg.ToSKColor(), IsAntialias = true };
             canvas.DrawRect(rightRect, bg2);
 
@@ -1062,8 +1068,12 @@ public class TabControl : UIElementBase
             };
 
             var mid2 = new SKPoint(rightRect.MidX, rightRect.MidY);
-            canvas.DrawLine(mid2.X - 4, mid2.Y - 6, mid2.X + 2, mid2.Y, p2);
-            canvas.DrawLine(mid2.X + 2, mid2.Y, mid2.X - 4, mid2.Y + 6, p2);
+            var xOffsetBig = 4f * ScaleFactor;
+            var yOffset = 6f * ScaleFactor;
+            var xOffsetSmall = 2f * ScaleFactor;
+
+            canvas.DrawLine(mid2.X - xOffsetBig, mid2.Y - yOffset, mid2.X + xOffsetSmall, mid2.Y, p2);
+            canvas.DrawLine(mid2.X + xOffsetSmall, mid2.Y, mid2.X - xOffsetBig, mid2.Y + yOffset, p2);
         }
     }
 
@@ -1078,18 +1088,18 @@ public class TabControl : UIElementBase
 
         if (_showRightChevron)
         {
-            buttonX = bounds.Width - CHEVRON_WIDTH - buttonSize - 12;
+            buttonX = bounds.Width - ChevronWidth - buttonSize - 12f * ScaleFactor;
         }
         else if (_tabRects.Count > 0)
         {
             var lastTab = _tabRects[_tabRects.Count - 1];
-            buttonX = lastTab.Right + 8f;
+            buttonX = lastTab.Right + 8f * ScaleFactor;
         }
         else
         {
             // No tabs - position near left with padding
             // No tabs - position near left with padding
-            buttonX = _showLeftChevron ? CHEVRON_WIDTH + 8 : 8;
+            buttonX = _showLeftChevron ? ChevronWidth + 8f * ScaleFactor : 8f * ScaleFactor;
         }
 
         var buttonRect = new SKRect(buttonX, buttonY, buttonX + buttonSize, buttonY + buttonSize);

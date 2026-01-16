@@ -15,16 +15,16 @@ namespace SDUI.Controls;
 
 public class ComboBox : UIElementBase
 {
-    private const int DropDownVerticalPadding = 6;
+    private int DropDownVerticalPadding => (int)(6 * ScaleFactor);
     private const int DefaultMinVisibleItems = 4;
-    private const int MinDropDownItemHeight = 32;
+    private int MinDropDownItemHeight => (int)(32 * ScaleFactor);
 
     #region Constructor
 
     public ComboBox()
     {
-        MinimumSize = new Size(50, 28);
-        Size = new Size(120, 28);
+        MinimumSize = new Size((int)(50 * ScaleFactor), (int)(28 * ScaleFactor));
+        Size = new Size((int)(120 * ScaleFactor), (int)(28 * ScaleFactor));
 
         _hoverAnimation = new AnimationManager(true)
         {
@@ -72,10 +72,10 @@ public class ComboBox : UIElementBase
     private class DropDownPanel : UIElementBase
     {
         // Windows 11 WinUI3 benzeri modern bo�luklar
-        private const int VERTICAL_PADDING = DropDownVerticalPadding;
-        private const int ITEM_MARGIN = 10; // Dropdown kenar�ndan item arkaplan kenar�na kadar margin
-        private const float CORNER_RADIUS = 10f;
-        private const int SCROLL_BAR_WIDTH = 14;
+        private int VERTICAL_PADDING => _owner.DropDownVerticalPadding;
+        private int ITEM_MARGIN => (int)(10 * ScaleFactor); // Dropdown kenar�ndan item arkaplan kenar�na kadar margin
+        private float CORNER_RADIUS => 10f * ScaleFactor;
+        private int SCROLL_BAR_WIDTH => (int)(14 * ScaleFactor);
 
         // Per-item hover animasyonlar�
         private readonly Dictionary<int, AnimationManager> _itemHoverAnims = new();
@@ -627,6 +627,8 @@ public class ComboBox : UIElementBase
     #region Properties
 
     private int _radius = 6;
+    private int RadiusScaled => (int)(_radius * ScaleFactor);
+    private float ShadowDepthScaled => ShadowDepth * ScaleFactor;
 
     [Browsable(true)]
     public int Radius
@@ -1270,19 +1272,19 @@ public class ComboBox : UIElementBase
         {
             var shadowAlpha = 12 + hoverProgress * 8 + pressProgress * 5;
             _paintShadow ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
-            EnsureShadowMaskFilter(ShadowDepth * 0.5f);
+            EnsureShadowMaskFilter(ShadowDepthScaled * 0.5f);
             _paintShadow.MaskFilter = _shadowMaskFilter;
             _paintShadow.Color = SKColors.Black.WithAlpha((byte)shadowAlpha);
             canvas.Save();
-            canvas.Translate(0, ShadowDepth * 0.3f);
-            canvas.DrawRoundRect(rect, _radius, _radius, _paintShadow);
+            canvas.Translate(0, ShadowDepthScaled * 0.3f);
+            canvas.DrawRoundRect(rect, RadiusScaled, RadiusScaled, _paintShadow);
             canvas.Restore();
         }
 
         // Base arka plan
         _paintBase ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
         _paintBase.Color = backgroundColor;
-        canvas.DrawRoundRect(rect, _radius, _radius, _paintBase);
+        canvas.DrawRoundRect(rect, RadiusScaled, RadiusScaled, _paintBase);
 
         // Hover/press glow overlay
         if (hoverProgress > 0 || pressProgress > 0)
@@ -1290,26 +1292,26 @@ public class ComboBox : UIElementBase
             var glowAlpha = (byte)(hoverProgress * 15 + pressProgress * 10);
             _paintGlow ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
             _paintGlow.Color = accentColor.WithAlpha(glowAlpha);
-            canvas.DrawRoundRect(rect, _radius, _radius, _paintGlow);
+            canvas.DrawRoundRect(rect, RadiusScaled, RadiusScaled, _paintGlow);
         }
 
         // �stte ince ayd�nl�k highlight (acrylic effect)
         EnsureHighlightShader(Height);
         _paintHighlight ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
         _paintHighlight.Shader = _highlightShader;
-        canvas.DrawRoundRect(rect, _radius, _radius, _paintHighlight);
+        canvas.DrawRoundRect(rect, RadiusScaled, RadiusScaled, _paintHighlight);
 
         // Modern kenarl�k (ince ve zarif)
         var borderAlpha = 0.4f + hoverProgress * 0.2f + pressProgress * 0.1f;
-        _paintBorder ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
+        _paintBorder ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f * ScaleFactor };
         _paintBorder.Color = ColorScheme.BorderColor.ToSKColor()
             .InterpolateColor(accentColor, blendFactor * 0.4f)
             .ToColor()
             .Alpha((byte)(255 * borderAlpha))
             .ToSKColor();
         var borderRect = rect;
-        borderRect.Inflate(-0.5f, -0.5f);
-        canvas.DrawRoundRect(borderRect, _radius - 0.5f, _radius - 0.5f, _paintBorder);
+        borderRect.Inflate(-0.5f * ScaleFactor, -0.5f * ScaleFactor);
+        canvas.DrawRoundRect(borderRect, RadiusScaled - 0.5f * ScaleFactor, RadiusScaled - 0.5f * ScaleFactor, _paintBorder);
 
         var textColor = ColorScheme.ForeColor.ToSKColor();
         var displayText = Text;
@@ -1321,15 +1323,15 @@ public class ComboBox : UIElementBase
         var textBounds = new SKRect();
         font.MeasureText(displayText, out textBounds);
         var textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
-        float textX = 16;
+        float textX = 16f * ScaleFactor;
 
         TextRenderingHelper.DrawText(canvas, displayText, textX, textY, font, _paintText);
 
         // Modern Chevron ikonu - DropDown ve DropDownList stillerinde g�ster
         if (DropDownStyle != ComboBoxStyle.Simple)
         {
-            float chevronSize = 10;
-            float chevronX = Width - 22;
+            float chevronSize = 10f * ScaleFactor;
+            float chevronX = Width - 22f * ScaleFactor;
             var chevronY = Height / 2f;
 
             // Arrow rotation animasyonu: 0� kapal�, 180� a��k
@@ -1343,7 +1345,7 @@ public class ComboBox : UIElementBase
             // Chevron hover background circle (animasyonlu)
             if (hoverProgress > 0.05f)
             {
-                var circleRadius = 13f * Math.Clamp(hoverProgress, 0, 1);
+                var circleRadius = 13f * ScaleFactor * Math.Clamp(hoverProgress, 0, 1);
                 _paintChevronBg ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
                 _paintChevronBg.Color = accentColor.WithAlpha((byte)(hoverProgress * 18));
                 canvas.DrawCircle(chevronX, chevronY, circleRadius, _paintChevronBg);
@@ -1359,7 +1361,7 @@ public class ComboBox : UIElementBase
             {
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
-                StrokeWidth = 1.5f,
+                StrokeWidth = 1.5f * ScaleFactor,
                 StrokeCap = SKStrokeCap.Round,
                 StrokeJoin = SKStrokeJoin.Round
             };
@@ -1383,13 +1385,13 @@ public class ComboBox : UIElementBase
 
     public override Size GetPreferredSize(Size proposedSize)
     {
-        return new Size(Math.Max(120, proposedSize.Width), 28);
+        return new Size(Math.Max((int)(120 * ScaleFactor), proposedSize.Width), (int)(28 * ScaleFactor));
     }
 
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
-        Height = 28; // Sabit y�kseklik
+        Height = (int)(28 * ScaleFactor); // Sabit y�kseklik
     }
 
     protected override void Dispose(bool disposing)

@@ -29,7 +29,7 @@ public class ListBox : UIElementBase
     {
         _items = [];
         _selectedIndex = -1;
-        _itemHeight = 30;
+        _itemHeight = (int)(30 * ScaleFactor);
         _topIndex = 0;
         _leftIndex = 0;
         _autoScroll = true;
@@ -37,7 +37,7 @@ public class ListBox : UIElementBase
         _verticalScrollBar = new ScrollBar
         {
             Dock = DockStyle.Right,
-            Width = 15,
+            Width = (int)(15 * ScaleFactor),
             Minimum = 0,
             SmallChange = 1,
             LargeChange = 5,
@@ -48,7 +48,7 @@ public class ListBox : UIElementBase
         _horizontalScrollBar = new ScrollBar
         {
             Dock = DockStyle.Bottom,
-            Height = 15,
+            Height = (int)(15 * ScaleFactor),
             Minimum = 0,
             SmallChange = 10,
             LargeChange = 50,

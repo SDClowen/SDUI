@@ -29,6 +29,10 @@ public class Button : UIElementBase, IButtonControl
 
     private float _shadowDepth = 4f;
     private SizeF _textSize;
+    
+    // DPI Scaled properties
+    private int RadiusScaled => (int)(_radius * ScaleFactor);
+    private float ShadowDepthScaled => _shadowDepth * ScaleFactor;
 
     public Button()
     {
@@ -223,14 +227,14 @@ public class Button : UIElementBase, IButtonControl
 
         // Add padding for elevation shadow
         // We use the base elevation for padding to prevent the button from being too small.
-        var elevationOffset = ColorScheme.GetElevationOffset(_elevation);
-        var elevationBlur = ColorScheme.GetElevationBlur(_elevation);
+        var elevationOffset = ColorScheme.GetElevationOffset(_elevation) * ScaleFactor;
+        var elevationBlur = ColorScheme.GetElevationBlur(_elevation) * ScaleFactor;
 
         // Calculate padding needed for the shadow
         // We add a small buffer (1px) to avoid hard clipping
-        var hPadding = Math.Max(elevationOffset, elevationBlur / 2) + 1;
-        var vPaddingTop = Math.Max(elevationOffset / 2, elevationBlur / 2) + 1;
-        var vPaddingBottom = elevationOffset + elevationBlur / 2 + 1;
+        var hPadding = Math.Max(elevationOffset, elevationBlur / 2f) + 1f;
+        var vPaddingTop = Math.Max(elevationOffset / 2f, elevationBlur / 2f) + 1f;
+        var vPaddingBottom = elevationOffset + elevationBlur / 2f + 1f;
 
         var bodyRect = new SKRect(
             baseRect.Left + hPadding,
@@ -251,7 +255,7 @@ public class Button : UIElementBase, IButtonControl
         currentElevation = Math.Min(currentElevation, 5);
 
         // Draw elevation shadow
-        if (Enabled && currentElevation > 0) ElevationHelper.DrawElevation(canvas, bodyRect, _radius, currentElevation);
+        if (Enabled && currentElevation > 0) ElevationHelper.DrawElevation(canvas, bodyRect, RadiusScaled, currentElevation);
 
         DrawButton(canvas, bodyRect, hoverProgress, pressProgress);
 
@@ -261,7 +265,7 @@ public class Button : UIElementBase, IButtonControl
             canvas.Save();
             using (var path = new SKPath())
             {
-                path.AddRoundRect(bodyRect, _radius, _radius);
+                path.AddRoundRect(bodyRect, RadiusScaled, RadiusScaled);
                 canvas.ClipPath(path, SKClipOperation.Intersect, true);
 
                 ElevationHelper.DrawRipple(
@@ -297,7 +301,7 @@ public class Button : UIElementBase, IButtonControl
                    Style = SKPaintStyle.Fill
                })
         {
-            canvas.DrawRoundRect(bodyRect, _radius, _radius, fillPaint);
+            canvas.DrawRoundRect(bodyRect, RadiusScaled, RadiusScaled, fillPaint);
         }
 
         // Draw state layer (hover/press)

@@ -27,6 +27,8 @@ public class ProgressBar : UIElementBase
     private bool _showValue;
     private long _value;
 
+    private int RadiusScaled => (int)(_radius * ScaleFactor);
+
     public ProgressBar()
     {
         BackColor = Color.Transparent;

@@ -103,7 +103,8 @@ public class ToggleButton : UIElementBase
     {
         base.OnPaint(canvas);
 
-        var toggleSize = Height - 3;
+        var spacing = 10f * ScaleFactor;
+        var toggleSize = Height - 3f * ScaleFactor;
         var radius = Height / 2f - 1;
         var textWidth = 0f;
 
@@ -127,11 +128,11 @@ public class ToggleButton : UIElementBase
             textWidth = textBounds.Width;
             TextRenderingHelper.DrawText(canvas, Text, 0, Height / 2f + textBounds.Height / 2f, font, textPaint);
 
-            canvas.Translate(textWidth + 10, 0);
+            canvas.Translate(textWidth + spacing, 0);
         }
 
         var progress = (float)animationManager.GetProgress();
-        var toggleWidth = Width - textWidth - 10;
+        var toggleWidth = Width - textWidth - spacing;
 
         using (var shadowFilter = SKImageFilter.CreateDropShadow(0, 1, 2, 2, SKColors.Black.WithAlpha(20)))
         using (var shadowPaint = new SKPaint
@@ -180,7 +181,7 @@ public class ToggleButton : UIElementBase
                    ImageFilter = thumbShadowFilter
                })
         {
-            var padding = 2f;
+            var padding = 2f * ScaleFactor;
             var circleRadius = (toggleSize - padding * 2) / 2f;
             var startX = padding + circleRadius;
             var endX = toggleWidth - padding - circleRadius;
@@ -189,6 +190,6 @@ public class ToggleButton : UIElementBase
         }
 
         if (!string.IsNullOrEmpty(Text))
-            canvas.Translate(-(textWidth + 10), 0);
+            canvas.Translate(-(textWidth + spacing), 0);
     }
 }

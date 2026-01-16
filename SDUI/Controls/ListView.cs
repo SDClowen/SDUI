@@ -104,7 +104,7 @@ public partial class ListView : UIElementBase
             {
                 var index = _listViewItems.IndexOf(value);
                 if (index != -1)
-                    _selectedIndex = index;
+                    SelectedIndex = index;
             }
         }
     }
@@ -114,8 +114,28 @@ public partial class ListView : UIElementBase
         get => _selectedIndex;
         set
         {
+            if (_selectedIndex == value) return;
             _selectedIndex = value;
+
+            if (_listViewItems != null)
+            {
+                foreach (var item in _listViewItems)
+                    item.StateSelected = false;
+
+                SelectedItems.Clear();
+                SelectedIndices.Clear();
+
+                if (_selectedIndex >= 0 && _selectedIndex < _listViewItems.Count)
+                {
+                    var item = _listViewItems[_selectedIndex];
+                    item.StateSelected = true;
+                    SelectedItems.Add(item);
+                    SelectedIndices.Add(_selectedIndex);
+                }
+            }
+
             SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
+            Invalidate();
         }
     }
 
@@ -924,8 +944,15 @@ public partial class ListView : UIElementBase
                         if (_listViewItems != null)
                             foreach (var r in _listViewItems)
                                 r.StateSelected = false;
+
+                        SelectedItems.Clear();
+                        SelectedIndices.Clear();
+
                         item.StateSelected = true;
+                        SelectedItems.Add(item);
                         _selectedIndex = _listViewItems != null ? _listViewItems.IndexOf(item) : -1;
+                        if (_selectedIndex != -1) SelectedIndices.Add(_selectedIndex);
+
                         SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
                         Invalidate();
                         return;
@@ -948,8 +975,16 @@ public partial class ListView : UIElementBase
                     if (itemRect.Contains(e.X, e.Y))
                     {
                         foreach (var r in _listViewItems) r.StateSelected = false;
+
+                        SelectedItems.Clear();
+                        SelectedIndices.Clear();
+
                         item.StateSelected = true;
+                        SelectedItems.Add(item);
+
                         _selectedIndex = _listViewItems.IndexOf(item);
+                        if (_selectedIndex != -1) SelectedIndices.Add(_selectedIndex);
+
                         SelectedIndexChanged?.Invoke(this, EventArgs.Empty);
                         Invalidate();
                         return;

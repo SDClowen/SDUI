@@ -12,7 +12,7 @@ public class NumUpDown : UIElementBase
 {
     private const int LONG_PRESS_TIMER_INTERVAL = 250;
 
-    private const int SIZE = 20;
+    private float _size => 20f * ScaleFactor;
     private readonly Timer _longPressTimer = new();
     private readonly Font _symbolFont;
     private readonly AnimationManager downButtonHoverAnimation;
@@ -148,8 +148,8 @@ public class NumUpDown : UIElementBase
 
     private void UpdateButtonRects()
     {
-        _upButtonRect = new RectangleF(Width - SIZE * ScaleFactor, 0, SIZE * ScaleFactor, Height / 2f);
-        _downButtonRect = new RectangleF(Width - SIZE * ScaleFactor, Height / 2f, SIZE * ScaleFactor, Height / 2f);
+        _upButtonRect = new RectangleF(Width - _size, 0, _size, Height / 2f);
+        _downButtonRect = new RectangleF(Width - _size, Height / 2f, _size, Height / 2f);
     }
 
     internal override void OnMouseMove(MouseEventArgs e)

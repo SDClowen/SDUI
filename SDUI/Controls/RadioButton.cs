@@ -11,16 +11,11 @@ namespace SDUI.Controls;
 
 public class Radio : UIElementBase
 {
-    private const int RADIOBUTTON_INNER_CIRCLE_SIZE = RADIOBUTTON_SIZE - 2 * RADIOBUTTON_OUTER_CIRCLE_WIDTH;
-
-    private const int RADIOBUTTON_OUTER_CIRCLE_WIDTH = 2;
-
-    // size constants
-    private const int RADIOBUTTON_SIZE = 18;
-
-    private const int RADIOBUTTON_SIZE_HALF = RADIOBUTTON_SIZE / 2;
-
-    private const int TEXT_PADDING = 4;
+    private float RadioButtonSize => 18f * ScaleFactor;
+    private float RadioButtonSizeHalf => RadioButtonSize / 2f;
+    private float TextPadding => 4f * ScaleFactor;
+    private float OuterCircleWidth => 2f * ScaleFactor;
+    private float InnerCircleSize => RadioButtonSize - 2 * OuterCircleWidth;
 
     // animation managers
     private readonly AnimationManager animationManager;
@@ -30,10 +25,10 @@ public class Radio : UIElementBase
     private bool _checked;
     private int _mouseState;
 
-    private int boxOffset;
+    private float boxOffset;
 
     // size related variables which should be recalculated onsizechanged
-    private Rectangle radioButtonBounds;
+    private RectangleF radioButtonBounds;
 
     private bool ripple;
 
@@ -137,34 +132,34 @@ public class Radio : UIElementBase
         };
 
         var textWidth = string.IsNullOrEmpty(Text) ? 0 : font.MeasureText(Text);
-        var height = Ripple ? 30 : 20;
+        var height = Ripple ? 30f * ScaleFactor : 20f * ScaleFactor;
         var fullHeight = height + Padding.Vertical;
 
         // Calculate expected box offset, matching OnSizeChanged logic
-        var boxOffset = fullHeight / 2 - (int)Math.Ceiling(RADIOBUTTON_SIZE / 2d);
+        var boxOffset = fullHeight / 2 - (float)Math.Ceiling(RadioButtonSize / 2d);
 
         // Width = boxOffset (left space) + Radio + Gap + Text + Padding + Buffer
-        var width = boxOffset + RADIOBUTTON_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
+        var width = boxOffset + RadioButtonSize + TextPadding + (int)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
 
-        return new Size(width, fullHeight);
+        return new Size((int)Math.Ceiling(width), (int)Math.Ceiling(fullHeight));
     }
 
     public override void OnPaint(SKCanvas canvas)
     {
         base.OnPaint(canvas);
 
-        var RADIOBUTTON_CENTER = boxOffset + RADIOBUTTON_SIZE_HALF;
+        var radioButtonCenter = boxOffset + RadioButtonSizeHalf;
         var animationProgress = (float)animationManager.GetProgress();
 
         var colorAlpha = Enabled ? (int)(animationProgress * 255.0) : 128;
         var backgroundAlpha = Enabled ? (int)(ColorScheme.Outline.A * (1.0 - animationProgress)) : 128;
-        var animationSize = animationProgress * 7f;
+        var animationSize = animationProgress * 7f * ScaleFactor;
         var animationSizeHalf = animationSize / 2;
 
         var accentColor = Enabled ? ColorScheme.Primary : ColorScheme.OnSurface.Alpha(50);
 
         // Ripple efekti
-        if (Ripple && rippleAnimationManager.IsAnimating()) DrawRippleEffect(canvas, accentColor, RADIOBUTTON_CENTER);
+        if (Ripple && rippleAnimationManager.IsAnimating()) DrawRippleEffect(canvas, accentColor, radioButtonCenter);
 
         // Modern circular outline with Primary color when checked
         var outlineColor = Checked
@@ -178,13 +173,13 @@ public class Radio : UIElementBase
                    Color = outlineColor,
                    IsAntialias = true,
                    Style = SKPaintStyle.Stroke,
-                   StrokeWidth = 2f
+                   StrokeWidth = 2f * ScaleFactor
                })
         {
             canvas.DrawCircle(
-                RADIOBUTTON_CENTER,
-                RADIOBUTTON_CENTER,
-                RADIOBUTTON_SIZE / 2f - 1,
+                radioButtonCenter,
+                radioButtonCenter,
+                RadioButtonSize / 2f - 1,
                 paint
             );
         }
@@ -198,9 +193,9 @@ public class Radio : UIElementBase
                })
         {
             canvas.DrawCircle(
-                RADIOBUTTON_CENTER,
-                RADIOBUTTON_CENTER,
-                RADIOBUTTON_INNER_CIRCLE_SIZE / 2f,
+                radioButtonCenter,
+                radioButtonCenter,
+                InnerCircleSize / 2f,
                 paint
             );
         }
@@ -219,8 +214,8 @@ public class Radio : UIElementBase
                 Style = SKPaintStyle.Fill
             };
             canvas.DrawCircle(
-                RADIOBUTTON_CENTER,
-                RADIOBUTTON_CENTER,
+                radioButtonCenter,
+                radioButtonCenter,
                 animationSizeHalf,
                 paint
             );
@@ -290,7 +285,7 @@ public class Radio : UIElementBase
             IsAntialias = true
         };
 
-        float textX = boxOffset + RADIOBUTTON_SIZE + TEXT_PADDING;
+        float textX = boxOffset + RadioButtonSize + TextPadding;
         var textBounds = SKRect.Create(textX, Padding.Top, Width - textX - Padding.Right, Height - Padding.Vertical);
 
         canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis,
@@ -300,8 +295,8 @@ public class Radio : UIElementBase
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
-        boxOffset = Height / 2 - (int)Math.Ceiling(RADIOBUTTON_SIZE / 2d);
-        radioButtonBounds = new Rectangle(boxOffset, boxOffset, RADIOBUTTON_SIZE, RADIOBUTTON_SIZE);
+        boxOffset = Height / 2 - (float)Math.Ceiling(RadioButtonSize / 2d);
+        radioButtonBounds = new RectangleF(boxOffset, boxOffset, RadioButtonSize, RadioButtonSize);
     }
 
     public override void OnClick(EventArgs e)

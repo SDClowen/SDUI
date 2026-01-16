@@ -61,14 +61,17 @@ public class TrackBar : UIElementBase
 
     private void UpdateControlSize()
     {
+        var heightValues = (_drawValueString ? 35 : 22) * ScaleFactor;
+        var tickHeight = (_showTicks ? 15 : 0) * ScaleFactor;
+        
         if (_orientation == Orientation.Horizontal)
         {
-            Height = (_drawValueString ? 35 : 22) + (_showTicks ? 15 : 0);
+            Height = (int)(heightValues + tickHeight);
             base.MinimumSize = new Size(50, Height);
         }
         else
         {
-            Width = (_drawValueString ? 35 : 22) + (_showTicks ? 15 : 0);
+            Width = (int)(heightValues + tickHeight);
             base.MinimumSize = new Size(Width, 50);
         }
     }

@@ -235,6 +235,7 @@ public class RichTextBox : TextBox
 public class TextBox : UIElementBase
 {
     private readonly int _caretWidth = 1;
+    private int CaretWidthScaled => (int)(_caretWidth * ScaleFactor);
     private readonly List<TextStyle> _styles = new();
     private readonly List<TextStyleSpan> _styleSpans = new();
     private bool _acceptsReturn;
@@ -253,6 +254,7 @@ public class TextBox : UIElementBase
     private Color _borderColor = ColorScheme.BorderColor;
     private SKPaint? _borderPaint;
     private float _borderWidth = 1.0f;
+    private float BorderWidthScaled => _borderWidth * ScaleFactor;
     private Color _charCountColor = Color.Gray;
     private SKPaint? _charCountPaint;
 
@@ -261,6 +263,7 @@ public class TextBox : UIElementBase
     private int _charCountSkFontDpi;
     private Font? _charCountSkFontSource;
     private float _cornerRadius = 6.0f;
+    private float CornerRadiusScaled => _cornerRadius * ScaleFactor;
     private Timer _cursorBlinkTimer = null!;
     private SKPaint? _cursorPaint;
 
@@ -1372,14 +1375,14 @@ public class TextBox : UIElementBase
         var surfaceColor = ResolveSurfaceColor(Enabled);
         _bgPaint!.Color = surfaceColor.ToSKColor();
         var backgroundRect = new SKRect(0, 0, bounds.Width, bounds.Height);
-        canvas.DrawRoundRect(backgroundRect, CornerRadius, CornerRadius, _bgPaint);
+        canvas.DrawRoundRect(backgroundRect, CornerRadiusScaled, CornerRadiusScaled, _bgPaint);
 
         if (focusProgress > 0.001f)
         {
             _focusGlowPaint!.Color = FocusedBorderColor.Alpha((int)Math.Round(35 * focusProgress)).ToSKColor();
 
             var glowRect = new SKRect(0, 0, bounds.Width, bounds.Height);
-            canvas.DrawRoundRect(glowRect, CornerRadius, CornerRadius, _focusGlowPaint);
+            canvas.DrawRoundRect(glowRect, CornerRadiusScaled, CornerRadiusScaled, _focusGlowPaint);
         }
 
         // 2. Draw Border (simple, flat)
@@ -1388,12 +1391,12 @@ public class TextBox : UIElementBase
         if (!Enabled) borderColor = borderColor.Brightness(ColorScheme.BackColor.IsDark() ? -0.05f : -0.1f);
 
         _borderPaint!.Color = borderColor.ToSKColor();
-        var focusedStroke = Math.Max(2.0f, BorderWidth + 0.5f);
-        _borderPaint.StrokeWidth = BorderWidth + (focusedStroke - BorderWidth) * focusProgress;
+        var focusedStroke = Math.Max(2.0f * ScaleFactor, BorderWidthScaled + 0.5f * ScaleFactor);
+        _borderPaint.StrokeWidth = BorderWidthScaled + (focusedStroke - BorderWidthScaled) * focusProgress;
 
         var inset = _borderPaint.StrokeWidth / 2;
         var borderRect = new SKRect(inset, inset, bounds.Width - inset, bounds.Height - inset);
-        canvas.DrawRoundRect(borderRect, CornerRadius, CornerRadius, _borderPaint);
+        canvas.DrawRoundRect(borderRect, CornerRadiusScaled, CornerRadiusScaled, _borderPaint);
 
         // 5. Determine Text to Draw
         var displayText = UseSystemPasswordChar && !string.IsNullOrEmpty(Text)
@@ -1456,7 +1459,7 @@ public class TextBox : UIElementBase
             if (Focused && _showCursor && _selectionLength == 0)
             {
                 _cursorPaint!.Color = ForeColor.ToSKColor();
-                _cursorPaint.StrokeWidth = _caretWidth;
+                _cursorPaint.StrokeWidth = CaretWidthScaled;
 
                 var cursorX = GetTextX(bounds.Width, textBounds.Width) - hOffset;
                 if (!string.IsNullOrEmpty(displayText))
@@ -1568,7 +1571,7 @@ public class TextBox : UIElementBase
                 var cursorBottom = cursorTop + (metrics.Descent - metrics.Ascent);
 
                 _cursorPaint!.Color = ForeColor.ToSKColor();
-                _cursorPaint.StrokeWidth = _caretWidth;
+                _cursorPaint.StrokeWidth = CaretWidthScaled;
                 canvas.DrawLine(new SKPoint(cursorX, cursorTop), new SKPoint(cursorX, cursorBottom), _cursorPaint);
             }
         }

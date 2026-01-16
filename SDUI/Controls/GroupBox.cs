@@ -13,6 +13,9 @@ public class GroupBox : UIElementBase
     private int _shadowDepth = 4;
     private ContentAlignment _textAlign = ContentAlignment.MiddleCenter;
 
+    private int RadiusScaled => (int)(_radius * ScaleFactor);
+    private float ShadowDepthScaled => _shadowDepth * ScaleFactor;
+
     public GroupBox()
     {
         BackColor = Color.Transparent;
@@ -69,18 +72,18 @@ public class GroupBox : UIElementBase
         }
 
         var rect = new SKRect(0, 0, Width, Height);
-        var inflate = _shadowDepth / 4f;
+        var inflate = ShadowDepthScaled / 4f;
         rect.Inflate(-inflate, -inflate);
         var shadowRect = rect;
 
-        // Ba�l�k �l��leri (padding uygulanm�� geni�lik)
-        var titleHeight = Font.Height + 7;
+        // Balk lleri (padding uygulanm genilik)
+        var titleHeight = Font.Height + 7f * ScaleFactor;
         float titleX = Padding.Left;
         var titleWidth = Math.Max(0, rect.Width - Padding.Horizontal);
         var titleRect = new SKRect(titleX, 0, titleX + titleWidth, titleHeight);
 
-        // G�lge �izimi
-        using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, _shadowDepth / 2f))
+        // Glge izimi
+        using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, ShadowDepthScaled / 2f))
         using (var paint = new SKPaint
                {
                    Color = SKColors.Black.WithAlpha(20),
@@ -88,7 +91,7 @@ public class GroupBox : UIElementBase
                    MaskFilter = shadowMaskFilter
                })
         {
-            canvas.DrawRoundRect(shadowRect, _radius, _radius, paint);
+            canvas.DrawRoundRect(shadowRect, RadiusScaled, RadiusScaled, paint);
         }
 
         // Arka plan �izimi
@@ -99,7 +102,7 @@ public class GroupBox : UIElementBase
                    Style = SKPaintStyle.Fill
                })
         {
-            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+            canvas.DrawRoundRect(rect, RadiusScaled, RadiusScaled, paint);
         }
 
         // Ba�l�k alan� �izimi (padding uygulanm�� s�n�rlar i�inde)
@@ -112,7 +115,7 @@ public class GroupBox : UIElementBase
                    Color = ColorScheme.BorderColor.ToSKColor(),
                    IsAntialias = true,
                    Style = SKPaintStyle.Stroke,
-                   StrokeWidth = 1
+                   StrokeWidth = 1f * ScaleFactor
                })
         {
             canvas.DrawLine(titleRect.Left, titleRect.Height - 1, titleRect.Right, titleRect.Height - 1, paint);
@@ -126,7 +129,7 @@ public class GroupBox : UIElementBase
                    Style = SKPaintStyle.Fill
                })
         {
-            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+            canvas.DrawRoundRect(rect, RadiusScaled, RadiusScaled, paint);
         }
 
         canvas.Restore();
@@ -174,10 +177,10 @@ public class GroupBox : UIElementBase
                    Color = ColorScheme.BorderColor.ToSKColor(),
                    IsAntialias = true,
                    Style = SKPaintStyle.Stroke,
-                   StrokeWidth = 1
+                   StrokeWidth = 1f * ScaleFactor
                })
         {
-            canvas.DrawRoundRect(rect, _radius, _radius, paint);
+            canvas.DrawRoundRect(rect, RadiusScaled, RadiusScaled, paint);
         }
     }
 

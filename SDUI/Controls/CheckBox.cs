@@ -11,12 +11,23 @@ namespace SDUI.Controls;
 
 public class CheckBox : UIElementBase
 {
-    private const int CHECKBOX_SIZE = 16;
-    private const int CHECKBOX_SIZE_HALF = CHECKBOX_SIZE / 2;
-    private const int TEXT_PADDING = 4;
+    private float CheckboxSize => 16f * ScaleFactor;
+    private float CheckboxSizeHalf => CheckboxSize / 2f;
+    private float TextPadding => 4f * ScaleFactor;
 
     // Tik işareti koordinatları - checkbox içinde ortalı olacak şekilde ayarlandı
-    private static readonly Point[] CHECKMARK_LINE = { new(4, 8), new(7, 11), new(12, 6) };
+    private PointF[] CheckmarkLine
+    {
+        get
+        {
+            var scale = CheckboxSize / 16f;
+            return new PointF[] { 
+                new(4f * scale, 8f * scale), 
+                new(7f * scale, 11f * scale), 
+                new(12f * scale, 6f * scale) 
+            };
+        }
+    }
 
     private readonly AnimationManager animationManager;
     private readonly AnimationManager rippleAnimationManager;
@@ -25,11 +36,10 @@ public class CheckBox : UIElementBase
     private bool _inputHandlersAttached;
     private int _mouseState;
     private bool _threeState;
-
-    private int boxOffset;
-    private RectangleF boxRectangle;
-    private Point mouseLocation;
     private bool ripple;
+    private float boxOffset;
+    private SKRect boxRectangle;
+    private Point mouseLocation;
 
     public CheckBox()
     {
@@ -139,7 +149,7 @@ public class CheckBox : UIElementBase
 
     private bool IsMouseInCheckArea()
     {
-        return boxRectangle.Contains(MouseLocation);
+        return boxRectangle.Contains(MouseLocation.X, MouseLocation.Y);
     }
 
     public override Size GetPreferredSize(Size proposedSize)
@@ -152,16 +162,16 @@ public class CheckBox : UIElementBase
         };
 
         var textWidth = string.IsNullOrEmpty(Text) ? 0 : font.MeasureText(Text);
-        var height = Ripple ? 30 : 20;
+        var height = Ripple ? 30f * ScaleFactor : 20f * ScaleFactor;
         var fullHeight = height + Padding.Vertical;
 
         // Calculate expected box offset (visual centering)
-        var boxOffset = (fullHeight - CHECKBOX_SIZE) / 2;
+        var boxOffset = (fullHeight - CheckboxSize) / 2f;
 
         // Width = boxOffset (left space) + CheckBox + Gap + Text + Padding + Buffer
-        var width = boxOffset + CHECKBOX_SIZE + TEXT_PADDING + (int)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
+        var width = boxOffset + CheckboxSize + TextPadding + (float)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
 
-        return new Size(width, fullHeight);
+        return new Size((int)Math.Ceiling(width), (int)Math.Ceiling(fullHeight));
     }
 
     public override void OnCreateControl()
@@ -184,8 +194,8 @@ public class CheckBox : UIElementBase
         var boxRect = new SKRect(
             boxOffset,
             boxOffset,
-            boxOffset + CHECKBOX_SIZE - 1,
-            boxOffset + CHECKBOX_SIZE - 1
+            boxOffset + CheckboxSize - 1,
+            boxOffset + CheckboxSize - 1
         );
 
         // Modern checkbox rendering
@@ -247,12 +257,12 @@ public class CheckBox : UIElementBase
 
     private void DrawRippleEffect(SKCanvas canvas, Color accentColor)
     {
-        var CHECKBOX_CENTER = boxOffset + CHECKBOX_SIZE_HALF - 1;
+        var checkboxCenter = boxOffset + CheckboxSizeHalf - 1;
 
         for (var i = 0; i < rippleAnimationManager.GetAnimationCount(); i++)
         {
             var animationValue = (float)rippleAnimationManager.GetProgress(i);
-            var animationSource = new SKPoint(CHECKBOX_CENTER, CHECKBOX_CENTER);
+            var animationSource = new SKPoint(checkboxCenter, checkboxCenter);
 
             var rippleColor = (bool)rippleAnimationManager.GetData(i)[0]
                 ? SKColors.Black.WithAlpha((byte)(animationValue * 40))
@@ -282,7 +292,7 @@ public class CheckBox : UIElementBase
             Color = accentColor.ToSKColor().WithAlpha((byte)colorAlpha),
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 2,
+            StrokeWidth = 2f * ScaleFactor,
             StrokeCap = SKStrokeCap.Round,
             StrokeJoin = SKStrokeJoin.Round
         };
@@ -290,10 +300,10 @@ public class CheckBox : UIElementBase
         if (CheckState == CheckState.Indeterminate)
         {
             canvas.DrawLine(
-                boxOffset + 4,
-                boxOffset + CHECKBOX_SIZE_HALF,
-                boxOffset + CHECKBOX_SIZE - 4,
-                boxOffset + CHECKBOX_SIZE_HALF,
+                boxOffset + 4f * ScaleFactor,
+                boxOffset + CheckboxSizeHalf,
+                boxOffset + CheckboxSize - 4f * ScaleFactor,
+                boxOffset + CheckboxSizeHalf,
                 checkPaint
             );
         }
@@ -302,8 +312,8 @@ public class CheckBox : UIElementBase
             var checkMarkRect = new SKRect(
                 boxOffset,
                 boxOffset,
-                boxOffset + CHECKBOX_SIZE * animationProgress,
-                boxOffset + CHECKBOX_SIZE
+                boxOffset + CheckboxSize * animationProgress,
+                boxOffset + CheckboxSize
             );
 
             using var clipPath = new SKPath();
@@ -312,9 +322,10 @@ public class CheckBox : UIElementBase
             canvas.ClipPath(clipPath);
 
             var path = new SKPath();
-            path.MoveTo(boxOffset + CHECKMARK_LINE[0].X, boxOffset + CHECKMARK_LINE[0].Y);
-            path.LineTo(boxOffset + CHECKMARK_LINE[1].X, boxOffset + CHECKMARK_LINE[1].Y);
-            path.LineTo(boxOffset + CHECKMARK_LINE[2].X, boxOffset + CHECKMARK_LINE[2].Y);
+            var checkMarkLine = CheckmarkLine;
+            path.MoveTo(boxOffset + checkMarkLine[0].X, boxOffset + checkMarkLine[0].Y);
+            path.LineTo(boxOffset + checkMarkLine[1].X, boxOffset + checkMarkLine[1].Y);
+            path.LineTo(boxOffset + checkMarkLine[2].X, boxOffset + checkMarkLine[2].Y);
 
             canvas.DrawPath(path, checkPaint);
             canvas.Restore();
@@ -336,7 +347,7 @@ public class CheckBox : UIElementBase
             IsAntialias = true
         };
 
-        float textX = boxOffset + CHECKBOX_SIZE + TEXT_PADDING;
+        float textX = boxOffset + CheckboxSize + TextPadding;
         var textBounds = SKRect.Create(textX, Padding.Top, Width - textX - Padding.Right, Height - Padding.Vertical);
 
         canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis,
@@ -380,8 +391,8 @@ public class CheckBox : UIElementBase
     internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
-        boxOffset = (Height - CHECKBOX_SIZE) / 2;
-        boxRectangle = new RectangleF(boxOffset, boxOffset, CHECKBOX_SIZE - 1, CHECKBOX_SIZE - 1);
+        boxOffset = (Height - CheckboxSize) / 2f;
+        boxRectangle = new SKRect(boxOffset, boxOffset, boxOffset + CheckboxSize - 1, boxOffset + CheckboxSize - 1);
     }
 
     public override void OnClick(EventArgs e)

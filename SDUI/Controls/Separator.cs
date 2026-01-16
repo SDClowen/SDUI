@@ -9,7 +9,7 @@ public class Separator : UIElementBase
 
     public Separator()
     {
-        Size = new Size(120, 6);
+        Size = new Size((int)(120 * ScaleFactor), (int)(6 * ScaleFactor));
     }
 
     public bool IsVertical
@@ -31,7 +31,7 @@ public class Separator : UIElementBase
             Color = ColorScheme.BorderColor.ToSKColor(),
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1
+            StrokeWidth = 1f * ScaleFactor
         };
 
         if (_isVertical)
