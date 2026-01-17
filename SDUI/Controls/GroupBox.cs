@@ -72,8 +72,6 @@ public class GroupBox : UIElementBase
         }
 
         var rect = new SKRect(0, 0, Width, Height);
-        var inflate = ShadowDepthScaled / 4f;
-        rect.Inflate(-inflate, -inflate);
         var shadowRect = rect;
 
         // Balk lleri (padding uygulanm genilik)

@@ -315,12 +315,13 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// </summary>
     public UIWindow()
     {
+        Controls = new ElementCollection(this);
+        AutoScaleMode = AutoScaleMode.None;
         CheckForIllegalCrossThreadCalls = false;
 
         // WinForms double-buffering can cause visible flicker when the window is presented by
         // a GPU swapchain (OpenGL/DX). Keep it for software, disable it for GPU backends.
         ApplyRenderStyles();
-        Controls = new ElementCollection(this);
         enableFullDraggable = false;
 
         pageAreaAnimationManager = new AnimationManager
@@ -1106,6 +1107,18 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         base.OnHandleCreated(e);
         ApplyRenderStyles();
         RecreateRenderer();
+
+        // Initial DPI sync: Ensure controls match the window's actual DPI 
+        // (which might differ from System DPI captured during initialization).
+        var dpi = DpiHelper.GetDpiForWindowInternal(Handle);
+        foreach (var control in Controls.OfType<UIElementBase>())
+        {
+            var oldDpi = control.ScaleFactor * 96f;
+            if (Math.Abs(oldDpi - dpi) > 0.001f)
+            {
+                control.OnDpiChanged(dpi, oldDpi);
+            }
+        }
     }
 
     protected override void OnHandleDestroyed(EventArgs e)
@@ -1476,7 +1489,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             // Force repaint to prevent stale background captures
             Update();
             if (ExtendMenu != null)
-                ExtendMenu.Show(PointToScreen(new Point(Convert.ToInt32(_extendBoxRect.Left),
+                ExtendMenu.Show(PointToScreen(new Point(Convert.ToInt32(_extendBoxRect.Right),
                     Convert.ToInt32(_extendBoxRect.Bottom))));
             else
                 OnExtendBoxClick?.Invoke(this, EventArgs.Empty);
@@ -2104,7 +2117,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
         if (ShouldCacheSoftwareBackBuffer(info))
         {
-            var bmp = RenderSoftwareFrameToGdiBitmap(info);
+            using var bmp = RenderSoftwareFrameToGdiBitmap(info);
             if (bmp != null)
             {
                 e.Graphics.DrawImageUnscaled(bmp, 0, 0);

@@ -43,8 +43,8 @@ public class ContextMenuStrip : MenuStrip
     private UIWindow _ownerWindow;
     private SKPaint? _separatorPaint;
 
-    private bool _showCheckMargin = true;
-    private bool _showImageMargin = true;
+    private bool _showCheckMargin = false;
+    private bool _showImageMargin = false;
 
     private SKPaint? _textPaint;
 
@@ -54,9 +54,7 @@ public class ContextMenuStrip : MenuStrip
         AutoSize = false;
         TabStop = false;
         Orientation = Orientation.Vertical;
-
-        // Dikey (dropdown) menü öğeleri için biraz daha yüksek satır
-        // ve daha ferah padding.
+        BackColor = Color.Transparent;
         ItemHeight = 28f;
         ItemPadding = 6f;
 
@@ -71,7 +69,7 @@ public class ContextMenuStrip : MenuStrip
     }
 
     [Category("Layout")]
-    [DefaultValue(true)]
+    [DefaultValue(false)]
     public bool ShowCheckMargin
     {
         get => _showCheckMargin;
@@ -84,7 +82,7 @@ public class ContextMenuStrip : MenuStrip
     }
 
     [Category("Layout")]
-    [DefaultValue(true)]
+    [DefaultValue(false)]
     public bool ShowImageMargin
     {
         get => _showImageMargin;
@@ -380,7 +378,10 @@ public class ContextMenuStrip : MenuStrip
 
     public override void OnPaint(SKCanvas canvas)
     {
-        base.OnPaint(canvas);
+        // Don't call base.OnPaint(canvas) because MenuStrip (base) draws a rectangular background
+        // which conflicts with ContextMenuStrip's rounded shadow path.
+        // base.OnPaint(canvas);
+
         var bounds = ClientRectangle;
 
         EnsureSkiaCaches();
@@ -389,6 +390,13 @@ public class ContextMenuStrip : MenuStrip
         var fadeAlpha = (byte)(fadeProgress * 255);
         const float CORNER_RADIUS = 10f;
 
+        // Start fresh: Clear the canvas area to fully transparent before drawing the shadow/popup.
+        // This is crucial because the parent window might have drawn something underneath?
+        // Actually, SDUI renderers usually handle the background for the Window, but since this is a child control,
+        // we might be drawing on top of existing pixels. 
+        // Skia usually composes correctly, but if "kare gibi render ediyor" (rendering like a square) means "seeing square artifacts",
+        // it's likely the base class drawing a rect.
+        
         // İçerik alanı (shadow margin kadar içeride)
         var contentRect = new SKRect(
             ShadowMargin,
@@ -402,7 +410,8 @@ public class ContextMenuStrip : MenuStrip
         for (var i = 0; i < 2; i++)
         {
             var offsetY = 0.75f + i * 0.85f;
-            var shadowAlpha = (byte)((8 - i * 3) * fadeProgress);
+            // Increased shadow opacity significantly to make it visible
+            var shadowAlpha = (byte)((64 - i * 24) * fadeProgress);
 
             var shadowPaint = _shadowPaints[i]!;
             shadowPaint.Color = SKColors.Black.WithAlpha(shadowAlpha);

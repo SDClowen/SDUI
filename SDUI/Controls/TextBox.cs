@@ -262,7 +262,7 @@ public class TextBox : UIElementBase
     private float _charCountSkFontBaseSize;
     private int _charCountSkFontDpi;
     private Font? _charCountSkFontSource;
-    private float _cornerRadius = 6.0f;
+    private float _cornerRadius = 4.0f;
     private float CornerRadiusScaled => _cornerRadius * ScaleFactor;
     private Timer _cursorBlinkTimer = null!;
     private SKPaint? _cursorPaint;
@@ -329,7 +329,8 @@ public class TextBox : UIElementBase
 
     public TextBox()
     {
-        Size = new Size(200, 32);
+        MinimumSize = new Size((int)(50 * ScaleFactor), (int)(28 * ScaleFactor));
+        Size = new Size((int)(120 * ScaleFactor), (int)(28 * ScaleFactor));
         BackColor = Color.Transparent; // Transparent olmalı ki UIElementBase canvas.Clear ile beyaz çizmesin
         ForeColor = ColorScheme.ForeColor;
         BorderColor = ColorScheme.BorderColor;
@@ -456,7 +457,7 @@ public class TextBox : UIElementBase
             _isMultiLine = value;
             if (!value)
             {
-                Height = 23;
+                Height = (int)(32 * ScaleFactor);
             }
             else
             {
@@ -1418,7 +1419,10 @@ public class TextBox : UIElementBase
             var textBounds = new SKRect();
             if (!string.IsNullOrEmpty(textToDraw)) font.MeasureText(textToDraw, out textBounds);
 
-            var y = bounds.Height / 2 - (metrics.Ascent + metrics.Descent) / 2;
+            // Center vertically based on CapHeight for better visual alignment than full Ascent/Descent
+            var capHeight = metrics.CapHeight > 0 ? metrics.CapHeight : -metrics.Ascent * 0.7f;
+            var y = bounds.Height / 2f + capHeight / 2f; 
+            
             // Account for horizontal scroll offset when computing X origin
             var hOffset = _horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0;
             var x = GetTextX(bounds.Width, textBounds.Width) - hOffset;
@@ -1493,10 +1497,11 @@ public class TextBox : UIElementBase
             for (var i = 0; i < lines.Count; i++)
             {
                 var line = lines[i];
-                var drawY = richY + i * lineHeight + font.Size;
-                if (drawY + font.Size < 0)
+                // Use -Ascent to properly place baseline from the top
+                var drawY = richY + i * lineHeight - metrics.Ascent;
+                if (drawY + metrics.Descent < 0)
                     continue;
-                if (drawY - font.Size > bounds.Height)
+                if (drawY + metrics.Ascent > bounds.Height)
                     break;
 
                 TextRenderingHelper.DrawText(canvas, line, xOffset, drawY, font, _textPaint);
@@ -1619,9 +1624,9 @@ public class TextBox : UIElementBase
                 var line = item.Line;
                 var lineStart = item.StartIndex;
 
-                // Compute baseline (top-aligned): padding + line index * lineHeight + ascent, adjusted by scroll
-                var top = Padding.Top - _scrollPosition + idx * lineHeight + metrics.Ascent;
-                var lineTop = top - metrics.Ascent;
+                // Compute baseline (top-aligned): padding + line index * lineHeight - ascent (positive shift), adjusted by scroll
+                var top = Padding.Top - _scrollPosition + idx * lineHeight - metrics.Ascent;
+                var lineTop = top + metrics.Ascent;
 
                 // Visibility checks
                 if (lineTop + lineHeight < 0)
@@ -1850,7 +1855,7 @@ public class TextBox : UIElementBase
     private Color GetThemedSurfaceColor()
     {
         // Use the shared theme primitives so the TextBox background tracks theme transitions.
-        return ColorScheme.SurfaceContainerLow;
+        return ColorScheme.Surface;
     }
 
     protected override void Dispose(bool disposing)
@@ -1986,8 +1991,30 @@ public class TextBox : UIElementBase
         var y = location.Y - Padding.Top + (int)_scrollPosition;
         var lineIndex = Math.Max(0, Math.Min(linesWithIdx.Count - 1, (int)(y / lineHeight)));
 
+        if (linesWithIdx.Count == 0) return;
+
         var line = linesWithIdx[lineIndex];
-        var clickX = location.X - Padding.Left + (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0);
+
+        // Determine X alignment offset for this line
+        // NOTE: Currently GetTextX only supports single-line logic (bounds vs text width).
+        // For MultiLine/Rich, we generally assume Left alignment or would need per-line alignment support.
+        // But for SingleLine, we MUST match OnPaint's alignment.
+        float xOffset;
+        if (!IsRich && !MultiLine)
+        {
+            var textBounds = new SKRect();
+            font.MeasureText(Text, out textBounds);
+            // Match OnPaint: x = GetTextX(...) - hOffset
+            xOffset = GetTextX(ClientRectangle.Width, textBounds.Width) - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0);
+        }
+        else
+        {
+            // Match OnPaint MultiLine/Rich: just Padding.Left - hOffset
+            xOffset = Padding.Left - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0);
+        }
+        
+        // Relative X click position
+        var clickX = location.X - xOffset;
 
         var charIndexInLine = 0;
         for (var i = 0; i <= line.Line.Length; i++)
@@ -1996,13 +2023,16 @@ public class TextBox : UIElementBase
             var bounds = new SKRect();
             font.MeasureText(textPart, out bounds);
 
+            // If clickX is within this character's bounds (or close enough)
             if (bounds.Width >= clickX || i == line.Line.Length)
             {
+                // Simple hit test: if we are closer to the previous char end, pick previous? 
+                // For now, simple geometric cut-off like original code
                 charIndexInLine = i;
                 break;
             }
         }
-
+        
         var caretIndex = line.StartIndex + charIndexInLine;
 
         if (!extend)

@@ -223,24 +223,9 @@ public class Button : UIElementBase, IButtonControl
         var pressProgress = (float)pressAnimationManager.GetProgress();
         var rippleProgress = (float)animationManager.GetProgress();
 
-        var baseRect = new SKRect(0, 0, Width, Height);
-
-        // Add padding for elevation shadow
-        // We use the base elevation for padding to prevent the button from being too small.
-        var elevationOffset = ColorScheme.GetElevationOffset(_elevation) * ScaleFactor;
-        var elevationBlur = ColorScheme.GetElevationBlur(_elevation) * ScaleFactor;
-
-        // Calculate padding needed for the shadow
-        // We add a small buffer (1px) to avoid hard clipping
-        var hPadding = Math.Max(elevationOffset, elevationBlur / 2f) + 1f;
-        var vPaddingTop = Math.Max(elevationOffset / 2f, elevationBlur / 2f) + 1f;
-        var vPaddingBottom = elevationOffset + elevationBlur / 2f + 1f;
-
-        var bodyRect = new SKRect(
-            baseRect.Left + hPadding,
-            baseRect.Top + vPaddingTop,
-            baseRect.Right - hPadding,
-            baseRect.Bottom - vPaddingBottom);
+        // Use the full bounds for the button body
+        // Shadow will be drawn outside thanks to UIElementBase clipping changes
+        var bodyRect = new SKRect(0, 0, Width, Height);
 
         canvas.Save();
 

@@ -152,4 +152,16 @@ public class StatusStrip : MenuStrip
             }
         }
     }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _bgPaint?.Dispose();
+            _bottomBorderPaint?.Dispose();
+            _gripPaint?.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
 }

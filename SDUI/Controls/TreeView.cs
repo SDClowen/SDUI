@@ -120,7 +120,6 @@ public class TreeView : UIElementBase
     public TreeView()
     {
         Nodes = new TreeNodeCollection(this);
-        DoubleBuffered = true;
         TabStop = true;
     }
 

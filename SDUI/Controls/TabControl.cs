@@ -731,9 +731,23 @@ public class TabControl : UIElementBase
                        IsAntialias = true
                    })
             {
-                var textX = tabRect.Left + sidePadding;
-                var textY = tabRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                 var maxTextWidth = tabRect.Width - (sidePadding * 2) - closeButtonSpace;
+                var textWidth = font.MeasureText(_pages[i].Text);
+                
+                // Center text if we have space, otherwise left align (ellipsized)
+                var textX = tabRect.Left + sidePadding;
+                if (textWidth < maxTextWidth)
+                {
+                    // Available width within padding/closeBtn
+                    var availableWidth = tabRect.Width - (sidePadding * 2) - closeButtonSpace;
+                    // Start of available area
+                    var areaStart = tabRect.Left + sidePadding;
+                    // Center point
+                    var center = areaStart + availableWidth / 2f;
+                    textX = center - textWidth / 2f;
+                }
+
+                var textY = tabRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
                 canvas.DrawTextWithEllipsis(_pages[i].Text, textX, textY, maxTextWidth, textPaint, font);
             }
 

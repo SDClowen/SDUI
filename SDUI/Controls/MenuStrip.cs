@@ -991,6 +991,7 @@ public class MenuStrip : UIElementBase
             _bgPaint?.Dispose();
             _bottomBorderPaint?.Dispose();
             _hoverBgPaint?.Dispose();
+            _checkPaint?.Dispose();
             _imgPaint?.Dispose();
             _textPaint?.Dispose();
             _arrowPaint?.Dispose();

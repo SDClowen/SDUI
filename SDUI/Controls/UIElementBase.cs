@@ -63,7 +63,6 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     public AutoScaleMode AutoScaleMode { get; set; }
 
     public bool Disposing { get; set; }
-    public virtual bool DoubleBuffered { get; set; }
     public bool CheckForIllegalCrossThreadCalls { get; set; }
 
     public bool InvokeRequired => false;
@@ -1179,9 +1178,8 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     {
         var saved = targetCanvas.Save();
 
-        // Translate and clip to element bounds
+        // Translate to element bounds
         targetCanvas.Translate(Location.X, Location.Y);
-        targetCanvas.ClipRect(SKRect.Create(0, 0, Width, Height));
 
         // Draw background
         var bg = ResolveBackgroundColor();
@@ -1194,6 +1192,8 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
         OnPaint(targetCanvas);
         // Paint?.Invoke(this, args); 
 
+        // Clip children to bounds
+        targetCanvas.ClipRect(SKRect.Create(0, 0, Width, Height));
         RenderChildren(targetCanvas);
 
         targetCanvas.RestoreToCount(saved);
