@@ -11,6 +11,12 @@ using SkiaSharp;
 
 namespace SDUI.Controls;
 
+public enum OpeningEffectType
+{
+    Fade,
+    SlideDownFade
+}
+
 public class ContextMenuStrip : MenuStrip
 {
     internal const float ShadowMargin = 7f;
@@ -42,8 +48,10 @@ public class ContextMenuStrip : MenuStrip
     private bool _ownerPreviousKeyPreview;
     private UIWindow _ownerWindow;
     private SKPaint? _separatorPaint;
-
     private SKPaint? _textPaint;
+    private SKPaint? _layerPaint;
+    private OpeningEffectType _openingEffect = OpeningEffectType.Fade;
+    private bool _openingUpwards;
 
     public ContextMenuStrip()
     {
@@ -69,10 +77,22 @@ public class ContextMenuStrip : MenuStrip
     [DefaultValue(true)]
     public bool AutoClose { get; set; } = true;
 
-    [Browsable(false)] 
+    [Category("Appearance")]
+    [DefaultValue(OpeningEffectType.Fade)]
+    public OpeningEffectType OpeningEffect
+    {
+        get => _openingEffect;
+        set
+        {
+            if (_openingEffect == value) return;
+            _openingEffect = value;
+        }
+    }
+
+    [Browsable(false)]
     public bool IsOpen { get; private set; }
 
-    [Browsable(false)] 
+    [Browsable(false)]
     public UIElementBase SourceElement { get; private set; }
 
     public event CancelEventHandler Opening;
@@ -158,7 +178,7 @@ public class ContextMenuStrip : MenuStrip
 
         // Close any open submenus before hiding
         CloseSubmenu();
-        
+
         DetachHandlers();
         Visible = false;
         _ownerWindow?.Invalidate();
@@ -198,9 +218,19 @@ public class ContextMenuStrip : MenuStrip
         {
             var topPos = targetY - size.Height;
             if (topPos >= client.Top + MARGIN)
+            {
                 targetY = topPos;
+                _openingUpwards = true;
+            }
             else
+            {
                 targetY = client.Bottom - size.Height - MARGIN;
+                _openingUpwards = false;
+            }
+        }
+        else
+        {
+            _openingUpwards = false;
         }
 
         targetX = Math.Max(client.Left + MARGIN, Math.Min(targetX, client.Right - size.Width - MARGIN));
@@ -344,7 +374,7 @@ public class ContextMenuStrip : MenuStrip
         if (!_itemHoverAnims.TryGetValue(item, out var engine))
         {
             engine = new AnimationManager
-                { Increment = 0.25, AnimationType = AnimationType.EaseOut, Singular = true, InterruptAnimation = true };
+            { Increment = 0.25, AnimationType = AnimationType.EaseOut, Singular = true, InterruptAnimation = true };
             engine.OnAnimationProgress += _ => Invalidate();
             _itemHoverAnims[item] = engine;
         }
@@ -366,13 +396,25 @@ public class ContextMenuStrip : MenuStrip
         var fadeAlpha = (byte)(fadeProgress * 255);
         const float CORNER_RADIUS = 10f;
 
+        // Apply animation effect based on OpeningEffect property
+        if (_openingEffect == OpeningEffectType.SlideDownFade)
+        {
+            _layerPaint ??= new SKPaint { IsAntialias = true };
+            _layerPaint.Color = SKColors.White.WithAlpha(fadeAlpha);
+            canvas.SaveLayer(_layerPaint);
+
+            // Slide animation: 8px movement
+            var translateY = (_openingUpwards ? 1f - fadeProgress : fadeProgress - 1f) * 8f;
+            canvas.Translate(0, translateY);
+        }
+
         // Start fresh: Clear the canvas area to fully transparent before drawing the shadow/popup.
         // This is crucial because the parent window might have drawn something underneath?
         // Actually, SDUI renderers usually handle the background for the Window, but since this is a child control,
         // we might be drawing on top of existing pixels. 
         // Skia usually composes correctly, but if "kare gibi render ediyor" (rendering like a square) means "seeing square artifacts",
         // it's likely the base class drawing a rect.
-        
+
         var contentRect = new SKRect(
             ShadowMargin,
             ShadowMargin,
@@ -532,7 +574,7 @@ public class ContextMenuStrip : MenuStrip
 
             var font = GetDefaultSkFont();
             _textPaint!.Color = textColor.ToSKColor().WithAlpha(fadeAlpha);
-            
+
             // Reserve space for chevron if item has dropdown
             var textWidth = itemRect.Right - textX;
             if (ShowSubmenuArrow && item.HasDropDown)
@@ -541,17 +583,17 @@ public class ContextMenuStrip : MenuStrip
                 // We want text to end 8px (scaled) before the chevron starts.
                 // Chevron icon is roughly 6px wide.
                 // RightPadding is now tight (14px).
-                
+
                 var widthToReserve = (14 + 6 + 8) * scale; // RightPadding + IconWidth + Gap
                 textWidth -= widthToReserve;
             }
-            
+
             var textBounds = SKRect.Create(textX, itemRect.Top, textWidth, itemRect.Height);
             canvas.DrawControlText(item.Text, textBounds, _textPaint, font, ContentAlignment.MiddleLeft, false, true);
 
             if (ShowSubmenuArrow && item.HasDropDown)
             {
-                var chevronSize = 5f * scale; 
+                var chevronSize = 5f * scale;
                 var chevronX = itemRect.Right - 14 * scale; // Align to Right - 14px (More space to ensure full 12px gap)
                 var chevronY = itemRect.MidY;
 
@@ -559,19 +601,25 @@ public class ContextMenuStrip : MenuStrip
                 var arrowColor = isHovered ? hoverFore : MenuForeColor;
                 var arrowAlphaBase = isHovered ? 255 : 102;
                 _arrowPaint!.Color = arrowColor.ToSKColor().WithAlpha((byte)(fadeAlpha * arrowAlphaBase / 255f));
-                
+
                 _chevronPath!.Reset();
-                
+
                 // Right arrow > (filled triangle)
                 _chevronPath.MoveTo(chevronX - chevronSize, chevronY - chevronSize);
                 _chevronPath.LineTo(chevronX + 2 * scale, chevronY);
                 _chevronPath.LineTo(chevronX - chevronSize, chevronY + chevronSize);
                 _chevronPath.Close();
-                
+
                 canvas.DrawPath(_chevronPath, _arrowPaint);
             }
 
             y += ItemHeight + ItemPadding;
+        }
+
+        // Restore layer if SlideDownFade effect was applied
+        if (_openingEffect == OpeningEffectType.SlideDownFade)
+        {
+            canvas.Restore();
         }
     }
 
@@ -579,14 +627,14 @@ public class ContextMenuStrip : MenuStrip
     {
         _bgPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
         _borderPaint ??= new SKPaint
-            { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1, FilterQuality = SKFilterQuality.High };
+        { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1, FilterQuality = SKFilterQuality.High };
         _separatorPaint ??= new SKPaint { IsAntialias = true, StrokeWidth = 1 };
         _hoverPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
         _iconPaint ??= new SKPaint { IsAntialias = true, FilterQuality = SKFilterQuality.High };
         _textPaint ??= new SKPaint { IsAntialias = true };
         _arrowPaint ??= new SKPaint
         {
-            IsAntialias = true, 
+            IsAntialias = true,
             Style = SKPaintStyle.Fill, // Fill for better visibility
             FilterQuality = SKFilterQuality.High
         };
@@ -641,10 +689,10 @@ public class ContextMenuStrip : MenuStrip
             w += CheckMarginWidth * scale;
 
         if (ShowImageMargin)
-             w += (ImageScalingSize.Width + 8) * scale;
+            w += (ImageScalingSize.Width + 8) * scale;
         else if (ShowIcons && item.Icon != null)
-             w += (ImageScalingSize.Width + 8) * scale;
-             
+            w += (ImageScalingSize.Width + 8) * scale;
+
         if (ShowSubmenuArrow && item.HasDropDown)
             w += 30 * scale; // Extra space for chevron 
 
@@ -694,6 +742,8 @@ public class ContextMenuStrip : MenuStrip
             _arrowPaint = null;
             _chevronPath?.Dispose();
             _chevronPath = null;
+            _layerPaint?.Dispose();
+            _layerPaint = null;
 
             for (var i = 0; i < _shadowPaints.Length; i++)
             {

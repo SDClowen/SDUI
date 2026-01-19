@@ -482,7 +482,21 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    [DefaultValue(null)] public ContextMenuStrip ExtendMenu { get; set; }
+    [DefaultValue(null)] 
+    public ContextMenuStrip ExtendMenu 
+    { 
+        get => _extendMenu;
+        set
+        {
+            _extendMenu = value;
+            if (_extendMenu != null)
+            {
+                _extendMenu.OpeningEffect = OpeningEffectType.SlideDownFade;
+            }
+        }
+    }
+    
+    private ContextMenuStrip _extendMenu;
 
     [DefaultValue(null)] public ContextMenuStrip FormMenu { get; set; }
 
