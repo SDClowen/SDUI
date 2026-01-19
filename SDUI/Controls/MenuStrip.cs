@@ -884,8 +884,10 @@ public class MenuStrip : UIElementBase
                 var parentContentLeft = this is ContextMenuStrip
                     ? ContextMenuStrip.ShadowMargin
                     : itemBounds.Left;
-                // Flip desiredBgLeft to left side of parent with 5px overlap to keep mouse connection
-                desiredBgLeft = parentContentLeft - submenuSize.Width + 5f;
+                // Flip to left side: submenu's background right edge should align with parent's left edge + 1px overlap
+                // submenuSize.Width includes shadow on both sides, so actual background width = submenuSize.Width - 2*shadow
+                // We want: desiredBgLeft + (submenuSize.Width - 2*shadow) = parentContentLeft - 1
+                desiredBgLeft = parentContentLeft - submenuSize.Width + 2f * shadow - 1f;
                 // If still off-screen to the left, clamp within bounds
                 var screenTargetLeft = PointToScreen(new Point((int)desiredBgLeft, (int)desiredBgTop)).X;
                 if (screenTargetLeft < screenBounds.Left)
@@ -960,7 +962,7 @@ public class MenuStrip : UIElementBase
         Invalidate();
     }
 
-    private void CloseSubmenu()
+    protected void CloseSubmenu()
     {
         if (_activeDropDown != null && _activeDropDown.IsOpen) _activeDropDown.Hide();
         _openedItem = null;
@@ -968,7 +970,7 @@ public class MenuStrip : UIElementBase
         Invalidate();
     }
 
-    private void EnsureDropDownHost()
+    protected void EnsureDropDownHost()
     {
         if (_activeDropDown != null) return;
         _activeDropDown = new ContextMenuStrip { AutoClose = true, Dock = DockStyle.None };

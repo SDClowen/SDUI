@@ -1491,10 +1491,10 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             if (ExtendMenu != null)
             {
                 var menuSize = ExtendMenu.MeasurePreferredSize();
-                ExtendMenu.Show(new Point(
+                ExtendMenu.Show(PointToScreen(new Point(
                     Convert.ToInt32(_extendBoxRect.Location.X),
-                    Convert.ToInt32(_extendBoxRect.Location.Y)
-                ));
+                    Convert.ToInt32(_extendBoxRect.Bottom)
+                )));
             }
             else
                 OnExtendBoxClick?.Invoke(this, EventArgs.Empty);

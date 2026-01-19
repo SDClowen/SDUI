@@ -156,6 +156,9 @@ public class ContextMenuStrip : MenuStrip
         if (canceling.Cancel)
             return;
 
+        // Close any open submenus before hiding
+        CloseSubmenu();
+        
         DetachHandlers();
         Visible = false;
         _ownerWindow?.Invalidate();
