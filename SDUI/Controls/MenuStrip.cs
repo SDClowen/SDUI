@@ -36,36 +36,34 @@ public class MenuStrip : UIElementBase
     private SKFont? _defaultSkFont;
     private int _defaultSkFontDpi;
     private Font? _defaultSkFontSource;
-    private Color _hoverBackColor = Color.FromArgb(62, 62, 62);
+    private Color _hoverBackColor = Color.Empty;
     private SKPaint? _hoverBgPaint;
     private MenuItem _hoveredItem;
-    private Color _hoverForeColor = Color.FromArgb(0, 122, 204);
+    private Color _hoverForeColor = Color.Empty;
     private float _iconSize = 16f;
     private Size _imageScalingSize = new(20, 20);
     private SKPaint? _imgPaint;
     private bool _isAnimating;
     private float _itemHeight = 24f;
-    private float _itemPadding = 4f; // temel boşluk, ekstra spacing sınırlanacak
-    private Color _menuBackColor = Color.FromArgb(45, 45, 45);
-    private Color _menuForeColor = Color.White;
+    private float _itemPadding = 7f; // temel boşluk, ekstra spacing sınırlanacak
+    private Color _menuBackColor = Color.Empty;
+    private Color _menuForeColor = Color.Empty;
     private MenuItem _openedItem;
     private Orientation _orientation = Orientation.Horizontal;
     private bool _roundedCorners = true;
-    private Color _separatorBackColor = Color.FromArgb(50, 50, 50);
-    private Color _separatorColor = Color.FromArgb(80, 80, 80);
-    private Color _separatorForeColor = Color.FromArgb(100, 100, 100);
+    private Color _separatorBackColor = Color.Empty;
+    private Color _separatorColor = Color.Empty;
+    private Color _separatorForeColor = Color.Empty;
     private float _separatorHeight = 1f;
     private float _separatorMargin = 4f;
     private bool _showCheckMargin = true;
     private bool _showHoverEffect = true;
     private bool _showIcons = true;
-    private bool _showImageMargin = true;
+    private bool _showImageMargin = false;
     private bool _showSubmenuArrow = true;
     private bool _stretch = true;
-    private Color _submenuBackColor = Color.FromArgb(37, 37, 37);
-    private Color _submenuBorderColor = Color.FromArgb(80, 80, 80);
-    private float _submenuCornerRadius = 8f;
-    private float _submenuOffset = 2f;
+    private Color _submenuBackColor = Color.Empty;
+    private Color _submenuBorderColor = Color.Empty;
     private SKPaint? _textPaint;
 
     public MenuStrip()
@@ -134,7 +132,12 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color MenuBackColor
     {
-        get => _menuBackColor;
+        get
+        {
+            if (!_menuBackColor.IsEmpty) return _menuBackColor;
+            // "Other color" unification: everything uses Surface by default
+            return ColorScheme.Surface;
+        }
         set
         {
             if (_menuBackColor == value) return;
@@ -146,7 +149,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color MenuForeColor
     {
-        get => _menuForeColor;
+        get => _menuForeColor.IsEmpty ? ColorScheme.OnSurface : _menuForeColor;
         set
         {
             if (_menuForeColor == value) return;
@@ -158,7 +161,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color HoverBackColor
     {
-        get => _hoverBackColor;
+        get => _hoverBackColor.IsEmpty ? ColorScheme.SurfaceVariant : _hoverBackColor;
         set
         {
             if (_hoverBackColor == value) return;
@@ -170,7 +173,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color HoverForeColor
     {
-        get => _hoverForeColor;
+        get => _hoverForeColor.IsEmpty ? MenuForeColor : _hoverForeColor;
         set
         {
             if (_hoverForeColor == value) return;
@@ -182,7 +185,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color SubmenuBackColor
     {
-        get => _submenuBackColor;
+        get => _submenuBackColor.IsEmpty ? ColorScheme.Surface : _submenuBackColor;
         set
         {
             if (_submenuBackColor == value) return;
@@ -194,7 +197,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color SubmenuBorderColor
     {
-        get => _submenuBorderColor;
+        get => _submenuBorderColor.IsEmpty ? ColorScheme.Outline : _submenuBorderColor;
         set
         {
             if (_submenuBorderColor == value) return;
@@ -206,7 +209,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color SeparatorColor
     {
-        get => _separatorColor;
+        get => _separatorColor.IsEmpty ? ColorScheme.OutlineVariant : _separatorColor;
         set
         {
             if (_separatorColor == value) return;
@@ -305,7 +308,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color SeparatorBackColor
     {
-        get => _separatorBackColor;
+        get => _separatorBackColor.IsEmpty ? ColorScheme.Surface : _separatorBackColor;
         set
         {
             if (_separatorBackColor == value) return;
@@ -317,7 +320,7 @@ public class MenuStrip : UIElementBase
     [Category("Appearance")]
     public Color SeparatorForeColor
     {
-        get => _separatorForeColor;
+        get => _separatorForeColor.IsEmpty ? ColorScheme.Outline : _separatorForeColor;
         set
         {
             if (_separatorForeColor == value) return;
@@ -484,12 +487,15 @@ public class MenuStrip : UIElementBase
             anim.StartNewAnimation(AnimationDirection.Out);
 
         var prog = (float)anim.GetProgress();
+        
+        var scale = ScaleFactor;
 
         // High-quality hover background with proper anti-aliasing
         if (ShowHoverEffect && hover)
         {
             var blend = _hoverBackColor.ToSKColor();
-            var alpha = (byte)(180 + 70 * prog);
+            // Reduced opacity for softer look (approx 10% to 25%) - much lighter than before
+            var alpha = (byte)(25 + 40 * prog);
             _hoverBgPaint ??= new SKPaint
             {
                 IsAntialias = true,
@@ -497,19 +503,19 @@ public class MenuStrip : UIElementBase
                 FilterQuality = SKFilterQuality.High
             };
             _hoverBgPaint.Color = blend.WithAlpha(alpha);
-            var rr = new SKRoundRect(bounds, 5);
+            var rr = new SKRoundRect(bounds, 5 * scale);
             c.DrawRoundRect(rr, _hoverBgPaint);
         }
 
-        var tx = bounds.Left + 10;
+        var tx = bounds.Left + 6 * scale;
 
         // Checkmark area (left margin for checkbox/radio)
-        float checkAreaWidth = 20;
+        float checkAreaWidth = 20 * scale;
         if (item.CheckState != CheckState.Unchecked || item.Icon != null)
         {
-            var checkX = bounds.Left + 8;
+            var checkX = bounds.Left + 8 * scale;
             var checkY = bounds.MidY;
-            var checkSize = 12f;
+            var checkSize = 12f * scale;
 
             if (item.CheckState == CheckState.Checked)
             {
@@ -518,7 +524,7 @@ public class MenuStrip : UIElementBase
                 {
                     IsAntialias = true,
                     Style = SKPaintStyle.Stroke,
-                    StrokeWidth = 1.8f,
+                    StrokeWidth = 1.8f * scale,
                     StrokeCap = SKStrokeCap.Round,
                     StrokeJoin = SKStrokeJoin.Round
                 };
@@ -526,9 +532,10 @@ public class MenuStrip : UIElementBase
 
                 _checkPath ??= new SKPath();
                 _checkPath.Reset();
-                _checkPath.MoveTo(checkX, checkY);
-                _checkPath.LineTo(checkX + checkSize * 0.35f, checkY + checkSize * 0.35f);
-                _checkPath.LineTo(checkX + checkSize, checkY - checkSize * 0.4f);
+                // Draw checkmark as proper V shape
+                _checkPath.MoveTo(checkX - checkSize * 0.4f, checkY);
+                _checkPath.LineTo(checkX, checkY + checkSize * 0.4f);
+                _checkPath.LineTo(checkX + checkSize * 0.6f, checkY - checkSize * 0.4f);
                 c.DrawPath(_checkPath, _checkPaint);
             }
             else if (item.CheckState == CheckState.Indeterminate)
@@ -541,7 +548,7 @@ public class MenuStrip : UIElementBase
                 };
                 _checkPaint.Color = MenuForeColor.ToSKColor().WithAlpha(128);
 
-                var boxSize = 8f;
+                var boxSize = 4f * scale;
                 var boxRect = new SKRect(
                     checkX,
                     checkY - boxSize / 2,
@@ -557,16 +564,17 @@ public class MenuStrip : UIElementBase
         // Icon
         if (ShowIcons && item.Icon != null)
         {
-            var iy = bounds.Top + (_itemHeight - _iconSize) / 2;
+            var scaledIconSize = _iconSize * scale;
+            var iy = bounds.Top + (bounds.Height - scaledIconSize) / 2;
             _imgPaint ??= new SKPaint
             {
                 IsAntialias = true,
                 FilterQuality = SKFilterQuality.High
             };
             var skBitmap = GetCachedIconBitmap(item.Icon);
-            c.DrawBitmap(skBitmap, new SKRect(bounds.Left + 8, iy, bounds.Left + 8 + _iconSize, iy + _iconSize),
+            c.DrawBitmap(skBitmap, new SKRect(bounds.Left + 4 * scale, iy, bounds.Left + 4 * scale + scaledIconSize, iy + scaledIconSize),
                 _imgPaint);
-            tx += _iconSize + 6;
+            tx += scaledIconSize + 6 * scale;
         }
 
         // Text with high quality
@@ -580,7 +588,16 @@ public class MenuStrip : UIElementBase
         var font = GetDefaultSkFont();
         _textPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
         _textPaint.Color = textColor.ToSKColor();
-        var drawBounds = SKRect.Create(tx, bounds.Top, bounds.Right - tx, bounds.Height);
+        
+        // Reserve space for chevron in vertical mode
+        var drawWidth = bounds.Right - tx;
+        var vertical = Orientation == Orientation.Vertical || this is ContextMenuStrip;
+        if (vertical && ShowSubmenuArrow && item.HasDropDown)
+        {
+            drawWidth -= 35 * scale; // Reserve space for chevron
+        }
+        
+        var drawBounds = SKRect.Create(tx, bounds.Top, drawWidth, bounds.Height);
         c.DrawControlText(item.Text, drawBounds, _textPaint, font, ContentAlignment.MiddleLeft, false, true);
 
         // Measure text width for arrow positioning
@@ -593,44 +610,49 @@ public class MenuStrip : UIElementBase
             _arrowPaint ??= new SKPaint
             {
                 IsAntialias = true,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = 1.2f,
-                StrokeCap = SKStrokeCap.Round,
-                StrokeJoin = SKStrokeJoin.Round
+                Style = SKPaintStyle.Fill, // FILL instead of STROKE for better visibility
+                FilterQuality = SKFilterQuality.High
             };
-            _arrowPaint.Color = textColor.ToSKColor();
 
-            var chevronSize = 5f;
+            // Opacity logic: 0.4 (approx 102) constant when resting, Full opacity when hovered
+            var arrowAlpha = hover ? (byte)255 : (byte)102; 
+            var arrowColor = hover ? textColor : MenuForeColor; // Use active text color on hover
+            _arrowPaint.Color = arrowColor.ToSKColor().WithAlpha(arrowAlpha);
+
+            var chevronSize = 5f * scale; // Increased from 5 to 6 for better visibility
             float arrowX;
             var arrowY = bounds.MidY;
 
             // Check if this is a ContextMenuStrip instance (not MenuStrip with vertical orientation)
             var isContextMenu = GetType() == typeof(ContextMenuStrip);
+            
+            _chevronPath ??= new SKPath();
+            _chevronPath.Reset();
 
             if (Orientation == Orientation.Vertical || isContextMenu)
             {
                 // Vertical: chevron at the right edge
-                arrowX = bounds.Right - 14;
-
-                _chevronPath ??= new SKPath();
-                _chevronPath.Reset();
+                arrowX = bounds.Right - 12 * scale;
+                
+                // Right arrow > (filled triangle)
                 _chevronPath.MoveTo(arrowX - chevronSize, arrowY - chevronSize);
-                _chevronPath.LineTo(arrowX - chevronSize / 2, arrowY);
+                _chevronPath.LineTo(arrowX + 2 * scale, arrowY);
                 _chevronPath.LineTo(arrowX - chevronSize, arrowY + chevronSize);
-                c.DrawPath(_chevronPath, _arrowPaint);
+                _chevronPath.Close();
             }
             else
             {
                 // Horizontal: chevron after text
-                arrowX = tx + textBounds.Width + 10;
+                arrowX = tx + textBounds.Width + 10 * scale;
 
-                _chevronPath ??= new SKPath();
-                _chevronPath.Reset();
+                // Down arrow v (filled triangle)
                 _chevronPath.MoveTo(arrowX - chevronSize, arrowY - chevronSize / 2);
-                _chevronPath.LineTo(arrowX, arrowY + chevronSize / 2);
+                _chevronPath.LineTo(arrowX, arrowY + chevronSize);
                 _chevronPath.LineTo(arrowX + chevronSize, arrowY - chevronSize / 2);
-                c.DrawPath(_chevronPath, _arrowPaint);
+                _chevronPath.Close();
             }
+            
+            c.DrawPath(_chevronPath, _arrowPaint);
         }
     }
 
@@ -641,8 +663,8 @@ public class MenuStrip : UIElementBase
 
         if (Orientation == Orientation.Horizontal)
         {
-            var x = ItemPadding;
-            var available = b.Width - ItemPadding * 2;
+            var x = ItemPadding + 6 * ScaleFactor;
+            var available = b.Width - ItemPadding * 2 - 12 * ScaleFactor;
             float total = 0;
             var widths = new float[Items.Count];
 
@@ -731,7 +753,23 @@ public class MenuStrip : UIElementBase
         if (_hoveredItem != hovered)
         {
             _hoveredItem = hovered;
-            if (_hoveredItem?.HasDropDown == true && _openedItem != _hoveredItem) OpenSubmenu(_hoveredItem);
+            
+            // If hovering over a different item with dropdown, switch to it
+            if (_hoveredItem?.HasDropDown == true && _openedItem != _hoveredItem)
+            {
+                OpenSubmenu(_hoveredItem);
+            }
+            // If hovering over item without dropdown but a submenu is open, close it
+            else if (_hoveredItem != null && !_hoveredItem.HasDropDown && _openedItem != null)
+            {
+                CloseSubmenu();
+            }
+            // If mouse left all items (null) and submenu is open, close it
+            else if (_hoveredItem == null && _openedItem != null)
+            {
+                CloseSubmenu();
+            }
+            
             Invalidate();
         }
     }
@@ -744,28 +782,31 @@ public class MenuStrip : UIElementBase
         for (var i = 0; i < Items.Count; i++)
             if (rects[i].Contains(e.Location))
             {
-                var item = Items[i];
-                if (item.HasDropDown)
-                {
-                    if (_openedItem == item)
-                    {
-                        /*keep*/
-                    }
-                    else
-                    {
-                        OpenSubmenu(item);
-                    }
-                }
-                else
-                {
-                    item.OnClick();
-                    CloseSubmenu();
-                }
-
+                OnItemClicked(Items[i]);
                 return;
             }
 
         CloseSubmenu();
+    }
+
+    protected virtual void OnItemClicked(MenuItem item)
+    {
+        if (item.HasDropDown)
+        {
+            if (_openedItem == item)
+            {
+                /*keep*/
+            }
+            else
+            {
+                OpenSubmenu(item);
+            }
+        }
+        else
+        {
+            item.OnClick();
+            CloseSubmenu();
+        }
     }
 
     internal override void OnMouseLeave(EventArgs e)
@@ -813,6 +854,32 @@ public class MenuStrip : UIElementBase
             var desiredBgLeft = parentContentRight - 1f;
             var desiredBgTop = itemBounds.Top;
 
+            // Measure submenu size to check if it fits
+            var submenuSize = _activeDropDown.MeasurePreferredSize();
+            var screenTargetRight = PointToScreen(new Point((int)desiredBgLeft, (int)desiredBgTop)).X +
+                                    submenuSize.Width;
+            var screenBounds = Screen.PrimaryScreen.WorkingArea;
+            if (ParentWindow != null)
+            {
+                screenBounds = ParentWindow.RectangleToScreen(ParentWindow.ClientRectangle);
+            }
+
+            // If it goes off-screen to the right, flip to the left side
+            if (screenTargetRight > screenBounds.Right)
+            {
+                var parentContentLeft = this is ContextMenuStrip
+                    ? ContextMenuStrip.ShadowMargin
+                    : itemBounds.Left;
+                // Flip desiredBgLeft to left side of parent with 5px overlap to keep mouse connection
+                desiredBgLeft = parentContentLeft - submenuSize.Width + 5f;
+                // If still off-screen to the left, clamp within bounds
+                var screenTargetLeft = PointToScreen(new Point((int)desiredBgLeft, (int)desiredBgTop)).X;
+                if (screenTargetLeft < screenBounds.Left)
+                {
+                    desiredBgLeft += (screenBounds.Left - screenTargetLeft);
+                }
+            }
+            
             // Convert desired background origin to dropdown's control origin (includes shadow space).
             var targetX = (int)Math.Round(desiredBgLeft - shadow);
             var targetY = (int)Math.Round(desiredBgTop - shadow);
@@ -919,7 +986,7 @@ public class MenuStrip : UIElementBase
         _activeDropDown.ShowImageMargin = ShowImageMargin;
     }
 
-    private MenuItem CloneMenuItem(MenuItem source)
+    protected internal virtual MenuItem CloneMenuItem(MenuItem source)
     {
         if (source is MenuItemSeparator separator)
         {
@@ -949,22 +1016,38 @@ public class MenuStrip : UIElementBase
 
     protected float MeasureItemWidth(MenuItem item)
     {
-        if (item is MenuItemSeparator) return 20f;
+        if (item is MenuItemSeparator) return 20f * ScaleFactor;
 
         var font = GetDefaultSkFont();
 
         var tb = new SKRect();
         font.MeasureText(item.Text, out tb);
-        var w = tb.Width;
+        var w = tb.Width + 12 * ScaleFactor; // Scaled padding (6 left + 6 right)
+
+        // Check/Icon area logic matching DrawMenuItem
+        // If has check state OR icon, we reserve checkAreaWidth (20)
+        // If has icon AND ShowIcons, we reserve iconWidth (IconSize + 6)
+        
+        bool hasCheckArea = item.CheckState != CheckState.Unchecked || item.Icon != null;
+        if (hasCheckArea) w += 20 * ScaleFactor;
 
         if (ShowIcons && item.Icon != null)
-            w += _iconSize + 4;
+            w += (_iconSize + 6) * ScaleFactor;
 
+        var vertical = Orientation == Orientation.Vertical || this is ContextMenuStrip;
+        
         if (ShowSubmenuArrow && item.HasDropDown)
-            w += _submenuArrowSize + 8; // Space for chevron
+        {
+            // Reserve space for arrow.
+            // Vertical uses right-aligned arrow logic (reserved space).
+            // Horizontal uses appended arrow logic (text + gap + arrow).
+            if (vertical)
+                w += 30 * ScaleFactor;
+            else
+                w += 4 * ScaleFactor; // Support for horizontal menu arrows
+        }
 
-        // Avoid excessive trailing padding; MenuStrip already has ItemPadding spacing.
-        return w + 12;
+        return w;
     }
 
     protected override void Dispose(bool disposing)

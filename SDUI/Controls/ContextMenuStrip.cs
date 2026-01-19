@@ -13,7 +13,7 @@ namespace SDUI.Controls;
 
 public class ContextMenuStrip : MenuStrip
 {
-    internal const float ShadowMargin = 7f; // Shadow için ekstra alan (daha subtle)
+    internal const float ShadowMargin = 7f;
     private const int MaxIconCacheEntries = 256;
     private const float CheckMarginWidth = 22f;
     private readonly AnimationManager _fadeInAnimation;
@@ -43,9 +43,6 @@ public class ContextMenuStrip : MenuStrip
     private UIWindow _ownerWindow;
     private SKPaint? _separatorPaint;
 
-    private bool _showCheckMargin = false;
-    private bool _showImageMargin = false;
-
     private SKPaint? _textPaint;
 
     public ContextMenuStrip()
@@ -55,12 +52,12 @@ public class ContextMenuStrip : MenuStrip
         TabStop = false;
         Orientation = Orientation.Vertical;
         BackColor = Color.Transparent;
-        ItemHeight = 28f;
-        ItemPadding = 6f;
+        ItemHeight = 32f; // Increased height significantly
+        ItemPadding = 8f; // Increased vertical margin
 
         _fadeInAnimation = new AnimationManager
         {
-            Increment = 0.30,
+            Increment = 0.20,
             AnimationType = AnimationType.EaseOut,
             Singular = true,
             InterruptAnimation = false
@@ -68,39 +65,15 @@ public class ContextMenuStrip : MenuStrip
         _fadeInAnimation.OnAnimationProgress += _ => Invalidate();
     }
 
-    [Category("Layout")]
-    [DefaultValue(false)]
-    public bool ShowCheckMargin
-    {
-        get => _showCheckMargin;
-        set
-        {
-            if (_showCheckMargin == value) return;
-            _showCheckMargin = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Layout")]
-    [DefaultValue(false)]
-    public bool ShowImageMargin
-    {
-        get => _showImageMargin;
-        set
-        {
-            if (_showImageMargin == value) return;
-            _showImageMargin = value;
-            Invalidate();
-        }
-    }
-
     [Category("Behavior")]
     [DefaultValue(true)]
     public bool AutoClose { get; set; } = true;
 
-    [Browsable(false)] public bool IsOpen { get; private set; }
+    [Browsable(false)] 
+    public bool IsOpen { get; private set; }
 
-    [Browsable(false)] public UIElementBase SourceElement { get; private set; }
+    [Browsable(false)] 
+    public UIElementBase SourceElement { get; private set; }
 
     public event CancelEventHandler Opening;
     public event CancelEventHandler Closing;
@@ -397,7 +370,6 @@ public class ContextMenuStrip : MenuStrip
         // Skia usually composes correctly, but if "kare gibi render ediyor" (rendering like a square) means "seeing square artifacts",
         // it's likely the base class drawing a rect.
         
-        // İçerik alanı (shadow margin kadar içeride)
         var contentRect = new SKRect(
             ShadowMargin,
             ShadowMargin,
@@ -437,6 +409,7 @@ public class ContextMenuStrip : MenuStrip
             contentRect.Bottom - 0.5f);
         canvas.DrawRoundRect(borderRect, CORNER_RADIUS, CORNER_RADIUS, _borderPaint);
 
+        var scale = ScaleFactor;
         var y = contentRect.Top + ItemPadding;
 
         foreach (var item in Items)
@@ -475,44 +448,57 @@ public class ContextMenuStrip : MenuStrip
 
             if (hoverProgress > 0.001f || isHovered)
             {
-                var hoverAlpha = (byte)Math.Max(180, 180 + 70 * hoverProgress);
+                // Soft hover logic identical to MenuStrip
+                var hoverAlpha = (byte)(25 + 40 * hoverProgress);
                 _hoverPaint!.Color = HoverBackColor.ToSKColor().WithAlpha((byte)(fadeAlpha * hoverAlpha / 255f));
-                canvas.DrawRoundRect(itemRect, 7, 7, _hoverPaint);
+                canvas.DrawRoundRect(itemRect, 7 * scale, 7 * scale, _hoverPaint);
             }
 
-            var textX = itemRect.Left + 12;
+            var textX = itemRect.Left + 10 * scale; // Increased left padding for text
 
             // Reserve space for check mark if enabled
             if (ShowCheckMargin)
             {
                 if (item.Checked)
                 {
-                    var cx = itemRect.Left + 12 + CheckMarginWidth / 2f;
+                    var cx = itemRect.Left + 12 * scale + CheckMarginWidth / 2f;
                     var cy = itemRect.MidY;
-                    var s = Math.Min(8f, ItemHeight / 3f);
-                    _arrowPaint!.Color = MenuForeColor.ToSKColor().WithAlpha(fadeAlpha);
+                    var s = Math.Min(8f * scale, ItemHeight / 3f);
+                    // Draw checkmark with Stroke style
+                    using var checkPaint = new SKPaint
+                    {
+                        IsAntialias = true,
+                        Style = SKPaintStyle.Stroke,
+                        StrokeWidth = 1.8f * scale,
+                        StrokeCap = SKStrokeCap.Round,
+                        StrokeJoin = SKStrokeJoin.Round,
+                        Color = MenuForeColor.ToSKColor().WithAlpha(fadeAlpha)
+                    };
                     var chk = new SKPath();
-                    chk.MoveTo(cx - s, cy);
-                    chk.LineTo(cx - s / 2f, cy + s / 2f);
-                    chk.LineTo(cx + s, cy - s);
-                    canvas.DrawPath(chk, _arrowPaint);
+                    // Draw checkmark as proper V shape - left to center to right
+                    chk.MoveTo(cx - s * 0.4f, cy - s * 0.15f);
+                    chk.LineTo(cx, cy + s * 0.35f);
+                    chk.LineTo(cx + s * 0.6f, cy - s * 0.5f);
+                    canvas.DrawPath(chk, checkPaint);
                     chk.Dispose();
                 }
 
-                textX += CheckMarginWidth;
+                textX += CheckMarginWidth * scale;
             }
 
-            var imageAreaWidth = ImageScalingSize.Width + 8;
+            var imageAreaWidth = (ImageScalingSize.Width + 8) * scale;
 
             if (ShowImageMargin)
             {
                 if (ShowIcons && item.Icon != null)
                 {
-                    var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
+                    var scaledIconWidth = ImageScalingSize.Width * scale;
+                    var scaledIconHeight = ImageScalingSize.Height * scale;
+                    var iconY = itemRect.Top + (ItemHeight - scaledIconHeight) / 2;
                     var iconBitmap = GetCachedIconBitmap(item.Icon);
                     _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
                     canvas.DrawBitmap(iconBitmap,
-                        new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height),
+                        new SKRect(textX, iconY, textX + scaledIconWidth, iconY + scaledIconHeight),
                         _iconPaint);
                 }
 
@@ -522,13 +508,15 @@ public class ContextMenuStrip : MenuStrip
             {
                 if (ShowIcons && item.Icon != null)
                 {
-                    var iconY = itemRect.Top + (ItemHeight - ImageScalingSize.Height) / 2;
+                    var scaledIconWidth = ImageScalingSize.Width * scale;
+                    var scaledIconHeight = ImageScalingSize.Height * scale;
+                    var iconY = itemRect.Top + (ItemHeight - scaledIconHeight) / 2;
                     var iconBitmap = GetCachedIconBitmap(item.Icon);
                     _iconPaint!.Color = SKColors.White.WithAlpha(fadeAlpha);
                     canvas.DrawBitmap(iconBitmap,
-                        new SKRect(textX, iconY, textX + ImageScalingSize.Width, iconY + ImageScalingSize.Height),
+                        new SKRect(textX, iconY, textX + scaledIconWidth, iconY + scaledIconHeight),
                         _iconPaint);
-                    textX += ImageScalingSize.Width + 8;
+                    textX += scaledIconWidth + 8 * scale;
                 }
             }
 
@@ -541,20 +529,42 @@ public class ContextMenuStrip : MenuStrip
 
             var font = GetDefaultSkFont();
             _textPaint!.Color = textColor.ToSKColor().WithAlpha(fadeAlpha);
-            var textBounds = SKRect.Create(textX, itemRect.Top, itemRect.Right - textX, itemRect.Height);
+            
+            // Reserve space for chevron if item has dropdown
+            var textWidth = itemRect.Right - textX;
+            if (ShowSubmenuArrow && item.HasDropDown)
+            {
+                // Chevron is right anchored. 
+                // We want text to end 8px (scaled) before the chevron starts.
+                // Chevron icon is roughly 6px wide.
+                // RightPadding is now tight (14px).
+                
+                var widthToReserve = (14 + 6 + 8) * scale; // RightPadding + IconWidth + Gap
+                textWidth -= widthToReserve;
+            }
+            
+            var textBounds = SKRect.Create(textX, itemRect.Top, textWidth, itemRect.Height);
             canvas.DrawControlText(item.Text, textBounds, _textPaint, font, ContentAlignment.MiddleLeft, false, true);
 
             if (ShowSubmenuArrow && item.HasDropDown)
             {
-                var chevronSize = 5f;
-                var chevronX = itemRect.Right - 14;
+                var chevronSize = 5f * scale; 
+                var chevronX = itemRect.Right - 14 * scale; // Align to Right - 14px (More space to ensure full 12px gap)
                 var chevronY = itemRect.MidY;
 
-                _arrowPaint!.Color = textColor.ToSKColor().WithAlpha(fadeAlpha);
+                // Chevron gets active text color and full opacity on hover, 0.4 opacity otherwise
+                var arrowColor = isHovered ? hoverFore : MenuForeColor;
+                var arrowAlphaBase = isHovered ? 255 : 102;
+                _arrowPaint!.Color = arrowColor.ToSKColor().WithAlpha((byte)(fadeAlpha * arrowAlphaBase / 255f));
+                
                 _chevronPath!.Reset();
+                
+                // Right arrow > (filled triangle)
                 _chevronPath.MoveTo(chevronX - chevronSize, chevronY - chevronSize);
-                _chevronPath.LineTo(chevronX - chevronSize / 2, chevronY);
+                _chevronPath.LineTo(chevronX + 2 * scale, chevronY);
                 _chevronPath.LineTo(chevronX - chevronSize, chevronY + chevronSize);
+                _chevronPath.Close();
+                
                 canvas.DrawPath(_chevronPath, _arrowPaint);
             }
 
@@ -573,8 +583,9 @@ public class ContextMenuStrip : MenuStrip
         _textPaint ??= new SKPaint { IsAntialias = true };
         _arrowPaint ??= new SKPaint
         {
-            IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1.2f, StrokeCap = SKStrokeCap.Round,
-            StrokeJoin = SKStrokeJoin.Round
+            IsAntialias = true, 
+            Style = SKPaintStyle.Fill, // Fill for better visibility
+            FilterQuality = SKFilterQuality.High
         };
         _chevronPath ??= new SKPath();
     }
@@ -616,16 +627,23 @@ public class ContextMenuStrip : MenuStrip
     // Include reserved margins for checks and images when measuring dropdown item width
     protected new float MeasureItemWidth(MenuItem item)
     {
-        if (item is MenuItemSeparator) return 20f;
+        var scale = ScaleFactor;
+        if (item is MenuItemSeparator) return 20f * scale;
 
-        var w = base.MeasureItemWidth(item);
+        var font = GetDefaultSkFont();
+        font.MeasureText(item.Text, out var tb);
+        var w = tb.Width + 24 * scale; // Base margin
 
         if (ShowCheckMargin)
-            w += CheckMarginWidth;
+            w += CheckMarginWidth * scale;
 
         if (ShowImageMargin)
-            if (!(ShowIcons && item.Icon != null))
-                w += ImageScalingSize.Width + 8;
+             w += (ImageScalingSize.Width + 8) * scale;
+        else if (ShowIcons && item.Icon != null)
+             w += (ImageScalingSize.Width + 8) * scale;
+             
+        if (ShowSubmenuArrow && item.HasDropDown)
+            w += 30 * scale; // Extra space for chevron 
 
         return w;
     }

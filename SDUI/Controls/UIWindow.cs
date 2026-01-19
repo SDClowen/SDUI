@@ -1489,8 +1489,13 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             // Force repaint to prevent stale background captures
             Update();
             if (ExtendMenu != null)
-                ExtendMenu.Show(PointToScreen(new Point(Convert.ToInt32(_extendBoxRect.Right),
-                    Convert.ToInt32(_extendBoxRect.Bottom))));
+            {
+                var menuSize = ExtendMenu.MeasurePreferredSize();
+                ExtendMenu.Show(new Point(
+                    Convert.ToInt32(_extendBoxRect.Location.X),
+                    Convert.ToInt32(_extendBoxRect.Location.Y)
+                ));
+            }
             else
                 OnExtendBoxClick?.Invoke(this, EventArgs.Empty);
         }
