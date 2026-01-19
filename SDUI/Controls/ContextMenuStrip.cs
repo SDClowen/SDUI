@@ -184,7 +184,7 @@ public class ContextMenuStrip : MenuStrip
 
         if (targetX + size.Width > client.Right - MARGIN)
         {
-            var leftPos = targetX - size.Width - MARGIN;
+            var leftPos = targetX - size.Width;
             if (leftPos >= client.Left + MARGIN)
                 targetX = leftPos;
             else

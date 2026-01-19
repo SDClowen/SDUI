@@ -852,16 +852,30 @@ public class MenuStrip : UIElementBase
 
             // Desired child background top-left (local coords), with 1px overlap to avoid seams.
             var desiredBgLeft = parentContentRight - 1f;
-            var desiredBgTop = itemBounds.Top;
-
-            // Measure submenu size to check if it fits
+            
+            // Measure submenu size to check if it fits and for centering
             var submenuSize = _activeDropDown.MeasurePreferredSize();
-            var screenTargetRight = PointToScreen(new Point((int)desiredBgLeft, (int)desiredBgTop)).X +
-                                    submenuSize.Width;
+            
+            // Center submenu vertically on the parent menu item
+            var desiredBgTop = itemBounds.Top + (itemBounds.Height - submenuSize.Height) / 2f;
+            var screenTarget = PointToScreen(new Point((int)desiredBgLeft, (int)desiredBgTop));
+            var screenTargetRight = screenTarget.X + submenuSize.Width;
+            var screenTargetBottom = screenTarget.Y + submenuSize.Height;
             var screenBounds = Screen.PrimaryScreen.WorkingArea;
             if (ParentWindow != null)
             {
                 screenBounds = ParentWindow.RectangleToScreen(ParentWindow.ClientRectangle);
+            }
+
+            // Adjust vertical position if submenu goes off-screen vertically
+            if (screenTargetBottom > screenBounds.Bottom)
+            {
+                var overflow = screenTargetBottom - screenBounds.Bottom;
+                desiredBgTop -= overflow;
+            }
+            if (screenTarget.Y < screenBounds.Top)
+            {
+                desiredBgTop += (screenBounds.Top - screenTarget.Y);
             }
 
             // If it goes off-screen to the right, flip to the left side
