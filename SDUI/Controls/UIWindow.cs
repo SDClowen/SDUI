@@ -1491,8 +1491,10 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             if (ExtendMenu != null)
             {
                 var menuSize = ExtendMenu.MeasurePreferredSize();
+                // Open menu centered horizontally under the extend box
+                var centerX = _extendBoxRect.Left + (_extendBoxRect.Width - menuSize.Width) / 2f;
                 ExtendMenu.Show(PointToScreen(new Point(
-                    Convert.ToInt32(_extendBoxRect.Location.X),
+                    Convert.ToInt32(centerX),
                     Convert.ToInt32(_extendBoxRect.Bottom)
                 )));
             }
