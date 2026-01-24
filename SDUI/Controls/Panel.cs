@@ -1,5 +1,7 @@
+using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Linq;
 using System.Windows.Forms;
 using SkiaSharp;
 
@@ -8,10 +10,8 @@ namespace SDUI.Controls;
 public class Panel : UIElementBase
 {
     private Padding _border;
-
     private Color _borderColor = Color.Transparent;
     private int _radius = 10;
-
     private float _shadowDepth = 4;
     private float RadiusScaled => _radius * ScaleFactor;
     private float ShadowDepthScaled => _shadowDepth * ScaleFactor;

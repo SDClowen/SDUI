@@ -1,2 +1,0 @@
-- Kodlar modern olmalı ve optimize edilmiş olmalı.
-- Winform projelerini kullanan insanları bu projeye kullandırmayı amaçlayan winform simulatoru gibidir. Yani insanlar hiç uğraşmadan bizim System.Windows.Forms yerine SDUI namespacesini kullanarak doğrudan migration gerektirmeden geçiş yapabilsinler.

@@ -61,11 +61,10 @@ public class FlowLayoutPanel : UIElementBase
         // Yeni kontrol için animasyon motoru oluştur
         _animations[e.Element] = new AnimationManager()
         {
-            Increment = 0.12f,
-            AnimationType = AnimationType.EaseInOut,
+            Increment = 0.25f,
+            AnimationType = AnimationType.Linear,
             InterruptAnimation = true
         };
-        _animations[e.Element].OnAnimationProgress += s => Invalidate();
 
         PerformLayout();
     }
@@ -250,19 +249,8 @@ public class FlowLayoutPanel : UIElementBase
 
     private void StartAnimation(UIElementBase control, Point targetPoint)
     {
-        if (!_animations.TryGetValue(control, out var animation)) return;
-
-        var currentLoc = control.Location;
-        animation.OnAnimationProgress += progress =>
-        {
-            var engine = progress as AnimationManager;
-            control.Location = new Point(
-                (int)(currentLoc.X + (targetPoint.X - currentLoc.X) * (float)engine.GetProgress()),
-                (int)(currentLoc.Y + (targetPoint.Y - currentLoc.Y) * (float)engine.GetProgress())
-            );
-            Invalidate();
-        };
-        animation.StartNewAnimation(AnimationDirection.In);
+        // Animasyonu devre dışı bırak - direkt pozisyon değiştir
+        control.Location = targetPoint;
     }
 
     private void AlignRow(List<UIElementBase> row, int y, int height, Rectangle clientArea)
@@ -400,174 +388,37 @@ public class FlowLayoutPanel : UIElementBase
     {
         base.OnPaint(canvas);
 
-
-        var rect = new SKRect(0, 0, Width, Height);
-
-        var color = BackColor == Color.Transparent ? ColorScheme.BackColor2 : BackColor;
-        var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
-
-        // Gölge çizimi
-        if (_shadowDepth > 0)
+        // Basit arka plan çizimi - performans için gölge ve rounded corner'ları kaldır
+        if (BackColor != Color.Transparent)
         {
-            using var shadowFilter = SKImageFilter.CreateDropShadow(
-                _shadowDepth,
-                _shadowDepth,
-                3,
-                3,
-                SKColors.Black.WithAlpha(30));
-            using var shadowPaint = new SKPaint
+            using var paint = new SKPaint
             {
-                Color = SKColors.Black.WithAlpha(30),
-                ImageFilter = shadowFilter,
-                IsAntialias = true
+                Color = BackColor.ToSKColor(),
+                IsAntialias = false
             };
-
-            if (_radius > 0)
-            {
-                using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
-                canvas.DrawPath(path, shadowPaint);
-            }
-            else
-            {
-                canvas.DrawRect(rect, shadowPaint);
-            }
+            canvas.DrawRect(0, 0, Width, Height, paint);
         }
-
-        // Panel arka planı
-        using (var paint = new SKPaint
-               {
-                   Color = color.ToSKColor(),
-                   IsAntialias = true
-               })
-        {
-            if (_radius > 0)
-            {
-                using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
-                canvas.DrawPath(path, paint);
-            }
-            else
-            {
-                canvas.DrawRect(rect, paint);
-            }
-        }
-
-        // Kenarlık çizimi
+        
+        // Kenarlık varsa basit çiz
         if (_border.All > 0 || _border.Left > 0 || _border.Top > 0 || _border.Right > 0 || _border.Bottom > 0)
         {
+            var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
             using var paint = new SKPaint
             {
                 Color = borderColor.ToSKColor(),
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = 1,
-                IsAntialias = true
+                IsAntialias = false
             };
 
-            if (_radius > 0)
-            {
-                using var path = new SKPath();
-                path.AddRoundRect(rect, _radius * ScaleFactor, _radius * ScaleFactor);
-
-                if (_border.All > 0)
-                {
-                    paint.StrokeWidth = _border.All;
-                    canvas.DrawPath(path, paint);
-                }
-                else
-                {
-                    // Sol kenarlık
-                    if (_border.Left > 0)
-                    {
-                        paint.StrokeWidth = _border.Left;
-                        using var left = new SKPath();
-                        left.MoveTo(rect.Left + _radius * ScaleFactor, rect.Top);
-                        left.LineTo(rect.Left + _radius * ScaleFactor, rect.Bottom);
-                        canvas.DrawPath(left, paint);
-                    }
-
-                    // Üst kenarlık
-                    if (_border.Top > 0)
-                    {
-                        paint.StrokeWidth = _border.Top;
-                        using var top = new SKPath();
-                        top.MoveTo(rect.Left, rect.Top + _radius * ScaleFactor);
-                        top.LineTo(rect.Right, rect.Top + _radius * ScaleFactor);
-                        canvas.DrawPath(top, paint);
-                    }
-
-                    // Sağ kenarlık
-                    if (_border.Right > 0)
-                    {
-                        paint.StrokeWidth = _border.Right;
-                        using var right = new SKPath();
-                        right.MoveTo(rect.Right - _radius * ScaleFactor, rect.Top);
-                        right.LineTo(rect.Right - _radius * ScaleFactor, rect.Bottom);
-                        canvas.DrawPath(right, paint);
-                    }
-
-                    // Alt kenarlık
-                    if (_border.Bottom > 0)
-                    {
-                        paint.StrokeWidth = _border.Bottom;
-                        using var bottom = new SKPath();
-                        bottom.MoveTo(rect.Left, rect.Bottom - _radius * ScaleFactor);
-                        bottom.LineTo(rect.Right, rect.Bottom - _radius * ScaleFactor);
-                        canvas.DrawPath(bottom, paint);
-                    }
-                }
-            }
-            else
-            {
-                if (_border.All > 0)
-                {
-                    paint.StrokeWidth = _border.All;
-                    canvas.DrawRect(rect, paint);
-                }
-                else
-                {
-                    // Sol kenarlık
-                    if (_border.Left > 0)
-                    {
-                        paint.StrokeWidth = _border.Left;
-                        canvas.DrawLine(rect.Left, rect.Top, rect.Left, rect.Bottom, paint);
-                    }
-
-                    // Üst kenarlık
-                    if (_border.Top > 0)
-                    {
-                        paint.StrokeWidth = _border.Top;
-                        canvas.DrawLine(rect.Left, rect.Top, rect.Right, rect.Top, paint);
-                    }
-
-                    // Sağ kenarlık
-                    if (_border.Right > 0)
-                    {
-                        paint.StrokeWidth = _border.Right;
-                        canvas.DrawLine(rect.Right, rect.Top, rect.Right, rect.Bottom, paint);
-                    }
-
-                    // Alt kenarlık
-                    if (_border.Bottom > 0)
-                    {
-                        paint.StrokeWidth = _border.Bottom;
-                        canvas.DrawLine(rect.Left, rect.Bottom, rect.Right, rect.Bottom, paint);
-                    }
-                }
-            }
-        }
-
-        // Debug çerçevesi
-        if (ColorScheme.DrawDebugBorders)
-        {
-            using var paint = new SKPaint
-            {
-                Color = SKColors.Red,
-                Style = SKPaintStyle.Stroke,
-                StrokeWidth = 1,
-                IsAntialias = true
-            };
-            canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
+            if (_border.Left > 0)
+                canvas.DrawLine(0, 0, 0, Height, paint);
+            if (_border.Top > 0)
+                canvas.DrawLine(0, 0, Width, 0, paint);
+            if (_border.Right > 0)
+                canvas.DrawLine(Width - 1, 0, Width - 1, Height, paint);
+            if (_border.Bottom > 0)
+                canvas.DrawLine(0, Height - 1, Width, Height - 1, paint);
         }
     }
 

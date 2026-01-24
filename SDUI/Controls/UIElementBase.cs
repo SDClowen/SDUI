@@ -52,22 +52,116 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
         _font = new Font("Segoe UI", 9f);
         _cursor = Cursors.Default;
         _currentDpi = DpiHelper.GetSystemDpi();
+        
+        InitializeScrollBars();
     }
 
-    public Image BackgroundImage { get; set; }
-    public ContentAlignment ImageAlign { get; set; }
-    public ImageLayout BackgroundImageLayout { get; set; }
+    private Image _backgroundImage;
+    public Image BackgroundImage
+    {
+        get => _backgroundImage;
+        set
+        {
+            if (_backgroundImage == value) return;
+            _backgroundImage = value;
+            OnBackgroundImageChanged(EventArgs.Empty);
+            Invalidate();
+        }
+    }
 
-    public RightToLeft RightToLeft { get; set; } = RightToLeft.No;
-    public SizeF AutoScaleDimensions { get; set; }
-    public AutoScaleMode AutoScaleMode { get; set; }
+    private ContentAlignment _imageAlign = ContentAlignment.MiddleCenter;
+    public ContentAlignment ImageAlign
+    {
+        get => _imageAlign;
+        set
+        {
+            if (_imageAlign == value) return;
+            _imageAlign = value;
+            OnImageAlignChanged(EventArgs.Empty);
+            Invalidate();
+        }
+    }
+
+    private ImageLayout _backgroundImageLayout = ImageLayout.Tile;
+    public ImageLayout BackgroundImageLayout
+    {
+        get => _backgroundImageLayout;
+        set
+        {
+            if (_backgroundImageLayout == value) return;
+            _backgroundImageLayout = value;
+            OnBackgroundImageLayoutChanged(EventArgs.Empty);
+            Invalidate();
+        }
+    }
+
+    private RightToLeft _rightToLeft = RightToLeft.No;
+    public RightToLeft RightToLeft
+    {
+        get => _rightToLeft;
+        set
+        {
+            if (_rightToLeft == value) return;
+            _rightToLeft = value;
+            OnRightToLeftChanged(EventArgs.Empty);
+            Invalidate();
+        }
+    }
+
+    private SizeF _autoScaleDimensions;
+    public SizeF AutoScaleDimensions
+    {
+        get => _autoScaleDimensions;
+        set
+        {
+            if (_autoScaleDimensions == value) return;
+            _autoScaleDimensions = value;
+        }
+    }
+
+    private AutoScaleMode _autoScaleMode = AutoScaleMode.None;
+    public AutoScaleMode AutoScaleMode
+    {
+        get => _autoScaleMode;
+        set
+        {
+            if (_autoScaleMode == value) return;
+            _autoScaleMode = value;
+        }
+    }
 
     public bool Disposing { get; set; }
     public bool CheckForIllegalCrossThreadCalls { get; set; }
-
     public bool InvokeRequired => false;
-    public bool AutoScroll { get; set; }
-    public Size AutoScrollMargin { get; set; }
+
+    protected ScrollBar? _vScrollBar;
+    protected ScrollBar? _hScrollBar;
+
+    private bool _autoScroll;
+    public bool AutoScroll
+    {
+        get => _autoScroll;
+        set
+        {
+            if (_autoScroll == value) return;
+            _autoScroll = value;
+            OnAutoScrollChanged(EventArgs.Empty);
+            UpdateScrollBars();
+            PerformLayout();
+        }
+    }
+
+    private Size _autoScrollMargin;
+    public Size AutoScrollMargin
+    {
+        get => _autoScrollMargin;
+        set
+        {
+            if (_autoScrollMargin == value) return;
+            _autoScrollMargin = value;
+            PerformLayout();
+        }
+    }
 
     public Image Image
     {
@@ -338,7 +432,7 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
         }
     }
 
-    private Size _size;
+    private Size _size = new(100, 23);
 
     public virtual Size Size
     {
@@ -1037,6 +1131,11 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     public event MouseEventHandler MouseWheel;
 
     public event EventHandler DpiChanged;
+    public event EventHandler BackgroundImageChanged;
+    public event EventHandler BackgroundImageLayoutChanged;
+    public event EventHandler ImageAlignChanged;
+    public event EventHandler RightToLeftChanged;
+    public event EventHandler AutoScrollChanged;
 
     // Fired when the element is loaded (parent window has finished loading). Raised once per element.
     public event EventHandler? Load;
@@ -1369,6 +1468,92 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
 
     #region Protected Event Methods
 
+    protected virtual void OnBackgroundImageChanged(EventArgs e)
+    {
+        BackgroundImageChanged?.Invoke(this, e);
+    }
+
+    protected virtual void OnBackgroundImageLayoutChanged(EventArgs e)
+    {
+        BackgroundImageLayoutChanged?.Invoke(this, e);
+    }
+
+    protected virtual void OnImageAlignChanged(EventArgs e)
+    {
+        ImageAlignChanged?.Invoke(this, e);
+    }
+
+    protected virtual void OnRightToLeftChanged(EventArgs e)
+    {
+        RightToLeftChanged?.Invoke(this, e);
+    }
+
+    protected virtual void OnAutoScrollChanged(EventArgs e)
+    {
+        AutoScrollChanged?.Invoke(this, e);
+    }
+
+    private void InitializeScrollBars()
+    {
+        if (this is ScrollBar)
+            return;
+
+        _vScrollBar = new ScrollBar
+        {
+            Dock = DockStyle.Right,
+            Visible = false,
+            Orientation = Orientation.Vertical,
+        };
+        _hScrollBar = new ScrollBar
+        {
+            Dock = DockStyle.Bottom,
+            Visible = false,
+            Orientation = Orientation.Horizontal,
+        };
+
+        _vScrollBar.ValueChanged += (s, e) => Invalidate();
+        _hScrollBar.ValueChanged += (s, e) => Invalidate();
+
+        Controls.Add(_vScrollBar);
+        Controls.Add(_hScrollBar);
+    }
+
+    protected void UpdateScrollBars()
+    {
+        if (!AutoScroll || _vScrollBar == null || _hScrollBar == null)
+            return;
+
+        var maxBottom = 0;
+        var maxRight = 0;
+
+        foreach (var control in Controls.OfType<UIElementBase>())
+        {
+            if (control == _vScrollBar || control == _hScrollBar)
+                continue;
+
+            maxBottom = Math.Max(maxBottom, control.Location.Y + control.Height);
+            maxRight = Math.Max(maxRight, control.Location.X + control.Width);
+        }
+
+        var needsVScroll = maxBottom > Height;
+        var needsHScroll = maxRight > Width;
+
+        _vScrollBar.Visible = needsVScroll;
+        _hScrollBar.Visible = needsHScroll;
+
+        if (needsVScroll)
+        {
+            _vScrollBar.Maximum = maxBottom - Height + 20;
+            _vScrollBar.LargeChange = Height / 2;
+        }
+
+        if (needsHScroll)
+        {
+            _hScrollBar.Maximum = maxRight - Width + 20;
+            _hScrollBar.LargeChange = Width / 2;
+        }
+    }
+
     public virtual void OnClick(EventArgs e)
     {
         if (!Enabled || !Visible)
@@ -1428,6 +1613,11 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
             hoveredElement?.OnMouseEnter(EventArgs.Empty);
             _lastHoveredElement = hoveredElement;
         }
+    }
+
+    protected void RaiseMouseDown(MouseEventArgs e)
+    {
+        MouseDown?.Invoke(this, e);
     }
 
     internal virtual void OnMouseDown(MouseEventArgs e)
@@ -2112,6 +2302,9 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     protected virtual void OnLayout(UILayoutEventArgs e)
     {
         Layout?.Invoke(this, e);
+        
+        UpdateScrollBars();
+        
         // Use DisplayRectangle for child layout area (already excludes padding)
         var clientArea = DisplayRectangle;
         var remainingArea = clientArea;

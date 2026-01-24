@@ -248,29 +248,55 @@ public class Label : UIElementBase
 
         var availableWidth = Width - Padding.Horizontal;
         var lineHeight = font.Spacing;
-        var text = Text;
+        
+        // Escape karakterlerini işle
+        var processedText = Text
+            .Replace("\\n", "\n")
+            .Replace("\\r", "\r")
+            .Replace("\\t", "\t");
+        
         var lines = new List<string>();
 
-        // Metni satırlara böl
-        while (!string.IsNullOrEmpty(text))
+        // Önce \n ile satırlara böl
+        var textLines = processedText.Split(new[] { '\n', '\r' }, StringSplitOptions.None);
+        
+        foreach (var textLine in textLines)
         {
-            float measuredWidth;
-            long count = font.BreakText(text, availableWidth, out measuredWidth);
-
-            if (count == 0) break;
-
-            var line = text.Substring(0, (int)count);
-            if (AutoEllipsis && text.Length > count)
+            var remainingText = textLine;
+            
+            // Her satırı genişliğe göre böl
+            while (!string.IsNullOrEmpty(remainingText))
             {
-                line = CreateEllipsisText(line, availableWidth, font);
-                text = "";
-            }
-            else
-            {
-                text = text.Substring((int)count).TrimStart();
-            }
+                float measuredWidth;
+                long count = font.BreakText(remainingText, availableWidth, out measuredWidth);
 
-            lines.Add(line);
+                if (count == 0) 
+                {
+                    if (remainingText.Length > 0)
+                    {
+                        lines.Add(remainingText.Substring(0, 1));
+                        remainingText = remainingText.Substring(1);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    continue;
+                }
+
+                var line = remainingText.Substring(0, (int)count);
+                if (AutoEllipsis && remainingText.Length > count)
+                {
+                    line = CreateEllipsisText(line, availableWidth, font);
+                    remainingText = "";
+                }
+                else
+                {
+                    remainingText = remainingText.Substring((int)count).TrimStart();
+                }
+
+                lines.Add(line);
+            }
         }
 
         // Dikey hizalama: padding'li alan içinde hizala.

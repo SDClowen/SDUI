@@ -1,6 +1,8 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using SDUI.Animation;
+using SDUI.Enums;
 using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
@@ -12,6 +14,15 @@ public class GroupBox : UIElementBase
     private int _radius = 10;
     private int _shadowDepth = 4;
     private ContentAlignment _textAlign = ContentAlignment.MiddleCenter;
+    private bool _collapsible = false;
+    private bool _collapsed = false;
+    private CollapseDirection _collapseDirection = CollapseDirection.Vertical;
+    private AnimationManager? _collapseAnimation;
+    private AnimationManager? _arrowAnimation;
+    private int _expandedSize;
+    private int _collapsedSize = 35;
+    private bool _isHeaderHovered = false;
+    private bool _sizeInitialized = false;
 
     private int RadiusScaled => (int)(_radius * ScaleFactor);
     private float ShadowDepthScaled => _shadowDepth * ScaleFactor;
@@ -20,6 +31,7 @@ public class GroupBox : UIElementBase
     {
         BackColor = Color.Transparent;
         Padding = new Padding(3, 8, 3, 3);
+        InitializeCollapseAnimation();
     }
 
     public ContentAlignment TextAlign
@@ -54,9 +66,231 @@ public class GroupBox : UIElementBase
         }
     }
 
+    [System.ComponentModel.Category("Behavior")]
+    [System.ComponentModel.DefaultValue(false)]
+    public bool Collapsible
+    {
+        get => _collapsible;
+        set
+        {
+            if (_collapsible == value) return;
+            _collapsible = value;
+            Invalidate();
+        }
+    }
+
+    [System.ComponentModel.Category("Behavior")]
+    [System.ComponentModel.DefaultValue(false)]
+    public bool Collapsed
+    {
+        get => _collapsed;
+        set
+        {
+            if (_collapsed == value) return;
+            SetCollapsed(value, animate: false);
+        }
+    }
+
+    [System.ComponentModel.Category("Behavior")]
+    [System.ComponentModel.DefaultValue(CollapseDirection.Vertical)]
+    public CollapseDirection CollapseDirection
+    {
+        get => _collapseDirection;
+        set
+        {
+            if (_collapseDirection == value) return;
+            
+            if (_sizeInitialized && !_collapsed)
+            {
+                var oldDirection = _collapseDirection;
+                _collapseDirection = value;
+                
+                if (oldDirection == CollapseDirection.Vertical)
+                    _expandedSize = Width;
+                else
+                    _expandedSize = Height;
+            }
+            else
+            {
+                _collapseDirection = value;
+            }
+            
+            Invalidate();
+        }
+    }
+
+    public event EventHandler? CollapsedChanged;
+
+    private void InitializeCollapseAnimation()
+    {
+        _collapseAnimation = new AnimationManager
+        {
+            AnimationType = AnimationType.EaseOut,
+            Increment = 0.1,
+        };
+        _collapseAnimation.OnAnimationProgress += OnCollapseAnimationUpdate;
+
+        _arrowAnimation = new AnimationManager
+        {
+            AnimationType = AnimationType.EaseOut,
+            Increment = 0.15,
+        };
+        _arrowAnimation.OnAnimationProgress += _ => Invalidate();
+    }
+
+    public void ToggleCollapsed()
+    {
+        if (!_collapsible) return;
+        SetCollapsed(!_collapsed, animate: true);
+    }
+
+    private void SetCollapsed(bool collapse, bool animate)
+    {
+        EnsureSizeInitialized();
+        
+        _collapsed = collapse;
+
+        if (animate && _collapseAnimation != null && _arrowAnimation != null)
+        {
+            _collapseAnimation.StartNewAnimation(_collapsed ? AnimationDirection.Out : AnimationDirection.In);
+            _arrowAnimation.StartNewAnimation(_collapsed ? AnimationDirection.Out : AnimationDirection.In);
+        }
+        else
+        {
+            ApplyCollapsedState();
+        }
+
+        CollapsedChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void OnCollapseAnimationUpdate(object? sender)
+    {
+        if (_collapseAnimation == null) return;
+
+        var progress = _collapseAnimation.GetProgress();
+        int currentSize;
+
+        if (_collapsed)
+        {
+            currentSize = (int)(_expandedSize - (_expandedSize - _collapsedSize) * progress);
+        }
+        else
+        {
+            currentSize = (int)(_collapsedSize + (_expandedSize - _collapsedSize) * progress);
+        }
+
+        if (_collapseDirection == CollapseDirection.Vertical)
+        {
+            Height = currentSize;
+        }
+        else
+        {
+            Width = currentSize;
+        }
+
+        Invalidate();
+    }
+
+    private void ApplyCollapsedState()
+    {
+        if (_collapseDirection == CollapseDirection.Vertical)
+        {
+            if (_collapsed)
+                Height = _collapsedSize;
+            else
+                Height = _expandedSize;
+        }
+        else
+        {
+            if (_collapsed)
+                Width = _collapsedSize;
+            else
+                Width = _expandedSize;
+        }
+    }
+
+    internal override void OnSizeChanged(EventArgs e)
+    {
+        base.OnSizeChanged(e);
+        
+        if (!_collapsed)
+        {
+            if (_collapseDirection == CollapseDirection.Vertical)
+                _expandedSize = Height;
+            else
+                _expandedSize = Width;
+                
+            _sizeInitialized = true;
+        }
+    }
+    
+    private void EnsureSizeInitialized()
+    {
+        if (!_sizeInitialized)
+        {
+            if (_collapseDirection == CollapseDirection.Vertical)
+                _expandedSize = Height;
+            else
+                _expandedSize = Width;
+                
+            _sizeInitialized = true;
+        }
+    }
+
+    internal override void OnMouseDown(MouseEventArgs e)
+    {
+        if (!_collapsible)
+        {
+            base.OnMouseDown(e);
+            return;
+        }
+
+        var titleHeight = Font.Height + 7;
+        if (e.Y < titleHeight)
+        {
+            var arrowHitBox = new Rectangle(0, 0, 25, (int)titleHeight);
+            if (arrowHitBox.Contains(e.Location))
+            {
+                ToggleCollapsed();
+                return;
+            }
+        }
+        
+        base.OnMouseDown(e);
+    }
+
+    internal override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+
+        if (!_collapsible) return;
+
+        var titleHeight = Font.Height + 7;
+        var arrowHitBox = new Rectangle(0, 0, 25, (int)titleHeight);
+        
+        bool wasHovered = _isHeaderHovered;
+        _isHeaderHovered = arrowHitBox.Contains(e.Location);
+
+        if (wasHovered != _isHeaderHovered)
+        {
+            Cursor = _isHeaderHovered ? System.Windows.Forms.Cursors.Hand : System.Windows.Forms.Cursors.Default;
+            Invalidate();
+        }
+    }
+
+    internal override void OnMouseLeave(EventArgs e)
+    {
+        base.OnMouseLeave(e);
+        _isHeaderHovered = false;
+        Cursor = System.Windows.Forms.Cursors.Default;
+        Invalidate();
+    }
+
     public override void OnPaint(SKCanvas canvas)
     {
         base.OnPaint(canvas);
+        
+        EnsureSizeInitialized();
 
         // Debug �er�evesi
         if (ColorScheme.DrawDebugBorders)
@@ -152,13 +386,15 @@ public class GroupBox : UIElementBase
             var textY = titleRect.Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
             float textX;
 
+            var textMargin = _collapsible ? 25f : 5f;
+
             switch (TextAlign)
             {
                 case ContentAlignment.MiddleLeft:
-                    textX = titleRect.Left;
+                    textX = titleRect.Left + textMargin;
                     break;
                 case ContentAlignment.MiddleRight:
-                    textX = titleRect.Right - textWidth;
+                    textX = titleRect.Right - textWidth - 5f;
                     break;
                 case ContentAlignment.MiddleCenter:
                 default:
@@ -167,6 +403,11 @@ public class GroupBox : UIElementBase
             }
 
             TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
+        }
+
+        if (_collapsible)
+        {
+            DrawCollapseArrow(canvas, titleRect.Height);
         }
 
         // �er�eve �izimi
@@ -220,5 +461,57 @@ public class GroupBox : UIElementBase
         }
 
         Invalidate();
+    }
+
+    private void DrawCollapseArrow(SKCanvas canvas, float titleHeight)
+    {
+        var arrowSize = 8f;
+        var arrowX = 10f;
+        var arrowY = titleHeight / 2f;
+
+        var rotationProgress = _arrowAnimation?.GetProgress() ?? (_collapsed ? 0.0 : 1.0);
+        
+        float rotation;
+        if (_collapseDirection == CollapseDirection.Vertical)
+        {
+            rotation = (float)(rotationProgress * 90);
+        }
+        else
+        {
+            rotation = (float)(rotationProgress * 90) + 90f;
+        }
+
+        using var arrowPaint = new SKPaint
+        {
+            Color = ColorScheme.ForeColor.ToSKColor(),
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = 2,
+            StrokeCap = SKStrokeCap.Round,
+            StrokeJoin = SKStrokeJoin.Round,
+        };
+
+        canvas.Save();
+        canvas.Translate(arrowX, arrowY);
+        canvas.RotateRadians(rotation * (float)Math.PI / 180f);
+
+        using var path = new SKPath();
+        path.MoveTo(-arrowSize / 2, -arrowSize / 3);
+        path.LineTo(0, arrowSize / 3);
+        path.LineTo(arrowSize / 2, -arrowSize / 3);
+
+        canvas.DrawPath(path, arrowPaint);
+        canvas.Restore();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _collapseAnimation?.Dispose();
+            _arrowAnimation?.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 }

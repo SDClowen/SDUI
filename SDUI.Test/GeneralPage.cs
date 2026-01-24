@@ -87,7 +87,9 @@ namespace SDUI.Demo
 
         private void button3_Click(object sender, EventArgs e)
         {
-            textBox1.Text = "Testing";
+            // Test Unicode characters and multiline selection
+            textBox1.Text = "Testing Unicode:\n🎨 Emoji Test\n中文字符\nРусский текст\nعربي\nLine 5\nLine 6\nLine 7";
+            textBox1.MultiLine = true;
         }
 
         private void textBox1_TextChanged(object sender, EventArgs e)

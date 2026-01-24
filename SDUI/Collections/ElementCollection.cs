@@ -372,6 +372,12 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         SetChildIndexInternal(child, newIndex);
     }
 
+    internal void Insert(int index, IUIElement value)
+    {
+        Add(value);
+        SetChildIndexInternal(value, index);
+    }
+
     private class ControlCollectionEnumerator : IEnumerator
     {
         private readonly ElementCollection list;

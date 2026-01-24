@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Windows.Forms;
 using SDUI.Animation;
 using SDUI.Extensions;
@@ -12,11 +14,18 @@ namespace SDUI.Controls;
 
 public class TabControl : UIElementBase
 {
+    private sealed class TabIconCache
+    {
+        public Image? Image;
+        public SKBitmap? Bitmap;
+    }
+
     private float ChevronWidth => 24f * ScaleFactor;
 
     // Add/Remove animations
     private readonly Dictionary<TabPage, AnimationManager> _addAnimations = new();
     private readonly Dictionary<int, AnimationManager> _hoverAnims = new();
+    private readonly Dictionary<TabPage, TabIconCache> _iconCache = new();
     private readonly List<TabPage> _pages = new();
     private readonly Dictionary<TabPage, AnimationManager> _removeAnimations = new();
 
@@ -29,6 +38,7 @@ public class TabControl : UIElementBase
     private float _cornerRadius = 8.0f;
     private int _draggedTabIndex = -1;
     private Point _dragStartPoint;
+    private bool _suppressPageSync;
 
     // Chrome-like styles and animation
     private Color _headerBackColor = ColorScheme.BackColor;
@@ -77,6 +87,8 @@ public class TabControl : UIElementBase
         };
         _selectionAnim.OnAnimationProgress += _ => Invalidate();
     }
+
+    internal IReadOnlyList<TabPage> Pages => _pages;
 
     [Browsable(false)]
     public TabPage SelectedPage => _selectedIndex >= 0 && _selectedIndex < _pages.Count ? _pages[_selectedIndex] : null;
@@ -308,6 +320,7 @@ public class TabControl : UIElementBase
                 _pages.Remove(page);
                 Controls.Remove(page);
                 _removeAnimations.Remove(page);
+                ClearTabIconCache(page);
 
                 if (_hoverAnims.ContainsKey(index)) _hoverAnims.Remove(index);
                 if (_selectedIndex >= _pages.Count) SelectedIndex = _pages.Count - 1;
@@ -321,6 +334,52 @@ public class TabControl : UIElementBase
 
             Invalidate();
         }
+    }
+
+    public void MovePage(TabPage page, int newIndex)
+    {
+        if (page == null) throw new ArgumentNullException(nameof(page));
+        var oldIndex = _pages.IndexOf(page);
+        if (oldIndex < 0) throw new InvalidOperationException("Tab page not found in this control.");
+
+        newIndex = Math.Clamp(newIndex, 0, _pages.Count - 1);
+        if (oldIndex == newIndex)
+            return;
+
+        _pages.RemoveAt(oldIndex);
+        _pages.Insert(newIndex, page);
+
+        if (_selectedIndex == oldIndex)
+        {
+            _selectedIndex = newIndex;
+        }
+        else if (_selectedIndex >= 0)
+        {
+            if (oldIndex < _selectedIndex && newIndex >= _selectedIndex)
+                _selectedIndex--;
+            else if (oldIndex > _selectedIndex && newIndex <= _selectedIndex)
+                _selectedIndex++;
+        }
+
+        _suppressPageSync = true;
+        try
+        {
+            Controls.Remove(page);
+            Controls.Insert(newIndex, page);
+        }
+        finally
+        {
+            _suppressPageSync = false;
+        }
+
+        _hoveredTabIndex = -1;
+        _hoveredCloseButtonIndex = -1;
+        _draggedTabIndex = -1;
+        _isDragging = false;
+
+        RebuildHoverAnimations();
+        UpdatePagesLayout();
+        Invalidate();
     }
 
     public void RemovePageAt(int index)
@@ -344,6 +403,50 @@ public class TabControl : UIElementBase
         }
     }
 
+    private void RebuildHoverAnimations()
+    {
+        _hoverAnims.Clear();
+        for (var i = 0; i < _pages.Count; i++)
+            EnsureHoverAnim(i);
+    }
+
+    private void ClearTabIconCache(TabPage page)
+    {
+        if (page == null) return;
+        if (_iconCache.TryGetValue(page, out var cache))
+        {
+            cache.Bitmap?.Dispose();
+            _iconCache.Remove(page);
+        }
+    }
+
+    private SKBitmap GetTabIconBitmap(TabPage page)
+    {
+        if (page == null || page.Image == null)
+        {
+            ClearTabIconCache(page);
+            return null;
+        }
+
+        if (_iconCache.TryGetValue(page, out var cache))
+        {
+            if (cache.Image == page.Image && cache.Bitmap != null)
+                return cache.Bitmap;
+
+            cache.Bitmap?.Dispose();
+            _iconCache.Remove(page);
+        }
+
+        using var ms = new MemoryStream();
+        page.Image.Save(ms, ImageFormat.Png);
+        ms.Position = 0;
+        var skBitmap = SKBitmap.Decode(ms);
+        if (skBitmap == null) return null;
+
+        _iconCache[page] = new TabIconCache { Image = page.Image, Bitmap = skBitmap };
+        return skBitmap;
+    }
+
     private void UpdateTabRects()
     {
         _tabRects.Clear();
@@ -360,6 +463,8 @@ public class TabControl : UIElementBase
 
         var sidePadding = fontSize * 1.2f;
         var closeButtonSpace = RenderPageClose ? (fontSize * 1.5f) : 0f;
+        var iconSize = Math.Min(fontSize * 1.2f, HeaderHeight - 6f);
+        var iconPad = fontSize * 0.5f;
 
         var minTabWidth = fontSize * 12f; 
         var maxTabWidth = fontSize * 30f;
@@ -374,7 +479,8 @@ public class TabControl : UIElementBase
             
             // Measure text: Text padding + CloseButton
             var textWidth = font.MeasureText(page.Text);
-            var requiredWidth = textWidth + (sidePadding * 2) + closeButtonSpace;
+            var iconSpace = RenderPageIcon && page.Image != null ? iconSize + iconPad : 0f;
+            var requiredWidth = textWidth + (sidePadding * 2) + closeButtonSpace + iconSpace;
 
             var w = Math.Clamp(requiredWidth, minTabWidth, maxTabWidth);
             tabWidths[i] = w;
@@ -484,6 +590,9 @@ public class TabControl : UIElementBase
     {
         base.OnControlAdded(e);
 
+        if (_suppressPageSync)
+            return;
+
         if (e.Element is TabPage page && !_pages.Contains(page))
         {
             _pages.Add(page);
@@ -500,9 +609,13 @@ public class TabControl : UIElementBase
     {
         base.OnControlRemoved(e);
 
+        if (_suppressPageSync)
+            return;
+
         if (e.Element is TabPage page && _pages.Contains(page))
         {
             _pages.Remove(page);
+            ClearTabIconCache(page);
 
             if (_selectedIndex >= _pages.Count)
                 SelectedIndex = Math.Max(-1, _pages.Count - 1);
@@ -716,6 +829,9 @@ public class TabControl : UIElementBase
             var sidePadding = fontSize * 1.2f;
             var closeButtonSpace = RenderPageClose ? (fontSize * 1.5f) : 0f;
             var closeSize = fontSize * 1.2f;
+            var iconSize = Math.Min(fontSize * 1.2f, tabRect.Height - 6f);
+            var iconPad = fontSize * 0.5f;
+            var iconSpace = RenderPageIcon && page.Image != null ? iconSize + iconPad : 0f;
 
             using (var font = new SKFont
                    {
@@ -731,17 +847,35 @@ public class TabControl : UIElementBase
                        IsAntialias = true
                    })
             {
-                var maxTextWidth = tabRect.Width - (sidePadding * 2) - closeButtonSpace;
+                var maxTextWidth = tabRect.Width - (sidePadding * 2) - closeButtonSpace - iconSpace;
                 var textWidth = font.MeasureText(_pages[i].Text);
-                
+
+                if (RenderPageIcon && page.Image != null)
+                {
+                    var iconBitmap = GetTabIconBitmap(page);
+                    if (iconBitmap != null)
+                    {
+                        var iconX = tabRect.Left + sidePadding;
+                        var iconY = tabRect.MidY - iconSize / 2f;
+                        var iconRect = new SKRect(iconX, iconY, iconX + iconSize, iconY + iconSize);
+                        using var iconPaint = new SKPaint
+                        {
+                            IsAntialias = true,
+                            FilterQuality = SKFilterQuality.Medium,
+                            Color = new SKColor(255, 255, 255, (byte)(255 * animAlpha))
+                        };
+                        canvas.DrawBitmap(iconBitmap, iconRect, iconPaint);
+                    }
+                }
+
                 // Center text if we have space, otherwise left align (ellipsized)
-                var textX = tabRect.Left + sidePadding;
+                var textX = tabRect.Left + sidePadding + iconSpace;
                 if (textWidth < maxTextWidth)
                 {
                     // Available width within padding/closeBtn
-                    var availableWidth = tabRect.Width - (sidePadding * 2) - closeButtonSpace;
+                    var availableWidth = tabRect.Width - (sidePadding * 2) - closeButtonSpace - iconSpace;
                     // Start of available area
-                    var areaStart = tabRect.Left + sidePadding;
+                    var areaStart = tabRect.Left + sidePadding + iconSpace;
                     // Center point
                     var center = areaStart + availableWidth / 2f;
                     textX = center - textWidth / 2f;
@@ -830,6 +964,24 @@ public class TabControl : UIElementBase
     internal override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
+
+        if (_isDragging && _draggedTabIndex >= 0 && e.Button == MouseButtons.Left)
+        {
+            var dx = Math.Abs(e.Location.X - _dragStartPoint.X);
+            var dy = Math.Abs(e.Location.Y - _dragStartPoint.Y);
+            var dragThreshold = 4f * ScaleFactor;
+
+            if (dx > dragThreshold || dy > dragThreshold)
+            {
+                var hoverIndex = GetTabIndexAtPoint(e.Location);
+                if (hoverIndex >= 0 && hoverIndex != _draggedTabIndex && _draggedTabIndex < _pages.Count)
+                {
+                    var draggedPage = _pages[_draggedTabIndex];
+                    MovePage(draggedPage, hoverIndex);
+                    _draggedTabIndex = hoverIndex;
+                }
+            }
+        }
 
         _hoveredTabIndex = GetTabIndexAtPoint(e.Location);
         _hoveredCloseButtonIndex = GetCloseButtonIndexAtPoint(e.Location);
@@ -1159,6 +1311,7 @@ public class TabControl : UIElementBase
 public class TabPage : UIElementBase
 {
     private string _text = nameof(TabPage);
+    private string _iconPath = string.Empty;
 
     public TabPage()
     {
@@ -1177,6 +1330,37 @@ public class TabPage : UIElementBase
                 return;
 
             _text = value;
+
+            if (Parent is TabControl tc)
+                tc.Invalidate();
+        }
+    }
+
+    [Category("Appearance")]
+    public string IconPath
+    {
+        get => _iconPath;
+        set
+        {
+            var newValue = value ?? string.Empty;
+            if (_iconPath == newValue)
+                return;
+
+            _iconPath = newValue;
+
+            if (string.IsNullOrWhiteSpace(_iconPath))
+            {
+                Image = null;
+            }
+            else
+            {
+                if (!File.Exists(_iconPath))
+                    throw new FileNotFoundException($"TabPage icon file not found: {_iconPath}", _iconPath);
+
+                using var stream = new FileStream(_iconPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var loaded = Image.FromStream(stream);
+                Image = (Image)loaded.Clone();
+            }
 
             if (Parent is TabControl tc)
                 tc.Invalidate();

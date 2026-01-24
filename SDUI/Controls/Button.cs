@@ -24,7 +24,7 @@ public class Button : UIElementBase, IButtonControl
     private int _mouseState;
     private bool _needsRedraw = true;
 
-    private int _radius = 12;
+    private int _radius = 6;
     private Point? _rippleCenter;
 
     private float _shadowDepth = 4f;
@@ -240,8 +240,11 @@ public class Button : UIElementBase, IButtonControl
         currentElevation = Math.Min(currentElevation, 5);
 
         // Draw elevation shadow
-        if (Enabled && currentElevation > 0) ElevationHelper.DrawElevation(canvas, bodyRect, RadiusScaled, currentElevation);
+        if (Enabled && currentElevation > 0) 
+            ElevationHelper.DrawElevation(canvas, bodyRect, RadiusScaled, currentElevation);
 
+        ElevationHelper.DrawGlassEffect(canvas, bodyRect, RadiusScaled, 0.05f);
+        
         DrawButton(canvas, bodyRect, hoverProgress, pressProgress);
 
         // Draw ripple effect
@@ -369,9 +372,10 @@ public class Button : UIElementBase, IButtonControl
             using var font = new SKFont
             {
                 Size = Font.Size.PtToPx(this),
-                Typeface = FontManager.GetSKTypeface(Font),
+                Typeface = FontManager.GetSKTypeface(Font) ?? SKTypeface.Default,
                 Subpixel = true,
-                Edging = SKFontEdging.SubpixelAntialias
+                Edging = SKFontEdging.SubpixelAntialias,
+                Hinting = SKFontHinting.Full
             };
 
             var textWidth = font.MeasureText(Text);

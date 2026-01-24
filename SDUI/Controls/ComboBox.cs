@@ -1262,12 +1262,12 @@ public class ComboBox : UIElementBase
         var accentColor = ColorScheme.AccentColor.ToSKColor();
         var baseColor = ColorScheme.BackColor.ToSKColor();
 
-        // Arka plan rengi hesapla (daha yumu�ak blend)
+        // Arka plan rengi hesapla (daha yumuşak blend)
         var blendFactor = Math.Clamp(hoverProgress * 0.15f + pressProgress * 0.1f + (DroppedDown ? 0.2f : 0f), 0f,
             0.4f);
         var backgroundColor = baseColor.InterpolateColor(accentColor, blendFactor);
 
-        // Modern g�lge efekti (hover ile dinamik - daha subtle)
+        // Modern gölge efekti (hover ile dinamik - daha subtle)
         if (ShadowDepth > 0)
         {
             var shadowAlpha = 12 + hoverProgress * 8 + pressProgress * 5;

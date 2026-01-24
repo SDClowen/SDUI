@@ -223,8 +223,13 @@ public static class SkiaExtensions
         // Create the SKTypeface
         var typeface = FontManager.GetSKTypeface(drawingFont);
 
-        // Create the SKFont
-        var skFont = new SKFont(typeface, drawingFont.Size);
+        // Create the SKFont with proper Unicode support
+        var skFont = new SKFont(typeface, drawingFont.Size)
+        {
+            Edging = SKFontEdging.SubpixelAntialias,
+            Subpixel = true,
+            Hinting = SKFontHinting.Full
+        };
 
         return skFont;
     }
