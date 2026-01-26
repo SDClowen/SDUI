@@ -7,7 +7,6 @@ using SDUI.Animation;
 using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
-using CheckState = SDUI.Enums.CheckState;
 
 namespace SDUI.Controls;
 

@@ -379,7 +379,7 @@
             // 
             checkBox6.BackColor = System.Drawing.Color.Transparent;
             checkBox6.Checked = false;
-            checkBox6.CheckState = System.Windows.Forms.CheckState.Unchecked;
+            checkBox6.CheckState = CheckState.Unchecked;
             checkBox6.Depth = 0;
             checkBox6.Image = null;
             checkBox6.Location = new System.Drawing.Point(584, 493);
@@ -398,7 +398,7 @@
             // 
             checkBox2.BackColor = System.Drawing.Color.Transparent;
             checkBox2.Checked = false;
-            checkBox2.CheckState = System.Windows.Forms.CheckState.Unchecked;
+            checkBox2.CheckState = CheckState.Unchecked;
             checkBox2.Depth = 0;
             checkBox2.Enabled = false;
             checkBox2.Image = null;
@@ -417,7 +417,7 @@
             // 
             checkBox1.BackColor = System.Drawing.Color.Transparent;
             checkBox1.Checked = false;
-            checkBox1.CheckState = System.Windows.Forms.CheckState.Unchecked;
+            checkBox1.CheckState = CheckState.Unchecked;
             checkBox1.Depth = 0;
             checkBox1.Image = null;
             checkBox1.Location = new System.Drawing.Point(753, 493);
@@ -600,7 +600,7 @@
             // 
             checkBox4.BackColor = System.Drawing.Color.Transparent;
             checkBox4.Checked = true;
-            checkBox4.CheckState = System.Windows.Forms.CheckState.Checked;
+            checkBox4.CheckState = CheckState.Checked;
             checkBox4.Depth = 0;
             checkBox4.Image = null;
             checkBox4.Location = new System.Drawing.Point(18, 317);
@@ -618,7 +618,7 @@
             // 
             checkBox3.BackColor = System.Drawing.Color.Transparent;
             checkBox3.Checked = false;
-            checkBox3.CheckState = System.Windows.Forms.CheckState.Unchecked;
+            checkBox3.CheckState = CheckState.Unchecked;
             checkBox3.Depth = 0;
             checkBox3.Dock = System.Windows.Forms.DockStyle.Top;
             checkBox3.Image = null;
@@ -895,7 +895,7 @@
             listView3.TabIndex = 0;
             listView3.UseCompatibleStateImageBehavior = false;
             listView3.UseVisualStyleBackColor = false;
-            listView3.View = System.Windows.Forms.View.Details;
+            listView3.View = View.Details;
             // 
             // columnHeader6
             // 
@@ -997,7 +997,7 @@
             listView2.TabIndex = 0;
             listView2.UseCompatibleStateImageBehavior = false;
             listView2.UseVisualStyleBackColor = false;
-            listView2.View = System.Windows.Forms.View.Details;
+            listView2.View = View.Details;
             // 
             // columnHeader5
             // 

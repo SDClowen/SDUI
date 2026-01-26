@@ -13,9 +13,14 @@ namespace SDUI.Designer;
 /// </summary>
 public class DesignSurface : DoubleBufferedControl
 {
+    protected override bool UseAutoScrollTranslation => false;
+    protected override float ChildRenderScale => _zoom;
+
     private readonly DoubleBufferedControl _canvas;
     private readonly List<DesignControl> _designControls = new();
     private readonly UndoRedoManager _undoRedoManager = new();
+    private ControlSnapshot? _clipboardSnapshot;
+    private int _pasteOffset;
     private DesignControl? _selectedControl;
     private string? _pendingControlType;
     private Point _dragStart;
@@ -32,6 +37,9 @@ public class DesignSurface : DoubleBufferedControl
     private bool _gridSnappingEnabled = true;
     private bool _showGridLines = true;
     private bool _showSnapLines = true;
+    private float _zoom = 1f;
+    private const float MinZoom = 0.25f;
+    private const float MaxZoom = 4.0f;
 
     private enum ResizeHandle
     {
@@ -96,15 +104,48 @@ public class DesignSurface : DoubleBufferedControl
         set => _pendingControlType = value;
     }
 
+    public float Zoom
+    {
+        get => _zoom;
+        set
+        {
+            var newValue = Math.Clamp(value, MinZoom, MaxZoom);
+            if (Math.Abs(_zoom - newValue) < 0.001f)
+                return;
+            _zoom = newValue;
+            UpdateCanvasSize();
+            UpdateCanvasScroll();
+            UpdateSelectionOverlay();
+            Invalidate();
+        }
+    }
+
+    public void ZoomIn()
+    {
+        Zoom = _zoom >= 1f ? _zoom + 0.1f : _zoom + 0.05f;
+    }
+
+    public void ZoomOut()
+    {
+        Zoom = _zoom <= 1f ? _zoom - 0.05f : _zoom - 0.1f;
+    }
+
+    public void ResetZoom()
+    {
+        Zoom = 1f;
+    }
+
     private void DesignSurface_MouseDown(object? sender, System.Windows.Forms.MouseEventArgs e)
     {
+        var location = ToDesignPoint(e.Location);
+
         if (e.Button == System.Windows.Forms.MouseButtons.Left)
         {
             // If there's a pending control type, add it
             if (!string.IsNullOrEmpty(_pendingControlType))
             {
-                var location = _gridSnappingEnabled ? SnapToGrid(e.Location) : e.Location;
-                AddDesignControl(_pendingControlType, location);
+                var snapped = _gridSnappingEnabled ? SnapToGrid(location) : location;
+                AddDesignControl(_pendingControlType, snapped);
                 _pendingControlType = null;
                 return;
             }
@@ -112,23 +153,23 @@ public class DesignSurface : DoubleBufferedControl
             // Check if we're clicking a resize handle first
             if (_selectedControl != null)
             {
-                _activeHandle = GetHandleAtPoint(e.Location, GetAbsoluteBounds(_selectedControl.Control));
+                _activeHandle = GetHandleAtPoint(location, GetAbsoluteBounds(_selectedControl.Control));
                 if (_activeHandle != ResizeHandle.None)
                 {
                     _isResizing = true;
                     _resizeStartBounds = _selectedControl.Control.Bounds;
-                    _dragStart = e.Location;
+                    _dragStart = location;
                     this.Cursor = GetCursorForHandle(_activeHandle);
                     return;
                 }
             }
 
             // Check if clicked on a control
-            var clickedControl = FindControlAtPoint(e.Location);
+            var clickedControl = FindControlAtPoint(location);
             if (clickedControl != null)
             {
                 SelectControl(clickedControl);
-                _dragStart = e.Location;
+                _dragStart = location;
                 _moveStartLocation = clickedControl.Control.Location;
             }
             else
@@ -140,10 +181,12 @@ public class DesignSurface : DoubleBufferedControl
 
     private void DesignSurface_MouseMove(object? sender, System.Windows.Forms.MouseEventArgs e)
     {
+        var location = ToDesignPoint(e.Location);
+
         // Update cursor based on handle hover
         if (_selectedControl != null && !_isResizing && !_isDragging)
         {
-            var handle = GetHandleAtPoint(e.Location, GetAbsoluteBounds(_selectedControl.Control));
+            var handle = GetHandleAtPoint(location, GetAbsoluteBounds(_selectedControl.Control));
             this.Cursor = GetCursorForHandle(handle);
         }
 
@@ -152,20 +195,20 @@ public class DesignSurface : DoubleBufferedControl
             // Handle resizing
             if (_isResizing)
             {
-                PerformResize(e.Location);
+                PerformResize(location);
                 return;
             }
 
             // Handle dragging
-            if (!_isDragging && Math.Abs(e.X - _dragStart.X) + Math.Abs(e.Y - _dragStart.Y) > 3)
+            if (!_isDragging && Math.Abs(location.X - _dragStart.X) + Math.Abs(location.Y - _dragStart.Y) > 3)
             {
                 _isDragging = true;
             }
 
             if (_isDragging)
             {
-                var deltaX = e.X - _dragStart.X;
-                var deltaY = e.Y - _dragStart.Y;
+                var deltaX = location.X - _dragStart.X;
+                var deltaY = location.Y - _dragStart.Y;
                 
                 var control = _selectedControl.Control;
                 
@@ -175,7 +218,7 @@ public class DesignSurface : DoubleBufferedControl
                 var newAbsoluteY = currentAbsoluteLocation.Y + deltaY;
                 
                 // Mouse noktasını kullanarak potansiyel parent'ı bul
-                var potentialParent = FindContainerAtPoint(e.Location, control);
+                var potentialParent = FindContainerAtPoint(location, control) ?? _canvas;
                 
                 // Yeni location'u hesapla (parent'a göre relative)
                 Point newLocation;
@@ -272,7 +315,7 @@ public class DesignSurface : DoubleBufferedControl
                 
                 UpdateSelectionOverlay();
                 
-                _dragStart = e.Location;
+                _dragStart = location;
                 _selectedControl.Control.Invalidate();
             }
         }
@@ -280,6 +323,8 @@ public class DesignSurface : DoubleBufferedControl
 
     private void DesignSurface_MouseUp(object? sender, System.Windows.Forms.MouseEventArgs e)
     {
+        var location = ToDesignPoint(e.Location);
+
         if (_isResizing && _selectedControl != null)
         {
             // Apply grid snap on resize complete
@@ -594,6 +639,30 @@ public class DesignSurface : DoubleBufferedControl
         var command = new AddControlCommand(this, controlType, location);
         _undoRedoManager.ExecuteCommand(command);
     }
+
+    public bool CopySelected()
+    {
+        if (_selectedControl == null)
+            return false;
+
+        _clipboardSnapshot = CreateSnapshot(_selectedControl.Control);
+        _pasteOffset = 0;
+        return _clipboardSnapshot != null;
+    }
+
+    public bool PasteClipboard()
+    {
+        if (_clipboardSnapshot == null)
+            return false;
+
+        var baseLocation = _selectedControl?.Control.Location ?? _clipboardSnapshot.Location;
+        _pasteOffset += 10;
+        var pasteLocation = new Point(baseLocation.X + _pasteOffset, baseLocation.Y + _pasteOffset);
+
+        var command = new SDUI.Designer.Commands.PasteControlCommand(this, _clipboardSnapshot, pasteLocation);
+        _undoRedoManager.ExecuteCommand(command);
+        return true;
+    }
     
     internal void AddDesignControlInternal(string controlType, Point location)
     {
@@ -612,6 +681,31 @@ public class DesignSurface : DoubleBufferedControl
             ControlsChanged?.Invoke(this, EventArgs.Empty);
             UpdateCanvasSize();
         }
+    }
+
+    internal DesignControl? AddDesignControlFromSnapshot(ControlSnapshot snapshot, Point location)
+    {
+        var control = CreateControlFromSnapshot(snapshot);
+        if (control == null)
+            return null;
+
+        control.Location = location;
+        control.Size = snapshot.Size;
+        control.Text = snapshot.Text ?? string.Empty;
+        ApplySnapshotProperties(control, snapshot);
+
+        control.Name = $"{snapshot.ControlType}_{_designControls.Count + 1}";
+        _canvas.Controls.Add(control);
+        AttachControlHandlers(control);
+
+        var designControl = new DesignControl(control);
+        _designControls.Add(designControl);
+
+        SelectControl(designControl);
+        ControlsChanged?.Invoke(this, EventArgs.Empty);
+        UpdateCanvasSize();
+
+        return designControl;
     }
 
     private new UIElementBase? CreateControl(string controlType)
@@ -633,6 +727,7 @@ public class DesignSurface : DoubleBufferedControl
             "NumUpDown" => new SDUI.Controls.NumUpDown { Size = new Size(120, 25) },
             "TrackBar" => new SDUI.Controls.TrackBar { Size = new Size(200, 45) },
             "ToggleButton" => new SDUI.Controls.ToggleButton { Text = "Toggle", Size = new Size(100, 30) },
+            "ColorPicker" => new SDUI.Controls.ColorPicker { Size = new Size(180, 32) },
             "ProgressBar" => new SDUI.Controls.ProgressBar { Size = new Size(200, 25) },
             "ShapeProgressBar" => new SDUI.Controls.ShapeProgressBar { Size = new Size(100, 100) },
             "ScrollBar" => new SDUI.Controls.ScrollBar { Size = new Size(20, 200) },
@@ -646,6 +741,138 @@ public class DesignSurface : DoubleBufferedControl
             "ContextMenuStrip" => new SDUI.Controls.ContextMenuStrip(),
             _ => null
         };
+    }
+
+    private UIElementBase? CreateControlFromSnapshot(ControlSnapshot snapshot)
+    {
+        var control = CreateControl(snapshot.ControlType);
+        if (control == null)
+        {
+            try
+            {
+                var type = Type.GetType(snapshot.ControlType) ?? typeof(UIElementBase).Assembly.GetType($"SDUI.Controls.{snapshot.ControlType}");
+                if (type != null)
+                    control = Activator.CreateInstance(type) as UIElementBase;
+            }
+            catch
+            {
+                control = null;
+            }
+        }
+
+        if (control == null)
+            return null;
+
+        foreach (var childSnapshot in snapshot.Children)
+        {
+            var child = CreateControlFromSnapshot(childSnapshot);
+            if (child == null)
+                continue;
+
+            child.Location = childSnapshot.Location;
+            child.Size = childSnapshot.Size;
+            child.Text = childSnapshot.Text ?? string.Empty;
+            ApplySnapshotProperties(child, childSnapshot);
+
+            control.Controls.Add(child);
+        }
+
+        return control;
+    }
+
+    private static ControlSnapshot? CreateSnapshot(UIElementBase control)
+    {
+        if (control == null)
+            return null;
+
+        var snapshot = new ControlSnapshot
+        {
+            ControlType = control.GetType().Name,
+            Location = control.Location,
+            Size = control.Size,
+            Text = control.Text ?? string.Empty
+        };
+
+        foreach (var prop in control.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+        {
+            if (!ShouldCopyProperty(prop))
+                continue;
+
+            try
+            {
+                snapshot.Properties[prop.Name] = prop.GetValue(control);
+            }
+            catch
+            {
+                // Skip properties that throw on get.
+            }
+        }
+
+        for (int i = 0; i < control.Controls.Count; i++)
+        {
+            if (control.Controls[i] is UIElementBase child)
+            {
+                var childSnapshot = CreateSnapshot(child);
+                if (childSnapshot != null)
+                    snapshot.Children.Add(childSnapshot);
+            }
+        }
+
+        return snapshot;
+    }
+
+    private static void ApplySnapshotProperties(UIElementBase control, ControlSnapshot snapshot)
+    {
+        foreach (var kvp in snapshot.Properties)
+        {
+            try
+            {
+                var prop = control.GetType().GetProperty(kvp.Key);
+                if (prop == null || !prop.CanWrite)
+                    continue;
+
+                prop.SetValue(control, kvp.Value);
+            }
+            catch
+            {
+                // Skip properties that fail to apply.
+            }
+        }
+    }
+
+    private static bool ShouldCopyProperty(System.Reflection.PropertyInfo prop)
+    {
+        if (!prop.CanRead || !prop.CanWrite)
+            return false;
+        if (prop.GetIndexParameters().Length > 0)
+            return false;
+
+        switch (prop.Name)
+        {
+            case "Parent":
+            case "ParentWindow":
+            case "ParentElement":
+            case "Controls":
+            case "Bounds":
+            case "Location":
+            case "Size":
+            case "Name":
+                return false;
+        }
+
+        var type = prop.PropertyType;
+        var underlying = Nullable.GetUnderlyingType(type) ?? type;
+
+        if (underlying.IsEnum || underlying.IsPrimitive)
+            return true;
+
+        if (underlying == typeof(string) || underlying == typeof(Color) || underlying == typeof(Font) ||
+            underlying == typeof(Point) || underlying == typeof(Size) || underlying == typeof(Rectangle) ||
+            underlying == typeof(System.Windows.Forms.Padding) || underlying == typeof(System.Windows.Forms.DockStyle) ||
+            underlying == typeof(System.Windows.Forms.AnchorStyles) || underlying == typeof(ContentAlignment))
+            return true;
+
+        return false;
     }
 
     private SDUI.Controls.TabControl CreateDesignTimeTabControl()
@@ -736,6 +963,16 @@ public class DesignSurface : DoubleBufferedControl
         UpdateCanvasSize();
     }
 
+    public sealed class ControlSnapshot
+    {
+        public string ControlType { get; set; } = string.Empty;
+        public Point Location { get; set; }
+        public Size Size { get; set; }
+        public string? Text { get; set; }
+        public Dictionary<string, object?> Properties { get; } = new();
+        public List<ControlSnapshot> Children { get; } = new();
+    }
+
     public void DeleteSelected()
     {
         DeleteSelectedControl();
@@ -809,6 +1046,11 @@ public class DesignSurface : DoubleBufferedControl
             IsAntialias = true
         };
 
+        var saved = canvas.Save();
+
+        if (Math.Abs(_zoom - 1f) > 0.001f)
+            canvas.Scale(_zoom, _zoom);
+
         // Draw vertical lines
         for (int x = _gridSize; x < Width; x += _gridSize)
         {
@@ -820,6 +1062,8 @@ public class DesignSurface : DoubleBufferedControl
         {
             canvas.DrawLine(0, y, Width, y, paint);
         }
+
+        canvas.RestoreToCount(saved);
     }
 
     public void LoadDesign(List<DesignControl> controls)
@@ -910,24 +1154,32 @@ public class DesignSurface : DoubleBufferedControl
         var clientWidth = Width;
         var clientHeight = Height;
 
-        var needsHScroll = contentWidth > clientWidth;
-        var needsVScroll = contentHeight > clientHeight;
+        if (_vScrollBar.Visible)
+            clientWidth = Math.Max(0, clientWidth - _vScrollBar.Width);
+        if (_hScrollBar.Visible)
+            clientHeight = Math.Max(0, clientHeight - _hScrollBar.Height);
+
+        var clientWidthLogical = Math.Max(1, (int)Math.Round(clientWidth / _zoom));
+        var clientHeightLogical = Math.Max(1, (int)Math.Round(clientHeight / _zoom));
+
+        var needsHScroll = contentWidth > clientWidthLogical;
+        var needsVScroll = contentHeight > clientHeightLogical;
 
         _hScrollBar.Visible = needsHScroll;
         _vScrollBar.Visible = needsVScroll;
 
         if (needsHScroll)
         {
-            _hScrollBar.Maximum = Math.Max(0, contentWidth - clientWidth);
-            _hScrollBar.LargeChange = Math.Max(1, clientWidth / 2);
+            _hScrollBar.Maximum = Math.Max(0, contentWidth - clientWidthLogical);
+            _hScrollBar.LargeChange = Math.Max(1, clientWidthLogical / 2);
             if (_hScrollBar.Value > _hScrollBar.Maximum)
                 _hScrollBar.Value = _hScrollBar.Maximum;
         }
 
         if (needsVScroll)
         {
-            _vScrollBar.Maximum = Math.Max(0, contentHeight - clientHeight);
-            _vScrollBar.LargeChange = Math.Max(1, clientHeight / 2);
+            _vScrollBar.Maximum = Math.Max(0, contentHeight - clientHeightLogical);
+            _vScrollBar.LargeChange = Math.Max(1, clientHeightLogical / 2);
             if (_vScrollBar.Value > _vScrollBar.Maximum)
                 _vScrollBar.Value = _vScrollBar.Maximum;
         }
@@ -962,6 +1214,13 @@ public class DesignSurface : DoubleBufferedControl
 
     private void HandleMouseWheel(int delta)
     {
+        if ((ModifierKeys & System.Windows.Forms.Keys.Control) == System.Windows.Forms.Keys.Control)
+        {
+            if (delta > 0) ZoomIn();
+            else if (delta < 0) ZoomOut();
+            return;
+        }
+
         if (!AutoScroll || _vScrollBar == null)
             return;
 
@@ -985,6 +1244,16 @@ public class DesignSurface : DoubleBufferedControl
     private void Control_MouseWheel(object? sender, System.Windows.Forms.MouseEventArgs e)
     {
         HandleMouseWheel(e.Delta);
+    }
+
+    private Point ToDesignPoint(Point point)
+    {
+        if (Math.Abs(_zoom - 1f) < 0.001f)
+            return point;
+
+        return new Point(
+            (int)Math.Round(point.X / _zoom),
+            (int)Math.Round(point.Y / _zoom));
     }
 
     private void Control_ControlAdded(object? sender, UIElementEventArgs e)

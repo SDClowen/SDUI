@@ -56,6 +56,43 @@ public partial class DesignerMainWindow : UIWindow
             UpdateCodeOutput();
             e.Handled = true;
         }
+            else if (e.Control && (e.KeyCode == System.Windows.Forms.Keys.Add || e.KeyCode == System.Windows.Forms.Keys.Oemplus))
+            {
+                _designSurface.ZoomIn();
+                e.Handled = true;
+            }
+            else if (e.Control && (e.KeyCode == System.Windows.Forms.Keys.Subtract || e.KeyCode == System.Windows.Forms.Keys.OemMinus))
+            {
+                _designSurface.ZoomOut();
+                e.Handled = true;
+            }
+            else if (e.Control && e.KeyCode == System.Windows.Forms.Keys.D0)
+            {
+                _designSurface.ResetZoom();
+                e.Handled = true;
+            }
+        // Copy/Paste/Cut
+        else if (e.Control && e.KeyCode == System.Windows.Forms.Keys.C)
+        {
+            if (_designSurface.CopySelected())
+                e.Handled = true;
+        }
+        else if (e.Control && e.KeyCode == System.Windows.Forms.Keys.V)
+        {
+            if (_designSurface.PasteClipboard())
+            {
+                UpdateCodeOutput();
+                e.Handled = true;
+            }
+        }
+        else if (e.Control && e.KeyCode == System.Windows.Forms.Keys.X)
+        {
+            if (_designSurface.CopySelected())
+            {
+                DeleteSelectedControl();
+                e.Handled = true;
+            }
+        }
         // Delete
         else if (e.KeyCode == System.Windows.Forms.Keys.Delete)
         {

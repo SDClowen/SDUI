@@ -1,4 +1,4 @@
-namespace SDUI.Enums;
+namespace SDUI;
 
 /// <summary>
 ///     Specifies the state of a control, such as a check box, that can be checked, unchecked,

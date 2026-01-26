@@ -1,4 +1,4 @@
-namespace SDUI.Enums;
+namespace SDUI;
 
 public enum CollapseDirection
 {

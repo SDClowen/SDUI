@@ -171,3 +171,34 @@ public class PropertyChangeCommand : DesignCommand
         property?.SetValue(_target, _oldValue);
     }
 }
+
+/// <summary>
+/// Command for pasting a control from clipboard snapshot
+/// </summary>
+public class PasteControlCommand : DesignCommand
+{
+    private readonly DesignSurface _surface;
+    private readonly DesignSurface.ControlSnapshot _snapshot;
+    private readonly Point _location;
+    private DesignControl? _addedControl;
+
+    public PasteControlCommand(DesignSurface surface, DesignSurface.ControlSnapshot snapshot, Point location)
+    {
+        _surface = surface;
+        _snapshot = snapshot;
+        _location = location;
+    }
+
+    public override string Description => $"Paste {_snapshot.ControlType}";
+
+    public override void Execute()
+    {
+        _addedControl = _surface.AddDesignControlFromSnapshot(_snapshot, _location);
+    }
+
+    public override void Undo()
+    {
+        if (_addedControl != null)
+            _surface.RemoveDesignControl(_addedControl);
+    }
+}

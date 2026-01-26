@@ -37,7 +37,7 @@ public partial class ListView
         {
             backPaint.Color = row.StateSelected
                 ? ColorScheme.PrimaryContainer.ToSKColor()
-                : ToSKColor(row.SubItems[0].BackColor);
+                : row.SubItems[0].BackColor.ToSKColor();
             canvas.DrawRect(rect, backPaint);
         }
 
@@ -76,7 +76,7 @@ public partial class ListView
             var defaultFore = row.StateSelected
                 ? ColorScheme.OnPrimaryContainer.ToSKColor()
                 : ColorScheme.OnSurface.ToSKColor();
-            var foreColor = !row.ForeColor.IsEmpty ? ToSKColor(row.ForeColor) : defaultFore;
+            var foreColor = !row.ForeColor.IsEmpty ? row.ForeColor.ToSKColor() : defaultFore;
             textPaint.Color = foreColor;
 
             // Vertical centering using font metrics from SKFont

@@ -420,7 +420,7 @@ public partial class MainWindow
         // wordWrapToolStripMenuItem
         // 
         wordWrapToolStripMenuItem.CheckOnClick = true;
-        wordWrapToolStripMenuItem.CheckState = SDUI.Enums.CheckState.Indeterminate;
+        wordWrapToolStripMenuItem.CheckState = CheckState.Indeterminate;
         wordWrapToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
         wordWrapToolStripMenuItem.Name = "wordWrapToolStripMenuItem";
         wordWrapToolStripMenuItem.Size = new System.Drawing.Size(155, 26);

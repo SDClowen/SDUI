@@ -1264,13 +1264,66 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
             : color.ToSKColor();
     }
 
+    protected virtual bool UseAutoScrollTranslation => true;
+    protected virtual float ChildRenderScale => 1f;
+    protected virtual bool UseChildScaleForInput => true;
+
+    private Point GetScrollOffset()
+    {
+        if (!AutoScroll || _vScrollBar == null || _hScrollBar == null)
+            return Point.Empty;
+
+        var x = _hScrollBar.Visible ? _hScrollBar.Value : 0;
+        var y = _vScrollBar.Visible ? _vScrollBar.Value : 0;
+        return new Point(x, y);
+    }
+
+    private static bool IsScrollBar(UIElementBase control)
+    {
+        return control is ScrollBar;
+    }
+
     private void RenderChildren(SKCanvas canvas)
     {
-        foreach (var child in Controls
-                     .OfType<IUIElement>()
-                     .OrderBy(el => el.ZOrder)
-                     .ThenBy(el => el.TabIndex))
-            child.Render(canvas);
+        var children = Controls
+            .OfType<IUIElement>()
+            .OrderBy(el => el.ZOrder)
+            .ThenBy(el => el.TabIndex)
+            .ToList();
+
+        var scrollOffset = GetScrollOffset();
+        var shouldTranslate = UseAutoScrollTranslation && AutoScroll && (scrollOffset.X != 0 || scrollOffset.Y != 0);
+        var scale = ChildRenderScale;
+        var shouldScale = Math.Abs(scale - 1f) > 0.001f;
+
+        if (shouldTranslate || shouldScale)
+        {
+            var saved = canvas.Save();
+            if (shouldTranslate)
+                canvas.Translate(-scrollOffset.X, -scrollOffset.Y);
+            if (shouldScale)
+                canvas.Scale(scale, scale);
+
+            foreach (var child in children)
+            {
+                if (child is UIElementBase element && IsScrollBar(element))
+                    continue;
+                child.Render(canvas);
+            }
+
+            canvas.RestoreToCount(saved);
+
+            foreach (var child in children)
+            {
+                if (child is UIElementBase element && IsScrollBar(element))
+                    child.Render(canvas);
+            }
+        }
+        else
+        {
+            foreach (var child in children)
+                child.Render(canvas);
+        }
     }
 
     private void RenderUncached(SKCanvas targetCanvas)
@@ -1535,22 +1588,29 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
             maxRight = Math.Max(maxRight, control.Location.X + control.Width);
         }
 
-        var needsVScroll = maxBottom > Height;
-        var needsHScroll = maxRight > Width;
+        var contentWidth = Math.Max(maxRight, AutoScrollMinSize.Width) + AutoScrollMargin.Width;
+        var contentHeight = Math.Max(maxBottom, AutoScrollMinSize.Height) + AutoScrollMargin.Height;
+
+        var needsVScroll = contentHeight > Height;
+        var needsHScroll = contentWidth > Width;
 
         _vScrollBar.Visible = needsVScroll;
         _hScrollBar.Visible = needsHScroll;
 
         if (needsVScroll)
         {
-            _vScrollBar.Maximum = maxBottom - Height + 20;
-            _vScrollBar.LargeChange = Height / 2;
+            _vScrollBar.Maximum = Math.Max(0, contentHeight - Height);
+            _vScrollBar.LargeChange = Math.Max(1, Height / 2);
+            if (_vScrollBar.Value > _vScrollBar.Maximum)
+                _vScrollBar.Value = _vScrollBar.Maximum;
         }
 
         if (needsHScroll)
         {
-            _hScrollBar.Maximum = maxRight - Width + 20;
-            _hScrollBar.LargeChange = Width / 2;
+            _hScrollBar.Maximum = Math.Max(0, contentWidth - Width);
+            _hScrollBar.LargeChange = Math.Max(1, Width / 2);
+            if (_hScrollBar.Value > _hScrollBar.Maximum)
+                _hScrollBar.Value = _hScrollBar.Maximum;
         }
     }
 
@@ -1594,18 +1654,28 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     {
         MouseMove?.Invoke(this, e);
 
+        var scrollOffset = GetScrollOffset();
+        var adjusted = new Point(e.X + scrollOffset.X, e.Y + scrollOffset.Y);
+        var scale = ChildRenderScale;
+
         UIElementBase hoveredElement = null;
         // Z-order'a göre tersten kontrol et (üstteki element önce)
         foreach (var control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder)
                      .Where(c => c.Visible && c.Enabled))
-            if (control.Bounds.Contains(e.Location))
+        {
+            var hitPoint = (UseAutoScrollTranslation && AutoScroll && !IsScrollBar(control)) ? adjusted : e.Location;
+            if (UseChildScaleForInput && !IsScrollBar(control) && Math.Abs(scale - 1f) > 0.001f)
+                hitPoint = new Point((int)Math.Round(hitPoint.X / scale), (int)Math.Round(hitPoint.Y / scale));
+
+            if (control.Bounds.Contains(hitPoint))
             {
                 hoveredElement = control;
-                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X,
-                    e.Y - control.Location.Y, e.Delta);
+                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, hitPoint.X - control.Location.X,
+                    hitPoint.Y - control.Location.Y, e.Delta);
                 control.OnMouseMove(childEventArgs);
                 break; // İlk eşleşenden sonra dur
             }
+        }
 
         if (hoveredElement != _lastHoveredElement)
         {
@@ -1624,11 +1694,20 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     {
         MouseDown?.Invoke(this, e);
 
+        var scrollOffset = GetScrollOffset();
+        var adjusted = new Point(e.X + scrollOffset.X, e.Y + scrollOffset.Y);
+        var scale = ChildRenderScale;
+
         var elementClicked = false;
         // Z-order'a göre tersten kontrol et (üstteki element önce)
         foreach (var control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder)
                      .Where(c => c.Visible && c.Enabled))
-            if (control.Bounds.Contains(e.Location))
+        {
+            var hitPoint = (UseAutoScrollTranslation && AutoScroll && !IsScrollBar(control)) ? adjusted : e.Location;
+            if (UseChildScaleForInput && !IsScrollBar(control) && Math.Abs(scale - 1f) > 0.001f)
+                hitPoint = new Point((int)Math.Round(hitPoint.X / scale), (int)Math.Round(hitPoint.Y / scale));
+
+            if (control.Bounds.Contains(hitPoint))
             {
                 elementClicked = true;
                 var window = GetParentWindow();
@@ -1636,8 +1715,8 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
                 if (window is UIWindow uiWindow)
                     prevWindowFocus = uiWindow.FocusedElement;
 
-                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X,
-                    e.Y - control.Location.Y, e.Delta);
+                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, hitPoint.X - control.Location.X,
+                    hitPoint.Y - control.Location.Y, e.Delta);
                 control.OnMouseDown(childEventArgs);
 
                 // Maintain focus without overriding a deeper focus set by the child.
@@ -1660,6 +1739,7 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
                 }
 
                 break; // İlk eşleşenden sonra dur
+            }
             }
 
         if (!elementClicked)
@@ -1717,16 +1797,26 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     {
         MouseUp?.Invoke(this, e);
 
+        var scrollOffset = GetScrollOffset();
+        var adjusted = new Point(e.X + scrollOffset.X, e.Y + scrollOffset.Y);
+        var scale = ChildRenderScale;
+
         // Z-order'a göre tersten kontrol et (üstteki element önce)
         foreach (var control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder)
                      .Where(c => c.Visible && c.Enabled))
-            if (control.Bounds.Contains(e.Location))
+        {
+            var hitPoint = (UseAutoScrollTranslation && AutoScroll && !IsScrollBar(control)) ? adjusted : e.Location;
+            if (UseChildScaleForInput && !IsScrollBar(control) && Math.Abs(scale - 1f) > 0.001f)
+                hitPoint = new Point((int)Math.Round(hitPoint.X / scale), (int)Math.Round(hitPoint.Y / scale));
+
+            if (control.Bounds.Contains(hitPoint))
             {
-                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X,
-                    e.Y - control.Location.Y, e.Delta);
+                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, hitPoint.X - control.Location.X,
+                    hitPoint.Y - control.Location.Y, e.Delta);
                 control.OnMouseUp(childEventArgs);
                 break; // İlk eşleşenden sonra dur
             }
+        }
     }
 
     internal virtual void OnMouseClick(MouseEventArgs e)
@@ -1737,17 +1827,27 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
         OnClick(EventArgs.Empty);
 
         // Z-order'a göre tersten kontrol et (üstteki element önce)
+        var scrollOffset = GetScrollOffset();
+        var adjusted = new Point(e.X + scrollOffset.X, e.Y + scrollOffset.Y);
+        var scale = ChildRenderScale;
+
         foreach (var control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder)
                      .Where(c => c.Visible && c.Enabled))
-            if (control.Bounds.Contains(e.Location))
+        {
+            var hitPoint = (UseAutoScrollTranslation && AutoScroll && !IsScrollBar(control)) ? adjusted : e.Location;
+            if (UseChildScaleForInput && !IsScrollBar(control) && Math.Abs(scale - 1f) > 0.001f)
+                hitPoint = new Point((int)Math.Round(hitPoint.X / scale), (int)Math.Round(hitPoint.Y / scale));
+
+            if (control.Bounds.Contains(hitPoint))
             {
-                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X,
-                    e.Y - control.Location.Y, e.Delta);
+                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, hitPoint.X - control.Location.X,
+                    hitPoint.Y - control.Location.Y, e.Delta);
                 control.OnMouseClick(childEventArgs);
 
                 if (_focusedElement != control)
                     _focusedElement = control;
                 break; // İlk eşleşenden sonra dur
+            }
             }
     }
 
@@ -1755,16 +1855,26 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     {
         MouseDoubleClick?.Invoke(this, e);
 
+        var scrollOffset = GetScrollOffset();
+        var adjusted = new Point(e.X + scrollOffset.X, e.Y + scrollOffset.Y);
+        var scale = ChildRenderScale;
+
         // Z-order'a göre tersten kontrol et (üstteki element önce)
         foreach (var control in Controls.OfType<UIElementBase>().OrderByDescending(c => c.ZOrder)
                      .Where(c => c.Visible && c.Enabled))
-            if (control.Bounds.Contains(e.Location))
+        {
+            var hitPoint = (UseAutoScrollTranslation && AutoScroll && !IsScrollBar(control)) ? adjusted : e.Location;
+            if (UseChildScaleForInput && !IsScrollBar(control) && Math.Abs(scale - 1f) > 0.001f)
+                hitPoint = new Point((int)Math.Round(hitPoint.X / scale), (int)Math.Round(hitPoint.Y / scale));
+
+            if (control.Bounds.Contains(hitPoint))
             {
-                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, e.X - control.Location.X,
-                    e.Y - control.Location.Y, e.Delta);
+                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, hitPoint.X - control.Location.X,
+                    hitPoint.Y - control.Location.Y, e.Delta);
                 control.OnMouseDoubleClick(childEventArgs);
                 break; // İlk eşleşenden sonra dur
             }
+        }
     }
 
     internal virtual void OnMouseLeave(EventArgs e)
@@ -2003,6 +2113,16 @@ public abstract partial class UIElementBase : IUIElement, IArrangedElement, IDis
     {
         if (!Enabled || !Visible)
             return;
+
+        if (AutoScroll && _vScrollBar != null && _vScrollBar.Visible)
+        {
+            var scrollLines = System.Windows.Forms.SystemInformation.MouseWheelScrollLines;
+            var step = Math.Max(1, _vScrollBar.SmallChange);
+            var deltaValue = (e.Delta / 120) * scrollLines * step;
+            var newValue = Math.Clamp(_vScrollBar.Value - deltaValue, _vScrollBar.Minimum, _vScrollBar.Maximum);
+            _vScrollBar.Value = newValue;
+            return;
+        }
 
         MouseWheel?.Invoke(this, e);
     }

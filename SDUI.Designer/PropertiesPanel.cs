@@ -21,7 +21,7 @@ internal class PropertiesPanel : SDUI.Controls.GroupBox
         ShadowDepth = 0;
         Radius = 0;
         Collapsible = true;
-        CollapseDirection = SDUI.Enums.CollapseDirection.Horizontal;
+        CollapseDirection = CollapseDirection.Horizontal;
 
         _propertyGrid = new PropertyGrid
         {

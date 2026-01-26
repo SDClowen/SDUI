@@ -49,14 +49,14 @@ public class ComboBox : UIElementBase
         // Ba�lang��ta ok a�a�� bakmal� (0 rotation)
         _arrowAnimation.SetProgress(0);
 
-        _dropDownPanel = new DropDownPanel(this);
+        _dropDownPanel = CreateDropDownPanel();
     }
 
     #endregion
 
     // Dropdown rendering enforces a minimum item height for a modern look.
     // Keep dropdown sizing consistent with what the dropdown actually draws.
-    private int EffectiveDropDownItemHeight => Math.Max(MinDropDownItemHeight, ItemHeight);
+    protected virtual int EffectiveDropDownItemHeight => Math.Max(MinDropDownItemHeight, ItemHeight);
 
     protected override void InvalidateFontCache()
     {
@@ -67,52 +67,57 @@ public class ComboBox : UIElementBase
         _defaultSkFontDpi = 0;
     }
 
+    protected virtual DropDownPanel CreateDropDownPanel()
+    {
+        return new DropDownPanel(this);
+    }
+
     #region Inner Classes
 
-    private class DropDownPanel : UIElementBase
+    public class DropDownPanel : UIElementBase
     {
         // Windows 11 WinUI3 benzeri modern bo�luklar
-        private int VERTICAL_PADDING => _owner.DropDownVerticalPadding;
+        protected int VERTICAL_PADDING => _owner.DropDownVerticalPadding;
         private int ITEM_MARGIN => (int)(10 * ScaleFactor); // Dropdown kenar�ndan item arkaplan kenar�na kadar margin
-        private float CORNER_RADIUS => 10f * ScaleFactor;
-        private int SCROLL_BAR_WIDTH => (int)(14 * ScaleFactor);
+        protected float CORNER_RADIUS => 10f * ScaleFactor;
+        protected int SCROLL_BAR_WIDTH => (int)(14 * ScaleFactor);
 
         // Per-item hover animasyonlar�
-        private readonly Dictionary<int, AnimationManager> _itemHoverAnims = new();
+        protected readonly Dictionary<int, AnimationManager> _itemHoverAnims = new();
 
-        private readonly AnimationManager _openAnimation = new()
+        protected readonly AnimationManager _openAnimation = new()
         {
             Increment = 0.13,
             AnimationType = AnimationType.EaseOut,
             InterruptAnimation = true
         };
 
-        private readonly ComboBox _owner;
-        private readonly ScrollBar _scrollBar;
-        private readonly SKMaskFilter?[] _shadowMaskFilters = new SKMaskFilter?[4];
+        protected readonly ComboBox _owner;
+        protected readonly ScrollBar _scrollBar;
+        protected readonly SKMaskFilter?[] _shadowMaskFilters = new SKMaskFilter?[4];
 
-        private readonly SKPaint?[] _shadowPaints = new SKPaint?[4];
-        private SKPaint? _bgPaint;
-        private SKPaint? _borderPaint;
+        protected readonly SKPaint?[] _shadowPaints = new SKPaint?[4];
+        protected SKPaint? _bgPaint;
+        protected SKPaint? _borderPaint;
 
-        private SKFont? _cachedFont;
-        private int _cachedFontDpi;
-        private Font? _cachedFontSource;
-        private SKPath? _clipPath;
-        private SKPaint? _highlightPaint;
-        private SKShader? _highlightShader;
-        private int _highlightShaderHeight;
-        private int _hoveredIndex = -1;
-        private SKPaint? _hoverPaint;
-        private bool _isClosing;
+        protected SKFont? _cachedFont;
+        protected int _cachedFontDpi;
+        protected Font? _cachedFontSource;
+        protected SKPath? _clipPath;
+        protected SKPaint? _highlightPaint;
+        protected SKShader? _highlightShader;
+        protected int _highlightShaderHeight;
+        protected int _hoveredIndex = -1;
+        protected SKPaint? _hoverPaint;
+        protected bool _isClosing;
 
-        private SKPaint? _layerPaint;
-        private bool _openingUpwards;
-        private int _scrollOffset;
-        private int _selectedIndex = -1;
-        private SKPaint? _selectionPaint;
-        private SKPaint? _textPaint;
-        private int _visibleItemCount;
+        protected SKPaint? _layerPaint;
+        protected bool _openingUpwards;
+        protected int _scrollOffset;
+        protected int _selectedIndex = -1;
+        protected SKPaint? _selectionPaint;
+        protected SKPaint? _textPaint;
+        protected int _visibleItemCount;
 
         public DropDownPanel(ComboBox owner)
         {
@@ -146,9 +151,9 @@ public class ComboBox : UIElementBase
             };
         }
 
-        private int ItemHeight => Math.Max(32, _owner.ItemHeight);
+        public virtual int ItemHeight => Math.Max(32, _owner.ItemHeight);
 
-        private SKFont GetCachedFont()
+        protected SKFont GetCachedFont()
         {
             var dpi = DeviceDpi > 0 ? DeviceDpi : 96;
             var font = _owner.Font;
@@ -202,13 +207,13 @@ public class ComboBox : UIElementBase
             }
         }
 
-        private void ScrollBar_ValueChanged(object sender, EventArgs e)
+        protected virtual void ScrollBar_ValueChanged(object sender, EventArgs e)
         {
             _scrollOffset = _scrollBar.Value;
             Invalidate();
         }
 
-        private AnimationManager EnsureItemAnim(int index)
+        protected AnimationManager EnsureItemAnim(int index)
         {
             if (!_itemHoverAnims.TryGetValue(index, out var ae))
             {
@@ -225,7 +230,7 @@ public class ComboBox : UIElementBase
             return ae;
         }
 
-        public void ShowItems()
+        public virtual void ShowItems()
         {
             _hoveredIndex = -1;
             _selectedIndex = _owner.SelectedIndex;
@@ -251,7 +256,7 @@ public class ComboBox : UIElementBase
             Invalidate();
         }
 
-        public void BeginOpen(bool openUpwards)
+        public virtual void BeginOpen(bool openUpwards)
         {
             _openingUpwards = openUpwards;
             _isClosing = false;
@@ -261,7 +266,7 @@ public class ComboBox : UIElementBase
             _openAnimation.StartNewAnimation(AnimationDirection.In);
         }
 
-        public void BeginClose()
+        public virtual void BeginClose()
         {
             if (!Visible) return;
             _isClosing = true;
@@ -332,7 +337,7 @@ public class ComboBox : UIElementBase
             Parent?.Controls.Remove(this);
         }
 
-        private int GetItemIndexAtPoint(Point point)
+        protected virtual int GetItemIndexAtPoint(Point point)
         {
             if (point.Y < VERTICAL_PADDING || point.Y > Height - VERTICAL_PADDING)
                 return -1;

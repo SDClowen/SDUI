@@ -73,6 +73,7 @@ public class DesignSurfaceViewModel : ViewModelBase
             "Panel" => new SDUI.Controls.Panel { Size = new System.Drawing.Size(200, 150) },
             "CheckBox" => new SDUI.Controls.CheckBox { Text = "CheckBox", Size = new System.Drawing.Size(120, 25) },
             "ComboBox" => new SDUI.Controls.ComboBox { Size = new System.Drawing.Size(150, 30) },
+            "ColorPicker" => new SDUI.Controls.ColorPicker { Size = new System.Drawing.Size(180, 32) },
             "ListBox" => new SDUI.Controls.ListBox { Size = new System.Drawing.Size(150, 100) },
             "ProgressBar" => new SDUI.Controls.ProgressBar { Size = new System.Drawing.Size(200, 25), Value = 50 },
             "GroupBox" => new SDUI.Controls.GroupBox { Text = "GroupBox", Size = new System.Drawing.Size(200, 150) },

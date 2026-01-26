@@ -110,7 +110,7 @@ public class Toolbox : SDUI.Controls.Panel
             "ListView", "TreeView", "ListBox",
             
             // Input Controls
-            "NumUpDown", "TrackBar", "ToggleButton",
+            "NumUpDown", "TrackBar", "ToggleButton", "ColorPicker",
             
             // Progress & Visual
             "ProgressBar", "ShapeProgressBar", "ScrollBar",

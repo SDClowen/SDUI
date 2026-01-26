@@ -32,6 +32,7 @@
             labelRenderBackend = new SDUI.Controls.Label();
             comboBoxRenderBackend = new SDUI.Controls.ComboBox();
             checkBoxPerfOverlay = new SDUI.Controls.CheckBox();
+            colorPicker = new SDUI.Controls.ColorPicker();
             comboBoxHatchType = new SDUI.Controls.ComboBox();
             checkBoxDrawFullHatch = new SDUI.Controls.CheckBox();
             numTitleHeight = new SDUI.Controls.NumUpDown();
@@ -110,8 +111,17 @@
                 checkBoxPerfOverlay.Size = new System.Drawing.Size(150, 30);
                 checkBoxPerfOverlay.TabIndex = 52;
                 checkBoxPerfOverlay.Text = "Show perf overlay";
-                checkBoxPerfOverlay.UseVisualStyleBackColor = true;
-                checkBoxPerfOverlay.CheckedChanged += checkBoxPerfOverlay_CheckedChanged;
+            checkBoxPerfOverlay.UseVisualStyleBackColor = true;
+            checkBoxPerfOverlay.CheckedChanged += checkBoxPerfOverlay_CheckedChanged;
+            // 
+            // colorPicker
+            // 
+            colorPicker.Location = new System.Drawing.Point(20, 160);
+            colorPicker.Name = "colorPicker";
+            colorPicker.Size = new System.Drawing.Size(180, 32);
+            colorPicker.TabIndex = 53;
+            colorPicker.Text = "Color Picker";
+            colorPicker.SelectedColorChanged += colorPicker_SelectedColorChanged;
             // 
             // comboBoxHatchType
             // 
@@ -305,6 +315,7 @@
             Controls.Add(checkBoxPerfOverlay);
             Controls.Add(comboBoxRenderBackend);
             Controls.Add(labelRenderBackend);
+            Controls.Add(colorPicker);
             Controls.Add(buttonBorderColor);
             Controls.Add(label1);
             Controls.Add(buttonSelectFont);
@@ -340,5 +351,6 @@
         private Controls.Label labelRenderBackend;
         private Controls.ComboBox comboBoxRenderBackend;
         private Controls.CheckBox checkBoxPerfOverlay;
+        private SDUI.Controls.ColorPicker colorPicker;
     }
 }

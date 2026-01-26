@@ -72,9 +72,9 @@ public partial class MainWindow : UIWindow
         // Demo of indeterminate state toggling
         string state = wordWrapToolStripMenuItem.CheckState switch
         {
-            SDUI.Enums.CheckState.Checked => "ON",
-            SDUI.Enums.CheckState.Unchecked => "OFF",
-            SDUI.Enums.CheckState.Indeterminate => "Auto",
+            CheckState.Checked => "ON",
+            CheckState.Unchecked => "OFF",
+            CheckState.Indeterminate => "Auto",
             _ => "Unknown"
         };
         statusStripLabel1.Text = $"Word Wrap: {state}";

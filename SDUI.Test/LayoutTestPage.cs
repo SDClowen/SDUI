@@ -9,11 +9,12 @@ namespace SDUI.Demo
     /// Comprehensive test page for new Measure/Arrange layout API
     /// Tests Dock, Anchor, AutoSize and mixed scenarios
     /// </summary>
-    public class LayoutTestPage : SDUI.Controls.Panel
+    public class LayoutTestPage : UIElementBase
     {
         public LayoutTestPage()
         {
             InitializeComponent();
+            Text = "Layout Test";
         }
 
         private void InitializeComponent()

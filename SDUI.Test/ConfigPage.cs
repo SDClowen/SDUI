@@ -26,12 +26,7 @@ namespace SDUI.Demo
                     SyncFromParent();
             };
 
-            // TabControl kullanımı:
-            // var tc = new TabControl();
-            // tc.AddPage(new TabPage() { Text = "General", Controls = { new GeneralPage() { Dock = DockStyle.Fill } } });
-            // tc.AddPage(new TabPage() { Text = "ListView", Controls = { new ListViewPage() { Dock = DockStyle.Fill } } });
-            // tc.Dock = DockStyle.Bottom;
-            // this.Controls.Add(tc);
+
         }
 
         private void checkBoxDrawFullHatch_CheckedChanged(object sender, EventArgs e)
@@ -194,6 +189,19 @@ namespace SDUI.Demo
             parent.Invalidate();
         }
 
+        private void colorPicker_SelectedColorChanged(object sender, EventArgs e)
+        {
+            if (_syncing)
+                return;
+
+            var form = FindForm();
+            if (form is not UIWindow parent)
+                return;
+
+            parent.TitleColor = colorPicker.SelectedColor;
+            parent.Invalidate();
+        }
+
         private void SyncFromParent()
         {
             var form = FindForm();
@@ -204,6 +212,7 @@ namespace SDUI.Demo
             try
             {
                 checkBoxPerfOverlay.Checked = parent.ShowPerfOverlay;
+                colorPicker.SelectedColor = parent.TitleColor;
 
                 var backendText = parent.RenderBackend.ToString();
                 if (!string.Equals(comboBoxRenderBackend.SelectedItem?.ToString(), backendText, StringComparison.Ordinal))

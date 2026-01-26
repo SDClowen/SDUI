@@ -844,13 +844,6 @@ public partial class ListView : UIElementBase
         return _listViewItems.IndexOf(listViewItem);
     }
 
-    private static SKColor ToSKColor(Color color)
-    {
-        if (color.IsEmpty) return SKColors.Transparent;
-        // SKColor ctor expects RGBA (bytes)
-        return new SKColor(color.R, color.G, color.B, color.A);
-    }
-
     // Add missing mouse handlers for interactions
     internal override void OnMouseDown(MouseEventArgs e)
     {
@@ -1069,7 +1062,7 @@ public partial class ListView : UIElementBase
         // Treat Transparent as "no explicit background" for this control so it
         // doesn't visually fall back to the host window's (often white) background.
         var bgColor = BackColor.IsEmpty || BackColor.A == 0 ? ColorScheme.Surface : BackColor;
-        bg.Color = ToSKColor(bgColor);
+        bg.Color = bgColor.ToSKColor();
         canvas.DrawRect(0, 0, Width, Height, bg);
 
         EnsureGroupAnimations();

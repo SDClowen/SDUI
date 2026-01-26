@@ -447,17 +447,33 @@ internal class PropertyItem : UIElementBase
             ForeColor = ColorScheme.ForeColor.Alpha(200)
         };
 
-        _valueEditor = CreateEditor(property);
-        _valueEditor.Location = new Point(145, 2);
-        _valueEditor.Size = new Size(125, 40);
+        _valueEditor = CreateEditor(_target, _property, OnValueChangedInternal);
+        if (_valueEditor is GroupBox nestedGroup)
+        {
+            _nameLabel.Visible = false;
+            nestedGroup.Location = new Point(5, 0);
+            nestedGroup.Width = 270;
+            Height = nestedGroup.Height + 4;
+            nestedGroup.CollapsedChanged += (s, e) =>
+            {
+                Height = nestedGroup.Height + 4;
+                if (Parent is UIElementBase parent)
+                    parent.PerformLayout();
+            };
+        }
+        else
+        {
+            _valueEditor.Location = new Point(145, 2);
+            _valueEditor.Size = new Size(125, 40);
+        }
 
         Controls.Add(_nameLabel);
         Controls.Add(_valueEditor);
     }
 
-    private UIElementBase CreateEditor(PropertyInfo property)
+    internal static UIElementBase CreateEditor(object target, PropertyInfo property, Action<object?> onValueChanged)
     {
-        var currentValue = property.GetValue(_target);
+        var currentValue = property.GetValue(target);
         var propertyType = property.PropertyType;
         var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
 
@@ -469,7 +485,7 @@ internal class PropertyItem : UIElementBase
                 Checked = (bool)(currentValue ?? false),
                 Text = ""
             };
-            checkBox.CheckedChanged += (s, e) => OnValueChangedInternal(checkBox.Checked);
+            checkBox.CheckedChanged += (s, e) => onValueChanged(checkBox.Checked);
             return checkBox;
         }
 
@@ -492,7 +508,7 @@ internal class PropertyItem : UIElementBase
                 if (comboBox.SelectedItem != null)
                 {
                     var newValue = Enum.Parse(underlyingType, comboBox.SelectedItem.ToString()!);
-                    OnValueChangedInternal(newValue);
+                    onValueChanged(newValue);
                 }
             };
             return comboBox;
@@ -501,20 +517,13 @@ internal class PropertyItem : UIElementBase
         // Color properties
         if (underlyingType == typeof(Color))
         {
-            var textBox = new TextBox
+            var picker = new ColorPicker
             {
-                Text = currentValue?.ToString() ?? "",
-                BackColor = Color.Transparent
+                SelectedColor = currentValue is Color c ? c : ColorScheme.AccentColor,
+                ShowHex = true
             };
-            textBox.TextChanged += (s, e) =>
-            {
-                if (TryParseColor(textBox.Text, out var parsedColor))
-                {
-                    textBox.BackColor = parsedColor;
-                    OnValueChangedInternal(parsedColor);
-                }
-            };
-            return textBox;
+            picker.SelectedColorChanged += (s, e) => onValueChanged(picker.SelectedColor);
+            return picker;
         }
 
         // Numeric properties
@@ -530,7 +539,7 @@ internal class PropertyItem : UIElementBase
             {
                 if (TryParseNullable(textBox.Text, propertyType, out var parsed))
                 {
-                    OnValueChangedInternal(parsed);
+                    onValueChanged(parsed);
                 }
             };
             return textBox;
@@ -551,10 +560,18 @@ internal class PropertyItem : UIElementBase
                 // Parse format like "10, 20" or "{X=10,Y=20}"
                 if (TryParseNullable(textBox.Text, propertyType, out var parsed))
                 {
-                    OnValueChangedInternal(parsed);
+                    onValueChanged(parsed);
                 }
             };
             return textBox;
+        }
+
+        // Complex types (struct/class) with nested properties
+        if (IsComplexType(underlyingType))
+        {
+            var complexEditor = CreateComplexEditor(target, property, underlyingType, onValueChanged);
+            if (complexEditor != null)
+                return complexEditor;
         }
 
         // String and other properties
@@ -564,12 +581,97 @@ internal class PropertyItem : UIElementBase
         };
         defaultTextBox.TextChanged += (s, e) =>
         {
-            OnValueChangedInternal(defaultTextBox.Text);
+            onValueChanged(defaultTextBox.Text);
         };
         return defaultTextBox;
     }
 
-    private bool TryParseNumeric(string text, Type targetType, out object? result)
+    private static bool IsComplexType(Type type)
+    {
+        if (type.IsPrimitive || type.IsEnum)
+            return false;
+        if (type == typeof(string) || type == typeof(decimal) || type == typeof(DateTime) || type == typeof(Guid))
+            return false;
+        return type.IsClass || type.IsValueType;
+    }
+
+    private static UIElementBase? CreateComplexEditor(object target, PropertyInfo property, Type effectiveType, Action<object?> onValueChanged)
+    {
+        var properties = effectiveType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.CanWrite && p.GetIndexParameters().Length == 0)
+            .ToList();
+
+        if (properties.Count == 0)
+            return null;
+
+        var currentValue = property.GetValue(target);
+        if (currentValue == null)
+        {
+            try
+            {
+                currentValue = Activator.CreateInstance(effectiveType);
+                if (currentValue != null)
+                    onValueChanged(currentValue);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        var group = new GroupBox
+        {
+            Width = 270,
+            Text = property.Name,
+            Collapsible = true,
+            Collapsed = true,
+            AutoScroll = true
+        };
+
+        var listPanel = new FlowLayoutPanel
+        {
+            Dock = System.Windows.Forms.DockStyle.Fill,
+            FlowDirection = System.Windows.Forms.FlowDirection.TopDown,
+            BackColor = Color.Transparent,
+            ShadowDepth = 0,
+            Radius = 0,
+            Border = new System.Windows.Forms.Padding(0),
+            AutoScroll = true,
+            WrapContents = false
+        };
+
+        group.Controls.Add(listPanel);
+
+        var contentHeight = 0;
+        foreach (var childProp in properties)
+        {
+            var item = new NestedPropertyItem(target, property, childProp);
+            item.Width = 260;
+            listPanel.Controls.Add(item);
+            contentHeight += item.Height;
+        }
+
+        ApplyNestedGroupHeight(group, contentHeight);
+        group.CollapsedChanged += (s, e) =>
+        {
+            if (!group.Collapsed)
+                ApplyNestedGroupHeight(group, contentHeight);
+
+            if (group.Parent is UIElementBase parent)
+                parent.PerformLayout();
+        };
+
+        return group;
+    }
+
+    private static void ApplyNestedGroupHeight(GroupBox group, int contentHeight)
+    {
+        var targetHeight = Math.Max(80, 30 + Math.Min(240, contentHeight) + group.Padding.Vertical);
+        if (!group.Collapsed)
+            group.Height = targetHeight;
+    }
+
+    private static bool TryParseNumeric(string text, Type targetType, out object? result)
     {
         result = null;
         if (string.IsNullOrWhiteSpace(text))
@@ -600,7 +702,7 @@ internal class PropertyItem : UIElementBase
         }
     }
 
-    private bool TryParseStructure(string text, Type targetType, out object? result)
+    private static bool TryParseStructure(string text, Type targetType, out object? result)
     {
         result = null;
         try
@@ -669,7 +771,7 @@ internal class PropertyItem : UIElementBase
         }
     }
 
-    private bool TryParseNullable(string text, Type targetType, out object? result)
+    private static bool TryParseNullable(string text, Type targetType, out object? result)
     {
         result = null;
         var underlyingType = Nullable.GetUnderlyingType(targetType);
@@ -704,7 +806,7 @@ internal class PropertyItem : UIElementBase
         return false;
     }
 
-    private bool TryParseColor(string text, out Color result)
+    private static bool TryParseColor(string text, out Color result)
     {
         result = Color.Empty;
         if (string.IsNullOrWhiteSpace(text))
@@ -756,7 +858,7 @@ internal class PropertyItem : UIElementBase
         return false;
     }
 
-    private bool TryParseHexColor(string text, out Color color)
+    private static bool TryParseHexColor(string text, out Color color)
     {
         color = Color.Empty;
         var hex = text.TrimStart('#');
@@ -786,7 +888,7 @@ internal class PropertyItem : UIElementBase
         return false;
     }
 
-    private bool TryExtractNumbers(string text, out List<double> numbers)
+    private static bool TryExtractNumbers(string text, out List<double> numbers)
     {
         var parsedNumbers = new List<double>();
         if (string.IsNullOrWhiteSpace(text))
@@ -832,7 +934,7 @@ internal class PropertyItem : UIElementBase
         return numbers.Count > 0;
     }
 
-    private bool TryParseNumberWithCulture(string text, out double value)
+    private static bool TryParseNumberWithCulture(string text, out double value)
     {
         if (double.TryParse(text, NumberStyles.Float | NumberStyles.AllowThousands,
                 CultureInfo.InvariantCulture, out value))
@@ -842,7 +944,7 @@ internal class PropertyItem : UIElementBase
             CultureInfo.CurrentCulture, out value);
     }
 
-    private bool TryConvertToInt(double value, out int result)
+    private static bool TryConvertToInt(double value, out int result)
     {
         var rounded = Math.Round(value);
         if (Math.Abs(value - rounded) > 0.0001)
@@ -854,7 +956,7 @@ internal class PropertyItem : UIElementBase
         return true;
     }
 
-    private bool TryConvertToLong(double value, out long result)
+    private static bool TryConvertToLong(double value, out long result)
     {
         var rounded = Math.Round(value);
         if (Math.Abs(value - rounded) > 0.0001)
@@ -866,7 +968,7 @@ internal class PropertyItem : UIElementBase
         return true;
     }
 
-    private bool TryConvertToShort(double value, out short result)
+    private static bool TryConvertToShort(double value, out short result)
     {
         if (!TryConvertToInt(value, out var intValue))
         {
@@ -884,7 +986,7 @@ internal class PropertyItem : UIElementBase
         return true;
     }
 
-    private bool TryConvertToByte(double value, out byte result)
+    private static bool TryConvertToByte(double value, out byte result)
     {
         if (!TryConvertToInt(value, out var intValue))
         {
@@ -916,6 +1018,81 @@ internal class PropertyItem : UIElementBase
         {
             throw new InvalidOperationException($"Failed to set property '{_property.Name}' on '{_target.GetType().Name}'.", ex);
         }
+    }
+}
+
+internal sealed class NestedPropertyItem : UIElementBase
+{
+    private readonly object _parentTarget;
+    private readonly PropertyInfo _parentProperty;
+    private readonly PropertyInfo _childProperty;
+    private readonly Label _nameLabel;
+    private readonly UIElementBase _valueEditor;
+
+    public NestedPropertyItem(object parentTarget, PropertyInfo parentProperty, PropertyInfo childProperty)
+    {
+        _parentTarget = parentTarget;
+        _parentProperty = parentProperty;
+        _childProperty = childProperty;
+
+        Width = 260;
+        Height = 45;
+        BackColor = Color.Transparent;
+        Margin = new System.Windows.Forms.Padding(2, 1, 2, 1);
+
+        _nameLabel = new Label
+        {
+            Text = childProperty.Name,
+            Location = new Point(10, 3),
+            Size = new Size(120, 18),
+            Font = new Font("Segoe UI", 8.5f),
+            ForeColor = ColorScheme.ForeColor.Alpha(200)
+        };
+
+        _valueEditor = CreateNestedEditor();
+        if (_valueEditor is GroupBox nestedGroup)
+        {
+            _nameLabel.Visible = false;
+            nestedGroup.Location = new Point(5, 0);
+            nestedGroup.Width = 250;
+            Height = nestedGroup.Height + 4;
+            nestedGroup.CollapsedChanged += (s, e) =>
+            {
+                Height = nestedGroup.Height + 4;
+                if (Parent is UIElementBase parent)
+                    parent.PerformLayout();
+            };
+        }
+        else
+        {
+            _valueEditor.Location = new Point(135, 2);
+            _valueEditor.Size = new Size(115, 40);
+        }
+
+        Controls.Add(_nameLabel);
+        Controls.Add(_valueEditor);
+    }
+
+    private UIElementBase CreateNestedEditor()
+    {
+        return PropertyItem.CreateEditor(_parentTarget, _childProperty, ApplyNestedValue);
+    }
+
+    private void ApplyNestedValue(object? newValue)
+    {
+        var parentValue = _parentProperty.GetValue(_parentTarget);
+        if (parentValue == null)
+        {
+            parentValue = Activator.CreateInstance(_parentProperty.PropertyType);
+        }
+
+        if (parentValue == null)
+            return;
+
+        _childProperty.SetValue(parentValue, newValue);
+
+        if (_parentProperty.PropertyType.IsValueType)
+            _parentProperty.SetValue(_parentTarget, parentValue);
     }
 }
 
