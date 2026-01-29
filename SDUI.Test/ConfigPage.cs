@@ -198,7 +198,7 @@ namespace SDUI.Demo
             if (form is not UIWindow parent)
                 return;
 
-            parent.TitleColor = colorPicker.SelectedColor;
+            parent.TitleColor = colorPicker.SelectedColor.ToDrawingColor();
             parent.Invalidate();
         }
 
@@ -212,7 +212,7 @@ namespace SDUI.Demo
             try
             {
                 checkBoxPerfOverlay.Checked = parent.ShowPerfOverlay;
-                colorPicker.SelectedColor = parent.TitleColor;
+                colorPicker.SelectedColor = parent.TitleColor.ToSKColor();
 
                 var backendText = parent.RenderBackend.ToString();
                 if (!string.Equals(comboBoxRenderBackend.SelectedItem?.ToString(), backendText, StringComparison.Ordinal))

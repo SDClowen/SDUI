@@ -1,87 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
-using SDUI.Animation;
 using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
-using SDUI.Controls;
+using System;
+using System.ComponentModel;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
 public class ColorPicker : ComboBox
 {
-    private Color _selectedColor = ColorScheme.AccentColor;
-    private Color _borderColor = ColorScheme.BorderColor;
     private bool _showHex = true;
     private int _columns = 8;
-    
-    // Parent ComboBox fields are private. We redefine interaction animations.
-    private readonly AnimationManager _hoverAnimation;
-    private readonly AnimationManager _pressAnimation;
-    private bool _hovered;
 
     public ColorPicker()
     {
         Size = new Size((int)(180 * ScaleFactor), (int)(32 * ScaleFactor));
-        DropDownStyle = ComboBoxStyle.DropDownList; 
-        
-        _hoverAnimation = new AnimationManager(true)
-        {
-            Increment = 0.2,
-            AnimationType = AnimationType.EaseInOut
-        };
-        _hoverAnimation.OnAnimationProgress += _ => Invalidate();
-
-        _pressAnimation = new AnimationManager(true)
-        {
-            Increment = 0.25,
-            AnimationType = AnimationType.EaseInOut
-        };
-        _pressAnimation.OnAnimationProgress += _ => Invalidate();
+        DropDownStyle = ComboBoxStyle.DropDownList;
 
         ResetPalette();
-    }
-    
-    [Category("Appearance")]
-    public Color BorderColor
-    {
-        get => _borderColor;
-        set
-        {
-            if (_borderColor == value) return;
-            _borderColor = value;
-            Invalidate();
-        }
-    }
-
-    [Category("Appearance")]
-    public Color SelectedColor
-    {
-        get => _selectedColor;
-        set
-        {
-            if (_selectedColor == value) return;
-            _selectedColor = value;
-            
-            // Sync with ComboBox selection
-            var index = -1;
-            for (int i = 0; i < Items.Count; i++)
-            {
-                if (Items[i] is Color c && c.ToArgb() == value.ToArgb())
-                {
-                    index = i;
-                    break;
-                }
-            }
-            SelectedIndex = index;
-            
-            Invalidate();
-            OnSelectedColorChanged();
-        }
     }
 
     [Category("Appearance")]
@@ -106,28 +43,15 @@ public class ColorPicker : ComboBox
         }
     }
 
-    public event EventHandler SelectedColorChanged;
-
-    private void OnSelectedColorChanged()
+    public SKColor SelectedColor
     {
-        SelectedColorChanged?.Invoke(this, EventArgs.Empty);
+        get => SelectedIndex == -1 ? SKColors.Empty : (SKColor)SelectedItem;
+        set => SelectedItem = value;
     }
 
-    public void SetPalette(IEnumerable<Color> colors)
+    protected override void OnSelectedItemChanged(EventArgs e)
     {
-        if (colors == null) throw new ArgumentNullException(nameof(colors));
-        Items.Clear();
-        foreach(var c in colors) Items.Add(c);
-        Items.Add("Custom..."); 
-        
-        if (Items.Count > 0 && SelectedIndex == -1)
-        {
-            if (Items[0] is Color c) 
-            {
-                SelectedIndex = 0;
-                _selectedColor = c;
-            }
-        }
+        base.OnSelectedItemChanged(e);
     }
 
     public void ResetPalette()
@@ -135,38 +59,39 @@ public class ColorPicker : ComboBox
         Items.Clear();
         var colors = new[]
         {
-            ColorScheme.AccentColor,
-            Color.FromArgb(33, 150, 243),
-            Color.FromArgb(3, 169, 244),
-            Color.FromArgb(0, 188, 212),
-            Color.FromArgb(0, 150, 136),
-            Color.FromArgb(76, 175, 80),
-            Color.FromArgb(139, 195, 74),
-            Color.FromArgb(205, 220, 57),
-            Color.FromArgb(255, 235, 59),
-            Color.FromArgb(255, 193, 7),
-            Color.FromArgb(255, 152, 0),
-            Color.FromArgb(255, 87, 34),
-            Color.FromArgb(244, 67, 54),
-            Color.FromArgb(233, 30, 99),
-            Color.FromArgb(156, 39, 176),
-            Color.FromArgb(103, 58, 183),
-            Color.FromArgb(63, 81, 181),
-            Color.FromArgb(121, 85, 72),
-            Color.FromArgb(96, 125, 139),
-            Color.FromArgb(120, 120, 120),
-            Color.FromArgb(160, 160, 160),
-            Color.FromArgb(200, 200, 200),
-            Color.White,
-            Color.Black,
-            Color.Red,
-            Color.Lime,
-            Color.Blue,
-            Color.Yellow,
-            Color.Magenta,
-            Color.Cyan
+            ColorScheme.AccentColor.ToSKColor(),
+            new SKColor(33, 150, 243),
+            new SKColor(3, 169, 244),
+            new SKColor(0, 188, 212),
+            new SKColor(0, 150, 136),
+            new SKColor(76, 175, 80),
+            new SKColor(139, 195, 74),
+            new SKColor(205, 220, 57),
+            new SKColor(255, 235, 59),
+            new SKColor(255, 193, 7),
+            new SKColor(255, 152, 0),
+            new SKColor(255, 87, 34),
+            new SKColor(244, 67, 54),
+            new SKColor(233, 30, 99),
+            new SKColor(156, 39, 176),
+            new SKColor(103, 58, 183),
+            new SKColor(63, 81, 181),
+            new SKColor(121, 85, 72),
+            new SKColor(96, 125, 139),
+            new SKColor(120, 120, 120),
+            new SKColor(160, 160, 160),
+            new SKColor(200, 200, 200),
+            SKColors.White,
+            SKColors.Black,
+            SKColors.Red,
+            SKColors.Lime,
+            SKColors.Blue,
+            SKColors.Yellow,
+            SKColors.Magenta,
+            SKColors.Cyan
         };
-        foreach(var c in colors) Items.Add(c);
+
+        Items.AddRange(colors);
         Items.Add("Custom...");
     }
 
@@ -174,78 +99,25 @@ public class ColorPicker : ComboBox
     {
         return new ColorDropDownPanel(this);
     }
-    
-    // We handle custom commitment via the panel interactions.
-    // If base triggers ChangeCommited, it uses SelectedIndex.
-    protected override void OnSelectionChangeCommitted(EventArgs e)
-    {
-        if (SelectedItem is Color c)
-        {
-            _selectedColor = c;
-            OnSelectedColorChanged();
-        }
-        else if (SelectedItem is string s && s == "Custom...")
-        {
-            // Should have been intercepted by DropDownPanel
-        }
-        
-        base.OnSelectionChangeCommitted(e);
-    }
 
     public override void OnPaint(SKCanvas canvas)
     {
+        base.OnPaint(canvas);
+
         var bounds = ClientRectangle;
-        var radius = 6f * ScaleFactor;
 
-        var hoverProgress = (float)_hoverAnimation.GetProgress();
-        var pressProgress = (float)_pressAnimation.GetProgress();
-
-        var bgColor = BackColor;
-        if (_hovered)
-        {
-            var dark = BackColor.IsDark();
-            var delta = dark ? 14 : -10;
-            bgColor = Color.FromArgb(
-                Math.Clamp(BackColor.R + delta, 0, 255),
-                Math.Clamp(BackColor.G + delta, 0, 255),
-                Math.Clamp(BackColor.B + delta, 0, 255));
-        }
-
-        var blend = Color.FromArgb(
-            (int)(bgColor.R + (ColorScheme.AccentColor.R - bgColor.R) * (pressProgress * 0.15f)),
-            (int)(bgColor.G + (ColorScheme.AccentColor.G - bgColor.G) * (pressProgress * 0.15f)),
-            (int)(bgColor.B + (ColorScheme.AccentColor.B - bgColor.B) * (pressProgress * 0.15f))
-        );
-
-        using var bgPaint = new SKPaint { Color = blend.ToSKColor(), IsAntialias = true };
-        using var borderPaint = new SKPaint
-        {
-            Color = BorderColor.ToSKColor(),
-            IsAntialias = true,
-            Style = SKPaintStyle.Stroke,
-            StrokeWidth = 1f
-        };
-
-        var rect = new SKRect(0, 0, bounds.Width, bounds.Height);
-        canvas.DrawRoundRect(rect, radius, radius, bgPaint);
-        canvas.DrawRoundRect(rect, radius, radius, borderPaint);
+        var selectedColor = SelectedIndex >= 0 && SelectedIndex < Items.Count && Items[SelectedIndex] is SKColor c
+            ? c
+            : ColorScheme.AccentColor.ToSKColor();
 
         // Content
         var padding = 6f * ScaleFactor;
         var swatchSize = bounds.Height - (int)(padding * 2);
         var swatchRect = new SKRect(padding, padding, padding + swatchSize, padding + swatchSize);
 
-        using var swatchPaint = new SKPaint { Color = _selectedColor.ToSKColor(), IsAntialias = true };
+        using var swatchPaint = new SKPaint { Color = selectedColor, IsAntialias = true };
         canvas.DrawRoundRect(swatchRect, 4f * ScaleFactor, 4f * ScaleFactor, swatchPaint);
         
-        using var swatchBorder = new SKPaint 
-        { 
-            Color = ColorScheme.BorderColor.Alpha(120).ToSKColor(),
-            Style = SKPaintStyle.Stroke, 
-            IsAntialias = true,
-            StrokeWidth = 1f
-        };
-        canvas.DrawRoundRect(swatchRect, 4f * ScaleFactor, 4f * ScaleFactor, swatchBorder);
 
         // Text
         if (_showHex)
@@ -254,9 +126,9 @@ public class ColorPicker : ComboBox
             var arrowWidth = 16f * ScaleFactor;
             var textRight = bounds.Width - padding - arrowWidth;
 
-            var hex = _selectedColor.A == 255
-                ? $"#{_selectedColor.R:X2}{_selectedColor.G:X2}{_selectedColor.B:X2}"
-                : $"#{_selectedColor.A:X2}{_selectedColor.R:X2}{_selectedColor.G:X2}{_selectedColor.B:X2}";
+            var hex = selectedColor.Alpha == 255
+                ? $"#{selectedColor.Red:X2}{selectedColor.Green:X2}{selectedColor.Blue:X2}"
+                : $"#{selectedColor.Alpha:X2}{selectedColor.Red:X2}{selectedColor.Green:X2}{selectedColor.Blue:X2}";
             
             using var font = new SKFont
             {
@@ -281,40 +153,9 @@ public class ColorPicker : ComboBox
         var arrowCenterY = bounds.Height / 2f;
         var arrowSize = 4f * ScaleFactor;
 
-        using var arrowPaint = new SKPaint
-        {
-            Color = ForeColor.Alpha((int)(200 + 40 * hoverProgress)).ToSKColor(),
-            StrokeWidth = 2f,
-            IsAntialias = true,
-            StrokeCap = SKStrokeCap.Round
-        };
-        canvas.DrawLine(arrowCenterX - arrowSize, arrowCenterY - arrowSize, arrowCenterX, arrowCenterY + arrowSize, arrowPaint);
-        canvas.DrawLine(arrowCenterX, arrowCenterY + arrowSize, arrowCenterX + arrowSize, arrowCenterY - arrowSize, arrowPaint);
     }
 
-    internal override void OnMouseEnter(EventArgs e)
-    {
-        base.OnMouseEnter(e);
-        _hovered = true;
-        _hoverAnimation.StartNewAnimation(AnimationDirection.In);
-    }
-
-    internal override void OnMouseLeave(EventArgs e)
-    {
-        base.OnMouseLeave(e);
-        _hovered = false;
-        _hoverAnimation.StartNewAnimation(AnimationDirection.Out);
-    }
-
-    internal override void OnMouseDown(MouseEventArgs e)
-    {
-        if (e.Button == MouseButtons.Left)
-            _pressAnimation.StartNewAnimation(AnimationDirection.In);
-            
-        base.OnMouseDown(e); 
-    }
-
-    public class ColorDropDownPanel : ComboBox.DropDownPanel
+    public class ColorDropDownPanel : DropDownPanel
     {
         private const int ItemMargin = 10;
         
@@ -389,8 +230,12 @@ public class ColorPicker : ComboBox
 
         private void SwitchToCustomMode()
         {
+            var selectedColor = _picker.SelectedIndex >= 0 && _picker.SelectedIndex < _picker.Items.Count && _picker.Items[_picker.SelectedIndex] is SKColor c
+                ? c
+                : ColorScheme.AccentColor.ToSKColor();
+
             _isInCustomMode = true;
-            _currentHsv = HsvColor.FromColor(_picker.SelectedColor);
+            _currentHsv = HsvColor.FromColor(selectedColor);
             
             // Resize panel
             var newWidth = (int)(240 * ScaleFactor);
@@ -499,10 +344,10 @@ public class ColorPicker : ComboBox
             var svRect = new SKRect(pad, pad, bounds.Width - pad, bounds.Width - pad);
             
             var hueRect = new SKRect(pad, svRect.Bottom + pad, bounds.Width - pad, svRect.Bottom + pad + hueHeight);
-            
+
             // Draw SV Box
             // 1. Pure Hue
-            var pureHue = ColorHelper.FromHsv(_currentHsv.H, 1f, 1f).ToSKColor();
+            var pureHue = SKColor.FromHsv(_currentHsv.H, 1f, 1f);
             using var huePaint = new SKPaint { Color = pureHue };
             canvas.DrawRect(svRect, huePaint);
             
@@ -598,7 +443,7 @@ public class ColorPicker : ComboBox
             {
                 // Commit
                 _picker.Items.Insert(_picker.Items.Count - 1, _currentHsv.ToColor());
-                _picker.SelectedColor = _currentHsv.ToColor();
+                _picker.SelectedItem = _currentHsv.ToColor();
                 Hide();
             }
             else if (cancelRect.Contains(e.X, e.Y))
@@ -647,49 +492,16 @@ public class ColorPicker : ComboBox
 
             public HsvColor(float h, float s, float v) { H = h; S = s; V = v; }
 
-            public Color ToColor()
+            public SKColor ToColor()
             {
-                return ColorHelper.FromHsv(H, S, V);
+                return SKColor.FromHsv(H, S, V);
             }
 
-            public static HsvColor FromColor(Color color)
+            public static HsvColor FromColor(SKColor color)
             {
-                return ColorHelper.ToHsv(color);
-            }
-        }
-        
-        private static class ColorHelper
-        {
-            public static Color FromHsv(float h, float s, float v)
-            {
-                int hi = Convert.ToInt32(Math.Floor(h / 60)) % 6;
-                float f = (float)(h / 60 - Math.Floor(h / 60));
+                color.ToHsv(out var h, out var s, out var v);
 
-                v = v * 255;
-                int vInt = Convert.ToInt32(v);
-                int p = Convert.ToInt32(v * (1 - s));
-                int q = Convert.ToInt32(v * (1 - f * s));
-                int t = Convert.ToInt32(v * (1 - (1 - f) * s));
-
-                return hi switch
-                {
-                    0 => Color.FromArgb(255, vInt, t, p),
-                    1 => Color.FromArgb(255, q, vInt, p),
-                    2 => Color.FromArgb(255, p, vInt, t),
-                    3 => Color.FromArgb(255, p, q, vInt),
-                    4 => Color.FromArgb(255, t, p, vInt),
-                    _ => Color.FromArgb(255, vInt, p, q)
-                };
-            }
-
-            public static HsvColor ToHsv(Color color)
-            {
-                float max = Math.Max(color.R, Math.Max(color.G, color.B));
-                float min = Math.Min(color.R, Math.Min(color.G, color.B));
-                float hue = color.GetHue();
-                float saturation = (max == 0) ? 0 : 1f - (1f * min / max);
-                float value = max / 255f;
-                return new HsvColor(hue, saturation, value);
+                return new HsvColor(h, s, v);
             }
         }
 

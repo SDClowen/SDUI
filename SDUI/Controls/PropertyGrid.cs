@@ -515,14 +515,14 @@ internal class PropertyItem : UIElementBase
         }
 
         // Color properties
-        if (underlyingType == typeof(Color))
+        if (underlyingType == typeof(SKColor))
         {
             var picker = new ColorPicker
             {
-                SelectedColor = currentValue is Color c ? c : ColorScheme.AccentColor,
+                SelectedColor = currentValue is SKColor c ? c : SKColors.Empty,
                 ShowHex = true
             };
-            picker.SelectedColorChanged += (s, e) => onValueChanged(picker.SelectedColor);
+            picker.SelectedItemChanged += (s, e) => onValueChanged(picker.SelectedColor);
             return picker;
         }
 

@@ -121,7 +121,7 @@
             colorPicker.Size = new System.Drawing.Size(180, 32);
             colorPicker.TabIndex = 53;
             colorPicker.Text = "Color Picker";
-            colorPicker.SelectedColorChanged += colorPicker_SelectedColorChanged;
+            colorPicker.SelectedItemChanged += colorPicker_SelectedColorChanged;
             // 
             // comboBoxHatchType
             // 
