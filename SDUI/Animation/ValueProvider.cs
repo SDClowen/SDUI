@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace SDUI.AnimationEngine;
+namespace SDUI.Animation;
 
 /// <summary>
 ///     A class for providing transition values. You can use it as a base for animations of custom-drawn controls, game

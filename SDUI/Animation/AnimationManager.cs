@@ -1,8 +1,8 @@
+using SDUI.Animation;
 using System;
 using System.Diagnostics;
 using System.Drawing;
-using System.Windows.Forms;
-using SDUI.AnimationEngine;
+using System.Timers;
 
 namespace SDUI.Animation;
 
@@ -48,7 +48,7 @@ public class AnimationManager : IDisposable
         if (_timer != null)
         {
             _timer.Stop();
-            _timer.Tick -= OnTick; // Event handler'i kaldir
+            _timer.Elapsed -= OnTick; // Event handler'i kaldir
             _timer.Dispose();
             _timer = null;
         }
@@ -67,7 +67,7 @@ public class AnimationManager : IDisposable
         try
         {
             _timer = new Timer { Interval = 16 }; // ~60 FPS
-            _timer.Tick += OnTick;
+            _timer.Elapsed += OnTick;
         }
         catch (Exception ex)
         {

@@ -1,4 +1,4 @@
-﻿namespace SDUI.AnimationEngine;
+﻿namespace SDUI.Animation;
 
 public static partial class EasingMethods
 {

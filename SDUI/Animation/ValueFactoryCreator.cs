@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SDUI.AnimationEngine;
+namespace SDUI.Animation;
 
 public static class ValueFactoryCreator
 {

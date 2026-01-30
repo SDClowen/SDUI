@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 
-namespace SDUI.AnimationEngine;
+namespace SDUI.Animation;
 
 public static class ValueFactories
 {

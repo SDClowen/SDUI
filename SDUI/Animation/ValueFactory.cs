@@ -1,4 +1,4 @@
-﻿namespace SDUI.AnimationEngine;
+﻿namespace SDUI.Animation;
 
 /// <summary>
 ///     A method that provides corresponding values of a specified type for a progress value.

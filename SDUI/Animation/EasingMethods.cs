@@ -1,4 +1,4 @@
-﻿namespace SDUI.AnimationEngine;
+﻿namespace SDUI.Animation;
 
 /// <summary>
 ///     <para>Provides methods and algorithms for creating smooth transitions.</para>
