@@ -1,13 +1,13 @@
 using System.Drawing;
 using SkiaSharp;
 
-namespace SDUI.Extensions;
+namespace SDUI;
 
 public static class ColorExtensions
 {
     public static SKColor ToSKColor(this Color color)
     {
-        return new SKColor(color.R, color.G, color.B, color.A);
+        return (uint)color.ToArgb();
     }
 
     public static Color ToColor(this SKColor color)

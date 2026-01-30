@@ -26,7 +26,7 @@ namespace SDUI.Demo
                 Dock = DockStyle.Top,
                 Height = 40,
                 TextAlign = ContentAlignment.MiddleCenter,
-                BackColor = SKColors.LightBlue.ToDrawingColor(),
+                BackColor = SKColors.LightBlue.ToColor(),
                 Font = new Font("Segoe UI", 12, FontStyle.Bold)
             };
             Controls.Add(statusLabel);
@@ -52,7 +52,7 @@ namespace SDUI.Demo
             {
                 Dock = DockStyle.Top,
                 Height = 40,
-                BackColor = SKColors.LightCoral.ToDrawingColor()
+                BackColor = SKColors.LightCoral.ToColor()
             };
             topPanel.Controls.Add(new SDUI.Controls.Label
             {
@@ -66,7 +66,7 @@ namespace SDUI.Demo
             {
                 Dock = DockStyle.Bottom,
                 Height = 40,
-                BackColor = SKColors.LightGreen.ToDrawingColor()
+                BackColor = SKColors.LightGreen.ToColor()
             };
             bottomPanel.Controls.Add(new SDUI.Controls.Label
             {
@@ -80,7 +80,7 @@ namespace SDUI.Demo
             {
                 Dock = DockStyle.Left,
                 Width = 80,
-                BackColor = SKColors.LightSkyBlue.ToDrawingColor()
+                BackColor = SKColors.LightSkyBlue.ToColor()
             };
             leftPanel.Controls.Add(new SDUI.Controls.Label
             {
@@ -94,7 +94,7 @@ namespace SDUI.Demo
             {
                 Dock = DockStyle.Right,
                 Width = 80,
-                BackColor = SKColors.LightYellow.ToDrawingColor()
+                BackColor = SKColors.LightYellow.ToColor()
             };
             rightPanel.Controls.Add(new SDUI.Controls.Label
             {
@@ -107,7 +107,7 @@ namespace SDUI.Demo
             var fillPanel = new SDUI.Controls.Panel
             {
                 Dock = DockStyle.Fill,
-                BackColor = SKColors.LightGray.ToDrawingColor()
+                BackColor = SKColors.LightGray.ToColor()
             };
             fillPanel.Controls.Add(new SDUI.Controls.Label
             {
@@ -185,7 +185,7 @@ namespace SDUI.Demo
                 Text = "Short text",
                 AutoSize = true,
                 Location = new Point(10, 30),
-                BackColor = SKColors.LightYellow.ToDrawingColor(),
+                BackColor = SKColors.LightYellow.ToColor(),
                 Padding = new Padding(5)
             };
             autoSizeTestGroup.Controls.Add(testLabel);
@@ -210,7 +210,7 @@ namespace SDUI.Demo
                 Text = "Font test",
                 AutoSize = true,
                 Location = new Point(200, 30),
-                BackColor = SKColors.LightCyan.ToDrawingColor(),
+                BackColor = SKColors.LightCyan.ToColor(),
                 Padding = new Padding(5)
             };
             autoSizeTestGroup.Controls.Add(testLabel2);
@@ -235,7 +235,7 @@ namespace SDUI.Demo
                 Text = "Padding",
                 AutoSize = true,
                 Location = new Point(390, 30),
-                BackColor = SKColors.LightGreen.ToDrawingColor(),
+                BackColor = SKColors.LightGreen.ToColor(),
                 Padding = new Padding(5)
             };
             autoSizeTestGroup.Controls.Add(testLabel3);

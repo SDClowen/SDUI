@@ -1,4 +1,5 @@
 ﻿using SDUI.Controls;
+using SDUI.Extensions;
 using SDUI.Rendering;
 using System;
 using System.Drawing.Drawing2D;
@@ -198,7 +199,7 @@ namespace SDUI.Demo
             if (form is not UIWindow parent)
                 return;
 
-            parent.TitleColor = colorPicker.SelectedColor.ToDrawingColor();
+            parent.TitleColor = colorPicker.SelectedColor.ToColor();
             parent.Invalidate();
         }
 

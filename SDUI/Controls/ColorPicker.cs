@@ -542,16 +542,16 @@ public class ColorPicker : ComboBox
                  
                  var item = _owner.Items[i];
                  
-                 if (item is Color c)
+                 if (item is SKColor c)
                  {
                      var swatchSize = ItemHeight - 12;
                      var swatchRect = new SKRect(itemRect.Left + 6, itemRect.Top + 6, itemRect.Left + 6 + swatchSize, itemRect.Top + 6 + swatchSize);
-                     using var p = new SKPaint { Color = c.ToSKColor(), IsAntialias = true };
+                     using var p = new SKPaint { Color = c, IsAntialias = true };
                      canvas.DrawRoundRect(swatchRect, 4, 4, p);
                      using var pb = new SKPaint { Color = SKColors.Gray, IsStroke = true, IsAntialias = true };
                      canvas.DrawRoundRect(swatchRect, 4, 4, pb);
                      
-                     string text = $"#{c.R:X2}{c.G:X2}{c.B:X2}";
+                     string text = $"#{c.Red:X2}{c.Green:X2}{c.Blue:X2}";
                      TextRenderingHelper.DrawText(canvas, text, swatchRect.Right + 12, currentY + ItemHeight/2 - font.Size/2, font, _textPaint);
                  }
                  else

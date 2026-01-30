@@ -191,18 +191,6 @@ public static class SkiaExtensions
         }
     }
 
-    // System.Drawing.Color
-
-    public static SKColor ToSKColor(this Color color)
-    {
-        return (uint)color.ToArgb();
-    }
-
-    public static Color ToDrawingColor(this SKColor color)
-    {
-        return Color.FromArgb((int)(uint)color);
-    }
-
     public static SKFont ToSKFont(this Font drawingFont)
     {
         if (drawingFont == null)

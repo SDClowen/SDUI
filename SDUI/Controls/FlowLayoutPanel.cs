@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using SDUI.Animation;
+using SDUI.Extensions;
 using SkiaSharp;
 
 namespace SDUI.Controls;
