@@ -142,7 +142,7 @@ namespace SDUI.Controls.Subclasses
 
                         if (hTheme != IntPtr.Zero)
                         {
-                            COLORREF color;
+                            COLORREF color = new() { };
                             if (isDark)
                                 color.R = color.G = color.B = 255;
                             else
