@@ -19,6 +19,7 @@ public class NativeMethods
     private const string uxtheme = "uxtheme.dll";
     private const string dwmapi = "dwmapi.dll";
 
+    public const int WM_NCDESTROY = 0x0082;
     public const int WM_NOTIFY = 0x004E;
     public const int WM_NCLBUTTONDOWN = 0xA1;
     public const int HT_CAPTION = 0x2;
@@ -40,6 +41,9 @@ public class NativeMethods
     public const int LVCDI_GROUP = 0x1;
     public const int LVCDI_ITEMSLIST = 0x2;
     public const int LVM_FIRST = 0x1000;
+    public const int LVM_SETTEXTCOLOR = LVM_FIRST + 36;
+    public const int LVM_SETTEXTBKCOLOR = LVM_FIRST + 38;
+    public const int LVM_SETBKCOLOR = LVM_FIRST + 1;
     public const int LVM_GETHEADER = LVM_FIRST + 31;
     public const int LVM_SETITEMSTATE = LVM_FIRST + 43;
     public const int LVM_GETGROUPRECT = LVM_FIRST + 98;
@@ -89,7 +93,7 @@ public class NativeMethods
     public const int LVGGR_LABEL = 2; // Label only
     public const int LVGGR_SUBSETLINK = 3; // subset link only
     public const int LVS_EX_DOUBLEBUFFER = 0x10000;
-    public const int LVM_SETEXTENDEDLISTVIEWSTYLE = 4150;
+    public const int LVM_SETEXTENDEDLISTVIEWSTYLE = LVM_FIRST + 54;
 
     public const int NM_FIRST = 0;
     public const int NM_CLICK = NM_FIRST - 2;
@@ -106,6 +110,12 @@ public class NativeMethods
     public const int TCM_FIRST = 4864;
     public const int TCM_ADJUSTRECT = TCM_FIRST + 40;
     public const int TCS_MULTILINE = 0x0200;
+    
+    // Redraw flags
+    public const int RDW_INVALIDATE = 0x0001;
+    public const int RDW_FRAME = 0x0400;
+    public const int RDW_ALLCHILDREN = 0x0080;
+    public const int RDW_UPDATENOW = 0x0100;
 
     public struct MARGINS // struct for box shadow
     {
@@ -118,6 +128,7 @@ public class NativeMethods
     public struct SubclassInfo
     {
         public COLORREF headerTextColor;
+        public COLORREF headerBkColor;
     };
 
     [DllImport("kernel32", EntryPoint = "RtlMoveMemory", SetLastError = false)]
@@ -169,8 +180,20 @@ public class NativeMethods
         out COLORREF pColor
     );
 
+    [DllImport("gdi32.dll")]
+    public static extern int SetBkMode(IntPtr hdc, int iBkMode);
+
+    [DllImport("gdi32.dll")]
+    public static extern uint SetBkColor(IntPtr hdc, COLORREF crColor);
+
     [DllImport(gdi32)]
     public static extern uint SetTextColor(IntPtr hdc, COLORREF crColor);
+
+    [DllImport("gdi32.dll")]
+    public static extern uint SetBkColor(IntPtr hdc, int crColor);
+
+    [DllImport(gdi32)]
+    public static extern uint SetTextColor(IntPtr hdc, int crColor);
 
     [DllImport(user32)]
     public static extern bool ReleaseCapture();
@@ -716,7 +739,25 @@ public class NativeMethods
         public byte R;
         public byte G;
         public byte B;
+        public byte A; // Reserved, should be 0
+
+        public COLORREF(byte r, byte g, byte b)
+        {
+            R = r;
+            G = g;
+            B = b;
+            A = 0;
+        }
+
+        public COLORREF(Color color)
+        {
+            R = color.R;
+            G = color.G;
+            B = color.B;
+            A = 0;
+        }
     }
+
 
     public enum ACCENT
     {

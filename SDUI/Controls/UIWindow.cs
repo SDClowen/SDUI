@@ -1,12 +1,11 @@
-﻿using System;
+﻿using SDUI.Animation;
+using SDUI.Helpers;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
-using SDUI.Animation;
-using SDUI.Helpers;
-using Svg;
 
 namespace SDUI.Controls;
 
@@ -1119,7 +1118,8 @@ public class UIWindow : UIWindowBase
                     _controlBoxRect
                 );
 
-            using var closePen = new Pen(_inCloseBox ? Color.White : foreColor);
+            using var closePen = new Pen(_inCloseBox ? Color.White : foreColor, 1.5f * DPI);
+
             graphics.DrawLine(
                 closePen,
                 _controlBoxRect.Left + _controlBoxRect.Width / 2 - (6 * DPI),
@@ -1137,6 +1137,12 @@ public class UIWindow : UIWindowBase
             );
         }
 
+
+        using var tempPen = new Pen(foreColor, 1.5f * DPI);
+        tempPen.StartCap = LineCap.Round;
+        tempPen.EndCap = LineCap.Round;
+
+
         // Maximize Box
         if (MaximizeBox)
         {
@@ -1150,7 +1156,7 @@ public class UIWindow : UIWindowBase
                 );
 
             graphics.DrawRectangle(
-                foreColor,
+                tempPen,
                 _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (12 * DPI / 2),
                 _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (11 * DPI / 2),
                 12 * DPI,
@@ -1160,7 +1166,7 @@ public class UIWindow : UIWindowBase
             if (WindowState == FormWindowState.Maximized)
             {
                 graphics.DrawLine(
-                    foreColor,
+                    tempPen,
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
                     _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (5 * DPI),
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
@@ -1168,7 +1174,7 @@ public class UIWindow : UIWindowBase
                 );
 
                 graphics.DrawLine(
-                    foreColor,
+                    tempPen,
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 - (3 * DPI),
                     _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (7 * DPI),
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
@@ -1176,7 +1182,7 @@ public class UIWindow : UIWindowBase
                 );
 
                 graphics.DrawLine(
-                    foreColor,
+                    tempPen,
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
                     _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 - (6 * DPI),
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (9 * DPI),
@@ -1184,7 +1190,7 @@ public class UIWindow : UIWindowBase
                 );
 
                 graphics.DrawLine(
-                    foreColor,
+                    tempPen,
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (8 * DPI),
                     _maximizeBoxRect.Top + _maximizeBoxRect.Height / 2 + (5 * DPI),
                     _maximizeBoxRect.Left + _maximizeBoxRect.Width / 2 + (5 * DPI),
@@ -1206,7 +1212,7 @@ public class UIWindow : UIWindowBase
                 );
 
             graphics.DrawLine(
-                foreColor,
+                tempPen,
                 _minimizeBoxRect.Left + _minimizeBoxRect.Width / 2 - (7 * DPI),
                 _minimizeBoxRect.Top + _minimizeBoxRect.Height / 2,
                 _minimizeBoxRect.Left + _minimizeBoxRect.Width / 2 + (6 * DPI),
@@ -1230,7 +1236,7 @@ public class UIWindow : UIWindowBase
                 graphics.FillPath(
                     brush,
                     new RectangleF(
-                        _extendBoxRect.X + 20 * DPI,
+                        _extendBoxRect.X + 20,
                         (_titleHeightDPI / 2) - (hoverSize / 2),
                         hoverSize,
                         hoverSize
@@ -1238,12 +1244,27 @@ public class UIWindow : UIWindowBase
                 );
             }
 
-            var size = 16 * DPI;
-            graphics.DrawSvg(
-                SvgIcons.Settings,
-                color,
-                new(_extendBoxRect.X + 24 * DPI, (_titleHeightDPI / 2) - (size / 2), size, size)
+            var centerX = _extendBoxRect.Left - 2 + _extendBoxRect.Width  / 2;
+            var centerY = _extendBoxRect.Top + _extendBoxRect.Height / 2;
+
+            var size = 5f * DPI;
+
+            graphics.DrawLine(
+                tempPen,
+                centerX + 10 - size,
+                centerY - size / 2,
+                centerX + 10,
+                centerY + size / 2
             );
+
+            graphics.DrawLine(
+                tempPen,
+                centerX + 10,
+                centerY + size / 2,
+                centerX + 10 + size,
+                centerY - size / 2
+            );
+
         }
 
         // Form Menu/Icon
@@ -1452,7 +1473,7 @@ public class UIWindow : UIWindowBase
                     360
                 );
 
-                using var linePen = new Pen(foreColor) { Width = 1.6f };
+                using var linePen = new Pen(foreColor) { Width = 1.6f * DPI};
                 size = 4f * DPI;
 
                 graphics.DrawLine(
@@ -1485,7 +1506,7 @@ public class UIWindow : UIWindowBase
                 using var brush = new SolidBrush(color);
                 color = foreColor.Alpha(220);
 
-                using var linePen = new Pen(color) { Width = 1.6f };
+                using var linePen = new Pen(color) { Width = 1.6f * DPI };
 
                 graphics.FillPath(brush, _newTabBoxRect.Radius(4));
                 var lastTabRect = pageRect[pageRect.Count - 1];
@@ -1530,52 +1551,6 @@ public class UIWindow : UIWindowBase
                 graphics.DrawLine(pen, Width, _titleHeightDPI - 1, 0, _titleHeightDPI - 1);
             }
         }
-    }
-
-    private void UpdateCachedMetrics()
-    {
-        _cachedMetrics = new CachedMetrics
-        {
-            TitleHeightDPI = _titleHeight * DPI,
-            IconWidthDPI = _iconWidth * DPI,
-            SymbolSizeDPI = _symbolSize * DPI,
-            IsMetricsValid = true,
-        };
-    }
-
-    private void DrawControlBoxButtons(Graphics g, Color foreColor)
-    {
-        // Cache hover colors
-        var closeHoverColor = Color.FromArgb(222, 179, 30, 30);
-
-        if (_inCloseBox)
-        {
-            var alpha = (int)(closeBoxHoverAnimationManager.GetProgress() * closeHoverColor.A);
-            g.FillRectangle(Color.FromArgb(alpha, closeHoverColor.RemoveAlpha()), _controlBoxRect);
-        }
-
-        // Draw close button
-        using var closePen = new Pen(_inCloseBox ? Color.White : foreColor);
-        var centerX = _controlBoxRect.Left + _controlBoxRect.Width / 2;
-        var centerY = _controlBoxRect.Top + _controlBoxRect.Height / 2;
-        var offset = 6 * DPI;
-
-        g.DrawLine(closePen, centerX - offset, centerY - offset, centerX + offset, centerY + offset);
-        g.DrawLine(closePen, centerX - offset, centerY + offset, centerX + offset, centerY - offset);
-
-        // Draw other control buttons similarly...
-    }
-
-    private void DrawWindowTitle(Graphics g, Color foreColor)
-    {
-        var stringSize = g.MeasureString(Text, Font);
-        var textPoint = new PointF(
-            (showMenuInsteadOfIcon ? _formMenuRect.X + _formMenuRect.Width : 16 * DPI + 14),
-            (_cachedMetrics.TitleHeightDPI / 2 - stringSize.Height / 2)
-        );
-
-        using var textBrush = new SolidBrush(foreColor);
-        g.DrawString(Text, Font, textBrush, textPoint);
     }
 
     protected override void OnTextChanged(EventArgs e)

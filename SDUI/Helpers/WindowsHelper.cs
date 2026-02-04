@@ -147,7 +147,7 @@ public static class WindowsHelper
 
             int useImmersiveDarkMode = enabled ? 1 : 0;
 
-            //AllowDarkModeForWindow(handle, true);
+            AllowDarkModeForWindow(handle, true);
             //return true;
             return DwmSetWindowAttribute(handle, attribute, ref useImmersiveDarkMode, sizeof(uint)) == 0;
         }

@@ -1,13 +1,32 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 
 namespace SDUI;
 
 public class ColorScheme
 {
+    private static Color _backColor = Color.White;
+
+    /// <summary>
+    /// Event fired when the theme color changes
+    /// </summary>
+    public static event EventHandler ThemeChanged;
+
     /// <summary>
     /// Gets or Sets to the theme back color
     /// </summary>
-    public static Color BackColor = Color.White;
+    public static Color BackColor
+    {
+        get => _backColor;
+        set
+        {
+            if (_backColor != value)
+            {
+                _backColor = value;
+                ThemeChanged?.Invoke(null, EventArgs.Empty);
+            }
+        }
+    }
 
     /// <summary>
     /// Get Determined theme forecolor from backcolor

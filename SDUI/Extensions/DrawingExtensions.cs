@@ -442,13 +442,4 @@ public static class DrawingExtensions
 
         graphics.DrawString(control.Text, control.Font, textBrush, rectangle, textFormat);
     }
-
-    public static void DrawSvg(this Graphics graphics, string svg, Color color, RectangleF rectangle)
-    {
-        var svgDocument = Svg.SvgDocument.FromSvg<Svg.SvgDocument>(svg);
-        svgDocument.Color = new Svg.SvgColourServer(color);
-
-        using var bitmap = svgDocument.Draw();
-        graphics.DrawImage(bitmap, rectangle);
-    }
 }
