@@ -13,7 +13,7 @@ public class StatusStrip : MenuStrip
     // Cached paints
     private SKPaint? _bgPaint;
     private SKPaint? _bottomBorderPaint;
-    private Padding _gripMargin = new(3);
+    private Thickness _gripMargin = new(3);
     private SKPaint? _gripPaint;
     private float _gripSize = 12f;
     private float _itemPadding = 6f;
@@ -62,7 +62,7 @@ public class StatusStrip : MenuStrip
     }
 
     [Category("Layout")]
-    public Padding GripMargin
+    public Thickness GripMargin
     {
         get => _gripMargin;
         set
@@ -122,19 +122,19 @@ public class StatusStrip : MenuStrip
 
         // Draw flat background like WinForms StatusStrip
         _bgPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
-        _bgPaint.Color = BackColor.ToSKColor();
-        canvas.DrawRect(new SKRect(0, 0, bounds.Width, bounds.Height), _bgPaint);
+        _bgPaint.Color = BackColor;
+        canvas.DrawRect(new SkiaSharp.SKRect(0, 0, bounds.Width, bounds.Height), _bgPaint);
 
         // subtle top border
         _bottomBorderPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f };
-        _bottomBorderPaint.Color = ColorScheme.BorderColor.ToSKColor().WithAlpha(120);
+        _bottomBorderPaint.Color = ColorScheme.BorderColor.WithAlpha(120);
         canvas.DrawLine(0, 0, bounds.Width, 0, _bottomBorderPaint);
 
         // Draw sizing grip if enabled (bottom-right)
         if (SizingGrip)
         {
             _gripPaint ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
-            _gripPaint.Color = ColorScheme.BorderColor.ToSKColor().WithAlpha(180);
+            _gripPaint.Color = ColorScheme.BorderColor.WithAlpha(180);
 
             // Draw three diagonal dots to mimic WinForms sizing grip
             var dotSize = 3f;
@@ -147,7 +147,7 @@ public class StatusStrip : MenuStrip
             {
                 var x = startX - col * gap - row * 1f;
                 var y = startY - row * gap + col * 0f;
-                var r = new SKRect(x - dotSize, y - dotSize, x, y);
+                var r = new SkiaSharp.SKRect(x - dotSize, y - dotSize, x, y);
                 canvas.DrawRect(r, _gripPaint);
             }
         }

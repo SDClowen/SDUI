@@ -1,8 +1,9 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Drawing;
-using System.Windows.Forms;
+
+using SDUI.Helpers;
+using SkiaSharp;
 
 namespace SDUI.Layout;
 
@@ -20,16 +21,16 @@ internal static partial class LayoutUtils
 
         // MRU of size MaxCacheSize
         private PreferredSizeCache[]? _sizeCacheList;
-        private Size _unconstrainedPreferredSize = s_invalidSize;
+        private SKSize _unconstrainedPreferredSize = s_invalidSize;
 
         /// GetTextSize
-        /// Given constraints, format flags a font and text, determine the size of the string
+        /// Given constraints, format options, a font and text, determine the size of the string
         /// employs an MRU of the last several constraints passed in via a ring-buffer of size MaxCacheSize.
-        /// Assumes Text and TextFormatFlags are the same, if either were to change, a call to
+        /// Assumes Text and TextRenderOptions are the same, if either were to change, a call to
         /// InvalidateCache should be made
-        public Size GetTextSize(string? text, Font? font, Size proposedConstraints, TextFormatFlags flags)
+        public SKSize GetTextSize(string? text, Font? font, SKSize proposedConstraints, TextRenderOptions options)
         {
-            if (!TextRequiresWordBreak(text, font, proposedConstraints, flags))
+            if (!TextRequiresWordBreak(text, font, proposedConstraints, options))
             {
                 // Text fits within proposed width
 
@@ -76,7 +77,7 @@ internal static partial class LayoutUtils
 
                 // if we've gotten here, it means we don't have a cache entry, therefore
                 // we should add a new one in the next available slot.
-                Size prefSize = TextRenderer.MeasureText(text, font, proposedConstraints, flags);
+                SKSize prefSize = TextRenderer.MeasureText(text, font, proposedConstraints, options);
                 _nextCacheEntry = (_nextCacheEntry + 1) % MaxCacheSize;
                 _sizeCacheList[_nextCacheEntry] = new PreferredSizeCache(proposedConstraints, prefSize);
 
@@ -85,7 +86,7 @@ internal static partial class LayoutUtils
         }
 
         /// InvalidateCache
-        /// Clears out the cached values, should be called whenever Text, Font or a TextFormatFlag has changed
+        /// Clears out the cached values, should be called whenever Text, Font or a TextRenderOption has changed
         public void InvalidateCache()
         {
             _unconstrainedPreferredSize = s_invalidSize;
@@ -96,25 +97,26 @@ internal static partial class LayoutUtils
         /// If you give the text all the space in the world it wants, then there should be no reason
         /// for it to break on a word. So we find out what the unconstrained size is (Int32.MaxValue, Int32.MaxValue)
         /// for a string - eg. 35, 13. If the size passed in has a larger width than 35, then we know that
-        /// the WordBreak flag is not necessary.
-        public bool TextRequiresWordBreak(string? text, Font? font, Size size, TextFormatFlags flags)
+        /// the word wrapping is not necessary.
+        public bool TextRequiresWordBreak(string? text, Font? font, SKSize size, TextRenderOptions options)
         {
             // if the unconstrained size of the string is larger than the proposed width
-            // we need the word break flag, otherwise we don't, its a perf hit to use it.
-            return GetUnconstrainedSize(text, font, flags).Width > size.Width;
+            // we need word wrapping, otherwise we don't, its a perf hit to use it.
+            return GetUnconstrainedSize(text, font, options).Width > size.Width;
         }
 
         /// GetUnconstrainedSize
         /// Gets the unconstrained (Int32.MaxValue, Int32.MaxValue) size for a piece of text
-        private Size GetUnconstrainedSize(string? text, Font? font, TextFormatFlags flags)
+        private SKSize GetUnconstrainedSize(string? text, Font? font, TextRenderOptions options)
         {
             if (_unconstrainedPreferredSize == s_invalidSize)
             {
-                // we also investigated setting the SingleLine flag, however this did not yield as much benefit as the word break
+                // we also investigated setting single line, however this did not yield as much benefit as the word break
                 // and had possibility of causing internationalization issues.
 
-                flags &= ~TextFormatFlags.WordBreak; // rip out the wordbreak flag
-                _unconstrainedPreferredSize = TextRenderer.MeasureText(text, font, s_maxSize, flags);
+                // Disable word wrapping for unconstrained measurement
+                var unconstrainedOptions = options with { Wrap = TextWrap.None };
+                _unconstrainedPreferredSize = TextRenderer.MeasureText(text, font, s_maxSize, unconstrainedOptions);
             }
 
             return _unconstrainedPreferredSize;

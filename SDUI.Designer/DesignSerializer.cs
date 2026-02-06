@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -115,7 +115,7 @@ public class DesignData
 {
     public string ControlType { get; set; } = "";
     public string Name { get; set; } = "";
-    public Point Location { get; set; }
+    public SKPoint Location { get; set; }
     public Size Size { get; set; }
     public string BackColor { get; set; } = "";
     public string ForeColor { get; set; } = "";

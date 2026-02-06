@@ -1,7 +1,8 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Drawing;
+using SkiaSharp;
+
 using System.Runtime.CompilerServices;
 
 namespace SDUI;
@@ -10,14 +11,12 @@ internal readonly partial struct Value
 {
     private readonly struct PackedColor
     {
-        private readonly int _argb;
-        private readonly short _knownColor;
+        private readonly uint _argb;
         private readonly short _state;
 
-        private PackedColor(int argb, KnownColor knownColor, short state)
+        private PackedColor(uint argb, short state)
         {
             _argb = argb;
-            _knownColor = (short)knownColor;
             _state = state;
         }
 
@@ -26,14 +25,13 @@ internal readonly partial struct Value
         {
             public readonly string? Name;
             public readonly long Argb;
-            public readonly short KnownColor;
             public readonly short State;
         }
 #pragma warning restore CS0649
 
-        public static bool TryCreate(in Color color, out PackedColor packedColor)
+        public static bool TryCreate(in SKColor color, out PackedColor packedColor)
         {
-            CastColor castColor = Unsafe.As<Color, CastColor>(ref Unsafe.AsRef(in color));
+            CastColor castColor = Unsafe.As<SKColor, CastColor>(ref Unsafe.AsRef(in color));
             if (castColor.Name is not null)
             {
                 // We can't stash the name, so we can't pack it. It might be possible to stash a named color by
@@ -45,12 +43,10 @@ internal readonly partial struct Value
                 return false;
             }
 
-            packedColor = new PackedColor((int)castColor.Argb, (KnownColor)castColor.KnownColor, castColor.State);
+            packedColor = new PackedColor((uint)castColor.Argb, castColor.State);
             return true;
         }
 
-        public Color Extract() => _knownColor != 0
-            ? Color.FromKnownColor((KnownColor)_knownColor)
-            : _state == 0 ? Color.Empty : Color.FromArgb(_argb);
+        public SKColor Extract() => new(_argb);
     }
 }

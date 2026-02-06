@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Animation;
 using SDUI.Extensions;
@@ -13,8 +13,8 @@ public class TrackBar : UIElementBase
 {
     public TrackBar()
     {
-        Size = new Size(200, 22);
-        MinimumSize = new Size(50, 22);
+        Size = new SKSize(200, 22);
+        MinimumSize = new SKSize(50, 22);
 
         _thumbHoverAnimation = new AnimationManager(true)
         {
@@ -67,12 +67,12 @@ public class TrackBar : UIElementBase
         if (_orientation == Orientation.Horizontal)
         {
             Height = (int)(heightValues + tickHeight);
-            base.MinimumSize = new Size(50, Height);
+            base.MinimumSize = new SKSize(50, Height);
         }
         else
         {
             Width = (int)(heightValues + tickHeight);
-            base.MinimumSize = new Size(Width, 50);
+            base.MinimumSize = new SKSize(Width, 50);
         }
     }
 
@@ -207,7 +207,7 @@ public class TrackBar : UIElementBase
         _trackHoverAnimation.StartNewAnimation(AnimationDirection.Out);
     }
 
-    private RectangleF GetTrackRect()
+    private SkiaSharp.SKRect GetTrackRect()
     {
         if (_orientation == Orientation.Horizontal)
             return new RectangleF(10 * base.ScaleFactor, Height / 2f - base.ScaleFactor, Width - 20 * base.ScaleFactor,
@@ -216,7 +216,7 @@ public class TrackBar : UIElementBase
             Height - 20 * base.ScaleFactor);
     }
 
-    private RectangleF GetInteractionTrackRect()
+    private SkiaSharp.SKRect GetInteractionTrackRect()
     {
         var rect = GetTrackRect();
 
@@ -228,7 +228,7 @@ public class TrackBar : UIElementBase
         return rect;
     }
 
-    private RectangleF GetThumbRect()
+    private SkiaSharp.SKRect GetThumbRect()
     {
         var trackRect = GetTrackRect();
         var percentage = (_value - _minimum) / (float)(_maximum - _minimum);
@@ -247,7 +247,7 @@ public class TrackBar : UIElementBase
         }
     }
 
-    private void DrawThumb(SKCanvas canvas, RectangleF thumbRect, SKPaint paint)
+    private void DrawThumb(SKCanvas canvas, SkiaSharp.SKRect thumbRect, SKPaint paint)
     {
         var centerX = thumbRect.X + thumbRect.Width / 2f;
         var centerY = thumbRect.Y + thumbRect.Height / 2f;
@@ -261,7 +261,7 @@ public class TrackBar : UIElementBase
 
             case ThumbShape.Square:
                 canvas.DrawRect(
-                    new SKRect(
+                    new SkiaSharp.SKRect(
                         centerX - halfWidth,
                         centerY - halfWidth,
                         centerX + halfWidth,
@@ -307,7 +307,7 @@ public class TrackBar : UIElementBase
         }
     }
 
-    private void DrawThumbIndicator(SKCanvas canvas, RectangleF thumbRect, RectangleF trackRect, SKPaint paint)
+    private void DrawThumbIndicator(SKCanvas canvas, SkiaSharp.SKRect thumbRect, SkiaSharp.SKRect trackRect, SKPaint paint)
     {
         var thickness = 6 * ScaleFactor;
 
@@ -340,15 +340,15 @@ public class TrackBar : UIElementBase
         canvas.DrawPath(_thumbIndicatorPath, paint);
     }
 
-    private void DrawTicks(SKCanvas canvas, RectangleF trackRect)
+    private void DrawTicks(SKCanvas canvas, SkiaSharp.SKRect trackRect)
     {
         if (!_showTicks) return;
 
         EnsureSkiaCaches();
 
         var tickPaint = _tickPaint!;
-        tickPaint.Color = (_tickColor == Color.Empty ? ColorScheme.ForeColor : _tickColor)
-            .Alpha(150).ToSKColor();
+        tickPaint.Color = (_tickColor == SKColor.Empty ? ColorScheme.ForeColor : _tickColor)
+            .WithAlpha(150);
         tickPaint.StrokeWidth = 1 * ScaleFactor;
 
         var textPaint = _tickTextPaint!;
@@ -415,7 +415,7 @@ public class TrackBar : UIElementBase
             _tickFont?.Dispose();
             _tickFont = new SKFont
             {
-                Size = 8f.PtToPx(this),
+                Size = 8f.Topx(this),
                 Typeface = FontManager.GetSKTypeface("Segoe UI"),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
@@ -434,7 +434,7 @@ public class TrackBar : UIElementBase
             _valueFont?.Dispose();
             _valueFont = new SKFont
             {
-                Size = 9f.PtToPx(this),
+                Size = 9f.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
@@ -462,7 +462,7 @@ public class TrackBar : UIElementBase
         }
     }
 
-    private SKPaint UpdateThumbFillPaint(RectangleF rect, Color startColor, Color endColor, Color defaultColor,
+    private SKPaint UpdateThumbFillPaint(SkiaSharp.SKRect rect, SKColor startColor, SKColor endColor, SKColor defaultColor,
         byte alpha = 255)
     {
         EnsureSkiaCaches();
@@ -471,7 +471,7 @@ public class TrackBar : UIElementBase
         paint.IsAntialias = true;
         paint.Style = SKPaintStyle.Fill;
 
-        if (startColor != Color.Empty && endColor != Color.Empty)
+        if (startColor != SKColor.Empty && endColor != SKColor.Empty)
         {
             // NOTE: shader coordinates depend on rect position, so this is updated per paint.
             var newShader = SKShader.CreateLinearGradient(
@@ -479,8 +479,8 @@ public class TrackBar : UIElementBase
                 new SKPoint(rect.Right, rect.Bottom),
                 new[]
                 {
-                    startColor.ToSKColor().WithAlpha(alpha),
-                    endColor.ToSKColor().WithAlpha(alpha)
+                    startColor.WithAlpha(alpha),
+                    endColor.WithAlpha(alpha)
                 },
                 null,
                 SKShaderTileMode.Clamp);
@@ -496,7 +496,7 @@ public class TrackBar : UIElementBase
             paint.Shader = null;
             _thumbFillShader?.Dispose();
             _thumbFillShader = null;
-            paint.Color = defaultColor.ToSKColor().WithAlpha(alpha);
+            paint.Color = defaultColor.WithAlpha(alpha);
         }
 
         return paint;
@@ -509,8 +509,8 @@ public class TrackBar : UIElementBase
 
         var trackRect = GetTrackRect();
         var thumbRect = GetThumbRect();
-        var accentColor = _thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor;
-        var lightAccent = Color.FromArgb(accentColor.A,
+        var accentColor = _thumbColor == SKColor.Empty ? ColorScheme.AccentColor : _thumbColor;
+        var lightAccent = new SKColor(accentColor.A,
             Math.Min(255, accentColor.R + 35),
             Math.Min(255, accentColor.G + 35),
             Math.Min(255, accentColor.B + 35));
@@ -526,18 +526,18 @@ public class TrackBar : UIElementBase
 
         // Draw Empty Track
         var emptyTrackPaint = _trackEmptyPaint!;
-        emptyTrackPaint.Color = (_trackColor == Color.Empty ? ColorScheme.BorderColor : _trackColor).ToSKColor();
+        emptyTrackPaint.Color = (_trackColor == SKColor.Empty ? ColorScheme.BorderColor : _trackColor);
         canvas.DrawRoundRect(visualTrackRect.ToSKRect(), trackThickness / 2, trackThickness / 2, emptyTrackPaint);
 
         // Draw Filled Track
         var filledTrackPaint = _trackFilledPaint!;
-        filledTrackPaint.Color = (_thumbColor == Color.Empty ? ColorScheme.AccentColor : _thumbColor).ToSKColor();
+        filledTrackPaint.Color = (_thumbColor == SKColor.Empty ? ColorScheme.AccentColor : _thumbColor);
 
-        SKRect filledRect;
+        SkiaSharp.SKRect filledRect;
         if (_orientation == Orientation.Horizontal)
         {
             var minFilled = trackThickness; // ensure visible fill at minimum
-            filledRect = new SKRect(
+            filledRect = new SkiaSharp.SKRect(
                 visualTrackRect.Left,
                 visualTrackRect.Top,
                 Math.Max(visualTrackRect.Left + minFilled, thumbRect.Left + thumbRect.Width / 2),
@@ -546,7 +546,7 @@ public class TrackBar : UIElementBase
         else
         {
             var minFilled = trackThickness;
-            filledRect = new SKRect(
+            filledRect = new SkiaSharp.SKRect(
                 visualTrackRect.Left,
                 thumbRect.Top + thumbRect.Height / 2,
                 visualTrackRect.Right,
@@ -572,12 +572,12 @@ public class TrackBar : UIElementBase
         // Draw Thumb Border
         var thumbBorderPaint = _thumbBorderPaint!;
         thumbBorderPaint.StrokeWidth = 2 * ScaleFactor;
-        thumbBorderPaint.Color = accentColor.ToSKColor();
+        thumbBorderPaint.Color = accentColor;
         DrawThumb(canvas, thumbRect, thumbBorderPaint);
 
         // Draw indicator (arrow) to anchor the thumb visually to the track
         var indicatorPaint = _thumbIndicatorPaint!;
-        indicatorPaint.Color = accentColor.ToSKColor().WithAlpha(200);
+        indicatorPaint.Color = accentColor.WithAlpha(200);
         DrawThumbIndicator(canvas, thumbRect, trackRect, indicatorPaint);
 
         // Değer metni
@@ -585,7 +585,7 @@ public class TrackBar : UIElementBase
         {
             var font = GetValueSkFont();
             var paint = _valueTextPaint!;
-            paint.Color = ColorScheme.ForeColor.ToSKColor();
+            paint.Color = ColorScheme.ForeColor;
             paint.IsAntialias = true;
 
             var formattedValue = string.Format(_valueFormat, ValueToSet);
@@ -654,7 +654,7 @@ public class TrackBar : UIElementBase
 
     private bool _isDragging;
     private bool _isHovered;
-    private Point _mouseLocation;
+    private SKPoint _mouseLocation;
     private readonly AnimationManager _thumbHoverAnimation;
     private readonly AnimationManager _thumbPressAnimation;
     private readonly AnimationManager _trackHoverAnimation;
@@ -671,19 +671,19 @@ public class TrackBar : UIElementBase
     private bool _showTicks;
     private int _tickFrequency = 10;
     private ValueDivisor _dividedValue = ValueDivisor.By1;
-    private Size _thumbSize = new(16, 16);
+    private SKSize _thumbSize = new(16, 16);
     private Orientation _orientation = Orientation.Horizontal;
     private ThumbShape _thumbShape = ThumbShape.Circle;
-    private Color _trackColor;
-    private Color _thumbColor;
-    private Color _tickColor;
+    private SKColor _trackColor;
+    private SKColor _thumbColor;
+    private SKColor _tickColor;
     private TrackStyle _trackStyle = TrackStyle.Simple;
-    private Color _trackGradientStart = Color.Empty;
-    private Color _trackGradientEnd = Color.Empty;
-    private Color _thumbGradientStart = Color.Empty;
-    private Color _thumbGradientEnd = Color.Empty;
+    private SKColor _trackGradientStart = SKColor.Empty;
+    private SKColor _trackGradientEnd = SKColor.Empty;
+    private SKColor _thumbGradientStart = SKColor.Empty;
+    private SKColor _thumbGradientEnd = SKColor.Empty;
     private string _valueFormat = "{0}";
-    private Size _customThumbSize = Size.Empty;
+    private SKSize _customThumbSize = Size.Empty;
 
     // Skia caches (to avoid per-frame allocations)
     private SKPaint? _trackEmptyPaint;
@@ -869,7 +869,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color TrackColor
+    public SKColor TrackColor
     {
         get => _trackColor;
         set
@@ -881,7 +881,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color ThumbColor
+    public SKColor ThumbColor
     {
         get => _thumbColor;
         set
@@ -893,7 +893,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color TickColor
+    public SKColor TickColor
     {
         get => _tickColor;
         set
@@ -917,7 +917,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color TrackGradientStart
+    public SKColor TrackGradientStart
     {
         get => _trackGradientStart;
         set
@@ -929,7 +929,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color TrackGradientEnd
+    public SKColor TrackGradientEnd
     {
         get => _trackGradientEnd;
         set
@@ -941,7 +941,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color ThumbGradientStart
+    public SKColor ThumbGradientStart
     {
         get => _thumbGradientStart;
         set
@@ -953,7 +953,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color ThumbGradientEnd
+    public SKColor ThumbGradientEnd
     {
         get => _thumbGradientEnd;
         set
@@ -965,7 +965,7 @@ public class TrackBar : UIElementBase
     }
 
     [Category("Appearance")]
-    public Size CustomThumbSize
+    public SKSize CustomThumbSize
     {
         get => _customThumbSize;
         set

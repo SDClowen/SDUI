@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Animation;
 using SDUI.Extensions;
@@ -28,7 +28,7 @@ public class Radio : UIElementBase
     private float boxOffset;
 
     // size related variables which should be recalculated onsizechanged
-    private RectangleF radioButtonBounds;
+    private SkiaSharp.SKRect radioButtonBounds;
 
     private bool ripple;
 
@@ -54,13 +54,13 @@ public class Radio : UIElementBase
             animationManager.StartNewAnimation(Checked ? AnimationDirection.In : AnimationDirection.Out);
 
         Ripple = true;
-        _mouseLocation = new Point(-1, -1);
+        _mouseLocation = new SKPoint(-1, -1);
 
         _mouseState = 0;
         MouseEnter += (_, _) => { _mouseState = 1; };
         MouseLeave += (_, _) =>
         {
-            _mouseLocation = new Point(-1, -1);
+            _mouseLocation = new SKPoint(-1, -1);
             _mouseState = 0;
         };
         MouseDown += (_, e) =>
@@ -85,7 +85,7 @@ public class Radio : UIElementBase
         };
     }
 
-    [Browsable(false)] private Point _mouseLocation { get; set; }
+    [Browsable(false)] private SKPoint _mouseLocation { get; set; }
 
     [Category("Behavior")]
     public bool Ripple
@@ -96,7 +96,7 @@ public class Radio : UIElementBase
             ripple = value;
             AutoSize = AutoSize; //Make AutoSize directly set the bounds.
 
-            if (value) Margin = new Padding(0);
+            if (value) Margin = new Thickness(0);
 
             Invalidate();
         }
@@ -122,11 +122,11 @@ public class Radio : UIElementBase
         CheckedChanged?.Invoke(this, e);
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
+    public override SKSize GetPreferredSize(SKSize proposedSize)
     {
         using var font = new SKFont
         {
-            Size = Font.Size.PtToPx(this),
+            Size = Font.Size.Topx(this),
             Typeface = FontManager.GetSKTypeface(Font),
             Edging = SKFontEdging.SubpixelAntialias
         };
@@ -141,7 +141,7 @@ public class Radio : UIElementBase
         // Width = boxOffset (left space) + Radio + Gap + Text + Padding + Buffer
         var width = boxOffset + RadioButtonSize + TextPadding + (int)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
 
-        return new Size((int)Math.Ceiling(width), (int)Math.Ceiling(fullHeight));
+        return new SKSize((int)Math.Ceiling(width), (int)Math.Ceiling(fullHeight));
     }
 
     public override void OnPaint(SKCanvas canvas)
@@ -156,17 +156,17 @@ public class Radio : UIElementBase
         var animationSize = animationProgress * 7f * ScaleFactor;
         var animationSizeHalf = animationSize / 2;
 
-        var accentColor = Enabled ? ColorScheme.Primary : ColorScheme.OnSurface.Alpha(50);
+        var accentColor = Enabled ? ColorScheme.Primary : ColorScheme.OnSurface.WithAlpha(50);
 
         // Ripple efekti
         if (Ripple && rippleAnimationManager.IsAnimating()) DrawRippleEffect(canvas, accentColor, radioButtonCenter);
 
         // Modern circular outline with Primary color when checked
         var outlineColor = Checked
-            ? ColorScheme.Primary.ToSKColor()
+            ? ColorScheme.Primary
             : Enabled
-                ? ColorScheme.Outline.ToSKColor()
-                : ColorScheme.OnSurface.Alpha(50).ToSKColor();
+                ? ColorScheme.Outline
+                : ColorScheme.OnSurface.WithAlpha(50);
 
         using (var paint = new SKPaint
                {
@@ -187,7 +187,7 @@ public class Radio : UIElementBase
         // İç dolgu (background)
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.Surface.ToSKColor(),
+                   Color = ColorScheme.Surface,
                    IsAntialias = true,
                    Style = SKPaintStyle.Fill
                })
@@ -203,13 +203,13 @@ public class Radio : UIElementBase
         // Seçili durumda iç nokta - Primary color
         if (Checked)
         {
-            var primaryColor = ColorScheme.Primary.ToSKColor();
-            var surfaceColor = ColorScheme.Surface.ToSKColor();
+            var primaryColor = ColorScheme.Primary;
+            var surfaceColor = ColorScheme.Surface;
             var interpolatedColor = primaryColor.InterpolateColor(surfaceColor, 1f - animationProgress);
 
             using var paint = new SKPaint
             {
-                Color = Enabled ? interpolatedColor : ColorScheme.OnSurface.Alpha(50).ToSKColor(),
+                Color = Enabled ? interpolatedColor : ColorScheme.OnSurface.WithAlpha(50),
                 IsAntialias = true,
                 Style = SKPaintStyle.Fill
             };
@@ -243,7 +243,7 @@ public class Radio : UIElementBase
         return radioButtonBounds.Contains(_mouseLocation);
     }
 
-    private void DrawRippleEffect(SKCanvas canvas, Color accentColor, float center)
+    private void DrawRippleEffect(SKCanvas canvas, SKColor accentColor, float center)
     {
         for (var i = 0; i < rippleAnimationManager.GetAnimationCount(); i++)
         {
@@ -252,7 +252,7 @@ public class Radio : UIElementBase
 
             var rippleColor = (bool)rippleAnimationManager.GetData(i)[0]
                 ? SKColors.Black.WithAlpha((byte)(animationValue * 40))
-                : accentColor.ToSKColor().WithAlpha((byte)(animationValue * 40));
+                : accentColor.WithAlpha((byte)(animationValue * 40));
 
             var rippleHeight = Height % 2 == 0 ? Height - 3f : Height - 2f;
             var rippleSize = rippleAnimationManager.GetDirection(i) == AnimationDirection.InOutIn
@@ -274,19 +274,19 @@ public class Radio : UIElementBase
     {
         using var font = new SKFont
         {
-            Size = Font.Size.PtToPx(this),
+            Size = Font.Size.Topx(this),
             Typeface = FontManager.GetSKTypeface(Font),
             Edging = SKFontEdging.SubpixelAntialias
         };
 
         using var textPaint = new SKPaint
         {
-            Color = (Enabled ? ColorScheme.ForeColor : Color.Gray).ToSKColor(),
+            Color = (Enabled ? ColorScheme.ForeColor : SKColor.Gray),
             IsAntialias = true
         };
 
         float textX = boxOffset + RadioButtonSize + TextPadding;
-        var textBounds = SKRect.Create(textX, Padding.Top, Width - textX - Padding.Right, Height - Padding.Vertical);
+        var textBounds = SkiaSharp.SKRect.Create(textX, base.Padding.Top, Width - textX - base.Padding.Right, Height - base.Padding.Vertical);
 
         canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis,
             UseMnemonic);

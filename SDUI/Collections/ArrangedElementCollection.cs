@@ -14,19 +14,19 @@ public class ArrangedElementCollection : IList
     {
     }
 
-    internal ArrangedElementCollection(List<IUIElement> innerList)
+    internal ArrangedElementCollection(List<IElement> innerList)
     {
         InnerList = innerList;
     }
 
     private ArrangedElementCollection(int size)
     {
-        InnerList = new List<IUIElement>(size);
+        InnerList = new List<IElement>(size);
     }
 
-    private protected List<IUIElement> InnerList { get; }
+    private protected List<IElement> InnerList { get; }
 
-    internal virtual IUIElement this[int index] => InnerList[index];
+    internal virtual IElement this[int index] => InnerList[index];
 
     void IList.Clear()
     {
@@ -111,7 +111,7 @@ public class ArrangedElementCollection : IList
     /// <summary>
     ///     Repositions a element in this list.
     /// </summary>
-    private protected void MoveElement(IUIElement element, int fromIndex, int toIndex)
+    private protected void MoveElement(IElement element, int fromIndex, int toIndex)
     {
         var delta = toIndex - fromIndex;
 

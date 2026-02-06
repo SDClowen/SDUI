@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SkiaSharp;
 
@@ -8,8 +8,8 @@ namespace SDUI.Controls;
 
 public class PictureBox : UIElementBase
 {
-    private Padding _border;
-    private Color _borderColor;
+    private Thickness _border;
+    private SKColor _borderColor;
     private Image _image;
     private int _radius;
     private float _shadowDepth;
@@ -19,10 +19,10 @@ public class PictureBox : UIElementBase
     {
         _sizeMode = PictureBoxSizeMode.Normal;
         _radius = 0;
-        _border = new Padding(0);
-        _borderColor = Color.Transparent;
+        _border = new Thickness(0);
+        _borderColor = SKColor.Transparent;
         _shadowDepth = 0;
-        BackColor = Color.Transparent;
+        BackColor = SKColor.Transparent;
     }
 
     [Category("Appearance")]
@@ -62,7 +62,7 @@ public class PictureBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Padding Border
+    public Thickness Border
     {
         get => _border;
         set
@@ -76,7 +76,7 @@ public class PictureBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color BorderColor
+    public SKColor BorderColor
     {
         get => _borderColor;
         set
@@ -105,10 +105,10 @@ public class PictureBox : UIElementBase
 
     public override void OnPaint(SKCanvas canvas)
     {
-        var rect = new SKRect(0, 0, Width, Height);
+        var rect = new SkiaSharp.SKRect(0, 0, Width, Height);
 
-        var color = BackColor == Color.Transparent ? ColorScheme.BackColor2 : BackColor;
-        var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
+        var color = BackColor == SKColor.Transparent ? ColorScheme.BackColor2 : BackColor;
+        var borderColor = _borderColor == SKColor.Transparent ? ColorScheme.BorderColor : _borderColor;
 
         // Gölge çizimi
         if (_shadowDepth > 0)
@@ -146,7 +146,7 @@ public class PictureBox : UIElementBase
         using var paint = new SKPaint();
         try
         {
-            paint.Color = color.ToSKColor();
+            paint.Color = color;
             paint.IsAntialias = true;
 
             if (_radius > 0)
@@ -168,7 +168,7 @@ public class PictureBox : UIElementBase
         if (_border.All > 0 || _border.Left > 0 || _border.Top > 0 || _border.Right > 0 || _border.Bottom > 0)
             try
             {
-                paint.Color = borderColor.ToSKColor();
+                paint.Color = borderColor;
                 paint.Style = SKPaintStyle.Stroke;
                 paint.StrokeWidth = 1;
                 paint.IsAntialias = true;
@@ -296,10 +296,10 @@ public class PictureBox : UIElementBase
         base.OnPaint(canvas);
     }
 
-    private SKRect GetImageRectangle()
+    private SkiaSharp.SKRect GetImageRectangle()
     {
         if (_image == null)
-            return SKRect.Empty;
+            return SkiaSharp.SKRect.Empty;
 
         var imageWidth = _image.Width;
         var imageHeight = _image.Height;
@@ -309,17 +309,17 @@ public class PictureBox : UIElementBase
         switch (_sizeMode)
         {
             case PictureBoxSizeMode.Normal:
-                return new SKRect(0, 0, imageWidth, imageHeight);
+                return new SkiaSharp.SKRect(0, 0, imageWidth, imageHeight);
             case PictureBoxSizeMode.StretchImage:
-                return new SKRect(0, 0, controlWidth, controlHeight);
+                return new SkiaSharp.SKRect(0, 0, controlWidth, controlHeight);
             case PictureBoxSizeMode.AutoSize:
                 Width = imageWidth;
                 Height = imageHeight;
-                return new SKRect(0, 0, imageWidth, imageHeight);
+                return new SkiaSharp.SKRect(0, 0, imageWidth, imageHeight);
             case PictureBoxSizeMode.CenterImage:
                 var x = (controlWidth - imageWidth) / 2;
                 var y = (controlHeight - imageHeight) / 2;
-                return new SKRect(x, y, x + imageWidth, y + imageHeight);
+                return new SkiaSharp.SKRect(x, y, x + imageWidth, y + imageHeight);
             case PictureBoxSizeMode.Zoom:
                 var ratioX = (float)controlWidth / imageWidth;
                 var ratioY = (float)controlHeight / imageHeight;
@@ -328,9 +328,9 @@ public class PictureBox : UIElementBase
                 var newHeight = imageHeight * ratio;
                 var newX = (controlWidth - newWidth) / 2;
                 var newY = (controlHeight - newHeight) / 2;
-                return new SKRect(newX, newY, newX + newWidth, newY + newHeight);
+                return new SkiaSharp.SKRect(newX, newY, newX + newWidth, newY + newHeight);
             default:
-                return new SKRect(0, 0, imageWidth, imageHeight);
+                return new SkiaSharp.SKRect(0, 0, imageWidth, imageHeight);
         }
     }
 }

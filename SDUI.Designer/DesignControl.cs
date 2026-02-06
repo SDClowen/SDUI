@@ -1,4 +1,4 @@
-using System.Drawing;
+
 using System.Text.Json.Serialization;
 using System.Reflection;
 using SDUI.Controls;
@@ -35,7 +35,7 @@ public class DesignControl
 
     public string Name { get; set; }
     public string ControlType { get; set; }
-    public Point Location { get; set; }
+    public SKPoint Location { get; set; }
     public Size Size { get; set; }
     public string Text { get; set; }
 

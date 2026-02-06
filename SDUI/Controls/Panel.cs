@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Linq;
 using System.Windows.Forms;
 using SkiaSharp;
@@ -9,8 +9,8 @@ namespace SDUI.Controls;
 
 public class Panel : UIElementBase
 {
-    private Padding _border;
-    private Color _borderColor = Color.Transparent;
+    private Thickness _border;
+    private SKColor _borderColor = SKColor.Transparent;
     private int _radius = 10;
     private float _shadowDepth = 4;
     private float RadiusScaled => _radius * ScaleFactor;
@@ -18,7 +18,7 @@ public class Panel : UIElementBase
 
     public Panel()
     {
-        BackColor = Color.Transparent;
+        BackColor = SKColor.Transparent;
     }
 
     [Category("Appearance")]
@@ -36,7 +36,7 @@ public class Panel : UIElementBase
     }
 
     [Category("Appearance")]
-    public Padding Border
+    public Thickness Border
     {
         get => _border;
         set
@@ -50,7 +50,7 @@ public class Panel : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color BorderColor
+    public SKColor BorderColor
     {
         get => _borderColor;
         set
@@ -79,10 +79,10 @@ public class Panel : UIElementBase
 
     public override void OnPaint(SKCanvas canvas)
     {
-        var rect = new SKRect(0, 0, Width, Height);
+        var rect = new SkiaSharp.SKRect(0, 0, Width, Height);
 
-        var color = BackColor == Color.Transparent ? ColorScheme.BackColor : BackColor;
-        var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
+        var color = BackColor == SKColor.Transparent ? ColorScheme.BackColor : BackColor;
+        var borderColor = _borderColor == SKColor.Transparent ? ColorScheme.BorderColor : _borderColor;
 
         // Gölge çizimi
         if (_shadowDepth > 0)
@@ -120,7 +120,7 @@ public class Panel : UIElementBase
         // Panel arka planı
         using var paint = new SKPaint
         {
-            Color = color.ToSKColor(),
+            Color = color,
             IsAntialias = true,
             FilterQuality = SKFilterQuality.High
         };
@@ -145,7 +145,7 @@ public class Panel : UIElementBase
         if (_border.All > 0 || _border.Left > 0 || _border.Top > 0 || _border.Right > 0 || _border.Bottom > 0)
             try
             {
-                paint.Color = borderColor.ToSKColor();
+                paint.Color = borderColor;
                 paint.Style = SKPaintStyle.Stroke;
                 paint.StrokeWidth = 1f * ScaleFactor;
                 paint.IsAntialias = true;

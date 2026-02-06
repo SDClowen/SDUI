@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Extensions;
 using SDUI.Helpers;
@@ -15,16 +15,16 @@ public class ChatBubble : UIElementBase
     private float _radius = 12f;
 
     private float _tailSize = 8f;
-    private SizeF _textSize;
+    private SKSize _textSize;
 
     public ChatBubble()
     {
-        MinimumSize = new Size(32, 32);
+        MinimumSize = new SKSize(32, 32);
         TextAlign = ContentAlignment.MiddleLeft;
-        Padding = new Padding(12);
+        Padding = new Thickness(12);
     }
 
-    [Category("Appearance")] public Color Color { get; set; } = ColorScheme.PrimaryColor;
+    [Category("Appearance")] public SKColor Color { get; set; } = ColorScheme.PrimaryColor;
 
     [Category("Appearance")]
     public float Radius
@@ -71,16 +71,17 @@ public class ChatBubble : UIElementBase
     internal override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
+
         using (var paint = new SKPaint())
         {
-            paint.TextSize = Font.Size.PtToPx(this);
+            paint.TextSize = Font.Size.Topx(this);
             paint.Typeface = FontManager.GetSKTypeface(Font);
             var metrics = paint.FontMetrics;
-            _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
+            _textSize = new SKSize(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
         }
 
         if (AutoSize)
-            Size = GetPreferredSize(Size.Empty);
+            Size = GetPreferredSize(SKSize.Empty);
     }
 
     public override void OnPaint(SKCanvas canvas)
@@ -92,7 +93,7 @@ public class ChatBubble : UIElementBase
 
         // Baloncuk şeklini çiz
         var bubblePath = new SKPath();
-        var rect = new SKRect(0, 0, Width, Height);
+        var rect = new SkiaSharp.SKRect(0, 0, Width, Height);
 
         // Tail (kuyruk) için alan bırak
         if (IsIncoming)
@@ -126,7 +127,7 @@ public class ChatBubble : UIElementBase
         // Baloncuğu çiz
         using (var paint = new SKPaint
                {
-                   Color = Color.ToSKColor(),
+                   Color = Color,
                    IsAntialias = true,
                    Style = SKPaintStyle.Fill
                })
@@ -156,15 +157,15 @@ public class ChatBubble : UIElementBase
         }
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
+    public override SKSize GetPreferredSize(SKSize proposedSize)
     {
-        var width = (int)Math.Ceiling(_textSize.Width) + Padding.Horizontal + (int)(_tailSize * 2);
-        var height = (int)Math.Ceiling(_textSize.Height) + Padding.Vertical;
+        var width = MathF.Ceiling(_textSize.Width) + Padding.Horizontal + (_tailSize * 2);
+        var height = MathF.Ceiling(_textSize.Height) + Padding.Vertical;
 
         // Minimum boyut kontrolü
         width = Math.Max(width, MinimumSize.Width);
         height = Math.Max(height, MinimumSize.Height);
 
-        return new Size(width, height);
+        return new SKSize(width, height);
     }
 }

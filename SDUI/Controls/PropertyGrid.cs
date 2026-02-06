@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
@@ -25,14 +25,14 @@ public class PropertyGrid : UIElementBase
     public PropertyGrid()
     {
         BackColor = ColorScheme.BackColor;
-        Size = new Size(300, 400);
+        Size = new SKSize(300, 400);
         AutoScroll = true;
         
         _categoryPanel = new FlowLayoutPanel
         {
             Dock = System.Windows.Forms.DockStyle.Fill,
             FlowDirection = System.Windows.Forms.FlowDirection.TopDown,
-            BackColor = Color.Transparent,
+            BackColor = SKColor.Transparent,
             ShadowDepth = 0,
             Radius = 0,
             Border = new System.Windows.Forms.Padding(0),
@@ -114,7 +114,7 @@ public class PropertyGrid : UIElementBase
                 foreach (var prop in group.OrderBy(p => p.Name))
                 {
                     var item = CreatePropertyItem(prop);
-                    item.Location = new Point(0, yPos);
+                    item.Location = new SKPoint(0, yPos);
                     categoryGroup.Controls.Add(item);
                     yPos += item.Height;
                 }
@@ -139,7 +139,7 @@ public class PropertyGrid : UIElementBase
             foreach (var prop in properties.OrderBy(p => p.Name))
             {
                 var item = CreatePropertyItem(prop);
-                item.Location = new Point(0, yPos);
+                item.Location = new SKPoint(0, yPos);
                 categoryGroup.Controls.Add(item);
                 yPos += item.Height;
             }
@@ -166,7 +166,7 @@ public class PropertyGrid : UIElementBase
         {
             Dock = System.Windows.Forms.DockStyle.Fill,
             FlowDirection = System.Windows.Forms.FlowDirection.TopDown,
-            BackColor = Color.Transparent,
+            BackColor = SKColor.Transparent,
             ShadowDepth = 0,
             Radius = 0,
             Border = new System.Windows.Forms.Padding(0),
@@ -184,7 +184,7 @@ public class PropertyGrid : UIElementBase
         {
             Width = contentWidth,
             Height = lineHeight,
-            BackColor = Color.Transparent,
+            BackColor = SKColor.Transparent,
             ShadowDepth = 0,
             Radius = 0,
             Border = new System.Windows.Forms.Padding(0)
@@ -193,8 +193,8 @@ public class PropertyGrid : UIElementBase
         var addButton = new Button
         {
             Text = "+",
-            Size = new Size(lineHeight - 4, lineHeight - 4),
-            Location = new Point(0, 2),
+            Size = new SKSize(lineHeight - 4, lineHeight - 4),
+            Location = new SKPoint(0, 2),
             BackColor = ColorScheme.OnSurface,
             ForeColor = ColorScheme.ForeColor,
             Radius = 4,
@@ -209,9 +209,9 @@ public class PropertyGrid : UIElementBase
         var addLabel = new Label
         {
             Text = "Add Tab",
-            Location = new Point(lineHeight, 4),
-            Size = new Size(contentWidth - lineHeight, lineHeight - 4),
-            ForeColor = ColorScheme.ForeColor.Alpha(220)
+            Location = new SKPoint(lineHeight, 4),
+            Size = new SKSize(contentWidth - lineHeight, lineHeight - 4),
+            ForeColor = ColorScheme.ForeColor.WithAlpha(220)
         };
 
         headerRow.Controls.Add(addButton);
@@ -235,7 +235,7 @@ public class PropertyGrid : UIElementBase
         {
             Width = contentWidth,
             Height = rowHeight,
-            BackColor = Color.Transparent,
+            BackColor = SKColor.Transparent,
             ShadowDepth = 0,
             Radius = 0,
             Border = new System.Windows.Forms.Padding(0)
@@ -250,8 +250,8 @@ public class PropertyGrid : UIElementBase
         var titleBox = new TextBox
         {
             Text = page.Text,
-            Location = new Point(0, 2),
-            Size = new Size(textBoxWidth, lineHeight - 4)
+            Location = new SKPoint(0, 2),
+            Size = new SKSize(textBoxWidth, lineHeight - 4)
         };
         titleBox.TextChanged += (s, e) =>
         {
@@ -262,8 +262,8 @@ public class PropertyGrid : UIElementBase
         var selectButton = new Button
         {
             Text = "Sel",
-            Size = new Size(selectWidth, buttonSize),
-            Location = new Point(textBoxWidth + buttonSpacing, 2),
+            Size = new SKSize(selectWidth, buttonSize),
+            Location = new SKPoint(textBoxWidth + buttonSpacing, 2),
             BackColor = ColorScheme.OnSurface,
             ForeColor = ColorScheme.ForeColor,
             Radius = 4,
@@ -280,8 +280,8 @@ public class PropertyGrid : UIElementBase
         var upButton = new Button
         {
             Text = "↑",
-            Size = new Size(buttonSize, buttonSize),
-            Location = new Point(textBoxWidth + buttonSpacing + selectWidth + buttonSpacing, 2),
+            Size = new SKSize(buttonSize, buttonSize),
+            Location = new SKPoint(textBoxWidth + buttonSpacing + selectWidth + buttonSpacing, 2),
             BackColor = ColorScheme.OnSurface,
             ForeColor = ColorScheme.ForeColor,
             Radius = 4,
@@ -302,8 +302,8 @@ public class PropertyGrid : UIElementBase
         var downButton = new Button
         {
             Text = "↓",
-            Size = new Size(buttonSize, buttonSize),
-            Location = new Point(textBoxWidth + buttonSpacing + selectWidth + buttonSpacing + buttonSize + buttonSpacing, 2),
+            Size = new SKSize(buttonSize, buttonSize),
+            Location = new SKPoint(textBoxWidth + buttonSpacing + selectWidth + buttonSpacing + buttonSize + buttonSpacing, 2),
             BackColor = ColorScheme.OnSurface,
             ForeColor = ColorScheme.ForeColor,
             Radius = 4,
@@ -324,8 +324,8 @@ public class PropertyGrid : UIElementBase
         var removeButton = new Button
         {
             Text = "×",
-            Size = new Size(buttonSize, buttonSize),
-            Location = new Point(textBoxWidth + buttonSpacing + selectWidth + buttonSpacing + buttonSize + buttonSpacing + buttonSize + buttonSpacing, 2),
+            Size = new SKSize(buttonSize, buttonSize),
+            Location = new SKPoint(textBoxWidth + buttonSpacing + selectWidth + buttonSpacing + buttonSize + buttonSpacing + buttonSize + buttonSpacing, 2),
             BackColor = ColorScheme.SurfaceVariant,
             ForeColor = ColorScheme.ForeColor,
             Radius = 4,
@@ -341,8 +341,8 @@ public class PropertyGrid : UIElementBase
         {
             Text = page.IconPath,
             PlaceholderText = "Icon path",
-            Location = new Point(0, lineHeight + 2),
-            Size = new Size(contentWidth - buttonSize - 4, lineHeight - 4)
+            Location = new SKPoint(0, lineHeight + 2),
+            Size = new SKSize(contentWidth - buttonSize - 4, lineHeight - 4)
         };
 
         void ApplyIconPath()
@@ -364,8 +364,8 @@ public class PropertyGrid : UIElementBase
         var clearButton = new Button
         {
             Text = "Clr",
-            Size = new Size(buttonSize, buttonSize),
-            Location = new Point(contentWidth - buttonSize, lineHeight + 2),
+            Size = new SKSize(buttonSize, buttonSize),
+            Location = new SKPoint(contentWidth - buttonSize, lineHeight + 2),
             BackColor = ColorScheme.SurfaceVariant,
             ForeColor = ColorScheme.ForeColor,
             Radius = 4,
@@ -435,23 +435,23 @@ internal class PropertyItem : UIElementBase
         
         Width = 280;
         Height = 45;
-        BackColor = Color.Transparent;
+        BackColor = SKColor.Transparent;
         Margin = new System.Windows.Forms.Padding(2, 1, 2, 1);
 
         _nameLabel = new Label
         {
             Text = property.Name,
-            Location = new Point(10, 3),
-            Size = new Size(130, 18),
+            Location = new SKPoint(10, 3),
+            Size = new SKSize(130, 18),
             Font = new Font("Segoe UI", 8.5f),
-            ForeColor = ColorScheme.ForeColor.Alpha(200)
+            ForeColor = ColorScheme.ForeColor.WithAlpha(200)
         };
 
         _valueEditor = CreateEditor(_target, _property, OnValueChangedInternal);
         if (_valueEditor is GroupBox nestedGroup)
         {
             _nameLabel.Visible = false;
-            nestedGroup.Location = new Point(5, 0);
+            nestedGroup.Location = new SKPoint(5, 0);
             nestedGroup.Width = 270;
             Height = nestedGroup.Height + 4;
             nestedGroup.CollapsedChanged += (s, e) =>
@@ -463,8 +463,8 @@ internal class PropertyItem : UIElementBase
         }
         else
         {
-            _valueEditor.Location = new Point(145, 2);
-            _valueEditor.Size = new Size(125, 40);
+            _valueEditor.Location = new SKPoint(145, 2);
+            _valueEditor.Size = new SKSize(125, 40);
         }
 
         Controls.Add(_nameLabel);
@@ -515,11 +515,11 @@ internal class PropertyItem : UIElementBase
         }
 
         // Color properties
-        if (underlyingType == typeof(SKColor))
+        if (underlyingType == typeof(SkiaSharp.SKColor))
         {
             var picker = new ColorPicker
             {
-                SelectedColor = currentValue is SKColor c ? c : SKColors.Empty,
+                SelectedColor = currentValue is SkiaSharp.SKColor c ? c : SKColors.Empty,
                 ShowHex = true
             };
             picker.SelectedItemChanged += (s, e) => onValueChanged(picker.SelectedColor);
@@ -545,10 +545,10 @@ internal class PropertyItem : UIElementBase
             return textBox;
         }
 
-        // Point, Size, Padding properties
-        if (underlyingType == typeof(Point) || underlyingType == typeof(Size) || 
+        // SKPoint, Size, Padding properties
+        if (underlyingType == typeof(SKPoint) || underlyingType == typeof(SKSize) || 
             underlyingType == typeof(System.Windows.Forms.Padding) ||
-            underlyingType == typeof(Rectangle))
+            underlyingType == typeof(SkiaSharp.SKRect))
         {
             var textBox = new TextBox
             {
@@ -632,7 +632,7 @@ internal class PropertyItem : UIElementBase
         {
             Dock = System.Windows.Forms.DockStyle.Fill,
             FlowDirection = System.Windows.Forms.FlowDirection.TopDown,
-            BackColor = Color.Transparent,
+            BackColor = SKColor.Transparent,
             ShadowDepth = 0,
             Radius = 0,
             Border = new System.Windows.Forms.Padding(0),
@@ -710,28 +710,28 @@ internal class PropertyItem : UIElementBase
             if (!TryExtractNumbers(text, out var numbers))
                 return false;
 
-            if (targetType == typeof(Point) && numbers.Count >= 2)
+            if (targetType == typeof(SKPoint) && numbers.Count >= 2)
             {
                 if (!TryConvertToInt(numbers[0], out var x) || !TryConvertToInt(numbers[1], out var y))
                     return false;
-                result = new Point(x, y);
+                result = new SKPoint(x, y);
                 return true;
             }
-            if (targetType == typeof(Size) && numbers.Count >= 2)
+            if (targetType == typeof(SKSize) && numbers.Count >= 2)
             {
                 if (!TryConvertToInt(numbers[0], out var w) || !TryConvertToInt(numbers[1], out var h))
                     return false;
-                result = new Size(w, h);
+                result = new SKSize(w, h);
                 return true;
             }
-            if (targetType == typeof(Rectangle) && numbers.Count >= 4)
+            if (targetType == typeof(SkiaSharp.SKRect) && numbers.Count >= 4)
             {
                 if (!TryConvertToInt(numbers[0], out var x) ||
                     !TryConvertToInt(numbers[1], out var y) ||
                     !TryConvertToInt(numbers[2], out var w) ||
                     !TryConvertToInt(numbers[3], out var h))
                     return false;
-                result = new Rectangle(x, y, w, h);
+                result = new SkiaSharp.SKRect(x, y, w, h);
                 return true;
             }
             if (targetType == typeof(System.Windows.Forms.Padding) && numbers.Count >= 1)
@@ -784,7 +784,7 @@ internal class PropertyItem : UIElementBase
 
         var effectiveType = underlyingType ?? targetType;
 
-        if (effectiveType == typeof(Color))
+        if (effectiveType == typeof(SKColor))
         {
             if (TryParseColor(text, out var parsedColor))
             {
@@ -794,8 +794,8 @@ internal class PropertyItem : UIElementBase
             return false;
         }
 
-        if (effectiveType == typeof(Point) || effectiveType == typeof(Size) ||
-            effectiveType == typeof(System.Windows.Forms.Padding) || effectiveType == typeof(Rectangle))
+        if (effectiveType == typeof(SKPoint) || effectiveType == typeof(SKSize) ||
+            effectiveType == typeof(System.Windows.Forms.Padding) || effectiveType == typeof(SkiaSharp.SKRect))
             return TryParseStructure(text, effectiveType, out result);
 
         if (effectiveType == typeof(int) || effectiveType == typeof(float) ||
@@ -806,9 +806,9 @@ internal class PropertyItem : UIElementBase
         return false;
     }
 
-    private static bool TryParseColor(string text, out Color result)
+    private static bool TryParseColor(string text, out SKColor result)
     {
-        result = Color.Empty;
+        result = SKColor.Empty;
         if (string.IsNullOrWhiteSpace(text))
             return false;
 
@@ -831,7 +831,7 @@ internal class PropertyItem : UIElementBase
                     TryConvertToByte(numbers[1], out var g) &&
                     TryConvertToByte(numbers[2], out var b))
                 {
-                    result = Color.FromArgb(r, g, b);
+                    result = new SKColor(r, g, b);
                     return true;
                 }
             }
@@ -842,13 +842,13 @@ internal class PropertyItem : UIElementBase
                     TryConvertToByte(numbers[2], out var g) &&
                     TryConvertToByte(numbers[3], out var b))
                 {
-                    result = Color.FromArgb(a, r, g, b);
+                    result = new SKColor(a, r, g, b);
                     return true;
                 }
             }
         }
 
-        var named = Color.FromName(trimmed);
+        var named = SKColor.FromName(trimmed);
         if (named.IsKnownColor || named.IsNamedColor)
         {
             result = named;
@@ -858,9 +858,9 @@ internal class PropertyItem : UIElementBase
         return false;
     }
 
-    private static bool TryParseHexColor(string text, out Color color)
+    private static bool TryParseHexColor(string text, out SKColor color)
     {
-        color = Color.Empty;
+        color = SKColor.Empty;
         var hex = text.TrimStart('#');
         if (hex.Length == 6 || hex.Length == 8)
         {
@@ -871,7 +871,7 @@ internal class PropertyItem : UIElementBase
                     var r = (int)((value >> 16) & 0xFF);
                     var g = (int)((value >> 8) & 0xFF);
                     var b = (int)(value & 0xFF);
-                    color = Color.FromArgb(r, g, b);
+                    color = new SKColor(r, g, b);
                     return true;
                 }
                 else
@@ -880,7 +880,7 @@ internal class PropertyItem : UIElementBase
                     var r = (int)((value >> 16) & 0xFF);
                     var g = (int)((value >> 8) & 0xFF);
                     var b = (int)(value & 0xFF);
-                    color = Color.FromArgb(a, r, g, b);
+                    color = new SKColor(a, r, g, b);
                     return true;
                 }
             }
@@ -1037,23 +1037,23 @@ internal sealed class NestedPropertyItem : UIElementBase
 
         Width = 260;
         Height = 45;
-        BackColor = Color.Transparent;
+        BackColor = SKColor.Transparent;
         Margin = new System.Windows.Forms.Padding(2, 1, 2, 1);
 
         _nameLabel = new Label
         {
             Text = childProperty.Name,
-            Location = new Point(10, 3),
-            Size = new Size(120, 18),
+            Location = new SKPoint(10, 3),
+            Size = new SKSize(120, 18),
             Font = new Font("Segoe UI", 8.5f),
-            ForeColor = ColorScheme.ForeColor.Alpha(200)
+            ForeColor = ColorScheme.ForeColor.WithAlpha(200)
         };
 
         _valueEditor = CreateNestedEditor();
         if (_valueEditor is GroupBox nestedGroup)
         {
             _nameLabel.Visible = false;
-            nestedGroup.Location = new Point(5, 0);
+            nestedGroup.Location = new SKPoint(5, 0);
             nestedGroup.Width = 250;
             Height = nestedGroup.Height + 4;
             nestedGroup.CollapsedChanged += (s, e) =>
@@ -1065,8 +1065,8 @@ internal sealed class NestedPropertyItem : UIElementBase
         }
         else
         {
-            _valueEditor.Location = new Point(135, 2);
-            _valueEditor.Size = new Size(115, 40);
+            _valueEditor.Location = new SKPoint(135, 2);
+            _valueEditor.Size = new SKSize(115, 40);
         }
 
         Controls.Add(_nameLabel);

@@ -1,12 +1,12 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using SkiaSharp;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
+
 using System.Runtime.CompilerServices;
-using System.Windows.Forms;
 
 namespace SDUI.Layout;
 
@@ -202,13 +202,13 @@ public sealed class PropertyStore
         // For value types that are larger than 8 bytes, we attempt to update the existing value
         // to avoid another boxing allocation.
 
-        if (typeof(T) == typeof(Padding))
+        if (typeof(T) == typeof(Thickness))
         {
-            AddOrUpdate(key, Unsafe.As<T, Padding>(ref value));
+            AddOrUpdate(key, Unsafe.As<T, Thickness>(ref value));
         }
-        else if (typeof(T) == typeof(Rectangle))
+        else if (typeof(T) == typeof(SkiaSharp.SKRect))
         {
-            AddOrUpdate(key, Unsafe.As<T, Rectangle>(ref value));
+            AddOrUpdate(key, Unsafe.As<T, SkiaSharp.SKRect>(ref value));
         }
         else
         {

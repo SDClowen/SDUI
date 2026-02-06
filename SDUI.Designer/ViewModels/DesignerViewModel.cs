@@ -74,7 +74,7 @@ public class DesignerViewModel : ViewModelBase
         GeneratedCode = @"// Generated code will appear here
 
 using System;
-using System.Drawing;
+
 using SDUI.Controls;
 
 public class MyForm : UIWindow

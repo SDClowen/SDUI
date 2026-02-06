@@ -1,58 +1,8 @@
+using SDUI.Controls;
+using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Windows.Forms;
-using SDUI.Controls;
-using SDUI.Enums;
-
-namespace SDUI.Enums
-{
-    /// <summary>
-    ///     Flex container direction
-    /// </summary>
-    public enum FlexDirection
-    {
-        Row,
-        RowReverse,
-        Column,
-        ColumnReverse
-    }
-
-    /// <summary>
-    ///     Main axis alignment
-    /// </summary>
-    public enum JustifyContent
-    {
-        FlexStart,
-        FlexEnd,
-        Center,
-        SpaceBetween,
-        SpaceAround,
-        SpaceEvenly
-    }
-
-    /// <summary>
-    ///     Cross axis alignment
-    /// </summary>
-    public enum AlignItems
-    {
-        FlexStart,
-        FlexEnd,
-        Center,
-        Stretch
-    }
-
-    /// <summary>
-    ///     Item wrapping behavior
-    /// </summary>
-    public enum FlexWrap
-    {
-        NoWrap,
-        Wrap,
-        WrapReverse
-    }
-}
 
 namespace SDUI.Helpers
 {
@@ -66,15 +16,15 @@ namespace SDUI.Helpers
         public AlignItems AlignItems { get; set; } = AlignItems.FlexStart;
         public FlexWrap Wrap { get; set; } = FlexWrap.NoWrap;
         public int Gap { get; set; } = 0;
-        public Padding Padding { get; set; } = new(0);
+        public Thickness Padding { get; set; } = new(0);
 
         /// <summary>
         ///     Perform flex layout on controls
         /// </summary>
-        public void PerformLayout(UIElementBase container, Rectangle clientArea)
+        public void PerformLayout(ElementBase container, SkiaSharp.SKRect clientArea)
         {
             var controls = container.Controls
-                .OfType<UIElementBase>()
+                .OfType<ElementBase>()
                 .Where(c => c.Visible && c.Dock == DockStyle.None)
                 .ToList();
 
@@ -82,7 +32,7 @@ namespace SDUI.Helpers
                 return;
 
             // Apply padding
-            var contentArea = new Rectangle(
+            var contentArea = new SkiaSharp.SKRect(
                 clientArea.Left + Padding.Left,
                 clientArea.Top + Padding.Top,
                 clientArea.Width - Padding.Horizontal,
@@ -102,11 +52,11 @@ namespace SDUI.Helpers
                 LayoutMultiLine(controls, contentArea, isHorizontal);
         }
 
-        private void LayoutSingleLine(List<UIElementBase> controls, Rectangle area, bool isHorizontal)
+        private void LayoutSingleLine(List<ElementBase> controls, SkiaSharp.SKRect area, bool isHorizontal)
         {
             // Calculate total size
-            var totalSize = 0;
-            var maxCrossSize = 0;
+            var totalSize = 0f;
+            var maxCrossSize = 0f;
 
             foreach (var control in controls)
                 if (isHorizontal)
@@ -141,29 +91,29 @@ namespace SDUI.Helpers
 
                 if (isHorizontal)
                 {
-                    control.Location = new Point(area.Left + mainPos, area.Top + crossPos);
+                    control.Location = new SKPoint(area.Left + mainPos, area.Top + crossPos);
 
                     // Apply stretch
                     if (AlignItems == AlignItems.Stretch)
-                        control.Size = new Size(control.Size.Width, area.Height);
+                        control.Size = new SKSize(control.Size.Width, area.Height);
                 }
                 else
                 {
-                    control.Location = new Point(area.Left + crossPos, area.Top + mainPos);
+                    control.Location = new SKPoint(area.Left + crossPos, area.Top + mainPos);
 
                     // Apply stretch
                     if (AlignItems == AlignItems.Stretch)
-                        control.Size = new Size(area.Width, control.Size.Height);
+                        control.Size = new SKSize(area.Width, control.Size.Height);
                 }
             }
         }
 
-        private void LayoutMultiLine(List<UIElementBase> controls, Rectangle area, bool isHorizontal)
+        private void LayoutMultiLine(List<ElementBase> controls, SkiaSharp.SKRect area, bool isHorizontal)
         {
             // Group controls into lines
-            var lines = new List<List<UIElementBase>>();
-            var currentLine = new List<UIElementBase>();
-            var currentLineSize = 0;
+            var lines = new List<List<ElementBase>>();
+            var currentLine = new List<ElementBase>();
+            var currentLineSize = 0f;
             var maxLineSize = isHorizontal ? area.Width : area.Height;
 
             foreach (var control in controls)
@@ -174,7 +124,7 @@ namespace SDUI.Helpers
                 if (requiredSize > maxLineSize && currentLine.Count > 0)
                 {
                     lines.Add(currentLine);
-                    currentLine = new List<UIElementBase>();
+                    currentLine = new List<ElementBase>();
                     currentLineSize = 0;
                 }
 
@@ -186,11 +136,11 @@ namespace SDUI.Helpers
                 lines.Add(currentLine);
 
             // Position each line
-            var crossOffset = 0;
+            var crossOffset = 0f;
             foreach (var line in lines)
             {
-                var lineMainSize = 0;
-                var lineCrossSize = 0;
+                var lineMainSize = 0f;
+                var lineCrossSize = 0f;
 
                 foreach (var control in line)
                     if (isHorizontal)
@@ -218,23 +168,23 @@ namespace SDUI.Helpers
                     );
 
                     if (isHorizontal)
-                        control.Location = new Point(area.Left + mainPos, area.Top + crossOffset + crossPos);
+                        control.Location = new SKPoint(area.Left + mainPos, area.Top + crossOffset + crossPos);
                     else
-                        control.Location = new Point(area.Left + crossOffset + crossPos, area.Top + mainPos);
+                        control.Location = new SKPoint(area.Left + crossOffset + crossPos, area.Top + mainPos);
                 }
 
                 crossOffset += lineCrossSize + Gap;
             }
         }
 
-        private int[] CalculateMainAxisPositions(int count, int totalSize, int availableSize)
+        private float[] CalculateMainAxisPositions(int count, float totalSize, float availableSize)
         {
-            var positions = new int[count];
+            var positions = new float[count];
 
             switch (JustifyContent)
             {
                 case JustifyContent.FlexStart:
-                    var pos = 0;
+                    var pos = 0f;
                     for (var i = 0; i < count; i++)
                     {
                         positions[i] = pos;
@@ -309,7 +259,7 @@ namespace SDUI.Helpers
             return positions;
         }
 
-        private int CalculateCrossAxisPosition(int itemSize, int lineSize)
+        private float CalculateCrossAxisPosition(float itemSize, float lineSize)
         {
             return AlignItems switch
             {

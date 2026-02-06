@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
@@ -11,7 +11,7 @@ namespace SDUI.Controls;
 public class PictureBox2 : UIElementBase
 {
     private ErrorImage _errorImage;
-    private Image _image;
+    private SKImage _image;
     private string _imageLocation;
     private bool _ownsImage;
     private PictureBoxSizeMode _sizeMode;
@@ -22,12 +22,12 @@ public class PictureBox2 : UIElementBase
         _sizeMode = PictureBoxSizeMode.Normal;
         WaitOnLoad = true;
         _errorImage = ErrorImage.NoImage;
-        BackColor = Color.Transparent;
+        BackColor = SKColors.Transparent;
     }
 
     [DefaultValue(null)]
     [Category("Appearance")]
-    public Image Image
+    public SKImage Image
     {
         get => _image;
         set
@@ -141,8 +141,8 @@ public class PictureBox2 : UIElementBase
 
     public override void OnPaint(SKCanvas canvas)
     {
-        if (BackColor != Color.Transparent)
-            canvas.DrawRect(0, 0, Width, Height, new SKPaint { Color = BackColor.ToSKColor() });
+        if (BackColor != SKColors.Transparent)
+            canvas.DrawRect(0, 0, Width, Height, new SKPaint { Color = BackColor });
 
         if (_skBitmap == null)
         {
@@ -161,10 +161,10 @@ public class PictureBox2 : UIElementBase
         base.OnPaint(canvas);
     }
 
-    private SKRect CalculateImageRect()
+    private SkiaSharp.SKRect CalculateImageRect()
     {
         if (_skBitmap == null)
-            return new SKRect(0, 0, Width, Height);
+            return new SkiaSharp.SKRect(0, 0, Width, Height);
 
         float destX = 0, destY = 0;
         float destWidth = Width, destHeight = Height;
@@ -202,7 +202,7 @@ public class PictureBox2 : UIElementBase
                 break;
         }
 
-        return new SKRect(destX, destY, destX + destWidth, destY + destHeight);
+        return new SkiaSharp.SKRect(destX, destY, destX + destWidth, destY + destHeight);
     }
 
     private void DrawErrorImage(SKCanvas canvas)

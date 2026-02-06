@@ -1,8 +1,8 @@
 ﻿using SDUI.Animation;
 using SDUI.Collections;
-using SDUI.Extensions;
 using SDUI.Helpers;
 using SDUI.Layout;
+using SDUI.Native.Windows;
 using SDUI.Rendering;
 using SkiaSharp;
 using System;
@@ -10,12 +10,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.Linq;
-using System.Windows.Forms;
+using System.Timers;
+using static SDUI.Native.Windows.Methods;
 
 namespace SDUI.Controls;
+
 
 public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 {
@@ -92,7 +92,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The rectangle of extend box
     /// </summary>
-    private RectangleF _closeTabBoxRect;
+    private SkiaSharp.SKRect _closeTabBoxRect;
 
     /// <summary>
     ///     The control box left value
@@ -102,7 +102,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The rectangle of control box
     /// </summary>
-    private RectangleF _controlBoxRect;
+    private SkiaSharp.SKRect _controlBoxRect;
 
     private Cursor _currentCursor;
 
@@ -118,14 +118,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The rectangle of extend box
     /// </summary>
-    private RectangleF _extendBoxRect;
+    private SkiaSharp.SKRect _extendBoxRect;
 
     private UIElementBase _focusedElement;
 
     /// <summary>
     ///     The rectangle of extend box
     /// </summary>
-    private RectangleF _formMenuRect;
+    private SkiaSharp.SKRect _formMenuRect;
 
     /// <summary>
     ///     If the mouse down <c>true</c>; otherwise <c>false</c>
@@ -135,7 +135,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     Gradient header colors
     /// </summary>
-    private Color[] _gradient = new[] { Color.Transparent, Color.Transparent };
+    private SKColor[] _gradient = new[] { SKColors.Transparent, SKColors.Transparent };
 
     private HatchStyle _hatch = HatchStyle.Percent80;
 
@@ -157,12 +157,12 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The position of the form when the left mouse button is pressed
     /// </summary>
-    private Point _location;
+    private SKPoint _location;
 
     /// <summary>
     ///     The position of the window before it is maximized
     /// </summary>
-    private Point _locationOfBeforeMaximized;
+    private SKPoint _locationOfBeforeMaximized;
 
     /// <summary>
     /// Gets or sets whether to display the control buttons of the form
@@ -191,7 +191,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The rectangle of maximize box
     /// </summary>
-    private RectangleF _maximizeBoxRect;
+    private SkiaSharp.SKRect _maximizeBoxRect;
 
     private int _maxZOrder;
 
@@ -203,7 +203,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The rectangle of minimize box
     /// </summary>
-    private RectangleF _minimizeBoxRect;
+    private SkiaSharp.SKRect _minimizeBoxRect;
 
     // Element that has explicitly captured mouse input (via SetMouseCapture)
     private UIElementBase? _mouseCapturedElement;
@@ -211,14 +211,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The position of the mouse when the left mouse button is pressed
     /// </summary>
-    private Point _mouseOffset;
+    private SKPoint _mouseOffset;
 
     private bool _needsFullRedraw = true;
 
     /// <summary>
     ///     The rectangle of extend box
     /// </summary>
-    private RectangleF _newTabBoxRect;
+    private SkiaSharp.SKRect _newTabBoxRect;
 
     private bool _newTabButton;
     private long _perfLastTimestamp;
@@ -232,7 +232,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The size of the window before it is maximized
     /// </summary>
-    private Size _sizeOfBeforeMaximized;
+    private SKSize _sizeOfBeforeMaximized;
 
     // Prevent Invalidate()->Update() storms in Software backend
     private bool _softwareUpdateQueued;
@@ -256,19 +256,19 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     private float _titleHeight = 32;
 
     private WindowPageControl _windowPageControl;
-    private Point animationSource;
+    private SKPoint animationSource;
 
     /// <summary>
     ///     The title color
     /// </summary>
-    private Color borderColor = Color.Transparent;
+    private SKColor borderColor = SKColors.Transparent;
 
     /// <summary>
     ///     Whether to trigger the stay event on the edge of the display
     /// </summary>
     private bool IsStayAtTopBorder;
 
-    private List<RectangleF> pageRect;
+    private List<SkiaSharp.SKRect> pageRect;
 
     private int previousSelectedPageIndex;
 
@@ -303,7 +303,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     The title color
     /// </summary>
-    private Color titleColor;
+    private SKColor titleColor;
 
     /// <summary>
     ///     The time at which the display edge dwell event was triggered
@@ -317,7 +317,6 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     {
         Controls = new ElementCollection(this);
         AutoScaleMode = AutoScaleMode.None;
-        CheckForIllegalCrossThreadCalls = false;
 
         // WinForms double-buffering can cause visible flicker when the window is presented by
         // a GPU swapchain (OpenGL/DX). Keep it for software, disable it for GPU backends.
@@ -482,9 +481,9 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    [DefaultValue(null)] 
-    public ContextMenuStrip ExtendMenu 
-    { 
+    [DefaultValue(null)]
+    public ContextMenuStrip ExtendMenu
+    {
         get => _extendMenu;
         set
         {
@@ -495,7 +494,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             }
         }
     }
-    
+
     private ContextMenuStrip _extendMenu;
 
     [DefaultValue(null)] public ContextMenuStrip FormMenu { get; set; }
@@ -591,7 +590,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    public Color[] Gradient
+    public SKColor[] Gradient
     {
         get => _gradient;
         set
@@ -605,8 +604,8 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     ///     Gets or sets the title color
     /// </summary>
     [Description("Title color")]
-    [DefaultValue(typeof(Color), "224, 224, 224")]
-    public Color TitleColor
+    [DefaultValue(typeof(SKColor), "224, 224, 224")]
+    public SKColor TitleColor
     {
         get => titleColor;
         set
@@ -620,16 +619,16 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     ///     Gets or sets the title color
     /// </summary>
     [Description("Border Color")]
-    [DefaultValue(typeof(Color), "Transparent")]
-    public Color BorderColor
+    [DefaultValue(typeof(SKColor), "Transparent")]
+    public SKColor BorderColor
     {
         get => borderColor;
         set
         {
             borderColor = value;
 
-            if (value != Color.Transparent)
-                WindowsHelper.ApplyBorderColor(Handle, borderColor);
+            if (value != SKColors.Transparent && !OperatingSystem.IsWindows())
+                SDUI.Native.Windows.Helpers.ApplyBorderColor(Handle, borderColor);
 
             Invalidate();
         }
@@ -797,22 +796,22 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         {
             var cp = base.CreateParams;
 
-            if (!DesignMode && _renderBackend != RenderBackend.Software)
+            if (_renderBackend != RenderBackend.Software)
             {
-                cp.Style |= (int)(NativeMethods.SetWindowLongFlags.WS_CLIPCHILDREN |
-                                  NativeMethods.SetWindowLongFlags.WS_CLIPSIBLINGS);
+                cp.Style |= (int)(SetWindowLongFlags.WS_CLIPCHILDREN |
+                                  SetWindowLongFlags.WS_CLIPSIBLINGS);
                 // WS_EX_NOREDIRECTIONBITMAP helps some WGL/SwapBuffers flicker scenarios,
                 // but can interfere with DXGI swapchains. Apply only for OpenGL.
                 if (_renderBackend == RenderBackend.OpenGL)
-                    cp.ExStyle |= (int)NativeMethods.SetWindowLongFlags.WS_EX_NOREDIRECTIONBITMAP;
-                cp.ExStyle &= ~(int)NativeMethods.SetWindowLongFlags.WS_EX_COMPOSITED;
+                    cp.ExStyle |= (uint)SetWindowLongFlags.WS_EX_NOREDIRECTIONBITMAP;
+                cp.ExStyle &= ~(uint)SetWindowLongFlags.WS_EX_COMPOSITED;
             }
 
             return cp;
         }
     }
 
-    public new ElementCollection Controls { get; }
+    public ElementCollection Controls { get; }
 
     // Explicit implementations to satisfy IUIElement interface contracts that differ from internal types
     IUIElement IUIElement.FocusedElement
@@ -853,9 +852,8 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     public bool _childControlsNeedAnchorLayout { get; set; }
     public bool _forceAnchorCalculations { get; set; }
 
-    public new void Invalidate()
+    public void Invalidate()
     {
-        base.Invalidate();
         // Avoid synchronous Update() storms (especially with multiple animations). In software
         // backend we still want snappy repaint, but we coalesce to one Update per message loop.
         if (IsHandleCreated && !IsDisposed && !Disposing && _suppressImmediateUpdateCount <= 0)
@@ -865,15 +863,15 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
     void IUIElement.Render(SKCanvas canvas)
     {
-        var w = ClientSize.Width;
-        var h = ClientSize.Height;
+        var w = (int)ClientSize.Width;
+        var h = (int)ClientSize.Height;
         if (w <= 0 || h <= 0)
             return;
         var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
         RenderScene(canvas, info);
     }
 
-    public new void PerformLayout()
+    public void PerformLayout()
     {
         if (_layoutSuspendCount > 0)
             return;
@@ -884,17 +882,17 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         Invalidate();
     }
 
-    public new void ResumeLayout()
+    public void ResumeLayout()
     {
         ResumeLayout(true);
     }
 
-    public new void SuspendLayout()
+    public void SuspendLayout()
     {
         _layoutSuspendCount++;
     }
 
-    public new void ResumeLayout(bool performLayout)
+    public void ResumeLayout(bool performLayout)
     {
         if (_layoutSuspendCount > 0)
             _layoutSuspendCount--;
@@ -931,22 +929,34 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// </summary>
     public event EventHandler OnNewTabBoxClick;
 
-    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    internal override void OnDpiChanged(float newDpi, float oldDpi)
     {
-        _suppressImmediateUpdateCount++;
         try
         {
-            base.OnDpiChanged(e);
+            base.OnDpiChanged(newDpi, oldDpi);
 
-            // Prefer WM_DPICHANGED suggested bounds; avoid manual scaling (can cause size oscillation).
-            var suggested = e.SuggestedRectangle;
-            if (Bounds != suggested) Bounds = suggested;
+            if (newDpi == oldDpi)
+                return;
+
+            _suppressImmediateUpdateCount++;
+
+            SKRect scaledRect = new SKRect(
+                Bounds.Left * newDpi,
+                Bounds.Top * newDpi,
+                Bounds.Right * newDpi,
+                Bounds.Bottom * newDpi
+            );
+
+            if (Bounds == scaledRect)
+                return;
+
+            Bounds = scaledRect;
 
             // Invalidate measurements recursively before DPI notification
             InvalidateMeasureRecursive();
 
             foreach (UIElementBase element in Controls)
-                element.OnDpiChanged(e.DeviceDpiNew, e.DeviceDpiOld);
+                element.OnDpiChanged(newDpi, oldDpi);
 
             // Invalidate layout measurements on DPI change
             PerformLayout();
@@ -972,18 +982,18 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         foreach (UIElementBase child in element.Controls) InvalidateMeasureRecursiveInternal(child);
     }
 
-    protected internal override void SetMouseCapture(UIElementBase element)
+    public override void SetMouseCapture(UIElementBase element)
     {
         _mouseCapturedElement = element;
-        NativeMethods.SetCapture(Handle);
+        SetCapture(Handle);
     }
 
-    protected internal override void ReleaseMouseCapture(UIElementBase element)
+    public override void ReleaseMouseCapture(UIElementBase element)
     {
         if (_mouseCapturedElement == element)
         {
             _mouseCapturedElement = null;
-            NativeMethods.ReleaseCapture();
+            ReleaseCapture();
         }
     }
 
@@ -1016,7 +1026,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         {
             _idleMaintenanceTimer = new Timer();
             _idleMaintenanceTimer.Interval = IdleMaintenanceDelayMs;
-            _idleMaintenanceTimer.Tick += IdleMaintenanceTimer_Tick;
+            _idleMaintenanceTimer.Elapsed += IdleMaintenanceTimer_Tick;
         }
     }
 
@@ -1069,7 +1079,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     return;
 
                 if (_renderBackend == RenderBackend.Software)
-                    Update();
+                    Invalidate();
             }));
         }
         catch
@@ -1148,17 +1158,9 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    protected override void OnPaintBackground(PaintEventArgs e)
-    {
-        if (!DesignMode && _renderBackend != RenderBackend.Software)
-            return;
-
-        base.OnPaintBackground(e);
-    }
-
     private void RecreateRenderer()
     {
-        if (DesignMode || IsDisposed || Disposing)
+        if (IsDisposed || Disposing)
             return;
 
         _renderer?.Dispose();
@@ -1180,7 +1182,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             };
 
             _renderer?.Initialize(Handle);
-            _renderer?.Resize(ClientSize.Width, ClientSize.Height);
+            _renderer?.Resize((int)ClientSize.Width, (int)ClientSize.Height);
         }
         catch
         {
@@ -1192,31 +1194,30 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
     private static MouseEventArgs CreateChildMouseEvent(MouseEventArgs source, UIElementBase element)
     {
-        // Kaynak koordinat� pencere tabanl�; elementi pencere tabanl� dikd�rtgene �evir
         var elementWindowRect = GetWindowRelativeBoundsStatic(element);
         return new MouseEventArgs(
             source.Button,
             source.Clicks,
-            source.X - elementWindowRect.X,
-            source.Y - elementWindowRect.Y,
+            source.X - (int)elementWindowRect.Location.X,
+            source.Y - (int)elementWindowRect.Location.Y,
             source.Delta);
     }
 
-    private static Rectangle GetWindowRelativeBoundsStatic(UIElementBase element)
+    private static SkiaSharp.SKRect GetWindowRelativeBoundsStatic(UIElementBase element)
     {
         if (element?.Parent == null)
-            return new Rectangle(element?.Location ?? Point.Empty, element?.Size ?? Size.Empty);
+            return new Rectangle(element?.Location ?? SKPoint.Empty, element?.Size ?? SKSize.Empty);
 
         if (element.Parent is UIWindowBase window && !window.IsDisposed)
         {
-            var screenLoc = element.PointToScreen(Point.Empty);
+            var screenLoc = element.PointToScreen(SKPoint.Empty);
             var clientLoc = window.PointToClient(screenLoc);
             return new Rectangle(clientLoc, element.Size);
         }
 
         if (element.Parent is UIElementBase parentElement)
         {
-            var screenLoc = element.PointToScreen(Point.Empty);
+            var screenLoc = element.PointToScreen(SKPoint.Empty);
             // Pencereyi zincirden bul
             UIWindowBase parentWindow = null;
             var current = parentElement;
@@ -1315,7 +1316,8 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     {
         base.OnControlAdded(e);
 
-        if (ShowTitle && !AllowAddControlOnTitle && e.Control.Top < TitleHeight) e.Control.Top = Padding.Top;
+        if (ShowTitle && !AllowAddControlOnTitle && e.Control.Top < TitleHeight)
+            e.Control.Top = Padding.Top;
     }
 
     protected override void OnControlRemoved(ControlEventArgs e)
@@ -1377,7 +1379,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         var titleIconSize = 24 * DPI;
         _formMenuRect = new RectangleF(10, _titleHeightDPI / 2 - titleIconSize / 2, titleIconSize, titleIconSize);
 
-        Padding = new Padding(Padding.Left, (int)(showTitle ? _titleHeightDPI : 0), Padding.Right, Padding.Bottom);
+        Padding = new Thickness(Padding.Left, (int)(showTitle ? _titleHeightDPI : 0), Padding.Right, Padding.Bottom);
     }
 
     private void HandleTabKey(bool isShift)
@@ -1410,7 +1412,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         // If the focused element is a TextBox that accepts tabs, treat Tab as input (not navigation).
         if (keyData == Keys.Tab && _focusedElement is TextBox tb && tb.AcceptsTab)
         {
-            tb.OnKeyPress(new KeyPressEventArgs('\t'));
+            tb.OnKeyPress(new KeyPressEventArgs(Keys.Tab));
             return true;
         }
 
@@ -1507,7 +1509,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 var menuSize = ExtendMenu.MeasurePreferredSize();
                 // Open menu centered horizontally under the extend box
                 var centerX = _extendBoxRect.Left + (_extendBoxRect.Width - menuSize.Width) / 2f;
-                ExtendMenu.Show(PointToScreen(new Point(
+                ExtendMenu.Show(PointToScreen(new SKPoint(
                     Convert.ToInt32(centerX),
                     Convert.ToInt32(_extendBoxRect.Bottom)
                 )));
@@ -1522,7 +1524,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             // Force repaint to prevent stale background captures
             Update();
             if (FormMenu != null)
-                FormMenu.Show(PointToScreen(new Point(Convert.ToInt32(_formMenuRect.Left),
+                FormMenu.Show(PointToScreen(new SKPoint(Convert.ToInt32(_formMenuRect.Left),
                     Convert.ToInt32(_formMenuRect.Bottom))));
             else
                 OnFormMenuClick?.Invoke(this, EventArgs.Empty);
@@ -1632,7 +1634,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (!ShowTitle)
             return;
 
-        if (e.Y > Padding.Top)
+        if (e.Y > Thickness.Top)
             return;
 
         if (e.Button == MouseButtons.Left && Movable)
@@ -1688,7 +1690,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (!ShowTitle)
             return;
 
-        if (e.Y > Padding.Top)
+        if (e.Y > Thickness.Top)
             return;
 
         ShowMaximize();
@@ -1701,7 +1703,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         {
             var captured = _mouseCapturedElement;
             var bounds = GetWindowRelativeBoundsStatic(captured);
-            var localEvent = new MouseEventArgs(e.Button, e.Clicks, e.X - bounds.X, e.Y - bounds.Y, e.Delta);
+            var localEvent = new MouseEventArgs(SDUI.Helpers.InputConversions.ToSDUIMouseButtons(e.Button), e.Clicks, e.X - bounds.X, e.Y - bounds.Y, e.Delta);
             captured.OnMouseUp(localEvent);
             if (e.Button == MouseButtons.Left) ReleaseMouseCapture(captured);
         }
@@ -1721,7 +1723,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
 
         IsStayAtTopBorder = false;
-        Cursor.Clip = new Rectangle();
+        Cursor.Clip = new SkiaSharp.SKRect();
         _formMoveMouseDown = false;
 
         animationSource = e.Location;
@@ -1785,7 +1787,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         {
             var captured = _mouseCapturedElement;
             var bounds = GetWindowRelativeBoundsStatic(captured);
-            var localEvent = new MouseEventArgs(e.Button, e.Clicks, e.X - bounds.X, e.Y - bounds.Y, e.Delta);
+            var localEvent = new MouseEventArgs(SDUI.Helpers.InputConversions.ToSDUIMouseButtons(e.Button), e.Clicks, e.X - bounds.X, e.Y - bounds.Y, e.Delta);
             captured.OnMouseMove(localEvent);
             return;
         }
@@ -1816,21 +1818,22 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 }
                 else if (DateTime.Now.Ticks - TopBorderStayTicks > _stickyBorderTime)
                 {
-                    Cursor.Clip = new Rectangle();
+                    Cursor.Clip = new SkiaSharp.SKRect();
                 }
             }
 
-            Location = new Point(_location.X - offsetX, _location.Y - offsetY);
+            Location = new SKPoint(_location.X - offsetX, _location.Y - offsetY);
         }
         else
         {
-            var inCloseBox = e.Location.InRect(_controlBoxRect);
-            var inMaxBox = e.Location.InRect(_maximizeBoxRect);
-            var inMinBox = e.Location.InRect(_minimizeBoxRect);
-            var inExtendBox = e.Location.InRect(_extendBoxRect);
-            var inCloseTabBox = _tabCloseButton && e.Location.InRect(_closeTabBoxRect);
-            var inNewTabBox = _newTabButton && e.Location.InRect(_newTabBoxRect);
-            var inFormMenuBox = e.Location.InRect(_formMenuRect);
+            var inCloseBox = _controlBoxRect.Contains(e.Location.X, e.Location.Y);
+            var inMaxBox = _maximizeBoxRect.Contains(e.Location.X, e.Location.Y);
+            var inMinBox = _minimizeBoxRect.Contains(e.Location.X, e.Location.Y);
+            var inExtendBox = _extendBoxRect.Contains(e.Location.X, e.Location.Y);
+            var inFormMenuBox = _formMenuRect.Contains(e.Location.X, e.Location.Y);
+            var inCloseTabBox = _tabCloseButton && _closeTabBoxRect.Contains(e.Location.X, e.Location.Y);
+            var inNewTabBox = _newTabButton && _newTabBoxRect.Contains(e.Location.X, e.Location.Y);
+
             var isChange = false;
 
             if (inCloseBox != _inCloseBox)
@@ -1954,7 +1957,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         Invalidate();
     }
 
-    protected override void OnMouseEnter(EventArgs e)
+    internal override void OnMouseEnter(EventArgs e)
     {
         base.OnMouseEnter(e);
 
@@ -1971,7 +1974,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    protected override void OnMouseWheel(MouseEventArgs e)
+    internal override void OnMouseWheel(MouseEventArgs e)
     {
         base.OnMouseWheel(e);
 
@@ -1986,7 +1989,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// <summary>
     ///     Recursive olarak child elementlere mouse wheel olay�n� iletir
     /// </summary>
-    private bool PropagateMouseWheel(IEnumerable<UIElementBase> elements, Point windowMousePos, MouseEventArgs e)
+    private bool PropagateMouseWheel(IEnumerable<UIElementBase> elements, SKPoint windowMousePos, MouseEventArgs e)
     {
         // Z-order'a g�re tersten kontrol et - en �stteki element �nce
         foreach (var element in elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
@@ -2025,7 +2028,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (screen.Primary)
             MaximizedBounds = screen.WorkingArea;
         else
-            MaximizedBounds = new Rectangle(0, 0, 0, 0);
+            MaximizedBounds = new SkiaSharp.SKRect(0, 0, 0, 0);
 
         if (WindowState == FormWindowState.Normal)
         {
@@ -2041,12 +2044,12 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 if (MinimumSize.Width > 0) w = MinimumSize.Width;
                 var h = 600;
                 if (MinimumSize.Height > 0) h = MinimumSize.Height;
-                _sizeOfBeforeMaximized = new Size(w, h);
+                _sizeOfBeforeMaximized = new SKSize(w, h);
             }
 
             Size = _sizeOfBeforeMaximized;
             if (_locationOfBeforeMaximized.X == 0 && _locationOfBeforeMaximized.Y == 0)
-                _locationOfBeforeMaximized = new Point(
+                _locationOfBeforeMaximized = new SKPoint(
                     screen.Bounds.Left + screen.Bounds.Width / 2 - _sizeOfBeforeMaximized.Width / 2,
                     screen.Bounds.Top + screen.Bounds.Height / 2 - _sizeOfBeforeMaximized.Height / 2);
 
@@ -2071,7 +2074,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         Invalidate();
     }
 
-    protected override void NotifyInvalidate(Rectangle invalidatedArea)
+    protected override void NotifyInvalidate(SkiaSharp.SKRect invalidatedArea)
     {
         base.NotifyInvalidate(invalidatedArea);
         _needsFullRedraw = true;
@@ -2088,7 +2091,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         base.WndProc(ref m);
     }
 
-    protected override void OnLayout(LayoutEventArgs levent)
+    internal override void OnLayout(LayoutEventArgs levent)
     {
         base.OnLayout(levent);
 
@@ -2165,20 +2168,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
     private void ApplyRenderStyles()
     {
-        if (DesignMode)
-            return;
-
         var gpu = _renderBackend != RenderBackend.Software;
-
-        SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, true);
-        SetStyle(ControlStyles.ResizeRedraw, true);
-
-        SetStyle(ControlStyles.DoubleBuffer, !gpu);
-        SetStyle(ControlStyles.OptimizedDoubleBuffer, !gpu);
-        SetStyle(ControlStyles.SupportsTransparentBackColor, !gpu);
-        SetStyle(ControlStyles.Opaque, gpu);
-
-        UpdateStyles();
 
         ApplyNativeWindowStyles(gpu);
     }
@@ -2283,7 +2273,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     private void RenderScene(SKCanvas canvas, SKImageInfo info)
     {
         GRContext? gr = null;
-        
+
         // Only use GPU context if the renderer is actually actively using it for this frame.
         // Prevents UIElementBase from creating GPU surfaces when we are falling back to CPU rendering
         // (which causes slow readbacks "weak rendering" and potential access violations).
@@ -2297,8 +2287,8 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
         else if (!(_renderer is DirectX11WindowRenderer) && !(_renderer is OpenGlWindowRenderer))
         {
-             // Fallback for other renderers
-             gr = (_renderer as IGpuWindowRenderer)?.GrContext;
+            // Fallback for other renderers
+            gr = (_renderer as IGpuWindowRenderer)?.GrContext;
         }
 
         var gpuScope = gr != null ? UIElementBase.PushGpuContext(gr) : null;
@@ -2306,10 +2296,10 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         {
             canvas.Save();
             canvas.ResetMatrix();
-            canvas.ClipRect(SKRect.Create(info.Width, info.Height));
+            canvas.ClipRect(SkiaSharp.SKRect.Create(info.Width, info.Height));
             // Ensure we clear to an opaque color to avoid any potential transparency artifacts or ghosting
             // from previous frames, especially in DirectX swapchains where buffer contents may be undefined.
-            canvas.Clear(ColorScheme.BackColor.ToSKColor());
+            canvas.Clear(ColorScheme.BackColor);
             PaintSurface(canvas, info);
             canvas.Restore();
 
@@ -2328,23 +2318,23 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
             // Match LINQ OrderBy stability (ties keep original order).
             StableSortByZOrderAscending(_frameElements);
-            
+
             // DEBUG: Count renders
             var renderedCount = 0;
             var needsRedrawBefore = 0;
             var needsRedrawAfter = 0;
-            
+
             for (var i = 0; i < _frameElements.Count; i++)
             {
                 var element = _frameElements[i];
                 if (!element.Visible || element.Width <= 0 || element.Height <= 0)
                     continue;
-                
+
                 renderedCount++;
                 if (element.NeedsRedraw) needsRedrawBefore++;
-                
+
                 element.Render(canvas);
-                
+
                 if (element.NeedsRedraw) needsRedrawAfter++;
             }
 
@@ -2353,7 +2343,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 DrawPerfOverlay(canvas);
                 // Show render stats
                 var statsPaint = new SKPaint { Color = SKColors.Yellow, TextSize = 12, IsAntialias = true };
-                canvas.DrawText($"Rendered: {renderedCount} | Before: {needsRedrawBefore} | After: {needsRedrawAfter}", 
+                canvas.DrawText($"Rendered: {renderedCount} | Before: {needsRedrawBefore} | After: {needsRedrawAfter}",
                     10, info.Height - 20, statsPaint);
                 statsPaint.Dispose();
             }
@@ -2388,7 +2378,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         using var paint = new SKPaint
         {
             IsAntialias = true,
-            Color = ColorScheme.ForeColor.ToSKColor(),
+            Color = ColorScheme.ForeColor,
             TextSize = 12
         };
 
@@ -2409,15 +2399,15 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
         if (!ShowTitle)
         {
-            canvas.Clear(ColorScheme.BackColor.ToSKColor());
+            canvas.Clear(ColorScheme.BackColor);
             return;
         }
 
-        var foreColor = ColorScheme.ForeColor.ToSKColor();
-        var hoverColor = ColorScheme.BorderColor.ToSKColor();
+        var foreColor = ColorScheme.ForeColor;
+        var hoverColor = ColorScheme.BorderColor;
 
         // Arka plan� temizle
-        canvas.Clear(ColorScheme.BackColor.ToSKColor());
+        canvas.Clear(ColorScheme.BackColor);
 
         if (FullDrawHatch)
         {
@@ -2431,32 +2421,32 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             canvas.DrawRect(0, 0, Width, Height, paint);
         }
 
-        if (titleColor != Color.Empty)
+        if (titleColor != SKColor.Empty)
         {
-            foreColor = titleColor.Determine().ToSKColor();
+            foreColor = titleColor.Determine();
             hoverColor = foreColor.WithAlpha(20);
-            using var paint = new SKPaint { Color = titleColor.ToSKColor() };
+            using var paint = new SKPaint { Color = titleColor };
             canvas.DrawRect(0, 0, Width, _titleHeightDPI, paint);
         }
         else if (_gradient.Length == 2 &&
-                 !(_gradient[0] == Color.Transparent && _gradient[1] == Color.Transparent))
+                 !(_gradient[0] == SKColors.Transparent && _gradient[1] == SKColors.Transparent))
         {
             using var shader = SKShader.CreateLinearGradient(
                 new SKPoint(0, 0),
                 new SKPoint(Width, _titleHeightDPI),
-                new[] { _gradient[0].ToSKColor(), _gradient[1].ToSKColor() },
+                new[] { _gradient[0], _gradient[1] },
                 null,
                 SKShaderTileMode.Clamp);
 
             using var paint = new SKPaint { Shader = shader };
             canvas.DrawRect(0, 0, Width, _titleHeightDPI, paint);
 
-            foreColor = _gradient[0].Determine().ToSKColor();
+            foreColor = _gradient[0].Determine();
             hoverColor = foreColor.WithAlpha(20);
         }
 
         // Ba�l�k alan� d���ndaki i�eri�i tema arkaplan� ile doldur
-        using (var contentBgPaint = new SKPaint { Color = ColorScheme.BackColor.ToSKColor() })
+        using (var contentBgPaint = new SKPaint { Color = ColorScheme.BackColor })
         {
             canvas.DrawRect(0, _titleHeightDPI, Width, Math.Max(0, Height - _titleHeightDPI), contentBgPaint);
         }
@@ -2464,7 +2454,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         // Kontrol d��meleri �izimi
         if (controlBox)
         {
-            var closeHoverColor = new SKColor(232, 17, 35);
+            var closeHoverColor = new SkiaSharp.SKColor(232, 17, 35);
 
             if (_inCloseBox)
             {
@@ -2473,7 +2463,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     Color = closeHoverColor.WithAlpha((byte)(closeBoxHoverAnimationManager.GetProgress() * 120)),
                     IsAntialias = true
                 };
-                canvas.DrawRect(_controlBoxRect.ToSKRect(), paint);
+                canvas.DrawRect(_controlBoxRect, paint);
             }
 
             using var closePaint = new SKPaint
@@ -2513,7 +2503,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     Color = hoverColor.WithAlpha((byte)(maxBoxHoverAnimationManager.GetProgress() * 80)),
                     IsAntialias = true
                 };
-                canvas.DrawRect(_maximizeBoxRect.ToSKRect(), paint);
+                canvas.DrawRect(_maximizeBoxRect, paint);
             }
 
             using var maxPaint = new SKPaint
@@ -2568,7 +2558,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     Color = hoverColor.WithAlpha((byte)(minBoxHoverAnimationManager.GetProgress() * 80)),
                     IsAntialias = true
                 };
-                canvas.DrawRect(_minimizeBoxRect.ToSKRect(), paint);
+                canvas.DrawRect(_minimizeBoxRect, paint);
             }
 
             using var minPaint = new SKPaint
@@ -2605,10 +2595,10 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 };
 
                 using var path = new SKPath();
-                path.AddRoundRect(new SKRect(
-                    _extendBoxRect.X + 20 * DPI,
+                path.AddRoundRect(SKRect.Create(
+                    _extendBoxRect.Left + 20 * DPI,
                     _titleHeightDPI / 2 - hoverSize / 2,
-                    _extendBoxRect.X + 20 * DPI + hoverSize,
+                    _extendBoxRect.Left + 20 * DPI + hoverSize,
                     _titleHeightDPI / 2 + hoverSize / 2
                 ), 15, 15);
 
@@ -2624,10 +2614,10 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 StrokeCap = SKStrokeCap.Round
             };
 
-            var iconRect = new SKRect(
-                _extendBoxRect.X + 24 * DPI,
+            var iconRect = new SkiaSharp.SKRect(
+                _extendBoxRect.Left + 24 * DPI,
                 _titleHeightDPI / 2 - size / 2,
-                _extendBoxRect.X + 24 * DPI + size,
+                _extendBoxRect.Left + 24 * DPI + size,
                 _titleHeightDPI / 2 + size / 2);
 
             canvas.DrawLine(
@@ -2656,7 +2646,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             };
 
             using var path = new SKPath();
-            path.AddRoundRect(_formMenuRect.ToSKRect(), 10, 10);
+            path.AddRoundRect(_formMenuRect, 10, 10);
             canvas.DrawPath(path, paint);
 
             using var menuPaint = new SKPaint
@@ -2688,7 +2678,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 using var bitmap = Icon.ToBitmap();
                 using var skBitmap = bitmap.ToSKBitmap();
                 using var image = SKImage.FromBitmap(skBitmap);
-                var iconRect = SKRect.Create(10, _titleHeightDPI / 2 - faviconSize / 2, faviconSize, faviconSize);
+                var iconRect = SkiaSharp.SKRect.Create(10, _titleHeightDPI / 2 - faviconSize / 2, faviconSize, faviconSize);
                 canvas.DrawImage(image, iconRect);
             }
         }
@@ -2698,7 +2688,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         {
             using var font = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
@@ -2709,14 +2699,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 IsAntialias = true
             };
 
-            var bounds = new SKRect();
+            var bounds = new SkiaSharp.SKRect();
             font.MeasureText(Text, out bounds);
             var textX = showMenuInsteadOfIcon
                 ? _formMenuRect.X + _formMenuRect.Width + 8 * DPI
                 : faviconSize + 14 * DPI;
             var textY = _titleHeightDPI / 2 + Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2;
 
-            TextRenderingHelper.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
+            TextRenderer.DrawText(canvas, Text, textX, textY, SKTextAlign.Left, font, textPaint);
         }
 
         // Tab kontrollerinin �izimi
@@ -2738,14 +2728,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 };
 
                 var rippleSize = (int)(animationProgress * pageRect[_windowPageControl.SelectedIndex].Width * 1.75);
-                var rippleRect = new SKRect(
+                var rippleRect = new SkiaSharp.SKRect(
                     animationSource.X - rippleSize / 2,
                     animationSource.Y - rippleSize / 2,
                     animationSource.X + rippleSize / 2,
                     animationSource.Y + rippleSize / 2);
 
                 canvas.Save();
-                canvas.ClipRect(pageRect[_windowPageControl.SelectedIndex].ToSKRect());
+                canvas.ClipRect(pageRect[_windowPageControl.SelectedIndex]);
                 canvas.DrawOval(rippleRect, ripplePaint);
                 canvas.Restore();
             }
@@ -2765,7 +2755,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             var activePageRect = pageRect[_windowPageControl.SelectedIndex];
 
             var y = activePageRect.Bottom - 2;
-            var x = previousActivePageRect.X + (activePageRect.X - previousActivePageRect.X) * (float)animationProgress;
+            var x = previousActivePageRect.Left + (activePageRect.Left - previousActivePageRect.Left) * (float)animationProgress;
             var width = previousActivePageRect.Width +
                         (activePageRect.Width - previousActivePageRect.Width) * (float)animationProgress;
 
@@ -2773,7 +2763,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             {
                 using var tabPaint = new SKPaint
                 {
-                    Color = ColorScheme.BackColor.ToSKColor().InterpolateColor(hoverColor, 0.15f),
+                    Color = ColorScheme.BackColor.InterpolateColor(hoverColor, 0.15f),
                     IsAntialias = true
                 };
 
@@ -2790,16 +2780,16 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             }
             else if (_tabDesingMode == TabDesingMode.Rounded)
             {
-                if (titleColor != Color.Empty && !titleColor.IsDark())
+                if (titleColor != SKColor.Empty && !titleColor.IsDark())
                     hoverColor = foreColor.WithAlpha(60);
 
                 using var tabPaint = new SKPaint
                 {
-                    Color = ColorScheme.BackColor.ToSKColor().InterpolateColor(hoverColor, 0.2f),
+                    Color = ColorScheme.BackColor.InterpolateColor(hoverColor, 0.2f),
                     IsAntialias = true
                 };
 
-                var tabRect = new SKRect(x, 6, x + width, _titleHeightDPI);
+                var tabRect = new SkiaSharp.SKRect(x, 6, x + width, _titleHeightDPI);
                 var radius = 9 * DPI;
 
                 using var path = new SKPath();
@@ -2808,16 +2798,16 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             }
             else // Chromed
             {
-                if (titleColor != Color.Empty && !titleColor.IsDark())
+                if (titleColor != SKColor.Empty && !titleColor.IsDark())
                     hoverColor = foreColor.WithAlpha(60);
 
                 using var tabPaint = new SKPaint
                 {
-                    Color = ColorScheme.BackColor.ToSKColor().InterpolateColor(hoverColor, 0.2f),
+                    Color = ColorScheme.BackColor.InterpolateColor(hoverColor, 0.2f),
                     IsAntialias = true
                 };
 
-                var tabRect = new SKRect(x, 5, x + width, _titleHeightDPI - 7);
+                var tabRect = new SkiaSharp.SKRect(x, 5, x + width, _titleHeightDPI - 7);
                 var radius = 12;
 
                 using var path = new SKPath();
@@ -2836,7 +2826,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 {
                     using var font = new SKFont
                     {
-                        Size = 12f.PtToPx(this),
+                        Size = 12f.Topx(this),
                         Typeface = FontManager.GetSKTypeface(Font),
                         Subpixel = true,
                         Edging = SKFontEdging.SubpixelAntialias
@@ -2847,7 +2837,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                         IsAntialias = true
                     };
 
-                    var startingIconBounds = new SKRect();
+                    var startingIconBounds = new SkiaSharp.SKRect();
                     font.MeasureText("", out startingIconBounds);
                     var iconX = rect.X + TAB_HEADER_PADDING * DPI;
 
@@ -2856,18 +2846,18 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     rect.Width -= inlinePaddingX + closeIconSize;
 
                     var textY = _titleHeightDPI / 2 + Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2;
-                    TextRenderingHelper.DrawText(canvas, "", iconX, textY, SKTextAlign.Center, font, textPaint);
+                    TextRenderer.DrawText(canvas, "", iconX, textY, SKTextAlign.Center, font, textPaint);
 
-                    var bounds = new SKRect();
+                    var bounds = new SkiaSharp.SKRect();
                     font.MeasureText(page.Text, out bounds);
                     var textX = rect.X + rect.Width / 2;
-                    TextRenderingHelper.DrawText(canvas, page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
+                    TextRenderer.DrawText(canvas, page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
                 }
                 else
                 {
                     using var font = new SKFont
                     {
-                        Size = 9f.PtToPx(this),
+                        Size = 9f.Topx(this),
                         Typeface = FontManager.GetSKTypeface(Font),
                         Subpixel = true,
                         Edging = SKFontEdging.SubpixelAntialias
@@ -2878,11 +2868,11 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                         IsAntialias = true
                     };
 
-                    var bounds = new SKRect();
+                    var bounds = new SkiaSharp.SKRect();
                     font.MeasureText(page.Text, out bounds);
                     var textX = rect.X + rect.Width / 2;
                     var textY = _titleHeightDPI / 2 + Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2;
-                    TextRenderingHelper.DrawText(canvas, page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
+                    TextRenderer.DrawText(canvas, page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
                 }
             }
 
@@ -2898,9 +2888,9 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     IsAntialias = true
                 };
 
-                _closeTabBoxRect = new RectangleF(x + width - TAB_HEADER_PADDING / 2 - size,
+                _closeTabBoxRect = new SKRect(x + width - TAB_HEADER_PADDING / 2 - size,
                     _titleHeightDPI / 2 - size / 2, size, size);
-                var buttonRect = _closeTabBoxRect.ToSKRect();
+                var buttonRect = _closeTabBoxRect;
 
                 canvas.DrawCircle(buttonRect.MidX, buttonRect.MidY, size / 2, buttonPaint);
 
@@ -2942,9 +2932,9 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 };
 
                 var lastTabRect = pageRect[pageRect.Count - 1];
-                _newTabBoxRect = new RectangleF(lastTabRect.X + lastTabRect.Width + size / 2,
+                _newTabBoxRect = new SKRect(lastTabRect.Left + lastTabRect.Width + size / 2,
                     _titleHeightDPI / 2 - size / 2, size, size);
-                var buttonRect = _newTabBoxRect.ToSKRect();
+                var buttonRect = _newTabBoxRect;
 
                 using var path = new SKPath();
                 path.AddRoundRect(buttonRect, 4, 4);
@@ -2980,9 +2970,9 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         {
             using var borderPaint = new SKPaint
             {
-                Color = titleColor != Color.Empty
-                    ? titleColor.Determine().ToSKColor().WithAlpha(30)
-                    : ColorScheme.BorderColor.ToSKColor(),
+                Color = titleColor != SKColor.Empty
+                    ? titleColor.Determine().WithAlpha(30)
+                    : ColorScheme.BorderColor,
                 StrokeWidth = 1,
                 IsAntialias = true
             };
@@ -2991,21 +2981,21 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    protected override void OnTextChanged(EventArgs e)
+    internal override void OnTextChanged(EventArgs e)
     {
         base.OnTextChanged(e);
         Invalidate();
     }
 
-    protected override void OnSizeChanged(EventArgs e)
+    internal override void OnSizeChanged(EventArgs e)
     {
         base.OnSizeChanged(e);
         CalcSystemBoxPos();
         PerformLayout();
 
-        if (!DesignMode && _renderBackend != RenderBackend.Software)
+        if (_renderBackend != RenderBackend.Software)
         {
-            _renderer?.Resize(ClientSize.Width, ClientSize.Height);
+            _renderer?.Resize((int)ClientSize.Width, (int)ClientSize.Height);
             Invalidate();
         }
     }
@@ -3013,6 +3003,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     protected override void OnShown(EventArgs e)
     {
         base.OnShown(e);
+
         CalcSystemBoxPos();
 
         // Trigger initial layout with current DPI
@@ -3022,7 +3013,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
     private void UpdateTabRects()
     {
-        pageRect = new List<RectangleF>();
+        pageRect = new List<SkiaSharp.SKRect>();
 
         if (_windowPageControl == null || _windowPageControl.Count == 0)
             return;
@@ -3048,7 +3039,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
         using var font = new SKFont
         {
-            Size = (_drawTabIcons ? 12f : 9f).PtToPx(this),
+            Size = (_drawTabIcons ? 12f : 9f).Topx(this),
             Typeface = FontManager.GetSKTypeface(Font),
             Subpixel = true,
             Edging = SKFontEdging.SubpixelAntialias
@@ -3059,7 +3050,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
         foreach (UIElementBase page in _windowPageControl.Controls)
         {
-            var bounds = new SKRect();
+            var bounds = new SkiaSharp.SKRect();
             font.MeasureText(page.Text ?? "", out bounds);
 
             var width = bounds.Width + (20 * DPI);
@@ -3096,17 +3087,17 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             if (finalWidth > maxSize)
                 finalWidth = maxSize;
 
-            pageRect.Add(new RectangleF(currentX, 0, finalWidth, _titleHeightDPI));
+            pageRect.Add(new SKRect(currentX, 0, finalWidth, _titleHeightDPI));
             currentX += finalWidth;
         }
     }
 
-    internal void UpdateCursor(UIElementBase element)
+    public override void UpdateCursor(UIElementBase element)
     {
         if (element == null || !element.Enabled || !element.Visible)
         {
             _currentCursor = Cursors.Default;
-            base.Cursor = Cursors.Default;
+            base.UpdateCursor(element);
             return;
         }
 
@@ -3114,7 +3105,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (_currentCursor != newCursor)
         {
             _currentCursor = newCursor;
-            base.Cursor = newCursor;
+            base.UpdateCursor(element);
         }
     }
 

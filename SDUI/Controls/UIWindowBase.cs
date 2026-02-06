@@ -1,29 +1,202 @@
-﻿using System;
+﻿using SDUI.Helpers;
+using SDUI.Native.Windows;
+using SkiaSharp;
+using System;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using SDUI.Helpers;
-using static SDUI.NativeMethods;
+using static SDUI.Native.Windows.Methods;
 
 namespace SDUI.Controls;
 
-public class UIWindowBase : Form
+public partial class UIWindowBase : ElementBase, IDisposable
 {
-    private const int htLeft = 10;
-    private const int htRight = 11;
-    private const int htTop = 12;
-    private const int htTopLeft = 13;
-    private const int htTopRight = 14;
-    private const int htBottom = 15;
-    private const int htBottomLeft = 16;
-    private const int htBottomRight = 17;
+    private IntPtr _hWnd;
+    private IntPtr _hInstance;
+    private bool _disposed;
+
+    private bool _updatingFromNative;
+
+    private WndProc _wndProcDelegate;
+
+    public IntPtr Handle => _hWnd;
 
     private FocusManager? _focusManager;
     private bool _mouseInClient;
     protected bool enableFullDraggable;
-    private Point location;
-    private bool right = false;
+    private SKPoint location;
+
+    private FormBorderStyle _formBorderStyle = FormBorderStyle.Sizable;
+    public FormBorderStyle FormBorderStyle
+    {
+        get => _formBorderStyle;
+        set
+        {
+            if (_formBorderStyle == value)
+                return;
+                
+            _formBorderStyle = value;
+            
+            // Apply border style to native window if handle is created
+            if (IsHandleCreated)
+            {
+                ApplyFormBorderStyle();
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Applies the current FormBorderStyle to the native window.
+    /// </summary>
+    private void ApplyFormBorderStyle()
+    {
+        if (!IsHandleCreated)
+            return;
+            
+        var (style, exStyle) = GetWindowStylesForBorderStyle(_formBorderStyle);
+        
+        // Set window style
+        if (IntPtr.Size == 8)
+        {
+            SetWindowLongPtr64(Handle, (int)WindowLongIndexFlags.GWL_STYLE, (IntPtr)style);
+            SetWindowLongPtr64(Handle, (int)WindowLongIndexFlags.GWL_EXSTYLE, (IntPtr)exStyle);
+        }
+        else
+        {
+            SetWindowLong32(Handle, (int)WindowLongIndexFlags.GWL_STYLE, (int)style);
+            SetWindowLong32(Handle, (int)WindowLongIndexFlags.GWL_EXSTYLE, (int)exStyle);
+        }
+        
+        // Update window to reflect style changes
+        SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0,
+            SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOMOVE | 
+            SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER | 
+            SetWindowPosFlags.SWP_NOACTIVATE);
+    }
+    
+    /// <summary>
+    /// Gets the native Windows styles for the specified FormBorderStyle.
+    /// </summary>
+    private static (uint style, uint exStyle) GetWindowStylesForBorderStyle(FormBorderStyle borderStyle)
+    {
+        uint style = (uint)WindowStyles.WS_VISIBLE;
+        uint exStyle = 0;
+        
+        switch (borderStyle)
+        {
+            case FormBorderStyle.None:
+                // Borderless popup window
+                style |= (uint)WindowStyles.WS_POPUP;
+                break;
+                
+            case FormBorderStyle.FixedSingle:
+                // Fixed size window with caption and system menu
+                style |= (uint)(WindowStyles.WS_OVERLAPPED | 
+                               WindowStyles.WS_CAPTION | 
+                               WindowStyles.WS_SYSMENU |
+                               WindowStyles.WS_MINIMIZEBOX);
+                exStyle |= (uint)SetWindowLongFlags.WS_EX_WINDOWEDGE;
+                break;
+                
+            case FormBorderStyle.Fixed3D:
+                // Fixed size with 3D border
+                style |= (uint)(WindowStyles.WS_OVERLAPPED | 
+                               WindowStyles.WS_CAPTION | 
+                               WindowStyles.WS_SYSMENU |
+                               WindowStyles.WS_MINIMIZEBOX |
+                               WindowStyles.WS_BORDER);
+                exStyle |= (uint)(SetWindowLongFlags.WS_EX_WINDOWEDGE | 
+                                 SetWindowLongFlags.WS_EX_CLIENTEDGE);
+                break;
+                
+            case FormBorderStyle.FixedDialog:
+                // Dialog style - fixed size with thick caption
+                style |= (uint)(WindowStyles.WS_POPUP | 
+                               WindowStyles.WS_CAPTION | 
+                               WindowStyles.WS_SYSMENU);
+                exStyle |= (uint)(SetWindowLongFlags.WS_EX_DLGMODALFRAME | 
+                                 SetWindowLongFlags.WS_EX_WINDOWEDGE);
+                break;
+                
+            case FormBorderStyle.Sizable:
+                // Standard resizable window
+                style |= (uint)WindowStyles.WS_OVERLAPPEDWINDOW;
+                break;
+                
+            case FormBorderStyle.FixedToolWindow:
+                // Fixed size tool window (small caption)
+                style |= (uint)(WindowStyles.WS_POPUP | 
+                               WindowStyles.WS_CAPTION | 
+                               WindowStyles.WS_SYSMENU);
+                exStyle |= (uint)(SetWindowLongFlags.WS_EX_TOOLWINDOW | 
+                                 SetWindowLongFlags.WS_EX_WINDOWEDGE);
+                break;
+                
+            case FormBorderStyle.SizableToolWindow:
+                // Resizable tool window (small caption)
+                style |= (uint)WindowStyles.WS_OVERLAPPEDWINDOW;
+                exStyle |= (uint)SetWindowLongFlags.WS_EX_TOOLWINDOW;
+                break;
+        }
+        
+        return (style, exStyle);
+    }
+
+    private FormStartPosition _formStartPosition = FormStartPosition.WindowsDefaultLocation;
+    public FormStartPosition FormStartPosition
+    {
+        get => _formStartPosition;
+        set
+        {
+            _formStartPosition = value;
+            
+            // If handle is already created, apply position change immediately
+            if (IsHandleCreated)
+            {
+                switch (value)
+                {
+                    case FormStartPosition.CenterScreen:
+                        CenterToScreen();
+                        break;
+                    case FormStartPosition.Manual:
+                        // Location already set, just ensure it's applied to the window
+                        SetWindowPos(Handle, IntPtr.Zero, (int)Location.X, (int)Location.Y, 0, 0,
+                            SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
+                        break;
+                }
+            }
+            // If handle not created yet, CreateParams will use this value
+        }
+    }
+
+    private FormWindowState _windowState = FormWindowState.Normal;
+    public FormWindowState WindowState
+    {
+        get => _windowState;
+        set
+        {
+            if (_windowState == value)
+                return;
+
+            _windowState = value;
+
+            if (!IsHandleCreated)
+                return;
+
+            switch (value)
+            {
+                case FormWindowState.Normal:
+                    ShowWindow(Handle, 1); // SW_SHOWNORMAL
+                    break;
+                case FormWindowState.Minimized:
+                    ShowWindow(Handle, 6); // SW_MINIMIZE
+                    break;
+                case FormWindowState.Maximized:
+                    ShowWindow(Handle, 3); // SW_MAXIMIZE
+                    break;
+            }
+        }
+    }
 
     /// <summary>
     ///     Modern focus manager for keyboard navigation
@@ -49,12 +222,12 @@ public class UIWindowBase : Form
 
     // Z-order için yeni özellikler
 
-    public int DwmMargin { get; set; } = 1;
+    public int DwmMargin { get; set; } = -1;
 
     /// <summary>
     ///     Get DPI
     /// </summary>
-    public float DPI => DeviceDpi / 96.0f;
+    public float DPI => DpiHelper.GetScaleFactor();
 
     /// <summary>
     ///     Has aero enabled by windows <c>true</c>; otherwise <c>false</c>
@@ -74,49 +247,279 @@ public class UIWindowBase : Form
         }
     }
 
-    protected override CreateParams CreateParams
+    /// <summary>
+    /// Gets a value indicating whether the control's layout is mirrored for right-to-left languages.
+    /// </summary>
+    /// <remarks>A mirrored control displays its content in a right-to-left layout, which is typically used
+    /// for languages such as Arabic or Hebrew. This property reflects the current layout direction of the control and
+    /// may depend on the control's handle and window style settings.</remarks>
+    private bool _isMirrored = false;
+    public bool IsMirrored
     {
         get
         {
-            var cp = base.CreateParams;
+            if (!IsHandleCreated)
+            {
+                CreateParams cp = CreateParams;
+                _isMirrored = (cp.ExStyle & (int)SetWindowLongFlags.WS_EX_LAYOUTRTL) != 0;
+            }
+
+            return _isMirrored;
+        }
+    }
+
+    protected virtual CreateParams CreateParams
+    {
+        get
+        {
+            var cp = new CreateParams();
+            cp.ClassName = "CoreWindow_" + Guid.NewGuid().ToString();
+            cp.Caption = Text;
+            
+            // Apply FormStartPosition
+            switch (_formStartPosition)
+            {
+                case FormStartPosition.CenterScreen:
+                    var screen = Screen.PrimaryScreen;
+                    cp.X = screen.Bounds.Left + (screen.Bounds.Width - Width) / 2;
+                    cp.Y = screen.Bounds.Top + (screen.Bounds.Height - Height) / 2;
+                    break;
+                case FormStartPosition.CenterParent:
+                    // TODO: Implement parent centering if needed
+                    cp.X = (int)Location.X;
+                    cp.Y = (int)Location.Y;
+                    break;
+                case FormStartPosition.Manual:
+                    cp.X = (int)Location.X;
+                    cp.Y = (int)Location.Y;
+                    break;
+                case FormStartPosition.WindowsDefaultLocation:
+                default:
+                    cp.X = CW_USEDEFAULT;
+                    cp.Y = CW_USEDEFAULT;
+                    break;
+            }
+            
+            // Set size - use current Size property values
+            cp.Width = Width > 0 ? Width : 800;  // Default width if not set
+            cp.Height = Height > 0 ? Height : 600; // Default height if not set
+            
+            // Get native styles based on FormBorderStyle
+            var (style, exStyle) = GetWindowStylesForBorderStyle(_formBorderStyle);
+            cp.Style = (int)style;
+            cp.ExStyle = exStyle;
+            
+            // Class styles
             if (!_aeroEnabled)
                 cp.ClassStyle |= CS_DROPSHADOW;
-
             cp.ClassStyle |= CS_DBLCLKS;
-
-            var style = (uint)cp.Style;
-
-            if (DesignMode)
-                style &= ~(uint)SetWindowLongFlags.WS_CAPTION;
-
-            style &= ~(uint)SetWindowLongFlags.WS_SYSMENU;
-            style &= ~(uint)SetWindowLongFlags.WS_THICKFRAME;
-            style &= ~(uint)SetWindowLongFlags.WS_MINIMIZE;
-            style &= ~(uint)SetWindowLongFlags.WS_MINIMIZEBOX;
-            style &= ~(uint)SetWindowLongFlags.WS_MAXIMIZE;
-            style &= ~(uint)SetWindowLongFlags.WS_MAXIMIZEBOX;
-            //style &= ~(uint)SetWindowLongFlags.WS_BORDER;
-            style |= (uint)SetWindowLongFlags.WS_TILED;
-            cp.Style = (int)style;
 
             return cp;
         }
     }
 
-    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-    {
-        // Handle keyboard navigation with focus manager
-        if (msg.Msg == 256 || msg.Msg == 260)
-        {
-            var keyArgs = new KeyEventArgs(keyData);
-            if (FocusManager.ProcessKeyNavigation(keyArgs))
-                return true;
+    public DialogResult DialogResult { get; set; }
 
-            if (keyData == Keys.Escape)
-                Close();
+    private Icon? _icon;
+    private bool _showIcon = true;
+
+    /// <summary>
+    /// Gets or sets the icon for the window.
+    /// </summary>
+    public Icon? Icon
+    {
+        get => _icon;
+        set
+        {
+            if (ReferenceEquals(_icon, value)) return;
+            _icon = value;
+            UpdateWindowIcon();
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether an icon is displayed in the title bar of the window.
+    /// </summary>
+    public bool ShowIcon
+    {
+        get => _showIcon;
+        set
+        {
+            if (_showIcon == value) return;
+            _showIcon = value;
+            UpdateWindowIcon();
+        }
+    }
+
+    private bool _keyPreview;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the window will receive key events before the event is passed to the control that has focus.
+    /// </summary>
+    /// <remarks>
+    /// When this property is set to true, the window will receive KeyDown, KeyUp, and KeyPress events before they are passed to the focused control.
+    /// This is useful for implementing global keyboard shortcuts or intercepting keys at the window level.
+    /// The event will still be passed to the focused control unless the Handled property is set to true.
+    /// </remarks>
+    public bool KeyPreview
+    {
+        get => _keyPreview;
+        set
+        {
+            if (_keyPreview == value) return;
+            _keyPreview = value;
+        }
+    }
+
+    public event EventHandler Activated;
+    public event EventHandler Deactivated;
+
+    public UIWindowBase()
+    {
+        // Set default window size (ElementBase default is 100x23 which is too small for a window)
+        Size = new SKSize(800, 600);
+        
+        _hInstance = Methods.GetModuleHandle(null);
+        _wndProcDelegate = new WndProc(WndProc);
+        CreateHandle();
+    }
+
+    /// <summary>
+    /// Gets or sets the location of the window. When set, updates the native window position.
+    /// </summary>
+    public override SKPoint Location
+    {
+        get => base.Location;
+        set
+        {
+            if (base.Location == value)
+                return;
+
+            base.Location = value;
+
+            // Update native window position if handle is created (avoid recursion from WM_MOVE)
+            if (IsHandleCreated && !_updatingFromNative)
+            {
+                SetWindowPos(Handle, IntPtr.Zero, (int)value.X, (int)value.Y, 0, 0,
+                    SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER | 
+                    SetWindowPosFlags.SWP_NOACTIVATE);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the size of the window. When set, updates the native window size.
+    /// </summary>
+    public override SKSize Size
+    {
+        get => base.Size;
+        set
+        {
+            if (base.Size == value)
+                return;
+
+            base.Size = value;
+
+            // Update native window size if handle is created (avoid recursion from WM_SIZE)
+            if (IsHandleCreated && !_updatingFromNative)
+            {
+                SetWindowPos(Handle, IntPtr.Zero, 0, 0, (int)value.Width, (int)value.Height,
+                    SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOZORDER | 
+                    SetWindowPosFlags.SWP_NOACTIVATE);
+            }
+        }
+    }
+
+    public void CreateHandle()
+    {
+        if (IsHandleCreated) 
+            return;
+
+        CreateParams cp = this.CreateParams;
+
+        var wc = new WNDCLASSEX
+        {
+            cbSize = (uint)Marshal.SizeOf(typeof(WNDCLASSEX)),
+            style = (uint)cp.ClassStyle, 
+            lpfnWndProc = _wndProcDelegate,
+            hInstance = GetModuleHandle(null),
+            hCursor = LoadCursor(IntPtr.Zero, 32512),
+            hbrBackground = (IntPtr)6,
+            lpszClassName = cp.ClassName
+        };
+
+        RegisterClassEx(ref wc);
+
+        // For CenterScreen, create window hidden first, then position and show
+        var createStyle = (uint)cp.Style;
+        if (_formStartPosition == FormStartPosition.CenterScreen)
+        {
+            createStyle &= ~(uint)WindowStyles.WS_VISIBLE;
         }
 
-        return base.ProcessCmdKey(ref msg, keyData);
+        // Create the window
+        _hWnd = CreateWindowEx(
+            cp.ExStyle,
+            cp.ClassName,
+            cp.Caption,
+            createStyle,
+            cp.X, cp.Y, cp.Width, cp.Height,
+            cp.Parent, IntPtr.Zero, wc.hInstance, IntPtr.Zero);
+
+        if (_hWnd == IntPtr.Zero)
+            throw new Exception("Pencere oluşturulamadı.");
+
+        IsHandleCreated = true;
+        OnHandleCreated(EventArgs.Empty);
+
+        // If CenterScreen, position the window before showing it
+        if (_formStartPosition == FormStartPosition.CenterScreen)
+        {
+            CenterToScreen();
+            ShowWindow(_hWnd, 5); // SW_SHOW
+        }
+    }
+
+    public void CenterToScreen()
+    {
+        int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+        Rect rect;
+        GetWindowRect(_hWnd, out rect);
+
+        int windowWidth = rect.Right - rect.Left;
+        int windowHeight = rect.Bottom - rect.Top;
+
+        int x = (screenWidth - windowWidth) / 2;
+        int y = (screenHeight - windowHeight) / 2;
+
+        SetWindowPos(_hWnd, IntPtr.Zero, x, y, 0, 0,
+            SWP_NOSIZE | SWP_NOZORDER);
+    }
+
+    protected bool ProcessCmdKey(ref MSG msg, Keys keyData)
+    {
+        // Handle keyboard navigation with focus manager
+        if (msg.message == (uint)WindowMessage.WM_KEYDOWN || msg.message == (uint)WindowMessage.WM_SYSKEYDOWN)
+        {
+            // Special keys that should always be processed at window level
+            if (keyData == Keys.Escape)
+            {
+                Close();
+                return true;
+            }
+
+            // Tab navigation
+            if (keyData == Keys.Tab || keyData == (Keys.Tab | Keys.Shift))
+            {
+                var keyArgs = new KeyEventArgs(keyData);
+                if (FocusManager.ProcessKeyNavigation(keyArgs))
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     protected void DragForm(IntPtr handle)
@@ -129,153 +532,225 @@ public class UIWindowBase : Form
     {
         base.OnLoad(e);
 
-        if (DesignMode)
-            return;
-
         // Mark window as loaded so dynamically added controls can trigger their Load immediately
         IsLoaded = true;
 
         // Ensure all child elements receive Load before the window is shown
         foreach (var c in Controls)
-            if (c is UIElementBase child)
+            if (c is ElementBase child)
                 child.EnsureLoadedRecursively();
-
-        // Otherwise, it will not be applied.
-        if (StartPosition == FormStartPosition.CenterScreen)
-            CenterToScreen();
 
         if (BackColor != ColorScheme.BackColor)
             BackColor = ColorScheme.BackColor;
     }
 
-    protected override void OnFormClosed(FormClosedEventArgs e)
+    /// <summary>
+    /// Displays the window associated with this instance if it is not already visible.
+    /// </summary>
+    /// <remarks>This method has no effect if the window handle is not valid. Calling this method on an
+    /// already visible window has no additional effect.</remarks>
+    public override void Show()
     {
-        base.OnFormClosed(e);
+        if (_hWnd != IntPtr.Zero)
+        {
+            Application.RegisterForm(this);
+            ShowWindow(_hWnd, 5);
+            Application.SetActiveForm(this);
+        }
+    }
 
-        if (DesignMode)
+    /// <summary>
+    /// Displays the dialog window and starts its message loop, blocking the calling thread until the dialog is closed.
+    /// </summary>
+    /// <remarks>This method shows the dialog associated with the current window handle and processes window
+    /// messages until the dialog is closed. The calling thread will not continue until the dialog is dismissed. This
+    /// method should be called from a thread that can safely run a message loop, such as the main UI thread.</remarks>
+    public void ShowDialog()
+    {
+        if (_hWnd == IntPtr.Zero)
             return;
 
+        ShowWindow(_hWnd, 5);
+        MSG msg;
+        while (GetMessage(out msg, IntPtr.Zero, 0, 0) > 0)
+        {
+            TranslateMessage(ref msg);
+            DispatchMessage(ref msg);
+        }
+    }
+
+    /// <summary>
+    /// Hides the window associated with this instance.
+    /// </summary>
+    /// <remarks>This method overrides the base implementation to hide the underlying native window. After
+    /// calling this method, the window will no longer be visible to the user, but it remains in memory and can be shown
+    /// again if needed.</remarks>
+    public override void Hide()
+    {
+        if (_hWnd != IntPtr.Zero)
+            ShowWindow(_hWnd, 0);
+    }
+
+    public void Close()
+    {
+        if (_hWnd != IntPtr.Zero)
+        {
+            nint param = 0;
+            PostMessage(_hWnd, (int)WindowMessage.WM_CLOSE, 0, ref param);
+            OnFormClosed(new FormClosedEventArgs(CloseReason.UserClosing));
+            Application.UnregisterForm(this);
+        }
+    }
+
+    protected virtual void OnFormClosed(FormClosedEventArgs e)
+    {
         // Unload all child elements now the window is closed
         foreach (var c in Controls)
-            if (c is UIElementBase child)
+            if (c is ElementBase child)
                 child.EnsureUnloadedRecursively();
 
         IsLoaded = false;
     }
 
-    protected override void WndProc(ref Message m)
+    private SKPoint GetMousePosition(IntPtr lParam)
     {
-        if (DesignMode)
-        {
-            base.WndProc(ref m);
-            return;
-        }
+        int x = (int)(lParam.ToInt64() & 0xFFFF);
+        int y = (int)((lParam.ToInt64() >> 16) & 0xFFFF);
 
-        switch (m.Msg)
+        POINT pt = new POINT { X = x, Y = y };
+        ScreenToClient(_hWnd, ref pt);
+        return new SKPoint(pt.X, pt.Y);
+    }
+
+    private static SKPoint GetClientMousePosition(IntPtr lParam)
+    {
+        int x = (short)(lParam.ToInt64() & 0xFFFF);
+        int y = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
+        return new SKPoint(x, y);
+    }
+
+    private static int GetWheelDelta(IntPtr wParam)
+    {
+        return (short)((wParam.ToInt64() >> 16) & 0xFFFF);
+    }
+
+    private void TrackMouseEvents()
+    {
+        var track = new TRACKMOUSEEVENT
         {
-            case WM_NCHITTEST:
-            {
-                if (WindowState != FormWindowState.Maximized)
+            cbSize = (uint)Marshal.SizeOf(typeof(TRACKMOUSEEVENT)),
+            dwFlags = TME_LEAVE | TME_HOVER,
+            hwndTrack = _hWnd,
+            dwHoverTime = HOVER_DEFAULT
+        };
+
+        if (!TrackMouseEvent(ref track))
+            throw new InvalidOperationException("TrackMouseEvent failed.");
+    }
+
+    private IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+    {
+        switch ((WindowMessage)msg)
+        {
+            case WindowMessage.WM_NCHITTEST:
                 {
-                    var gripDist = 10;
-
-                    var pt = PointToClient(Cursor.Position);
-
-                    var clientSize = ClientSize;
-                    ///allow resize on the lower right corner
-                    if (pt.X >= clientSize.Width - gripDist && pt.Y >= clientSize.Height - gripDist &&
-                        clientSize.Height >= gripDist)
+                    // lParam contains screen coordinates for WM_NCHITTEST - convert to client once
+                    int screenX = (short)(lParam.ToInt64() & 0xFFFF);
+                    int screenY = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
+                    
+                    POINT pt = new POINT { X = screenX, Y = screenY };
+                    ScreenToClient(Handle, ref pt);
+                    var clientPt = new SKPoint(pt.X, pt.Y);
+                    
+                    if (WindowState != FormWindowState.Maximized)
                     {
-                        m.Result = IsMirrored ? htBottomLeft : htBottomRight;
-                        return;
+                        var gripDist = 10;
+                        var clientSize = ClientSize;
+                        
+                        // Allow resize on the lower right corner
+                        if (clientPt.X >= clientSize.Width - gripDist && clientPt.Y >= clientSize.Height - gripDist &&
+                            clientSize.Height >= gripDist)
+                        {
+                            return IsMirrored ? (IntPtr)HTBOTTOMLEFT : (IntPtr)HTBOTTOMRIGHT;
+                        }
+
+                        // Allow resize on the lower left corner
+                        if (clientPt.X <= gripDist && clientPt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                        {
+                            return IsMirrored ? (IntPtr)HTBOTTOMRIGHT : (IntPtr)HTBOTTOMLEFT;
+                        }
+
+                        // Allow resize on the upper right corner
+                        if (clientPt.X <= gripDist && clientPt.Y <= gripDist && clientSize.Height >= gripDist)
+                        {
+                            return IsMirrored ? (IntPtr)HTTOPRIGHT : (IntPtr)HTTOPLEFT;
+                        }
+
+                        // Allow resize on the upper left corner
+                        if (clientPt.X >= clientSize.Width - gripDist && clientPt.Y <= gripDist && clientSize.Height >= gripDist)
+                        {
+                            return IsMirrored ? (IntPtr)HTTOPLEFT : (IntPtr)HTTOPRIGHT;
+                        }
+
+                        // Allow resize on the top border
+                        if (clientPt.Y <= 2 && clientSize.Height >= 2)
+                        {
+                            return (IntPtr)HTTOP;
+                        }
+
+                        // Allow resize on the bottom border
+                        if (clientPt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
+                        {
+                            return (IntPtr)HTBOTTOM;
+                        }
+
+                        // Allow resize on the left border
+                        if (clientPt.X <= gripDist && clientSize.Height >= gripDist)
+                        {
+                            return (IntPtr)HTLEFT;
+                        }
+
+                        // Allow resize on the right border
+                        if (clientPt.X >= clientSize.Width - gripDist && clientSize.Height >= gripDist)
+                        {
+                            return (IntPtr)HTRIGHT;
+                        }
                     }
 
-                    ///allow resize on the lower left corner
-                    if (pt.X <= gripDist && pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                    {
-                        m.Result = IsMirrored ? htBottomRight : htBottomLeft;
-                        return;
-                    }
-
-                    ///allow resize on the upper right corner
-                    if (pt.X <= gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
-                    {
-                        m.Result = IsMirrored ? htTopRight : htTopLeft;
-                        return;
-                    }
-
-                    ///allow resize on the upper left corner
-                    if (pt.X >= clientSize.Width - gripDist && pt.Y <= gripDist && clientSize.Height >= gripDist)
-                    {
-                        m.Result = IsMirrored ? htTopLeft : htTopRight;
-                        return;
-                    }
-
-                    ///allow resize on the top border
-                    if (pt.Y <= 2 && clientSize.Height >= 2)
-                    {
-                        m.Result = htTop;
-                        return;
-                    }
-
-                    ///allow resize on the bottom border
-                    if (pt.Y >= clientSize.Height - gripDist && clientSize.Height >= gripDist)
-                    {
-                        m.Result = htBottom;
-                        return;
-                    }
-
-                    ///allow resize on the left border
-                    if (pt.X <= gripDist && clientSize.Height >= gripDist)
-                    {
-                        m.Result = htLeft;
-                        return;
-                    }
-
-                    ///allow resize on the right border
-                    if (pt.X >= clientSize.Width - gripDist && clientSize.Height >= gripDist)
-                    {
-                        m.Result = htRight;
-                        return;
-                    }
+                    // Not on a resize border - treat as client area for custom title bar handling
+                    // Dragging is handled by UIWindow via DragForm() in mouse event handlers
+                    return (IntPtr)HTCLIENT;
                 }
-
-                if ((int)m.Result == HTCLIENT) // drag the form
-                    m.Result = HTCAPTION;
-
-                break;
-            }
-            case WM_NCCALCSIZE:
+           /* case WindowMessage.WM_NCCALCSIZE:
 
                 var handle = Handle;
 
-                var lpwp = (WINDOWPOS)Marshal.PtrToStructure(m.LParam, typeof(WINDOWPOS));
+                var lpwp = (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
                 if (lpwp.HWND == IntPtr.Zero)
-                    return;
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
 
-                if ((lpwp.flags & (SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOREDRAW)) != 0) return;
-                // TEMPORARY CODE
-                // if (OS.IsAppThemed ()) {
-                // OS.InvalidateRect (handle, null, true);
-                // return result;
-                // }
-                var bits = GetWindowLong(handle, WindowLongIndexFlags.GWL_STYLE).ToInt32();
+                if ((lpwp.flags & (SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOREDRAW)) != 0)
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
+
+                var bits = GetWindowLong(handle, WindowLongIndexFlags.GWL_STYLE).ToInt64();
                 if ((bits & TCS_MULTILINE) != 0)
                 {
                     InvalidateRect(handle, new Rect(), true);
-                    return;
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
                 }
 
                 var rect = new Rect();
                 SetRect(rect, 0, 0, lpwp.cx, lpwp.cy);
 
-                SendMessage(handle, WM_NCCALCSIZE, 0, ref rect);
+                SendMessage(handle, (int)WindowMessage.WM_NCCALCSIZE, 0, ref rect);
                 var newWidth = rect.Right - rect.Left;
                 var newHeight = rect.Bottom - rect.Top;
                 GetClientRect(handle, ref rect);
                 var oldWidth = rect.Right - rect.Left;
                 var oldHeight = rect.Bottom - rect.Top;
-                if (newWidth == oldWidth && newHeight == oldHeight) return;
+                if (newWidth == oldWidth && newHeight == oldHeight)
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
+
                 var inset = new Rect();
                 SendMessage(handle, TCM_ADJUSTRECT, 0, ref inset);
                 int marginX = -inset.Right, marginY = -inset.Bottom;
@@ -299,24 +774,335 @@ public class UIWindowBase : Form
                     InvalidateRect(handle, rect, true);
                 }
 
-                return;
+                return DefWindowProc(hWnd, msg, wParam, lParam);
+                */
+            case WindowMessage.WM_MOUSEMOVE:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.None, 0, (int)point.X, (int)point.Y, 0);
+                    OnMouseMove(args);
+
+                    if (!_mouseInClient)
+                    {
+                        _mouseInClient = true;
+                        TrackMouseEvents();
+                        OnMouseEnter(EventArgs.Empty);
+                    }
+
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_MOUSEHOVER:
+                {
+                    OnMouseHover(EventArgs.Empty);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_MOUSELEAVE:
+                {
+                    _mouseInClient = false;
+                    OnMouseLeave(EventArgs.Empty);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_LBUTTONDOWN:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Left, 1, (int)point.X, (int)point.Y, 0);
+                    OnMouseDown(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_LBUTTONUP:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Left, 1, (int)point.X, (int)point.Y, 0);
+                    OnMouseUp(args);
+                    OnMouseClick(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_LBUTTONDBLCLK:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Left, 2, (int)point.X, (int)point.Y, 0);
+                    OnMouseDoubleClick(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_RBUTTONDOWN:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Right, 1, (int)point.X, (int)point.Y, 0);
+                    OnMouseDown(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_RBUTTONUP:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Right, 1, (int)point.X, (int)point.Y, 0);
+                    OnMouseUp(args);
+                    OnMouseClick(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_RBUTTONDBLCLK:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Right, 2, (int)point.X, (int)point.Y, 0);
+                    OnMouseDoubleClick(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_MBUTTONDOWN:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Middle, 1, (int)point.X, (int)point.Y, 0);
+                    OnMouseDown(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_MBUTTONUP:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Middle, 1, (int)point.X, (int)point.Y, 0);
+                    OnMouseUp(args);
+                    OnMouseClick(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_MBUTTONDBLCLK:
+                {
+                    var point = GetClientMousePosition(lParam);
+                    var args = new MouseEventArgs(MouseButtons.Middle, 2, (int)point.X, (int)point.Y, 0);
+                    OnMouseDoubleClick(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_MOUSEWHEEL:
+            case WindowMessage.WM_MOUSEHWHEEL:
+                {
+                    var point = GetMousePosition(lParam);
+                    var delta = GetWheelDelta(wParam);
+                    var args = new MouseEventArgs(MouseButtons.None, 0, (int)point.X, (int)point.Y, delta);
+                    OnMouseWheel(args);
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_KEYDOWN:
+            case WindowMessage.WM_SYSKEYDOWN:
+                {
+                    var keyCode = (Keys)wParam.ToInt32();
+                    var keyArgs = new KeyEventArgs(keyCode, ModifierKeys);
+                    var msgInfo = new MSG
+                    {
+                        hwnd = hWnd,
+                        message = msg,
+                        wParam = wParam,
+                        lParam = lParam
+                    };
+
+                    // Process command keys first (shortcuts, navigation)
+                    if (ProcessCmdKey(ref msgInfo, keyCode))
+                        return IntPtr.Zero;
+
+                    // If KeyPreview is enabled, window gets first chance to handle
+                    if (KeyPreview)
+                    {
+                        OnKeyDown(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    // Route to focused element if exists (but not if it's this window to prevent recursion)
+                    if (FocusedElement != null && FocusedElement != this)
+                    {
+                        FocusedElement.OnKeyDown(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    // If KeyPreview is disabled and no focused element handled it, window handles it now
+                    if (!KeyPreview && (FocusedElement == null || FocusedElement == this))
+                    {
+                        OnKeyDown(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
+                }
+            case WindowMessage.WM_KEYUP:
+            case WindowMessage.WM_SYSKEYUP:
+                {
+                    var keyCode = (Keys)wParam.ToInt32();
+                    var keyArgs = new KeyEventArgs(keyCode, ModifierKeys);
+
+                    // If KeyPreview is enabled, window gets first chance to handle
+                    if (KeyPreview)
+                    {
+                        OnKeyUp(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    // Route to focused element if exists (but not if it's this window to prevent recursion)
+                    if (FocusedElement != null && FocusedElement != this)
+                    {
+                        FocusedElement.OnKeyUp(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    // If KeyPreview is disabled and no focused element handled it, window handles it now
+                    if (!KeyPreview && (FocusedElement == null || FocusedElement == this))
+                    {
+                        OnKeyUp(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
+                }
+            case WindowMessage.WM_CHAR:
+                {
+                    var keyCode = (Keys)wParam.ToInt32();
+                    var keyArgs = new KeyPressEventArgs(keyCode, ModifierKeys);
+
+                    // If KeyPreview is enabled, window gets first chance to handle
+                    if (KeyPreview)
+                    {
+                        OnKeyPress(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    // Route to focused element if exists (but not if it's this window to prevent recursion)
+                    if (FocusedElement != null && FocusedElement != this)
+                    {
+                        FocusedElement.OnKeyPress(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    // If KeyPreview is disabled and no focused element handled it, window handles it now
+                    if (!KeyPreview && (FocusedElement == null || FocusedElement == this))
+                    {
+                        OnKeyPress(keyArgs);
+                        if (keyArgs.Handled)
+                            return IntPtr.Zero;
+                    }
+
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
+                }
+            case WindowMessage.WM_SETFOCUS:
+                Application.SetActiveForm(this);
+                OnGotFocus(EventArgs.Empty);
+                return IntPtr.Zero;
+            case WindowMessage.WM_KILLFOCUS:
+                OnLostFocus(EventArgs.Empty);
+                return IntPtr.Zero;
+            case WindowMessage.WM_ACTIVATE:
+            {
+                var activateType = wParam.ToInt32() & 0xFFFF;
+                if (activateType != 0) // WA_INACTIVE = 0
+                {
+                    Application.SetActiveForm(this);
+                    Activated?.Invoke(this, EventArgs.Empty);
+                }
+                else
+                {
+                    Deactivated?.Invoke(this, EventArgs.Empty);
+                }
+                return DefWindowProc(hWnd, msg, wParam, lParam);
+            }
+            case WindowMessage.WM_NCACTIVATE:
+            {
+                if (wParam != IntPtr.Zero)
+                {
+                    Application.SetActiveForm(this);
+                }
+                return DefWindowProc(hWnd, msg, wParam, lParam);
+            }
+            case WindowMessage.WM_MOVE:
+                {
+                    int x = (short)(lParam.ToInt64() & 0xFFFF);
+                    int y = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
+                    
+                    // Prevent recursion when updating from native window
+                    _updatingFromNative = true;
+                    try
+                    {
+                        Location = new SKPoint(x, y);
+                        OnLocationChanged(EventArgs.Empty);
+                    }
+                    finally
+                    {
+                        _updatingFromNative = false;
+                    }
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_SIZE:
+                {
+                    // wParam contains the resize type
+                    var sizeType = wParam.ToInt32();
+                    int width = (short)(lParam.ToInt64() & 0xFFFF);
+                    int height = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
+                    
+                    // Update WindowState from native notification without triggering ShowWindow
+                    switch (sizeType)
+                    {
+                        case 0: // SIZE_RESTORED
+                            _windowState = FormWindowState.Normal;
+                            break;
+                        case 1: // SIZE_MINIMIZED
+                            _windowState = FormWindowState.Minimized;
+                            break;
+                        case 2: // SIZE_MAXIMIZED
+                            _windowState = FormWindowState.Maximized;
+                            break;
+                    }
+                    
+                    // Prevent recursion when updating from native window
+                    _updatingFromNative = true;
+                    try
+                    {
+                        Size = new SKSize(width, height);
+                        OnSizeChanged(EventArgs.Empty);
+                    }
+                    finally
+                    {
+                        _updatingFromNative = false;
+                    }
+                    return IntPtr.Zero;
+                }
+            case WindowMessage.WM_CLOSE:
+                Application.UnregisterForm(this);
+                OnFormClosed(new FormClosedEventArgs(CloseReason.UserClosing));
+                return DefWindowProc(hWnd, msg, wParam, lParam);
+            case WindowMessage.WM_SHOWWINDOW:
+                {
+                    // wParam: TRUE if the window is being shown, FALSE if being hidden
+                    bool isShowing = wParam != IntPtr.Zero;
+                    if (isShowing && !IsLoaded)
+                    {
+                        IsLoaded = true;
+                        OnShown(EventArgs.Empty);
+                    }
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
+                }
+            case WindowMessage.WM_NCDESTROY:
+                {
+                    // Called after WM_DESTROY, when the window is being completely destroyed
+                    OnHandleDestroyed(EventArgs.Empty);
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
+                }
+            case WindowMessage.WM_DESTROY:
+                Application.UnregisterForm(this);
+                OnFormClosed(new FormClosedEventArgs(CloseReason.UserClosing));
+                PostQuitMessage(0);
+                return IntPtr.Zero;
+
         }
 
-        base.WndProc(ref m);
+        return DefWindowProc(hWnd, msg, wParam, lParam);
     }
 
-    protected override void OnHandleCreated(EventArgs e)
+    protected virtual void OnHandleCreated(EventArgs e)
     {
-        base.OnHandleCreated(e);
+        SDUI.Native.Windows.Helpers.ApplyRoundCorner(Handle);
 
-        if (DesignMode)
-            return;
-
-        WindowsHelper.ApplyRoundCorner(Handle);
-
-        if (_aeroEnabled)
+        if (_aeroEnabled && DwmMargin >= 0)
         {
-            var v = 2;
+            uint v = 2;
 
             DwmSetWindowAttribute(Handle, DWMWINDOWATTRIBUTE.DWMWA_NCRENDERING_POLICY, ref v, 4);
             var margins = new MARGINS
@@ -334,12 +1120,15 @@ public class UIWindowBase : Form
             SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOMOVE |
             SetWindowPosFlags.SWP_NOZORDER | SetWindowPosFlags.SWP_NOOWNERZORDER | SetWindowPosFlags.SWP_NOACTIVATE);
 
+        // Set window icon if available
+        UpdateWindowIcon();
+
         // Ensure child elements receive the correct initial DPI now that the window handle is available.
         // Use InitializeDpi on first load to set DPI without scaling (design-time sizes are for 96 DPI)
         try
         {
             float windowDpi = DpiHelper.GetDpiForWindowInternal(Handle);
-            foreach (var child in Controls.OfType<UIElementBase>()) child.InitializeDpi(windowDpi);
+            foreach (var child in Controls.OfType<ElementBase>()) child.InitializeDpi(windowDpi);
         }
         catch
         {
@@ -347,48 +1136,166 @@ public class UIWindowBase : Form
         }
     }
 
-    protected override void OnBackColorChanged(EventArgs e)
+    internal override void OnBackColorChanged(EventArgs e)
     {
         base.OnBackColorChanged(e);
-        if (DesignMode)
+
+        if (!SDUI.Native.Windows.Helpers.IsModern)
             return;
 
-        if (!WindowsHelper.IsModern)
-            return;
-
-        WindowsHelper.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
+        SDUI.Native.Windows.Helpers.UseImmersiveDarkMode(Handle, ColorScheme.BackColor.IsDark());
 
         if (ColorScheme.BackColor.IsDark())
         {
-            var flag = DWMSBT_TABBEDWINDOW;
-            DwmSetWindowAttribute(
-                Handle,
-                DWMWINDOWATTRIBUTE.DWMWA_SYSTEMBACKDROP_TYPE,
-                ref flag,
-                Marshal.SizeOf<int>());
+            SDUI.Native.Windows.Helpers.EnableBackdropType(Handle, DWMSBT_TABBEDWINDOW);
         }
     }
 
-    protected override void OnDpiChanged(DpiChangedEventArgs e)
+    /// <summary>
+    /// Updates the window icon when Icon or ShowIcon properties change.
+    /// </summary>
+    private void UpdateWindowIcon()
     {
-        base.OnDpiChanged(e);
+        if (!IsHandleCreated)
+            return;
+
+        if (_showIcon && _icon != null)
+        {
+            // Set both small and large icons
+            IntPtr hIcon = _icon.Handle;
+            SendMessagePtr(Handle, (int)WindowMessage.WM_SETICON, (IntPtr)ICON_SMALL, hIcon);
+            SendMessagePtr(Handle, (int)WindowMessage.WM_SETICON, (IntPtr)ICON_BIG, hIcon);
+        }
+        else
+        {
+            // Remove icons
+            SendMessagePtr(Handle, (int)WindowMessage.WM_SETICON, (IntPtr)ICON_SMALL, IntPtr.Zero);
+            SendMessagePtr(Handle, (int)WindowMessage.WM_SETICON, (IntPtr)ICON_BIG, IntPtr.Zero);
+        }
     }
 
     /// <summary>
     ///     Request that the window capture mouse input for the specified element.
-    ///     Default implementation does nothing; derived window classes may override to provide capture semantics.
+    ///     This allows the element to continue receiving mouse events even when the cursor moves outside its bounds.
     /// </summary>
-    protected internal virtual void SetMouseCapture(UIElementBase element)
+    /// <param name="element">The element that should receive captured mouse events</param>
+    public virtual void SetMouseCapture(ElementBase element)
     {
-        // No-op by default
+        // Default implementation uses native Windows mouse capture
+        if (IsHandleCreated && element != null)
+        {
+            SetCapture(Handle);
+        }
     }
 
     /// <summary>
     ///     Release mouse capture previously set for the specified element.
-    ///     Default implementation does nothing; derived window classes may override to provide capture semantics.
     /// </summary>
-    protected internal virtual void ReleaseMouseCapture(UIElementBase element)
+    /// <param name="element">The element that had mouse capture</param>
+    public virtual void ReleaseMouseCapture(ElementBase element)
     {
-        // No-op by default
+        // Default implementation releases native Windows mouse capture
+        if (IsHandleCreated)
+        {
+            ReleaseCapture();
+        }
+    }
+
+    /// <summary>
+    ///     Raises the Shown event. Called when the window is first displayed.
+    /// </summary>
+    protected virtual void OnShown(EventArgs e)
+    {
+        // Default implementation does nothing; derived classes can override
+    }
+
+    /// <summary>
+    ///     Raises the HandleDestroyed event. Called when the window handle is destroyed.
+    /// </summary>
+    protected virtual void OnHandleDestroyed(EventArgs e)
+    {
+        // Default implementation does nothing; derived classes can override
+    }
+
+    /// <summary>
+    /// Updates the window cursor based on the provided element's cursor.
+    /// This method sets the native Windows cursor for the window.
+    /// </summary>
+    /// <param name="element">The element whose cursor should be displayed. If null, disabled, or invisible, the default cursor is used.</param>
+    public virtual void UpdateCursor(ElementBase element)
+    {
+        if (!IsHandleCreated)
+            return;
+
+        Cursor targetCursor;
+        if (element == null || !element.Enabled || !element.Visible)
+        {
+            targetCursor = Cursors.Default;
+        }
+        else
+        {
+            targetCursor = element.Cursor ?? Cursors.Default;
+        }
+
+        // Set the native Windows cursor
+        if (targetCursor != null && targetCursor.Handle != IntPtr.Zero)
+        {
+            SetCursor(targetCursor.Handle);
+        }
+    }
+
+    /// <summary>
+    /// Converts a point from this window's client coordinates to screen coordinates using native Windows API.
+    /// </summary>
+    public SKPoint PointToScreen(SKPoint clientPoint)
+    {
+        if (!IsHandleCreated)
+            return clientPoint;
+
+        POINT pt = new POINT 
+        { 
+            X = (int)clientPoint.X, 
+            Y = (int)clientPoint.Y 
+        };
+        
+        ClientToScreen(Handle, ref pt);
+        return new SKPoint(pt.X, pt.Y);
+    }
+
+    /// <summary>
+    /// Converts a point from screen coordinates to this window's client coordinates using native Windows API.
+    /// </summary>
+    public SKPoint PointToClient(SKPoint screenPoint)
+    {
+        if (!IsHandleCreated)
+            return screenPoint;
+
+        POINT pt = new POINT 
+        { 
+            X = (int)screenPoint.X, 
+            Y = (int)screenPoint.Y 
+        };
+        
+        ScreenToClient(Handle, ref pt);
+        return new SKPoint(pt.X, pt.Y);
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+
+        if (!_disposed)
+        {
+            if (_hWnd != IntPtr.Zero)
+            {
+                _hWnd = IntPtr.Zero;
+                // Pencereyi yok etme işlemleri burada yapılabilir
+                // DestroyWindow(_hWnd) - genellikle WM_CLOSE tetikler
+            }
+
+            // Class'ı sistemden düşür
+            UnregisterClass(CreateParams.ClassName, _hInstance);
+            _disposed = true;
+        }
     }
 }

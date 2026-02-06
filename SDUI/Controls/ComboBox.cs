@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
+
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using SDUI.Animation;
@@ -23,8 +23,8 @@ public class ComboBox : UIElementBase
 
     public ComboBox()
     {
-        MinimumSize = new Size((int)(50 * ScaleFactor), (int)(28 * ScaleFactor));
-        Size = new Size((int)(120 * ScaleFactor), (int)(28 * ScaleFactor));
+        MinimumSize = new SKSize((int)(50 * ScaleFactor), (int)(28 * ScaleFactor));
+        Size = new SKSize((int)(120 * ScaleFactor), (int)(28 * ScaleFactor));
 
         _hoverAnimation = new AnimationManager(true)
         {
@@ -273,8 +273,6 @@ public class ComboBox : UIElementBase
 
     [Browsable(true)] public int MaxDropDownItems { get; set; } = 8;
 
-    [Browsable(true)] public DrawMode DrawMode { get; set; } = DrawMode.Normal;
-
     [Browsable(true)] public bool FormattingEnabled { get; set; }
 
     [Browsable(true)] public bool IntegralHeight { get; set; } = true;
@@ -478,14 +476,14 @@ public class ComboBox : UIElementBase
         if (Items.Count == 0) return Width;
         using var font = new SKFont
         {
-            Size = Font.Size.PtToPx(this),
+            Size = Font.Size.Topx(this),
             Typeface = FontManager.GetSKTypeface(Font)
         };
         var maxText = 0f;
         for (var i = 0; i < Items.Count; i++)
         {
             var txt = GetItemText(Items[i]) ?? string.Empty;
-            var bounds = new SKRect();
+            var bounds = new SkiaSharp.SKRect();
             font.MeasureText(txt, out bounds);
             maxText = Math.Max(maxText, bounds.Width);
         }
@@ -527,7 +525,7 @@ public class ComboBox : UIElementBase
 
         var spaceBelow = _parentWindow.Height - comboLocation.Y - Height - MARGIN;
         var spaceAbove = comboLocation.Y - MARGIN;
-        var availableSpace = Math.Max(spaceBelow, spaceAbove);
+        var availableSpace = (int)Math.Max(spaceBelow, spaceAbove);
 
         int dropdownHeight;
         if (AutoDropDownHeight)
@@ -543,36 +541,36 @@ public class ComboBox : UIElementBase
             dropdownHeight = Math.Max(minHeight, Math.Min(target, totalItemsHeight));
         }
 
-        dropdownHeight = Math.Min(dropdownHeight, client.Height - MARGIN * 2);
+        dropdownHeight = (int)Math.Min(dropdownHeight, client.Height - MARGIN * 2);
         var dropdownWidth = _dropDownWidth == 0 ? MeasureDropDownAutoWidth() : DropDownWidth;
 
         // Smart positioning with flip support (ContextMenuStrip gibi)
         var canOpenDown = dropdownHeight <= spaceBelow;
         var canOpenUp = dropdownHeight <= spaceAbove;
 
-        Point dropdownLocation;
+        SKPoint dropdownLocation;
         if (canOpenDown)
         {
-            dropdownHeight = Math.Min(dropdownHeight, Math.Max(minHeight, spaceBelow));
-            dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height + 2);
+            dropdownHeight = (int)Math.Min(dropdownHeight, Math.Max(minHeight, spaceBelow));
+            dropdownLocation = new SKPoint(comboLocation.X, comboLocation.Y + Height + 2);
         }
         else if (canOpenUp)
         {
-            dropdownHeight = Math.Min(dropdownHeight, Math.Max(minHeight, spaceAbove));
-            dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
+            dropdownHeight = (int)Math.Min(dropdownHeight, Math.Max(minHeight, spaceAbove));
+            dropdownLocation = new SKPoint(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
         }
         else
         {
             // Neither fits perfectly - pick the side with more space
             if (spaceBelow >= spaceAbove)
             {
-                dropdownLocation = new Point(comboLocation.X, comboLocation.Y + Height + 2);
-                dropdownHeight = Math.Max(minHeight, Math.Min(dropdownHeight, spaceBelow));
+                dropdownLocation = new SKPoint(comboLocation.X, comboLocation.Y + Height + 2);
+                dropdownHeight = (int)Math.Max(minHeight, Math.Min(dropdownHeight, spaceBelow));
             }
             else
             {
-                dropdownHeight = Math.Max(minHeight, Math.Min(dropdownHeight, spaceAbove));
-                dropdownLocation = new Point(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
+                dropdownHeight = (int)Math.Max(minHeight, Math.Min(dropdownHeight, spaceAbove));
+                dropdownLocation = new SKPoint(comboLocation.X, comboLocation.Y - dropdownHeight - 2);
             }
         }
 
@@ -593,8 +591,8 @@ public class ComboBox : UIElementBase
             Math.Min(dropdownLocation.Y, client.Bottom - dropdownHeight - MARGIN));
 
         // Clamp size to available space
-        dropdownWidth = Math.Min(dropdownWidth, client.Width - MARGIN * 2);
-        dropdownHeight = Math.Min(dropdownHeight, client.Height - MARGIN * 2);
+        dropdownWidth = (int)Math.Min(dropdownWidth, client.Width - MARGIN * 2);
+        dropdownHeight = (int)Math.Min(dropdownHeight, client.Height - MARGIN * 2);
 
         _dropDownPanel.Location = dropdownLocation;
         _dropDownPanel.Width = dropdownWidth;
@@ -632,9 +630,9 @@ public class ComboBox : UIElementBase
         Debug.WriteLine("CloseDropDown: Dropdown closed");
     }
 
-    private Point GetLocationRelativeToWindow()
+    private SKPoint GetLocationRelativeToWindow()
     {
-        int x = 0, y = 0;
+        float x = 0, y = 0;
         UIElementBase current = this;
 
         while (current != null && current.Parent != _parentWindow)
@@ -650,7 +648,7 @@ public class ComboBox : UIElementBase
             y += current.Location.Y;
         }
 
-        return new Point(x, y);
+        return new SKPoint(x, y);
     }
 
     private void AttachWindowHandlers()
@@ -694,9 +692,9 @@ public class ComboBox : UIElementBase
         }
 
         // ComboBox'�n kendi alan� i�inde mi kontrol et
-        var comboBounds = new Rectangle(GetLocationRelativeToWindow(), Size);
+        var comboBounds = SKRect.Create(GetLocationRelativeToWindow(), Size);
         Debug.WriteLine(
-            $"OnWindowMouseDown: ComboBox bounds=({comboBounds.X},{comboBounds.Y},{comboBounds.Width},{comboBounds.Height})");
+            $"OnWindowMouseDown: ComboBox bounds=({comboBounds.Left},{comboBounds.Top},{comboBounds.Width},{comboBounds.Height})");
         if (comboBounds.Contains(e.Location))
         {
             Debug.WriteLine("OnWindowMouseDown: Click inside ComboBox, not closing");
@@ -704,9 +702,9 @@ public class ComboBox : UIElementBase
         }
 
         // Dropdown panel i�inde mi kontrol et
-        var panelBounds = new Rectangle(_dropDownPanel.Location, _dropDownPanel.Size);
+        var panelBounds = SKRect.Create(_dropDownPanel.Location, _dropDownPanel.Size);
         Debug.WriteLine(
-            $"OnWindowMouseDown: Panel bounds=({panelBounds.X},{panelBounds.Y},{panelBounds.Width},{panelBounds.Height})");
+            $"OnWindowMouseDown: Panel bounds=({panelBounds.Left},{panelBounds.Top},{panelBounds.Width},{panelBounds.Height})");
         if (panelBounds.Contains(e.Location))
         {
             Debug.WriteLine("OnWindowMouseDown: Click inside panel, not closing");
@@ -758,7 +756,7 @@ public class ComboBox : UIElementBase
             _defaultSkFont?.Dispose();
             _defaultSkFont = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true
             };
@@ -796,13 +794,13 @@ public class ComboBox : UIElementBase
 
     public override void OnPaint(SKCanvas canvas)
     {
-        var rect = new SKRect(0, 0, Width, Height);
+        var rect = new SkiaSharp.SKRect(0, 0, Width, Height);
 
         var hoverProgress = (float)_hoverAnimation.GetProgress();
         var pressProgress = (float)_pressAnimation.GetProgress();
 
-        var accentColor = ColorScheme.AccentColor.ToSKColor();
-        var baseColor = ColorScheme.BackColor.ToSKColor();
+        var accentColor = ColorScheme.AccentColor;
+        var baseColor = ColorScheme.BackColor;
 
         // Arka plan rengi hesapla (daha yumuşak blend)
         var blendFactor = Math.Clamp(hoverProgress * 0.15f + pressProgress * 0.1f + (DroppedDown ? 0.2f : 0f), 0f,
@@ -846,23 +844,22 @@ public class ComboBox : UIElementBase
         // Modern kenarl�k (ince ve zarif)
         var borderAlpha = 0.4f + hoverProgress * 0.2f + pressProgress * 0.1f;
         _paintBorder ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = 1f * ScaleFactor };
-        _paintBorder.Color = ColorScheme.BorderColor.ToSKColor()
+        _paintBorder.Color = ColorScheme.BorderColor
             .InterpolateColor(accentColor, blendFactor * 0.4f)
-            .ToColor()
-            .Alpha((byte)(255 * borderAlpha))
-            .ToSKColor();
+            .WithAlpha((byte)(255 * borderAlpha))
+            ;
         var borderRect = rect;
         borderRect.Inflate(-0.5f * ScaleFactor, -0.5f * ScaleFactor);
         canvas.DrawRoundRect(borderRect, RadiusScaled - 0.5f * ScaleFactor, RadiusScaled - 0.5f * ScaleFactor, _paintBorder);
 
-        var textColor = ColorScheme.ForeColor.ToSKColor();
+        var textColor = ColorScheme.ForeColor;
         var displayText = Text;
 
         var font = GetDefaultSkFont();
         _paintText ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
         _paintText.Color = textColor;
 
-        var textBounds = new SKRect();
+        var textBounds = new SkiaSharp.SKRect();
         font.MeasureText(displayText, out textBounds);
         var textY = Height / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
         float textX = 16f * ScaleFactor;
@@ -882,7 +879,7 @@ public class ComboBox : UIElementBase
 
             // Chevron color (status of hover and pressre)
             var chevronBlend = Math.Clamp(hoverProgress * 0.35f + pressProgress * 0.5f, 0f, 1f);
-            var chevronColor = ColorScheme.ForeColor.ToSKColor().InterpolateColor(accentColor, chevronBlend);
+            var chevronColor = ColorScheme.ForeColor.InterpolateColor(accentColor, chevronBlend);
 
             // Chevron hover background circle (with animation)
             if (hoverProgress > 0.05f)
@@ -925,9 +922,9 @@ public class ComboBox : UIElementBase
 
     #region Overrides
 
-    public override Size GetPreferredSize(Size proposedSize)
+    public override SKSize GetPreferredSize(SKSize proposedSize)
     {
-        return new Size(Math.Max((int)(120 * ScaleFactor), proposedSize.Width), (int)(28 * ScaleFactor));
+        return new SKSize(Math.Max((int)(120 * ScaleFactor), proposedSize.Width), (int)(28 * ScaleFactor));
     }
 
     internal override void OnSizeChanged(EventArgs e)

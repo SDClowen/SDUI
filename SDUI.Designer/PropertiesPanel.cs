@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+
 using SDUI.Controls;
 
 namespace SDUI.Designer;
@@ -25,7 +25,7 @@ internal class PropertiesPanel : SDUI.Controls.GroupBox
 
         _propertyGrid = new PropertyGrid
         {
-            Location = new Point(10, 45),
+            Location = new SKPoint(10, 45),
             Width = Width - 20,
             Height = 600,
             PropertySort = PropertySort.Categorized,
@@ -54,7 +54,7 @@ internal class PropertiesPanel : SDUI.Controls.GroupBox
         if (_selectedControl == null) return;
 
         // Update DesignControl wrapper if needed
-        if (e.PropertyName == "Location" && e.NewValue is Point newLocation)
+        if (e.PropertyName == "Location" && e.NewValue is SKPoint newLocation)
         {
             _selectedControl.Location = newLocation;
         }

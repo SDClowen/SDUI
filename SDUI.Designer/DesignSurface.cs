@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using SDUI;
 using SDUI.Controls;
 using SDUI.Extensions;
@@ -23,12 +23,12 @@ public class DesignSurface : DoubleBufferedControl
     private int _pasteOffset;
     private DesignControl? _selectedControl;
     private string? _pendingControlType;
-    private Point _dragStart;
+    private SKPoint _dragStart;
     private bool _isDragging;
     private bool _isResizing;
     private ResizeHandle _activeHandle = ResizeHandle.None;
     private Rectangle _resizeStartBounds;
-    private Point _moveStartLocation;
+    private SKPoint _moveStartLocation;
     private UIElementBase? _highlightedContainer;
     private SelectionOverlay? _selectionOverlay;
     private DesignGuides? _designGuides;
@@ -63,7 +63,7 @@ public class DesignSurface : DoubleBufferedControl
         _canvas = new DoubleBufferedControl
         {
             BackColor = Color.Transparent,
-            Location = Point.Empty,
+            Location = SKPoint.Empty,
             Size = Size
         };
         Controls.Add(_canvas);
@@ -221,17 +221,17 @@ public class DesignSurface : DoubleBufferedControl
                 var potentialParent = FindContainerAtPoint(location, control) ?? _canvas;
                 
                 // Yeni location'u hesapla (parent'a göre relative)
-                Point newLocation;
+                SKPoint newLocation;
                 if (potentialParent == _canvas)
                 {
                     // Ana surface'e göre absolute
-                    newLocation = new Point(newAbsoluteX, newAbsoluteY);
+                    newLocation = new SKPoint(newAbsoluteX, newAbsoluteY);
                 }
                 else
                 {
                     // Parent control'e göre relative
                     var parentAbsoluteLocation = GetAbsoluteLocation(potentialParent);
-                    newLocation = new Point(
+                    newLocation = new SKPoint(
                         newAbsoluteX - parentAbsoluteLocation.X,
                         newAbsoluteY - parentAbsoluteLocation.Y
                     );
@@ -256,7 +256,7 @@ public class DesignSurface : DoubleBufferedControl
                     else
                     {
                         var parentAbsoluteLocation = GetAbsoluteLocation(potentialParent);
-                        newLocation = new Point(
+                        newLocation = new SKPoint(
                             snappedAbsoluteLocation.X - parentAbsoluteLocation.X,
                             snappedAbsoluteLocation.Y - parentAbsoluteLocation.Y
                         );
@@ -376,34 +376,34 @@ public class DesignSurface : DoubleBufferedControl
         this.Cursor = System.Windows.Forms.Cursors.Default;
     }
 
-    private ResizeHandle GetHandleAtPoint(Point point, Rectangle bounds)
+    private ResizeHandle GetHandleAtPoint(SKPoint point, Rectangle bounds)
     {
         int half = HandleSize / 2;
         
         // Check corners first (higher priority)
-        if (IsPointNear(point, new Point(bounds.Left, bounds.Top), half))
+        if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Top), half))
             return ResizeHandle.TopLeft;
-        if (IsPointNear(point, new Point(bounds.Right, bounds.Top), half))
+        if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Top), half))
             return ResizeHandle.TopRight;
-        if (IsPointNear(point, new Point(bounds.Right, bounds.Bottom), half))
+        if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Bottom), half))
             return ResizeHandle.BottomRight;
-        if (IsPointNear(point, new Point(bounds.Left, bounds.Bottom), half))
+        if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Bottom), half))
             return ResizeHandle.BottomLeft;
         
         // Check edges
-        if (IsPointNear(point, new Point(bounds.Left + bounds.Width / 2, bounds.Top), half))
+        if (IsPointNear(point, new SKPoint(bounds.Left + bounds.Width / 2, bounds.Top), half))
             return ResizeHandle.Top;
-        if (IsPointNear(point, new Point(bounds.Right, bounds.Top + bounds.Height / 2), half))
+        if (IsPointNear(point, new SKPoint(bounds.Right, bounds.Top + bounds.Height / 2), half))
             return ResizeHandle.Right;
-        if (IsPointNear(point, new Point(bounds.Left + bounds.Width / 2, bounds.Bottom), half))
+        if (IsPointNear(point, new SKPoint(bounds.Left + bounds.Width / 2, bounds.Bottom), half))
             return ResizeHandle.Bottom;
-        if (IsPointNear(point, new Point(bounds.Left, bounds.Top + bounds.Height / 2), half))
+        if (IsPointNear(point, new SKPoint(bounds.Left, bounds.Top + bounds.Height / 2), half))
             return ResizeHandle.Left;
         
         return ResizeHandle.None;
     }
 
-    private bool IsPointNear(Point p1, Point p2, int tolerance)
+    private bool IsPointNear(SKPoint p1, SKPoint p2, int tolerance)
     {
         return Math.Abs(p1.X - p2.X) <= tolerance && Math.Abs(p1.Y - p2.Y) <= tolerance;
     }
@@ -420,7 +420,7 @@ public class DesignSurface : DoubleBufferedControl
         };
     }
 
-    private void PerformResize(Point currentPoint)
+    private void PerformResize(SKPoint currentPoint)
     {
         if (_selectedControl == null) return;
 
@@ -480,9 +480,9 @@ public class DesignSurface : DoubleBufferedControl
         control.Invalidate();
     }
 
-    private Point SnapToGrid(Point location)
+    private SKPoint SnapToGrid(SKPoint location)
     {
-        return new Point(
+        return new SKPoint(
             (location.X / _gridSize) * _gridSize,
             (location.Y / _gridSize) * _gridSize
         );
@@ -496,7 +496,7 @@ public class DesignSurface : DoubleBufferedControl
         );
     }
 
-    private DesignControl? FindControlAtPoint(Point point)
+    private DesignControl? FindControlAtPoint(SKPoint point)
     {
         // En üstteki kontrolden başla (Z-order)
         for (int i = _designControls.Count - 1; i >= 0; i--)
@@ -516,7 +516,7 @@ public class DesignSurface : DoubleBufferedControl
         return null;
     }
 
-    private UIElementBase? FindContainerAtPoint(Point point, UIElementBase excludeControl)
+    private UIElementBase? FindContainerAtPoint(SKPoint point, UIElementBase excludeControl)
     {
         UIElementBase? deepestContainer = null;
         int deepestLevel = -1;
@@ -579,7 +579,7 @@ public class DesignSurface : DoubleBufferedControl
         return level;
     }
 
-    private Point GetAbsoluteLocation(UIElementBase control)
+    private SKPoint GetAbsoluteLocation(UIElementBase control)
     {
         var location = control.Location;
         var parent = control.Parent as UIElementBase;
@@ -634,7 +634,7 @@ public class DesignSurface : DoubleBufferedControl
         }
     }
 
-    public void AddDesignControl(string controlType, Point location)
+    public void AddDesignControl(string controlType, SKPoint location)
     {
         var command = new AddControlCommand(this, controlType, location);
         _undoRedoManager.ExecuteCommand(command);
@@ -657,14 +657,14 @@ public class DesignSurface : DoubleBufferedControl
 
         var baseLocation = _selectedControl?.Control.Location ?? _clipboardSnapshot.Location;
         _pasteOffset += 10;
-        var pasteLocation = new Point(baseLocation.X + _pasteOffset, baseLocation.Y + _pasteOffset);
+        var pasteLocation = new SKPoint(baseLocation.X + _pasteOffset, baseLocation.Y + _pasteOffset);
 
         var command = new SDUI.Designer.Commands.PasteControlCommand(this, _clipboardSnapshot, pasteLocation);
         _undoRedoManager.ExecuteCommand(command);
         return true;
     }
     
-    internal void AddDesignControlInternal(string controlType, Point location)
+    internal void AddDesignControlInternal(string controlType, SKPoint location)
     {
         var control = CreateControl(controlType);
         if (control != null)
@@ -683,7 +683,7 @@ public class DesignSurface : DoubleBufferedControl
         }
     }
 
-    internal DesignControl? AddDesignControlFromSnapshot(ControlSnapshot snapshot, Point location)
+    internal DesignControl? AddDesignControlFromSnapshot(ControlSnapshot snapshot, SKPoint location)
     {
         var control = CreateControlFromSnapshot(snapshot);
         if (control == null)
@@ -867,7 +867,7 @@ public class DesignSurface : DoubleBufferedControl
             return true;
 
         if (underlying == typeof(string) || underlying == typeof(Color) || underlying == typeof(Font) ||
-            underlying == typeof(Point) || underlying == typeof(Size) || underlying == typeof(Rectangle) ||
+            underlying == typeof(SKPoint) || underlying == typeof(Size) || underlying == typeof(Rectangle) ||
             underlying == typeof(System.Windows.Forms.Padding) || underlying == typeof(System.Windows.Forms.DockStyle) ||
             underlying == typeof(System.Windows.Forms.AnchorStyles) || underlying == typeof(ContentAlignment))
             return true;
@@ -966,7 +966,7 @@ public class DesignSurface : DoubleBufferedControl
     public sealed class ControlSnapshot
     {
         public string ControlType { get; set; } = string.Empty;
-        public Point Location { get; set; }
+        public SKPoint Location { get; set; }
         public Size Size { get; set; }
         public string? Text { get; set; }
         public Dictionary<string, object?> Properties { get; } = new();
@@ -1040,7 +1040,7 @@ public class DesignSurface : DoubleBufferedControl
     {
         using var paint = new SkiaSharp.SKPaint
         {
-            Color = ColorScheme.ForeColor.Alpha(20).ToSKColor(),
+            Color = ColorScheme.ForeColor.WithAlpha(20),
             StrokeWidth = 1,
             Style = SkiaSharp.SKPaintStyle.Stroke,
             IsAntialias = true
@@ -1134,7 +1134,7 @@ public class DesignSurface : DoubleBufferedControl
     {
         var x = (_hScrollBar != null && _hScrollBar.Visible) ? _hScrollBar.Value : 0;
         var y = (_vScrollBar != null && _vScrollBar.Visible) ? _vScrollBar.Value : 0;
-        var newLocation = new Point(-x, -y);
+        var newLocation = new SKPoint(-x, -y);
         if (_canvas.Location != newLocation)
             _canvas.Location = newLocation;
 
@@ -1197,7 +1197,7 @@ public class DesignSurface : DoubleBufferedControl
         return new Rectangle(location, control.Size);
     }
 
-    private Point GetCanvasRelativeLocation(UIElementBase control)
+    private SKPoint GetCanvasRelativeLocation(UIElementBase control)
     {
         var location = control.Location;
         var parent = control.Parent as UIElementBase;
@@ -1246,12 +1246,12 @@ public class DesignSurface : DoubleBufferedControl
         HandleMouseWheel(e.Delta);
     }
 
-    private Point ToDesignPoint(Point point)
+    private SKPoint ToDesignPoint(SKPoint point)
     {
         if (Math.Abs(_zoom - 1f) < 0.001f)
             return point;
 
-        return new Point(
+        return new SKPoint(
             (int)Math.Round(point.X / _zoom),
             (int)Math.Round(point.Y / _zoom));
     }

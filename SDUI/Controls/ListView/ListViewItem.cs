@@ -4,7 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
+
 using System.Runtime.Serialization;
 using System.Windows.Forms;
 
@@ -28,7 +28,7 @@ public partial class ListViewItem : ICloneable
     private static readonly BitVector32.Section s_subItemCountSection =
         BitVector32.CreateSection(MaxSubItems, s_savedStateImageIndexSection);
 
-    private readonly Point _position = new(-1, -1);
+    private readonly SKPoint _position = new(-1, -1);
 
     private AccessibleObject? _accessibilityObject;
     private View _accessibilityObjectView;
@@ -98,7 +98,7 @@ public partial class ListViewItem : ICloneable
         }
     }
 
-    public ListViewItem(string[]? items, int imageIndex, Color foreColor, Color backColor, Font? font)
+    public ListViewItem(string[]? items, int imageIndex, SKColor foreColor, SKColor backColor, Font? font)
         : this(items, imageIndex)
     {
         ForeColor = foreColor;
@@ -154,7 +154,7 @@ public partial class ListViewItem : ICloneable
         Group = group;
     }
 
-    public ListViewItem(string[]? items, int imageIndex, Color foreColor, Color backColor, Font? font,
+    public ListViewItem(string[]? items, int imageIndex, SKColor foreColor, SKColor backColor, Font? font,
         ListViewGroup? group)
         : this(items, imageIndex, foreColor, backColor, font)
     {
@@ -187,7 +187,7 @@ public partial class ListViewItem : ICloneable
         }
     }
 
-    public ListViewItem(string[]? items, string? imageKey, Color foreColor, Color backColor, Font? font)
+    public ListViewItem(string[]? items, string? imageKey, SKColor foreColor, SKColor backColor, Font? font)
         : this(items, imageKey)
     {
         ForeColor = foreColor;
@@ -225,7 +225,7 @@ public partial class ListViewItem : ICloneable
         Group = group;
     }
 
-    public ListViewItem(string[]? items, string? imageKey, Color foreColor, Color backColor, Font? font,
+    public ListViewItem(string[]? items, string? imageKey, SKColor foreColor, SKColor backColor, Font? font,
         ListViewGroup? group)
         : this(items, imageKey, foreColor, backColor, font)
     {
@@ -265,7 +265,7 @@ public partial class ListViewItem : ICloneable
     ///     using the global font for the ListView control that hosts it.
     /// </summary>
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public Color BackColor
+    public SKColor BackColor
     {
         get
         {
@@ -286,7 +286,7 @@ public partial class ListViewItem : ICloneable
     ///     the ListViewItem has not been added to a ListView control.
     /// </summary>
     [Browsable(false)]
-    public Rectangle Bounds
+    public SKRect Bounds
     {
         get
         {
@@ -364,7 +364,7 @@ public partial class ListViewItem : ICloneable
         set => SubItems[0].Font = value;
     }
 
-    public Color ForeColor
+    public SKColor ForeColor
     {
         get
         {
@@ -774,7 +774,7 @@ public partial class ListViewItem : ICloneable
     ///     Returns a specific portion of the ListViewItem's bounding rectangle.
     ///     The rectangle returned is empty if the ListViewItem has not been added to a ListView control.
     /// </summary>
-    public Rectangle GetBounds(ItemBoundsPortion portion)
+    public SKRect GetBounds(ItemBoundsPortion portion)
     {
         if (_listView is not null && _listView.IsHandleCreated) return _listView.GetItemRect(Index, portion);
 
@@ -813,7 +813,7 @@ public partial class ListViewItem : ICloneable
 
     private bool ShouldSerializePosition()
     {
-        return !_position.Equals(new Point(-1, -1));
+        return !_position.Equals(new SKPoint(-1, -1));
     }
 
     public override string ToString()

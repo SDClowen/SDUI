@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
@@ -50,7 +50,7 @@ public partial class ListView
         var iconY = y + (RowHeight - iconSize) / 2f;
 
         // Draw the icon
-        var destRect = new SKRect(x, iconY, x + iconSize, iconY + iconSize);
+        var destRect = new SkiaSharp.SKRect(x, iconY, x + iconSize, iconY + iconSize);
         canvas.DrawBitmap(skBitmap, destRect);
     }
 

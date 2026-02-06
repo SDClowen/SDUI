@@ -37,7 +37,7 @@
             // 
             // listView1
             // 
-            this.listView1.BackColor = System.Drawing.Color.Transparent;
+            this.listView1.BackColor = SkiaSharp.SKColor.Transparent;
             this.listView1.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.columnHeader1,
@@ -45,13 +45,13 @@
             this.columnHeader3,
             this.columnHeader4});
             this.listView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.listView1.ForeColor = System.Drawing.Color.Empty;
+            this.listView1.ForeColor = SkiaSharp.SKColor.Empty;
             this.listView1.FullRowSelect = true;
-            this.listView1.Location = new System.Drawing.Point(0, 0);
+            this.listView1.Location = new System.Drawing.SKPoint(0, 0);
             this.listView1.Margin = new System.Windows.Forms.Padding(4, 3, 4, 3);
             this.listView1.Name = "listView1";
             this.listView1.ShowItemToolTips = true;
-            this.listView1.Size = new System.Drawing.Size(1075, 646);
+            this.listView1.Size = new SkiaSharp.SKSize(1075, 646);
             this.listView1.TabIndex = 1;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = View.Details;
@@ -80,7 +80,7 @@
             // 
             this.Controls.Add(this.listView1);
             this.Name = "ListViewPage";
-            this.Size = new System.Drawing.Size(1075, 646);
+            this.Size = new SkiaSharp.SKSize(1075, 646);
             this.ResumeLayout(false);
 
         }

@@ -1,21 +1,21 @@
 using System;
 using System.ComponentModel;
-using System.Drawing;
+using System.Timers;
 using System.Windows.Forms;
 using SDUI.Animation;
 using SkiaSharp;
 
 namespace SDUI.Controls;
 
-public class ScrollBar : UIElementBase
+public class ScrollBar : ElementBase
 {
     private readonly Timer _hideTimer;
     private readonly AnimationManager _scrollAnim; // scroll animasyonu
     private readonly AnimationManager _visibilityAnim;
     private double _animatedValue; // animasyonlu değer
     private bool _autoHide = true;
-    private Point _dragStartPoint;
-    private int _dragStartValue;
+    private SKPoint _dragStartPoint;
+    private float _dragStartValue;
     private int _hideDelay = 1200; // ms
 
     private bool _hostHovered; // container hover durumu
@@ -23,22 +23,22 @@ public class ScrollBar : UIElementBase
     private bool _isHovered; // track hover
     private bool _isThumbHovered;
     private bool _isThumbPressed;
-    private int _largeChange = 10;
-    private int _maximum = 100;
-    private int _minimum;
+    private float _largeChange = 10;
+    private float _maximum = 100;
+    private float _minimum;
     private Orientation _orientation = Orientation.Vertical;
 
     // Radius & auto-hide
     private int _radius = 6; // default radius daha büyük
     private double _scrollAnimIncrement = 0.45; // kaydırma için hızlı varsayılan
     private AnimationType _scrollAnimType = AnimationType.EaseOut;
-    private int _smallChange = 1;
-    private int _targetValue; // animasyon hedefi
+    private float _smallChange = 1;
+    private float _targetValue; // animasyon hedefi
     private int _thickness = 2; // ince varsayılan
-    private Rectangle _thumbRect;
-    private Rectangle _trackRect;
+    private SkiaSharp.SKRect _thumbRect;
+    private SkiaSharp.SKRect _trackRect;
     private bool _useThumbShadow = true;
-    private int _value;
+    private float _value;
 
     // Yeni: animasyon ayarları
     private double _visibilityAnimIncrement = 0.20; // daha hızlı varsayılan
@@ -46,7 +46,7 @@ public class ScrollBar : UIElementBase
 
     public ScrollBar()
     {
-        BackColor = Color.Transparent; // ColorScheme ile uyumlu
+        BackColor = SKColors.Transparent; // ColorScheme ile uyumlu
         Cursor = Cursors.Default;
         ApplyOrientationSize();
 
@@ -72,7 +72,7 @@ public class ScrollBar : UIElementBase
         };
 
         _hideTimer = new Timer { Interval = _hideDelay };
-        _hideTimer.Tick += HideTimer_Tick;
+        _hideTimer.Elapsed += HideTimer_Tick;
 
         _visibilityAnim.SetProgress(_autoHide ? 0 : 1);
         _animatedValue = _value;
@@ -224,7 +224,7 @@ public class ScrollBar : UIElementBase
     public bool IsVertical => Orientation == Orientation.Vertical;
 
     [DefaultValue(0)]
-    public int Value
+    public float Value
     {
         get => _value;
         set
@@ -251,7 +251,7 @@ public class ScrollBar : UIElementBase
     }
 
     [DefaultValue(0)]
-    public int Minimum
+    public float Minimum
     {
         get => _minimum;
         set
@@ -265,7 +265,7 @@ public class ScrollBar : UIElementBase
     }
 
     [DefaultValue(100)]
-    public int Maximum
+    public float Maximum
     {
         get => _maximum;
         set
@@ -279,7 +279,7 @@ public class ScrollBar : UIElementBase
     }
 
     [DefaultValue(10)]
-    public int LargeChange
+    public float LargeChange
     {
         get => _largeChange;
         set
@@ -292,7 +292,7 @@ public class ScrollBar : UIElementBase
     }
 
     [DefaultValue(1)]
-    public int SmallChange
+    public float SmallChange
     {
         get => _smallChange;
         set
@@ -302,20 +302,20 @@ public class ScrollBar : UIElementBase
         }
     }
 
-    [DefaultValue(typeof(Color), "Transparent")]
+    [DefaultValue(typeof(SKColor), "Transparent")]
     [Description("Track rengi override; Transparent ise ColorScheme kullanılır")]
-    public Color TrackColor { get; set; } = Color.Transparent;
+    public SKColor TrackColor { get; set; } = SKColors.Transparent;
 
-    [DefaultValue(typeof(Color), "Transparent")]
+    [DefaultValue(typeof(SKColor), "Transparent")]
     [Description("Thumb rengi override; Transparent ise ColorScheme kullanılır")]
-    public Color ThumbColor { get; set; } = Color.Transparent;
+    public SKColor ThumbColor { get; set; } = SKColors.Transparent;
 
     public event EventHandler ValueChanged;
     public event EventHandler Scroll;
 
     private void ApplyOrientationSize()
     {
-        Size = IsVertical ? new Size(_thickness, Math.Max(Height, 100)) : new Size(Math.Max(Width, 100), _thickness);
+        Size = IsVertical ? new SKSize(_thickness, Math.Max(Height, 100)) : new SKSize(Math.Max(Width, 100), _thickness);
     }
 
     private void HideTimer_Tick(object sender, EventArgs e)
@@ -334,7 +334,7 @@ public class ScrollBar : UIElementBase
         if (disposing)
         {
             _hideTimer.Stop();
-            _hideTimer.Tick -= HideTimer_Tick;
+            _hideTimer.Elapsed -= HideTimer_Tick;
             _hideTimer.Dispose();
 
             _visibilityAnim.Dispose();
@@ -348,7 +348,7 @@ public class ScrollBar : UIElementBase
     {
         if (Maximum <= Minimum)
         {
-            _thumbRect = Rectangle.Empty;
+            _thumbRect = SkiaSharp.SKRect.Empty;
             return;
         }
 
@@ -361,14 +361,14 @@ public class ScrollBar : UIElementBase
         if (IsVertical)
         {
             thumbPos = (int)((currentValue - Minimum) / (Maximum - Minimum) * (Height - thumbLength));
-            _thumbRect = new Rectangle(0, thumbPos, Width, thumbLength);
-            _trackRect = new Rectangle(0, 0, Width, Height);
+            _thumbRect = new SkiaSharp.SKRect(0, thumbPos, Width, thumbLength);
+            _trackRect = new SkiaSharp.SKRect(0, 0, Width, Height);
         }
         else
         {
             thumbPos = (int)((currentValue - Minimum) / (Maximum - Minimum) * (Width - thumbLength));
-            _thumbRect = new Rectangle(thumbPos, 0, thumbLength, Height);
-            _trackRect = new Rectangle(0, 0, Width, Height);
+            _thumbRect = new SkiaSharp.SKRect(thumbPos, 0, thumbLength, Height);
+            _trackRect = new SkiaSharp.SKRect(0, 0, Width, Height);
         }
     }
 
@@ -380,10 +380,10 @@ public class ScrollBar : UIElementBase
         if (visibility <= 0f)
             return; // tamamen gizli
 
-        var baseTrackColor = TrackColor == Color.Transparent ? ColorScheme.BackColor2 : TrackColor;
+        var baseTrackColor = TrackColor == SKColors.Transparent ? ColorScheme.BackColor2 : TrackColor;
         var blendedTrack = baseTrackColor.BlendWith(ColorScheme.ForeColor, 0.18f);
         var trackAlpha = (byte)(50 * visibility);
-        var trackSk = blendedTrack.ToSKColor().WithAlpha(trackAlpha);
+        var trackSk = blendedTrack.WithAlpha(trackAlpha);
 
         using (var trackPaint = new SKPaint
                {
@@ -392,16 +392,16 @@ public class ScrollBar : UIElementBase
                })
         {
             var radius = Math.Max(0, _radius * ScaleFactor);
-            canvas.DrawRoundRect(new SKRoundRect(new SKRect(0, 0, Width, Height), radius), trackPaint);
+            canvas.DrawRoundRect(new SKRoundRect(new SkiaSharp.SKRect(0, 0, Width, Height), radius), trackPaint);
         }
 
         if (_thumbRect.IsEmpty) return;
 
-        var schemeBase = ThumbColor == Color.Transparent ? ColorScheme.BorderColor : ThumbColor;
-        if (schemeBase == Color.Transparent)
+        var schemeBase = ThumbColor == SKColors.Transparent ? ColorScheme.BorderColor : ThumbColor;
+        if (schemeBase == SKColors.Transparent)
             schemeBase = ColorScheme.ForeColor;
 
-        Color stateColor;
+        SKColor stateColor;
         if (_isThumbPressed)
             stateColor = schemeBase.BlendWith(ColorScheme.ForeColor, 0.35f);
         else if (_isThumbHovered || _isHovered || _hostHovered)
@@ -409,7 +409,7 @@ public class ScrollBar : UIElementBase
         else
             stateColor = schemeBase.BlendWith(ColorScheme.BackColor, 0.15f);
 
-        var thumbColor = stateColor.ToSKColor().WithAlpha((byte)(220 * Math.Clamp(visibility, 0f, 1f)));
+        var thumbColor = stateColor.WithAlpha((byte)(220 * Math.Clamp(visibility, 0f, 1f)));
 
         if (_useThumbShadow && visibility > 0f)
         {
@@ -421,9 +421,9 @@ public class ScrollBar : UIElementBase
                 ImageFilter = shadowFilter,
                 IsAntialias = true
             };
-            var r = new SKRect(_thumbRect.X, _thumbRect.Y, _thumbRect.Right, _thumbRect.Bottom);
+
             var rad = Math.Max(0, _radius * ScaleFactor);
-            canvas.DrawRoundRect(new SKRoundRect(r, rad), shadowPaint);
+            canvas.DrawRoundRect(new SKRoundRect(_thumbRect, rad), shadowPaint);
         }
 
         using (var thumbPaint = new SKPaint
@@ -432,9 +432,8 @@ public class ScrollBar : UIElementBase
                    IsAntialias = true
                })
         {
-            var r = new SKRect(_thumbRect.X, _thumbRect.Y, _thumbRect.Right, _thumbRect.Bottom);
             var rad = Math.Max(0, _radius * ScaleFactor);
-            canvas.DrawRoundRect(new SKRoundRect(r, rad), thumbPaint);
+            canvas.DrawRoundRect(new SKRoundRect(_thumbRect, rad), thumbPaint);
         }
 
         // Debug
@@ -476,7 +475,7 @@ public class ScrollBar : UIElementBase
                 _dragStartValue = Value;
 
                 // Capture mouse at window level so we continue receiving moves/up even when cursor leaves scrollbar bounds
-                var parentWindow = (this as IUIElement).GetParentWindow();
+                var parentWindow = (this as ElementBase).GetParentWindow();
                 if (parentWindow != null)
                     parentWindow.SetMouseCapture(this);
             }
@@ -484,14 +483,14 @@ public class ScrollBar : UIElementBase
             {
                 if (IsVertical)
                 {
-                    if (e.Y < _thumbRect.Y)
+                    if (e.Y < _thumbRect.Location.Y)
                         Value -= LargeChange;
                     else if (e.Y > _thumbRect.Bottom)
                         Value += LargeChange;
                 }
                 else
                 {
-                    if (e.X < _thumbRect.X)
+                    if (e.X < _thumbRect.Location.X)
                         Value -= LargeChange;
                     else if (e.X > _thumbRect.Right)
                         Value += LargeChange;
@@ -508,7 +507,7 @@ public class ScrollBar : UIElementBase
         base.OnMouseMove(e);
         var oldThumbHovered = _isThumbHovered;
         _isThumbHovered = _thumbRect.Contains(e.Location);
-        _isHovered = new Rectangle(Point.Empty, Size).Contains(e.Location);
+        _isHovered = SKRect.Create(SKPoint.Empty, Size).Contains(e.Location);
         if (oldThumbHovered != _isThumbHovered)
             Invalidate();
 
@@ -535,7 +534,7 @@ public class ScrollBar : UIElementBase
             _isThumbPressed = false;
 
             // Release capture if we had captured it
-            var parentWindow = (this as IUIElement).GetParentWindow();
+            var parentWindow = (this as IElement).GetParentWindow();
             if (parentWindow != null)
                 parentWindow.ReleaseMouseCapture(this);
 
@@ -587,9 +586,9 @@ public class ScrollBar : UIElementBase
         Scroll?.Invoke(this, e);
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
+    public override SKSize GetPreferredSize(SKSize proposedSize)
     {
-        return IsVertical ? new Size(_thickness, 100) : new Size(100, _thickness);
+        return IsVertical ? new SKSize(_thickness, 100) : new SKSize(100, _thickness);
     }
 
     internal void SetHostHover(bool hovered)

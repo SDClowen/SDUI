@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.Drawing; // Point, Size
+ // SKPoint, Size
 
 namespace SDUI.Demo
 {
@@ -18,7 +18,7 @@ namespace SDUI.Demo
         private readonly SDUI.Controls.Button _btnAddPanel;
         private readonly SDUI.Controls.Button _btnCompile;
         private int _nameIndex = 1;
-        private Point _dragOffset;
+        private SKPoint _dragOffset;
         private UIElementBase _dragging;
 
         public DesignerWindow()
@@ -75,7 +75,7 @@ namespace SDUI.Demo
             int x = 8;
             foreach(var btn in _toolBar.Controls.OfType<SDUI.Controls.Button>())
             {
-                btn.Location = new Point(x, 6);
+                btn.Location = new SKPoint(x, 6);
                 x += btn.Width + 8;
             }
         }
@@ -98,7 +98,7 @@ namespace SDUI.Demo
         private void AddControl(UIElementBase element)
         {
             element.Name = string.IsNullOrEmpty(element.Name) ? NewName(element.GetType().Name.ToLower()) : element.Name;
-            element.Location = new Point(30 * (_designSurface.Controls.Count+1), 30);
+            element.Location = new SKPoint(30 * (_designSurface.Controls.Count+1), 30);
             _designSurface.Controls.Add(element);
         }
 
@@ -134,7 +134,7 @@ namespace SDUI.Demo
         {
             var sb = new StringBuilder();
             sb.AppendLine("using SDUI.Controls;");
-            sb.AppendLine("using System.Drawing;");
+            sb.AppendLine("");
             sb.AppendLine();
             sb.AppendLine("namespace SDUI.DesignerOutput");
             sb.AppendLine("{");
@@ -151,7 +151,7 @@ namespace SDUI.Demo
                 sb.AppendLine($"                Name = \"{el.Name}\",");
                 sb.AppendLine($"                Text = \"{(el is SDUI.Controls.Button btn ? btn.Text : el.Text)}\",");
                 sb.AppendLine($"                Width = {el.Width}, Height = {el.Height},");
-                sb.AppendLine($"                Location = new Point({el.Location.X}, {el.Location.Y})");
+                sb.AppendLine($"                Location = new SKPoint({el.Location.X}, {el.Location.Y})");
                 sb.AppendLine("            };\n");
                 sb.AppendLine($"            window.Controls.Add({el.Name});");
             }

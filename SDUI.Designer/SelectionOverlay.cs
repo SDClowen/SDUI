@@ -1,4 +1,4 @@
-using System.Drawing;
+
 using SDUI.Controls;
 using SkiaSharp;
 
@@ -40,7 +40,7 @@ internal class SelectionOverlay : SDUI.Controls.UIElementBase
         using var paint = new SKPaint
         {
             Style = SKPaintStyle.Stroke,
-            Color = ColorScheme.Primary.ToSKColor(),
+            Color = ColorScheme.Primary,
             StrokeWidth = 2,
             PathEffect = SKPathEffect.CreateDash(new float[] { 4, 4 }, 0)
         };
@@ -56,7 +56,7 @@ internal class SelectionOverlay : SDUI.Controls.UIElementBase
         var handlePaint = new SKPaint
         {
             Style = SKPaintStyle.Stroke,
-            Color = ColorScheme.Primary.ToSKColor(),
+            Color = ColorScheme.Primary,
             StrokeWidth = 1
         };
 

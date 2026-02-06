@@ -5,14 +5,14 @@ namespace SDUI.Validations;
 
 public class CustomValidationRule : ValidationRule
 {
-    private readonly Func<UIElementBase, (bool isValid, string errorMessage)> _validationFunc;
+    private readonly Func<ElementBase, (bool isValid, string errorMessage)> _validationFunc;
 
-    public CustomValidationRule(Func<UIElementBase, (bool isValid, string errorMessage)> validationFunc)
+    public CustomValidationRule(Func<ElementBase, (bool isValid, string errorMessage)> validationFunc)
     {
         _validationFunc = validationFunc;
     }
 
-    public override bool Validate(UIElementBase element, out string errorMessage)
+    public override bool Validate(ElementBase element, out string errorMessage)
     {
         var result = _validationFunc(element);
         errorMessage = result.errorMessage;

@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using System.Linq;
 using System.Windows.Forms;
 using SDUI.Controls;
@@ -13,9 +13,9 @@ namespace SDUI.Helpers;
 /// </summary>
 public class FocusManager
 {
-    private readonly List<UIElementBase> _focusableElements = new();
+    private readonly List<ElementBase> _focusableElements = new();
     private readonly UIWindowBase _window;
-    private UIElementBase? _currentFocus;
+    private ElementBase? _currentFocus;
     private bool _isNavigating;
 
     public FocusManager(UIWindowBase window)
@@ -26,7 +26,7 @@ public class FocusManager
     /// <summary>
     ///     Current focused element
     /// </summary>
-    public UIElementBase? FocusedElement
+    public ElementBase? FocusedElement
     {
         get => _currentFocus;
         private set
@@ -49,7 +49,7 @@ public class FocusManager
         _focusableElements.Clear();
 
         // Collect from window's controls
-        foreach (var control in _window.Controls.OfType<UIElementBase>()) CollectFromElement(control);
+        foreach (var control in _window.Controls.OfType<ElementBase>()) CollectFromElement(control);
 
         _focusableElements.Sort((a, b) =>
         {
@@ -58,8 +58,8 @@ public class FocusManager
 
             // Deterministic tiebreaker when many controls share the default TabIndex (0).
             // Use window-relative location (top-to-bottom, left-to-right), then ZOrder.
-            var aLoc = _window.PointToClient(a.PointToScreen(Point.Empty));
-            var bLoc = _window.PointToClient(b.PointToScreen(Point.Empty));
+            var aLoc = _window.PointToClient(a.PointToScreen(SKPoint.Empty));
+            var bLoc = _window.PointToClient(b.PointToScreen(SKPoint.Empty));
 
             var yCompare = aLoc.Y.CompareTo(bLoc.Y);
             if (yCompare != 0) return yCompare;
@@ -71,20 +71,20 @@ public class FocusManager
         });
     }
 
-    private void CollectFromElement(UIElementBase element)
+    private void CollectFromElement(ElementBase element)
     {
         if (element.Visible && element.Enabled && element.TabStop && element.CanSelect) _focusableElements.Add(element);
 
         // Recursive for nested containers
-        if (element is IUIElement uiElement)
-            foreach (var child in uiElement.Controls.OfType<UIElementBase>())
+        if (element is IElement uiElement)
+            foreach (var child in uiElement.Controls.OfType<ElementBase>())
                 CollectFromElement(child);
     }
 
     /// <summary>
     ///     Sets focus to specific element
     /// </summary>
-    public bool SetFocus(UIElementBase? element)
+    public bool SetFocus(ElementBase? element)
     {
         // Ensure the host window gets WinForms focus so key events flow.
         if (_window.CanFocus)
@@ -95,7 +95,7 @@ public class FocusManager
 
         // Delegate real focus behavior to the existing focus pipeline so
         // OnGotFocus/OnLostFocus and related events fire correctly.
-        if (_window is UIWindow uiWindow)
+        if (_window is UIWindowBase uiWindow)
         {
             uiWindow.FocusedElement = element;
         }
@@ -213,13 +213,13 @@ public class FocusManager
     /// <summary>
     ///     Ensures focused element is visible by scrolling containers
     /// </summary>
-    private void EnsureVisible(UIElementBase element)
+    private void EnsureVisible(ElementBase element)
     {
         // Find scrollable parent and scroll to make element visible
         var parent = element.Parent;
         while (parent != null)
         {
-            if (parent is UIElementBase parentElement && parentElement.AutoScroll)
+            if (parent is ElementBase parentElement && parentElement.AutoScroll)
             {
                 // Calculate if element is outside visible bounds
                 var elementBounds = element.Bounds;
@@ -229,25 +229,25 @@ public class FocusManager
                 // This is a placeholder for future scroll implementation
             }
 
-            parent = parent is UIElementBase pe ? pe.Parent : null;
+            parent = parent is ElementBase pe ? pe.Parent : null;
         }
     }
 
     /// <summary>
     ///     Draw focus indicator for the current element
     /// </summary>
-    public void DrawFocusIndicator(SKCanvas canvas, Rectangle bounds, float cornerRadius)
+    public void DrawFocusIndicator(SKCanvas canvas, SkiaSharp.SKRect bounds, float cornerRadius)
     {
         using var paint = new SKPaint
         {
             IsAntialias = true,
-            Color = ColorScheme.Primary.ToSKColor(),
+            Color = ColorScheme.Primary,
             IsStroke = true,
             StrokeWidth = 2f,
             PathEffect = SKPathEffect.CreateDash(new[] { 4f, 2f }, 0)
         };
 
-        var rect = new SKRect(
+        var rect = new SkiaSharp.SKRect(
             bounds.Left - 2,
             bounds.Top - 2,
             bounds.Right + 2,
@@ -260,12 +260,12 @@ public class FocusManager
 
 public class FocusChangedEventArgs : EventArgs
 {
-    public FocusChangedEventArgs(UIElementBase? oldFocus, UIElementBase? newFocus)
+    public FocusChangedEventArgs(ElementBase? oldFocus, ElementBase? newFocus)
     {
         OldFocus = oldFocus;
         NewFocus = newFocus;
     }
 
-    public UIElementBase? OldFocus { get; }
-    public UIElementBase? NewFocus { get; }
+    public ElementBase? OldFocus { get; }
+    public ElementBase? NewFocus { get; }
 }

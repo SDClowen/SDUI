@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+﻿
 
 namespace SDUI.Demo
 {
@@ -33,25 +33,25 @@ namespace SDUI.Demo
             this.multiPageControl = new SDUI.Controls.TabControl();
             this.tabPage2 = new SDUI.Controls.TabPage();
             this.SuspendLayout();
-            tabPage2.BackColor = System.Drawing.Color.White;
-tabPage2.Location = new System.Drawing.Point(4, 28);
+            tabPage2.BackColor = SkiaSharp.SKColor.White;
+tabPage2.Location = new System.Drawing.SKPoint(4, 28);
 tabPage2.Margin = new System.Windows.Forms.Padding(0);
 tabPage2.Name = "tabPage2";
-tabPage2.Size = new System.Drawing.Size(482, 552);
+tabPage2.Size = new SkiaSharp.SKSize(482, 552);
 tabPage2.TabIndex = 1;
 tabPage2.Text = "Advanced setup";
             // 
             // multiPageControl
             // 
             this.multiPageControl.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.multiPageControl.Location = new System.Drawing.Point(0, 0);
+            this.multiPageControl.Location = new System.Drawing.SKPoint(0, 0);
             this.multiPageControl.Name = "multiPageControl";
             this.multiPageControl.RenderNewPageButton = false;
             this.multiPageControl.RenderPageClose = false;
             this.multiPageControl.RenderPageIcon = false;
             this.multiPageControl.SelectedIndex = -1;
             this.multiPageControl.BorderColor = Color.Red;
-            this.multiPageControl.Size = new System.Drawing.Size(1083, 552);
+            this.multiPageControl.Size = new SkiaSharp.SKSize(1083, 552);
             this.multiPageControl.TabIndex = 6;
             this.multiPageControl.NewPageButtonClicked += new System.EventHandler(this.multiPageControl_NewPageButtonClicked);
             // 
@@ -59,7 +59,7 @@ tabPage2.Text = "Advanced setup";
             // 
             this.Controls.Add(this.multiPageControl);
             this.Name = "MultiPageControlTestPage";
-            this.Size = new System.Drawing.Size(1083, 552);
+            this.Size = new SkiaSharp.SKSize(1083, 552);
             this.ResumeLayout(false);
 
         }

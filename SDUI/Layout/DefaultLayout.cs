@@ -1,10 +1,11 @@
 
 using SDUI.Controls;
+using SkiaSharp;
 using System;
 using System.Collections;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Drawing;
+
 using System.Windows.Forms;
 
 namespace SDUI.Layout;
@@ -29,10 +30,10 @@ internal partial class DefaultLayout : LayoutEngine
             IArrangedElement element = children[i];
             if (CommonProperties.xGetAutoSizedAndAnchored(element))
             {
-                Rectangle bounds = GetCachedBounds(element);
+                SkiaSharp.SKRect bounds = GetCachedBounds(element);
  
                 AnchorStyles anchor = GetAnchor(element);
-                Size proposedConstraints = LayoutUtils.s_maxSize;
+                SKSize proposedConstraints = LayoutUtils.s_maxSize;
  
                 if ((anchor & (AnchorStyles.Left | AnchorStyles.Right)) == (AnchorStyles.Left | AnchorStyles.Right))
                 {
@@ -44,8 +45,8 @@ internal partial class DefaultLayout : LayoutEngine
                     proposedConstraints.Height = bounds.Height;
                 }
  
-                Size prefSize = element.GetPreferredSize(proposedConstraints);
-                Rectangle newBounds = bounds;
+                SKSize prefSize = element.GetPreferredSize(proposedConstraints);
+                SkiaSharp.SKRect newBounds = bounds;
                 if (CommonProperties.GetAutoSizeMode(element) == AutoSizeMode.GrowAndShrink)
                 {
                     // this is the case for simple things like radio button, checkbox, etc.
@@ -57,7 +58,7 @@ internal partial class DefaultLayout : LayoutEngine
                     // behavior in things like panel. a panel with no elements sizes to 0,0.
                     if (bounds.Width < prefSize.Width || bounds.Height < prefSize.Height)
                     {
-                        Size newSize = LayoutUtils.UnionSizes(bounds.Size, prefSize);
+                        SKSize newSize = LayoutUtils.UnionSizes(bounds.Size, prefSize);
                         newBounds = GetGrowthBounds(element, newSize);
                     }
                 }
@@ -75,11 +76,11 @@ internal partial class DefaultLayout : LayoutEngine
     ///  anchoring the control may grow to the left/upwards rather than to the
     ///  right/downwards. i.e., it may be translated.)
     /// </summary>
-    private static Rectangle GetGrowthBounds(IArrangedElement element, Size newSize)
+    private static SkiaSharp.SKRect GetGrowthBounds(IArrangedElement element, SKSize newSize)
     {
         GrowthDirection direction = GetGrowthDirection(element);
-        Rectangle oldBounds = GetCachedBounds(element);
-        Point location = oldBounds.Location;
+        SkiaSharp.SKRect oldBounds = GetCachedBounds(element);
+        SKPoint location = oldBounds.Location;
  
         Debug.Assert(CommonProperties.GetAutoSizeMode(element) == AutoSizeMode.GrowAndShrink || (newSize.Height >= oldBounds.Height && newSize.Width >= oldBounds.Width),
             "newSize expected to be >= current size.");
@@ -95,8 +96,9 @@ internal partial class DefaultLayout : LayoutEngine
             // We are growing towards the top, translate Y
             location.Y -= newSize.Height - oldBounds.Height;
         }
- 
-        Rectangle newBounds = new(location, newSize);
+
+        // With the following, which uses the correct SKRect constructor:
+        SkiaSharp.SKRect newBounds = new SkiaSharp.SKRect(location.X, location.Y, location.X + newSize.Width, location.Y + newSize.Height);
  
         Debug.Assert(CommonProperties.GetAutoSizeMode(element) == AutoSizeMode.GrowAndShrink || newBounds.Contains(oldBounds), "How did we resize in such a way we no longer contain our old bounds?");
  
@@ -147,7 +149,7 @@ internal partial class DefaultLayout : LayoutEngine
     /// <summary>
     ///  Layout for a single anchored control. There's no order dependency when laying out anchored controls.
     /// </summary>
-    private static Rectangle GetAnchorDestination(IArrangedElement element, Rectangle displayRect, bool measureOnly)
+    private static SkiaSharp.SKRect GetAnchorDestination(IArrangedElement element, SkiaSharp.SKRect displayRect, bool measureOnly)
     {
         // Container can not be null since we AnchorControls takes a non-null container.
         return true
@@ -155,9 +157,9 @@ internal partial class DefaultLayout : LayoutEngine
             : ComputeAnchoredBounds(element, displayRect, measureOnly);
     }
  
-    private static Rectangle ComputeAnchoredBoundsV2(IArrangedElement element, Rectangle displayRectangle)
+    private static SkiaSharp.SKRect ComputeAnchoredBoundsV2(IArrangedElement element, SkiaSharp.SKRect displayRectangle)
     {
-        Rectangle bounds = GetCachedBounds(element);
+        SkiaSharp.SKRect bounds = GetCachedBounds(element);
         if (displayRectangle.IsEmpty)
         {
             return bounds;
@@ -169,8 +171,8 @@ internal partial class DefaultLayout : LayoutEngine
             return bounds;
         }
  
-        int width = bounds.Width;
-        int height = bounds.Height;
+        var width = bounds.Width;
+        var height = bounds.Height;
         anchorInfo.DisplayRectangle = displayRectangle;
  
         Debug.WriteLineIf(width < 0 || height < 0, $"\t\t'{element}' destination bounds resulted in negative");
@@ -198,7 +200,7 @@ internal partial class DefaultLayout : LayoutEngine
             {
                 // The control neither anchored Right nor Left but anchored Top or Bottom, the control's
                 // X-coordinate should be adjusted according to the parent's width.
-                int growOrShrink = (displayRectangle.Width - (anchorInfo.Left + anchorInfo.Right + width)) / 2;
+                var growOrShrink = (displayRectangle.Width - (anchorInfo.Left + anchorInfo.Right + width)) / 2;
                 anchorInfo.Left += growOrShrink;
                 anchorInfo.Right += growOrShrink;
             }
@@ -225,23 +227,23 @@ internal partial class DefaultLayout : LayoutEngine
             {
                 // The control neither anchored Top or Bottom but anchored Right or Left, the control's
                 // Y-coordinate is adjusted accoring to the parent's height.
-                int growOrShrink = (displayRectangle.Height - (anchorInfo.Bottom + anchorInfo.Top + height)) / 2;
+                var growOrShrink = (displayRectangle.Height - (anchorInfo.Bottom + anchorInfo.Top + height)) / 2;
                 anchorInfo.Top += growOrShrink;
                 anchorInfo.Bottom += growOrShrink;
             }
         }
  
-        return new Rectangle(anchorInfo.Left, anchorInfo.Top, width, height);
+        return new SkiaSharp.SKRect(anchorInfo.Left, anchorInfo.Top, width, height);
     }
  
-    private static Rectangle ComputeAnchoredBounds(IArrangedElement element, Rectangle displayRect, bool measureOnly)
+    private static SkiaSharp.SKRect ComputeAnchoredBounds(IArrangedElement element, SkiaSharp.SKRect displayRect, bool measureOnly)
     {
         AnchorInfo layout = GetAnchorInfo(element)!;
  
-        int left = layout.Left + displayRect.X;
-        int top = layout.Top + displayRect.Y;
-        int right = layout.Right + displayRect.X;
-        int bottom = layout.Bottom + displayRect.Y;
+        var left = layout.Left + displayRect.Left;
+        var top = layout.Top + displayRect.Top;
+        var right = layout.Right + displayRect.Left;
+        var bottom = layout.Bottom + displayRect.Top;
  
         AnchorStyles anchor = GetAnchor(element);
  
@@ -256,7 +258,7 @@ internal partial class DefaultLayout : LayoutEngine
         }
         else if (!IsAnchored(anchor, AnchorStyles.Left))
         {
-            int center = displayRect.Width / 2;
+            var center = displayRect.Width / 2;
             right += center;
             left += center;
         }
@@ -272,7 +274,7 @@ internal partial class DefaultLayout : LayoutEngine
         }
         else if (!IsAnchored(anchor, AnchorStyles.Top))
         {
-            int center = displayRect.Height / 2;
+            var center = displayRect.Height / 2;
             bottom += center;
             top += center;
         }
@@ -292,14 +294,14 @@ internal partial class DefaultLayout : LayoutEngine
         }
         else
         {
-            Rectangle cachedBounds = GetCachedBounds(element);
+            SkiaSharp.SKRect cachedBounds = GetCachedBounds(element);
             // in this scenario we've likely been passed a 0 sized display rectangle to determine our height.
             // we will need to translate the right and bottom edges as necessary to the positive plane.
  
             // right < left means the control is anchored both left and right.
             // cachedBounds != control.Bounds means  the control's size has changed
             // any, all, or none of these can be true.
-            if (right < left || cachedBounds.Width != element.Bounds.Width || cachedBounds.X != element.Bounds.X)
+            if (right < left || cachedBounds.Width != element.Bounds.Width || cachedBounds.Left != element.Bounds.Left)
             {
                 if (cachedBounds != element.Bounds)
                 {
@@ -317,7 +319,7 @@ internal partial class DefaultLayout : LayoutEngine
             // bottom < top means the control is anchored both top and bottom.
             // cachedBounds != control.Bounds means  the control's size has changed
             // any, all, or none of these can be true.
-            if (bottom < top || cachedBounds.Height != element.Bounds.Height || cachedBounds.Y != element.Bounds.Y)
+            if (bottom < top || cachedBounds.Height != element.Bounds.Height || cachedBounds.Top != element.Bounds.Top)
             {
                 if (cachedBounds != element.Bounds)
                 {
@@ -333,12 +335,12 @@ internal partial class DefaultLayout : LayoutEngine
             }
         }
  
-        return new Rectangle(left, top, right - left, bottom - top);
+        return new SkiaSharp.SKRect(left, top, right - left, bottom - top);
     }
  
     private static void LayoutAnchoredControls(IArrangedElement container)
     {
-        Rectangle displayRectangle = container.DisplayRectangle;
+        SkiaSharp.SKRect displayRectangle = container.DisplayRectangle;
         if (CommonProperties.GetAutoSize(container) && ((displayRectangle.Width == 0) || (displayRectangle.Height == 0)))
         {
             // We haven't set ourselves to the preferred size yet. Proceeding will
@@ -360,16 +362,14 @@ internal partial class DefaultLayout : LayoutEngine
         }
     }
  
-    private static Size LayoutDockedControls(IArrangedElement container, bool measureOnly)
+    private static SKSize LayoutDockedControls(IArrangedElement container, bool measureOnly)
     {
         Debug.Assert(!HasCachedBounds(container), "Do not call this method with an active cached bounds list.");
- 
+
         // If measuring, we start with an empty rectangle and add as needed.
         // If doing actual layout, we start with the container's rect and subtract as we layout.
-        Rectangle remainingBounds = measureOnly ? Rectangle.Empty : container.DisplayRectangle;
-        Size preferredSize = Size.Empty;
- 
-        IArrangedElement? mdiClient = null;
+        SkiaSharp.SKRect remainingBounds = measureOnly ? SkiaSharp.SKRect.Empty : container.DisplayRectangle;
+        SKSize preferredSize = SKSize.Empty;
  
         // Docking layout is order dependent. After much debate, we decided to use z-order as the
         // docking order. (Introducing a DockOrder property was a close second)
@@ -386,65 +386,59 @@ internal partial class DefaultLayout : LayoutEngine
                 {
                     case DockStyle.Top:
                         {
-                            Size elementSize = GetVerticalDockedSize(element, remainingBounds.Size, measureOnly);
-                            Rectangle newElementBounds = new(remainingBounds.X, remainingBounds.Y, elementSize.Width, elementSize.Height);
+                            SKSize elementSize = GetVerticalDockedSize(element, remainingBounds.Size, measureOnly);
+                            SkiaSharp.SKRect newElementBounds = new(remainingBounds.Location.X, remainingBounds.Location.Y, elementSize.Width, elementSize.Height);
  
                             TryCalculatePreferredSizeDockedControl(element, newElementBounds, measureOnly, ref preferredSize, ref remainingBounds);
  
                             // What we are really doing here: top += control.Bounds.Height;
-                            remainingBounds.Y += element.Bounds.Height;
-                            remainingBounds.Height -= element.Bounds.Height;
+                            remainingBounds.Top += element.Bounds.Height;
+                            remainingBounds.Bottom -= element.Bounds.Height;
                             break;
                         }
  
                     case DockStyle.Bottom:
                         {
-                            Size elementSize = GetVerticalDockedSize(element, remainingBounds.Size, measureOnly);
-                            Rectangle newElementBounds = new(remainingBounds.X, remainingBounds.Bottom - elementSize.Height, elementSize.Width, elementSize.Height);
+                            SKSize elementSize = GetVerticalDockedSize(element, remainingBounds.Size, measureOnly);
+                            SkiaSharp.SKRect newElementBounds = new(remainingBounds.Left, remainingBounds.Bottom - elementSize.Height, elementSize.Width, elementSize.Height);
  
                             TryCalculatePreferredSizeDockedControl(element, newElementBounds, measureOnly, ref preferredSize, ref remainingBounds);
  
                             // What we are really doing here: bottom -= control.Bounds.Height;
-                            remainingBounds.Height -= element.Bounds.Height;
+                            remainingBounds.Bottom -= element.Bounds.Height;
  
                             break;
                         }
  
                     case DockStyle.Left:
                         {
-                            Size elementSize = GetHorizontalDockedSize(element, remainingBounds.Size, measureOnly);
-                            Rectangle newElementBounds = new(remainingBounds.X, remainingBounds.Y, elementSize.Width, elementSize.Height);
+                            SKSize elementSize = GetHorizontalDockedSize(element, remainingBounds.Size, measureOnly);
+                            SkiaSharp.SKRect newElementBounds = new(remainingBounds.Left, remainingBounds.Top, elementSize.Width, elementSize.Height);
  
                             TryCalculatePreferredSizeDockedControl(element, newElementBounds, measureOnly, ref preferredSize, ref remainingBounds);
  
                             // What we are really doing here: left += control.Bounds.Width;
-                            remainingBounds.X += element.Bounds.Width;
-                            remainingBounds.Width -= element.Bounds.Width;
+                            remainingBounds.Left += element.Bounds.Width;
+                            remainingBounds.Right -= element.Bounds.Width;
                             break;
                         }
  
                     case DockStyle.Right:
                         {
-                            Size elementSize = GetHorizontalDockedSize(element, remainingBounds.Size, measureOnly);
-                            Rectangle newElementBounds = new(remainingBounds.Right - elementSize.Width, remainingBounds.Y, elementSize.Width, elementSize.Height);
+                            SKSize elementSize = GetHorizontalDockedSize(element, remainingBounds.Size, measureOnly);
+                            SkiaSharp.SKRect newElementBounds = new(remainingBounds.Right - elementSize.Width, remainingBounds.Top, elementSize.Width, elementSize.Height);
  
                             TryCalculatePreferredSizeDockedControl(element, newElementBounds, measureOnly, ref preferredSize, ref remainingBounds);
  
                             // What we are really doing here: right -= control.Bounds.Width;
-                            remainingBounds.Width -= element.Bounds.Width;
+                            remainingBounds.Right -= element.Bounds.Width;
                             break;
                         }
  
                     case DockStyle.Fill:
-                        if (element is MdiClient)
                         {
-                            Debug.Assert(mdiClient is null, "How did we end up with multiple MdiClients?");
-                            mdiClient = element;
-                        }
-                        else
-                        {
-                            Size elementSize = remainingBounds.Size;
-                            Rectangle newElementBounds = new(remainingBounds.X, remainingBounds.Y, elementSize.Width, elementSize.Height);
+                            SKSize elementSize = remainingBounds.Size;
+                            SkiaSharp.SKRect newElementBounds = new(remainingBounds.Left, remainingBounds.Top, elementSize.Width, elementSize.Height);
  
                             TryCalculatePreferredSizeDockedControl(element, newElementBounds, measureOnly, ref preferredSize, ref remainingBounds);
                         }
@@ -455,12 +449,6 @@ internal partial class DefaultLayout : LayoutEngine
                         break;
                 }
             }
- 
-            // Treat the MDI client specially, since it's supposed to blend in with the parent form
-            if (mdiClient is not null)
-            {
-                SetCachedBounds(mdiClient, remainingBounds);
-            }
         }
  
         return preferredSize;
@@ -470,11 +458,11 @@ internal partial class DefaultLayout : LayoutEngine
     ///  Helper method that either sets the control bounds or does the preferredSize computation based on
     ///  the value of measureOnly.
     /// </summary>
-    private static void TryCalculatePreferredSizeDockedControl(IArrangedElement element, Rectangle newElementBounds, bool measureOnly, ref Size preferredSize, ref Rectangle remainingBounds)
+    private static void TryCalculatePreferredSizeDockedControl(IArrangedElement element, SkiaSharp.SKRect newElementBounds, bool measureOnly, ref SKSize preferredSize, ref SkiaSharp.SKRect remainingBounds)
     {
         if (measureOnly)
         {
-            Size neededSize = new(
+            SKSize neededSize = new(
                 Math.Max(0, newElementBounds.Width - remainingBounds.Width),
                 Math.Max(0, newElementBounds.Height - remainingBounds.Height));
  
@@ -496,7 +484,7 @@ internal partial class DefaultLayout : LayoutEngine
             }
             else if (dockStyle == DockStyle.Fill && CommonProperties.GetAutoSize(element))
             {
-                Size elementPrefSize = element.GetPreferredSize(neededSize);
+                SKSize elementPrefSize = element.GetPreferredSize(neededSize);
                 remainingBounds.Size += elementPrefSize;
                 preferredSize += elementPrefSize;
             }
@@ -506,7 +494,7 @@ internal partial class DefaultLayout : LayoutEngine
             element.SetBounds(newElementBounds, BoundsSpecified.None);
  
 #if DEBUG
-            var control = (UIElementBase)element;
+            var control = (ElementBase)element;
             newElementBounds.Size = control.ApplySizeConstraints(newElementBounds.Size);
  
             // This usually happens when a Control overrides its SetBoundsCore or sets size during OnResize
@@ -523,9 +511,9 @@ internal partial class DefaultLayout : LayoutEngine
         }
     }
  
-    private static Size GetVerticalDockedSize(IArrangedElement element, Size remainingSize, bool measureOnly)
+    private static SKSize GetVerticalDockedSize(IArrangedElement element, SKSize remainingSize, bool measureOnly)
     {
-        Size newSize = xGetDockedSize(element, /* constraints = */ new Size(remainingSize.Width, 1));
+        SKSize newSize = xGetDockedSize(element, /* constraints = */ new SKSize(remainingSize.Width, 1));
         if (!measureOnly)
         {
             newSize.Width = remainingSize.Width;
@@ -540,9 +528,9 @@ internal partial class DefaultLayout : LayoutEngine
         return newSize;
     }
  
-    private static Size GetHorizontalDockedSize(IArrangedElement element, Size remainingSize, bool measureOnly)
+    private static SKSize GetHorizontalDockedSize(IArrangedElement element, SKSize remainingSize, bool measureOnly)
     {
-        Size newSize = xGetDockedSize(element, /* constraints = */ new Size(1, remainingSize.Height));
+        SKSize newSize = xGetDockedSize(element, /* constraints = */ new SKSize(1, remainingSize.Height));
         if (!measureOnly)
         {
             newSize.Height = remainingSize.Height;
@@ -557,9 +545,9 @@ internal partial class DefaultLayout : LayoutEngine
         return newSize;
     }
  
-    private static Size xGetDockedSize(IArrangedElement element, Size constraints)
+    private static SKSize xGetDockedSize(IArrangedElement element, SKSize constraints)
     {
-        Size desiredSize;
+        SKSize desiredSize;
         if (CommonProperties.GetAutoSize(element))
         {
             // Ask control for its desired size using the provided constraints.
@@ -578,17 +566,17 @@ internal partial class DefaultLayout : LayoutEngine
  
     private protected override bool LayoutCore(IArrangedElement container, LayoutEventArgs args)
     {
-        return TryCalculatePreferredSize(container, measureOnly: false, preferredSize: out Size _);
+        return TryCalculatePreferredSize(container, measureOnly: false, preferredSize: out SKSize _);
     }
  
     /// <remarks>
     ///  <para>PreferredSize is only computed if measureOnly = true.</para>
     /// </remarks>
-    private static bool TryCalculatePreferredSize(IArrangedElement container, bool measureOnly, out Size preferredSize)
+    private static bool TryCalculatePreferredSize(IArrangedElement container, bool measureOnly, out SKSize preferredSize)
     {
         ArrangedElementCollection children = container.Children;
         // PreferredSize is garbage unless measureOnly is specified
-        preferredSize = new Size(-7103, -7105);
+        preferredSize = new SKSize(-7103, -7105);
  
         // Short circuit for items with no children
         if (!measureOnly && children.Count == 0)
@@ -621,12 +609,12 @@ internal partial class DefaultLayout : LayoutEngine
             }
         }
  
-        Size preferredSizeForDocking = Size.Empty;
-        Size preferredSizeForAnchoring;
+        SKSize preferredSKSizeorDocking = SKSize.Empty;
+        SKSize preferredSKSizeorAnchoring;
  
         if (dock)
         {
-            preferredSizeForDocking = LayoutDockedControls(container, measureOnly);
+            preferredSKSizeorDocking = LayoutDockedControls(container, measureOnly);
         }
  
         if (anchor && !measureOnly)
@@ -649,10 +637,10 @@ internal partial class DefaultLayout : LayoutEngine
         else
         {
             // Finish the preferredSize computation and clear cached anchored positions.
-            preferredSizeForAnchoring = GetAnchorPreferredSize(container);
+            preferredSKSizeorAnchoring = GetAnchorPreferredSize(container);
  
-            Padding containerPadding;
-            if (container is UIElementBase control)
+            Thickness containerPadding;
+            if (container is ElementBase control)
             {
                 // Calling this will respect Control.DefaultPadding.
                 containerPadding = control.Padding;
@@ -660,14 +648,14 @@ internal partial class DefaultLayout : LayoutEngine
             else
             {
                 // Not likely to happen but handle this gracefully.
-                containerPadding = CommonProperties.GetPadding(container, Padding.Empty);
+                containerPadding = CommonProperties.GetPadding(container, Thickness.Empty);
             }
  
-            preferredSizeForAnchoring.Width -= containerPadding.Left;
-            preferredSizeForAnchoring.Height -= containerPadding.Top;
+            preferredSKSizeorAnchoring.Width -= containerPadding.Left;
+            preferredSKSizeorAnchoring.Height -= containerPadding.Top;
  
             ClearCachedBounds(container);
-            preferredSize = LayoutUtils.UnionSizes(preferredSizeForDocking, preferredSizeForAnchoring);
+            preferredSize = LayoutUtils.UnionSizes(preferredSKSizeorDocking, preferredSKSizeorAnchoring);
         }
  
         return CommonProperties.GetAutoSize(container);
@@ -691,8 +679,8 @@ internal partial class DefaultLayout : LayoutEngine
             anchorInfo = new AnchorInfo();
             SetAnchorInfo(element, anchorInfo);
         }
- 
-        Rectangle cachedBounds = GetCachedBounds(element);
+
+        SkiaSharp.SKRect cachedBounds = GetCachedBounds(element);
         AnchorInfo oldAnchorInfo = new()
         {
             Left = anchorInfo.Left,
@@ -700,23 +688,23 @@ internal partial class DefaultLayout : LayoutEngine
             Right = anchorInfo.Right,
             Bottom = anchorInfo.Bottom
         };
- 
-        Rectangle elementBounds = element.Bounds;
+
+        SkiaSharp.SKRect elementBounds = element.Bounds;
         anchorInfo.Left = elementBounds.Left;
         anchorInfo.Top = elementBounds.Top;
         anchorInfo.Right = elementBounds.Right;
         anchorInfo.Bottom = elementBounds.Bottom;
- 
-        Rectangle parentDisplayRect = element.Container.DisplayRectangle;
-        int parentWidth = parentDisplayRect.Width;
-        int parentHeight = parentDisplayRect.Height;
+
+        SkiaSharp.SKRect parentDisplayRect = element.Container.DisplayRectangle;
+        var parentWidth = parentDisplayRect.Width;
+        var parentHeight = parentDisplayRect.Height;
  
         // The anchors is relative to the parent DisplayRectangle, so offset the anchors
         // by the DisplayRect origin
-        anchorInfo.Left -= parentDisplayRect.X;
-        anchorInfo.Top -= parentDisplayRect.Y;
-        anchorInfo.Right -= parentDisplayRect.X;
-        anchorInfo.Bottom -= parentDisplayRect.Y;
+        anchorInfo.Left -= parentDisplayRect.Left;
+        anchorInfo.Top -= parentDisplayRect.Top;
+        anchorInfo.Right -= parentDisplayRect.Left;
+        anchorInfo.Bottom -= parentDisplayRect.Top;
  
         AnchorStyles anchor = GetAnchor(element);
         if (IsAnchored(anchor, AnchorStyles.Right))
@@ -786,7 +774,7 @@ internal partial class DefaultLayout : LayoutEngine
     ///  https://github.com/dotnet/winforms/blob/tree/main/docs/design/anchor-layout-changes-in-net80.md for more details.
     ///  Developers may opt-out of this new behavior using switch <see cref="AppContextSwitches.AnchorLayoutV2"/>.
     /// </devdoc>
-    internal static void UpdateAnchorInfoV2(UIElementBase control)
+    internal static void UpdateAnchorInfoV2(ElementBase control)
     {
         if (!CommonProperties.GetNeedsAnchorLayout(control))
         {
@@ -834,11 +822,11 @@ internal partial class DefaultLayout : LayoutEngine
  
         // Reset parent flag as we now ready to iterate over all children requiring AnchorInfo calculation.
         parent._childControlsNeedAnchorLayout = false;
- 
-        Rectangle displayRectangle = control.Parent!.DisplayRectangle;
-        Rectangle elementBounds = GetCachedBounds(control);
-        int x = elementBounds.X;
-        int y = elementBounds.Y;
+
+        SkiaSharp.SKRect displayRectangle = control.Parent!.DisplayRectangle;
+        SkiaSharp.SKRect elementBounds = GetCachedBounds(control);
+        var x = elementBounds.Left;
+        var y = elementBounds.Top;
  
         anchorInfo.DisplayRectangle = displayRectangle;
         anchorInfo.Left = x;
@@ -900,7 +888,7 @@ internal partial class DefaultLayout : LayoutEngine
             bool dockNeedsLayout = CommonProperties.GetNeedsDockLayout(element);
             CommonProperties.xSetDock(element, value);
  
-            using (new LayoutTransaction(element.Container as UIElementBase, element, PropertyNames.Dock))
+            using (new LayoutTransaction(element.Container as ElementBase, element, PropertyNames.Dock))
             {
                 // if the item is autosized, calling setbounds performs a layout, which
                 // if we haven't set the anchors info properly yet makes dock/anchors layout cranky.
@@ -929,7 +917,7 @@ internal partial class DefaultLayout : LayoutEngine
         Debug.Assert(GetDock(element) == value, "Error setting Dock value.");
     }
  
-    public static void ScaleAnchorInfo(IArrangedElement element, SizeF factor)
+    public static void ScaleAnchorInfo(IArrangedElement element, SKSize factor)
     {
         AnchorInfo? anchorInfo = GetAnchorInfo(element);
  
@@ -948,7 +936,7 @@ internal partial class DefaultLayout : LayoutEngine
         }
     }
  
-    private static Rectangle GetCachedBounds(IArrangedElement element)
+    private static SkiaSharp.SKRect GetCachedBounds(IArrangedElement element)
     {
         if (element.Container is { } container)
         {
@@ -957,7 +945,7 @@ internal partial class DefaultLayout : LayoutEngine
                 object? bounds = dictionary[element];
                 if (bounds is not null)
                 {
-                    return (Rectangle)bounds;
+                    return (SkiaSharp.SKRect)bounds;
                 }
             }
         }
@@ -973,7 +961,7 @@ internal partial class DefaultLayout : LayoutEngine
         if (CommonProperties.GetAutoSize(container))
         {
             // Avoiding calling DisplayRectangle before checking AutoSize for Everett compat
-            Rectangle displayRectangle = container.DisplayRectangle;
+            SkiaSharp.SKRect displayRectangle = container.DisplayRectangle;
             if ((displayRectangle.Width == 0) || (displayRectangle.Height == 0))
             {
                 ClearCachedBounds(container);
@@ -1004,7 +992,7 @@ internal partial class DefaultLayout : LayoutEngine
                 // and will callback InitLayout with a different bounds and BoundsSpecified.
                 dictionary.Remove(entry.Key);
 #endif
-                Rectangle bounds = (Rectangle)entry.Value!;
+                SkiaSharp.SKRect bounds = (SkiaSharp.SKRect)entry.Value!;
                 element.SetBounds(bounds, BoundsSpecified.None);
 #if DEBUG
                 break;
@@ -1017,7 +1005,7 @@ internal partial class DefaultLayout : LayoutEngine
  
     private static void ClearCachedBounds(IArrangedElement container) => container.Properties.RemoveValue(s_cachedBoundsProperty);
  
-    private static void SetCachedBounds(IArrangedElement element, Rectangle bounds)
+    private static void SetCachedBounds(IArrangedElement element, SkiaSharp.SKRect bounds)
     {
         if (element.Container is { } container && bounds != GetCachedBounds(element))
         {
@@ -1042,23 +1030,23 @@ internal partial class DefaultLayout : LayoutEngine
             "Attempt to InitLayout while element has active cached bounds.");
  
         if (specified != BoundsSpecified.None &&
-            (CommonProperties.GetNeedsAnchorLayout(element) && ((UIElementBase)element)._childControlsNeedAnchorLayout))
+            (CommonProperties.GetNeedsAnchorLayout(element) && ((ElementBase)element)._childControlsNeedAnchorLayout))
         {
             UpdateAnchorInfo(element);
         }
     }
  
-    internal override Size GetPreferredSize(IArrangedElement container, Size proposedBounds)
+    internal override SKSize GetPreferredSize(IArrangedElement container, SKSize proposedBounds)
     {
         Debug.Assert(!HasCachedBounds(container), "Do not call this method with an active cached bounds list.");
  
-        TryCalculatePreferredSize(container, measureOnly: true, preferredSize: out Size prefSize);
+        TryCalculatePreferredSize(container, measureOnly: true, preferredSize: out SKSize prefSize);
         return prefSize;
     }
  
-    private static Size GetAnchorPreferredSize(IArrangedElement container)
+    private static SKSize GetAnchorPreferredSize(IArrangedElement container)
     {
-        Size prefSize = Size.Empty;
+        SKSize prefSize = SKSize.Empty;
  
         ArrangedElementCollection children = container.Children;
         for (int i = children.Count - 1; i >= 0; i--)
@@ -1067,8 +1055,8 @@ internal partial class DefaultLayout : LayoutEngine
             if (!CommonProperties.GetNeedsDockLayout(element) && element.ParticipatesInLayout)
             {
                 AnchorStyles anchor = GetAnchor(element);
-                Padding margin = CommonProperties.GetMargin(element);
-                Rectangle elementSpace = LayoutUtils.InflateRect(GetCachedBounds(element), margin);
+                Thickness margin = CommonProperties.GetMargin(element);
+                SkiaSharp.SKRect elementSpace = LayoutUtils.InflateRect(GetCachedBounds(element), margin);
  
                 if (IsAnchored(anchor, AnchorStyles.Left) && !IsAnchored(anchor, AnchorStyles.Right))
                 {
@@ -1087,7 +1075,7 @@ internal partial class DefaultLayout : LayoutEngine
                 if (IsAnchored(anchor, AnchorStyles.Right))
                 {
                     AnchorInfo? anchorInfo = GetAnchorInfo(element);
-                    Rectangle bounds = GetCachedBounds(element);
+                    SkiaSharp.SKRect bounds = GetCachedBounds(element);
                     prefSize.Width = Math.Max(prefSize.Width, anchorInfo is null ? bounds.Right : bounds.Right + anchorInfo.Right);
                 }
  
@@ -1095,9 +1083,9 @@ internal partial class DefaultLayout : LayoutEngine
                 {
                     // If we are right anchored, see what the anchors distance between our right edge and
                     // the container is, and make sure our container is large enough to accomodate us.
-                    Rectangle anchorDest = GetAnchorDestination(element, Rectangle.Empty, measureOnly: true);
+                    SkiaSharp.SKRect anchorDest = GetAnchorDestination(element, SkiaSharp.SKRect.Empty, measureOnly: true);
                     AnchorInfo? anchorInfo = GetAnchorInfo(element);
-                    Rectangle bounds = GetCachedBounds(element);
+                    SkiaSharp.SKRect bounds = GetCachedBounds(element);
                     prefSize.Height = Math.Max(prefSize.Height, anchorInfo is null ? bounds.Bottom : bounds.Bottom + anchorInfo.Bottom);
                 }
             }

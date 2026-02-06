@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Extensions;
 using SDUI.Helpers;
@@ -12,27 +12,27 @@ namespace SDUI.Controls;
 public class MenuItem
 {
     private bool _autoSize = true;
-    private Color _backColor = Color.Empty;
+    private SKColor _backColor = SKColor.Empty;
     private bool _checkOnClick;
 
     private CheckState _checkState = CheckState.Unchecked;
     private bool _enabled = true;
     private Font _font;
-    private Color _foreColor = Color.Empty;
-    private Bitmap _icon;
-    private Image _image;
-    private Color _imageTransparentColor = Color.Empty;
+    private SKColor _foreColor = SKColor.Empty;
+    private SKBitmap _icon;
+    private SKImage _image;
+    private SKColor _imageTransparentColor = SKColor.Empty;
     private bool _isSeparator;
     private string _name = string.Empty;
-    private Padding _padding = new(3);
+    private Thickness _padding = new(3);
     private Keys _shortcutKeys = Keys.None;
     private bool _showSubmenuArrow = true;
-    private Size _size;
+    private SKSize _size;
     private string _text = string.Empty;
     private ContentAlignment _textAlign = ContentAlignment.MiddleLeft;
     private bool _visible = true;
 
-    public MenuItem(string text = "", Bitmap icon = null)
+    public MenuItem(string text = "", SKBitmap icon = null)
     {
         _text = text;
         _icon = icon;
@@ -44,7 +44,7 @@ public class MenuItem
     /// <summary>
     ///     TODO!
     /// </summary>
-    public ToolStripItemAlignment Alignment { get; set; } = ToolStripItemAlignment.Left;
+    public Aligment Alignment { get; set; } = Aligment.Left;
 
     [Category("Behavior")]
     [DefaultValue(false)]
@@ -108,7 +108,7 @@ public class MenuItem
         }
     }
 
-    public Bitmap Icon
+    public SKBitmap Icon
     {
         get => _icon;
         set
@@ -135,7 +135,7 @@ public class MenuItem
     }
 
     [Category("Appearance")]
-    public Image Image
+    public SKImage Image
     {
         get => _image;
         set
@@ -148,8 +148,8 @@ public class MenuItem
     }
 
     [Category("Appearance")]
-    [DefaultValue(typeof(Color), "Empty")]
-    public Color ImageTransparentColor
+    [DefaultValue(typeof(SKColor), "Empty")]
+    public SKColor ImageTransparentColor
     {
         get => _imageTransparentColor;
         set
@@ -186,7 +186,7 @@ public class MenuItem
     }
 
     [Category("Layout")]
-    public Size Size
+    public SKSize Size
     {
         get => _size;
         set
@@ -199,7 +199,7 @@ public class MenuItem
     }
 
     [Category("Appearance")]
-    public Color ForeColor
+    public SKColor ForeColor
     {
         get => _foreColor;
         set
@@ -211,7 +211,7 @@ public class MenuItem
     }
 
     [Category("Appearance")]
-    public Color BackColor
+    public SKColor BackColor
     {
         get => _backColor;
         set
@@ -275,7 +275,7 @@ public class MenuItem
     }
 
     [Category("Layout")]
-    public Padding Padding
+    public Thickness Padding
     {
         get => _padding;
         set
@@ -310,13 +310,14 @@ public class MenuItem
     {
         if (Parent == null) return;
 
+        var font = Font ?? Parent.Font;
         using var paint = new SKPaint
         {
-            TextSize = (Font ?? Parent.Font).Size.PtToPx(Parent),
-            Typeface = FontManager.GetSKTypeface(Font ?? Parent.Font)
+            TextSize = font.Size.Topx(Parent),
+            Typeface = font.SKTypeface
         };
 
-        var textBounds = new SKRect();
+        var textBounds = new SkiaSharp.SKRect();
         paint.MeasureText(Text, ref textBounds);
 
         var width = (int)textBounds.Width + Padding.Horizontal;
@@ -335,12 +336,12 @@ public class MenuItem
         if (ShortcutKeys != Keys.None)
         {
             var shortcutText = ShortcutKeys.ToString();
-            var shortcutBounds = new SKRect();
+            var shortcutBounds = new SkiaSharp.SKRect();
             paint.MeasureText(shortcutText, ref shortcutBounds);
             width += (int)shortcutBounds.Width + 20; // Kısayol tuşu için ekstra genişlik
         }
 
-        _size = new Size(width, height);
+        _size = new SKSize(width, height);
     }
 
     public static MenuItem CreateSeparator()
@@ -377,9 +378,9 @@ public class MenuItem
 public class MenuItemSeparator : MenuItem
 {
     private float _height = 2f;
-    private Color _lineColor = Color.FromArgb(100, 100, 100);
+    private SKColor _lineColor = new SKColor(100, 100, 100);
     private float _margin = 4f;
-    private Color _shadowColor = Color.FromArgb(50, 50, 50);
+    private SKColor _shadowColor = new SKColor(50, 50, 50);
 
     public MenuItemSeparator()
     {
@@ -411,7 +412,7 @@ public class MenuItemSeparator : MenuItem
     }
 
     [Category("Appearance")]
-    public Color LineColor
+    public SKColor LineColor
     {
         get => _lineColor;
         set
@@ -423,7 +424,7 @@ public class MenuItemSeparator : MenuItem
     }
 
     [Category("Appearance")]
-    public Color ShadowColor
+    public SKColor ShadowColor
     {
         get => _shadowColor;
         set

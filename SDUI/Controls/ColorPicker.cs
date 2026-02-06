@@ -1,10 +1,7 @@
-using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
@@ -15,7 +12,7 @@ public class ColorPicker : ComboBox
 
     public ColorPicker()
     {
-        Size = new Size((int)(180 * ScaleFactor), (int)(32 * ScaleFactor));
+        Size = new SKSize((int)(180 * ScaleFactor), (int)(32 * ScaleFactor));
         DropDownStyle = ComboBoxStyle.DropDownList;
 
         ResetPalette();
@@ -43,9 +40,9 @@ public class ColorPicker : ComboBox
         }
     }
 
-    public SKColor SelectedColor
+    public SkiaSharp.SKColor SelectedColor
     {
-        get => SelectedIndex == -1 ? SKColors.Empty : (SKColor)SelectedItem;
+        get => SelectedIndex == -1 ? SKColors.Empty : (SkiaSharp.SKColor)SelectedItem;
         set => SelectedItem = value;
     }
 
@@ -59,28 +56,28 @@ public class ColorPicker : ComboBox
         Items.Clear();
         var colors = new[]
         {
-            ColorScheme.AccentColor.ToSKColor(),
-            new SKColor(33, 150, 243),
-            new SKColor(3, 169, 244),
-            new SKColor(0, 188, 212),
-            new SKColor(0, 150, 136),
-            new SKColor(76, 175, 80),
-            new SKColor(139, 195, 74),
-            new SKColor(205, 220, 57),
-            new SKColor(255, 235, 59),
-            new SKColor(255, 193, 7),
-            new SKColor(255, 152, 0),
-            new SKColor(255, 87, 34),
-            new SKColor(244, 67, 54),
-            new SKColor(233, 30, 99),
-            new SKColor(156, 39, 176),
-            new SKColor(103, 58, 183),
-            new SKColor(63, 81, 181),
-            new SKColor(121, 85, 72),
-            new SKColor(96, 125, 139),
-            new SKColor(120, 120, 120),
-            new SKColor(160, 160, 160),
-            new SKColor(200, 200, 200),
+            ColorScheme.AccentColor,
+            new SkiaSharp.SKColor(33, 150, 243),
+            new SkiaSharp.SKColor(3, 169, 244),
+            new SkiaSharp.SKColor(0, 188, 212),
+            new SkiaSharp.SKColor(0, 150, 136),
+            new SkiaSharp.SKColor(76, 175, 80),
+            new SkiaSharp.SKColor(139, 195, 74),
+            new SkiaSharp.SKColor(205, 220, 57),
+            new SkiaSharp.SKColor(255, 235, 59),
+            new SkiaSharp.SKColor(255, 193, 7),
+            new SkiaSharp.SKColor(255, 152, 0),
+            new SkiaSharp.SKColor(255, 87, 34),
+            new SkiaSharp.SKColor(244, 67, 54),
+            new SkiaSharp.SKColor(233, 30, 99),
+            new SkiaSharp.SKColor(156, 39, 176),
+            new SkiaSharp.SKColor(103, 58, 183),
+            new SkiaSharp.SKColor(63, 81, 181),
+            new SkiaSharp.SKColor(121, 85, 72),
+            new SkiaSharp.SKColor(96, 125, 139),
+            new SkiaSharp.SKColor(120, 120, 120),
+            new SkiaSharp.SKColor(160, 160, 160),
+            new SkiaSharp.SKColor(200, 200, 200),
             SKColors.White,
             SKColors.Black,
             SKColors.Red,
@@ -106,14 +103,14 @@ public class ColorPicker : ComboBox
 
         var bounds = ClientRectangle;
 
-        var selectedColor = SelectedIndex >= 0 && SelectedIndex < Items.Count && Items[SelectedIndex] is SKColor c
+        var selectedColor = SelectedIndex >= 0 && SelectedIndex < Items.Count && Items[SelectedIndex] is SkiaSharp.SKColor c
             ? c
-            : ColorScheme.AccentColor.ToSKColor();
+            : ColorScheme.AccentColor;
 
         // Content
         var padding = 6f * ScaleFactor;
         var swatchSize = bounds.Height - (int)(padding * 2);
-        var swatchRect = new SKRect(padding, padding, padding + swatchSize, padding + swatchSize);
+        var swatchRect = new SkiaSharp.SKRect(padding, padding, padding + swatchSize, padding + swatchSize);
 
         using var swatchPaint = new SKPaint { Color = selectedColor, IsAntialias = true };
         canvas.DrawRoundRect(swatchRect, 4f * ScaleFactor, 4f * ScaleFactor, swatchPaint);
@@ -132,7 +129,7 @@ public class ColorPicker : ComboBox
             
             using var font = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
@@ -140,7 +137,7 @@ public class ColorPicker : ComboBox
             
             using var textPaint = new SKPaint
             {
-                Color = ForeColor.ToSKColor(),
+                Color = ForeColor,
                 IsAntialias = true
             };
 
@@ -165,7 +162,7 @@ public class ColorPicker : ComboBox
         private bool _draggingSv;
         private bool _draggingHue;
         
-        private Size _defaultSize;
+        private SKSize _defaultSize;
 
         public ColorDropDownPanel(ColorPicker owner) : base(owner)
         {
@@ -187,7 +184,7 @@ public class ColorPicker : ComboBox
             }
         }
         
-        protected override int GetItemIndexAtPoint(Point point)
+        protected override int GetItemIndexAtPoint(SKPoint point)
         {
             if (_isInCustomMode) return -1; // No items in custom mode
             
@@ -200,14 +197,16 @@ public class ColorPicker : ComboBox
             if (itemSize <= 0) return -1;
 
             var relativeY = point.Y - VERTICAL_PADDING;
-            var col = (point.X - VERTICAL_PADDING) / itemSize;
+            var col = ((int)point.X - VERTICAL_PADDING) / itemSize;
             
             if (col < 0 || col >= _picker.Columns) return -1;
             
             var rowVisual = relativeY / itemSize;
-            var index = _scrollOffset + rowVisual * _picker.Columns + col;
+            var index = _scrollOffset + (int)rowVisual * _picker.Columns + col;
             
-            if (index >= 0 && index < _owner.Items.Count) return index;
+            if (index >= 0 && index < _owner.Items.Count) 
+                return index;
+
             return -1;
         }
 
@@ -230,9 +229,9 @@ public class ColorPicker : ComboBox
 
         private void SwitchToCustomMode()
         {
-            var selectedColor = _picker.SelectedIndex >= 0 && _picker.SelectedIndex < _picker.Items.Count && _picker.Items[_picker.SelectedIndex] is SKColor c
+            var selectedColor = _picker.SelectedIndex >= 0 && _picker.SelectedIndex < _picker.Items.Count && _picker.Items[_picker.SelectedIndex] is SkiaSharp.SKColor c
                 ? c
-                : ColorScheme.AccentColor.ToSKColor();
+                : ColorScheme.AccentColor;
 
             _isInCustomMode = true;
             _currentHsv = HsvColor.FromColor(selectedColor);
@@ -245,7 +244,7 @@ public class ColorPicker : ComboBox
             // Adjust location if width changes?
             // ComboBox usually centers or left aligns.
             // Let's just set Size.
-            Size = new Size(newWidth, newHeight);
+            Size = new SKSize(newWidth, newHeight);
             
             _scrollBar.Visible = false;
             Invalidate();
@@ -322,9 +321,9 @@ public class ColorPicker : ComboBox
         private void DrawCustomPicker(SKCanvas canvas)
         {
             // Background
-            var surfaceColor = ColorScheme.Surface.ToSKColor();
+            var surfaceColor = ColorScheme.Surface;
             using var bgPaint = new SKPaint { Color = surfaceColor, IsAntialias = true };
-            canvas.DrawRect(new SKRect(0, 0, Width, Height), bgPaint);
+            canvas.DrawRect(new SkiaSharp.SKRect(0, 0, Width, Height), bgPaint);
 
             var bounds = ClientRectangle;
             float pad = 12 * ScaleFactor;
@@ -341,13 +340,13 @@ public class ColorPicker : ComboBox
             // Ensure squares? Or just fill width. 
             // If Window is 240, pad 12 => 216 width. Height can comprise rest.
             // Let's make SV Box square-ish but adjustable.
-            var svRect = new SKRect(pad, pad, bounds.Width - pad, bounds.Width - pad);
+            var svRect = new SkiaSharp.SKRect(pad, pad, bounds.Width - pad, bounds.Width - pad);
             
-            var hueRect = new SKRect(pad, svRect.Bottom + pad, bounds.Width - pad, svRect.Bottom + pad + hueHeight);
+            var hueRect = new SkiaSharp.SKRect(pad, svRect.Bottom + pad, bounds.Width - pad, svRect.Bottom + pad + hueHeight);
 
             // Draw SV Box
             // 1. Pure Hue
-            var pureHue = SKColor.FromHsv(_currentHsv.H, 1f, 1f);
+            var pureHue = SkiaSharp.SKColor.FromHsv(_currentHsv.H, 1f, 1f);
             using var huePaint = new SKPaint { Color = pureHue };
             canvas.DrawRect(svRect, huePaint);
             
@@ -388,29 +387,29 @@ public class ColorPicker : ComboBox
             // Hue Selection
             float hueX = hueRect.Left + (_currentHsv.H / 360f) * hueRect.Width;
             using var hueSelPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 2, Color = SKColors.Black, IsAntialias = true };
-            canvas.DrawRect(new SKRect(hueX - 2, hueRect.Top, hueX + 2, hueRect.Bottom), hueSelPaint);
+            canvas.DrawRect(new SkiaSharp.SKRect(hueX - 2, hueRect.Top, hueX + 2, hueRect.Bottom), hueSelPaint);
             
             // Buttons
             var btnAreaY = hueRect.Bottom + pad;
             var w = 80 * ScaleFactor;
-            var cancelRect = new SKRect(bounds.Width - pad - w - 10 - w, btnAreaY, bounds.Width - pad - w - 10, btnAreaY + buttonHeight);
-            var saveRect = new SKRect(bounds.Width - pad - w, btnAreaY, bounds.Width - pad, btnAreaY + buttonHeight);
+            var cancelRect = new SkiaSharp.SKRect(bounds.Width - pad - w - 10 - w, btnAreaY, bounds.Width - pad - w - 10, btnAreaY + buttonHeight);
+            var saveRect = new SkiaSharp.SKRect(bounds.Width - pad - w, btnAreaY, bounds.Width - pad, btnAreaY + buttonHeight);
             
             DrawButton(canvas, cancelRect, "Back", false);
             DrawButton(canvas, saveRect, "Set", true);
         }
         
-        private void DrawButton(SKCanvas canvas, SKRect rect, string text, bool primary)
+        private void DrawButton(SKCanvas canvas, SkiaSharp.SKRect rect, string text, bool primary)
         {
-            var paint = new SKPaint { Color = primary ? ColorScheme.AccentColor.ToSKColor() : ColorScheme.Surface.ToSKColor().WithAlpha(200), IsAntialias = true };
+            var paint = new SKPaint { Color = primary ? ColorScheme.AccentColor : ColorScheme.Surface.WithAlpha(200), IsAntialias = true };
             if (!primary) 
             {
                  paint.Style = SKPaintStyle.Stroke;
-                 paint.Color = ColorScheme.BorderColor.ToSKColor();
+                 paint.Color = ColorScheme.BorderColor;
             }
             canvas.DrawRoundRect(rect, 4, 4, paint);
             
-            var textP = new SKPaint { Color = primary ? SKColors.White : ColorScheme.ForeColor.ToSKColor(), IsAntialias = true, TextAlign = SKTextAlign.Center };
+            var textP = new SKPaint { Color = primary ? SKColors.White : ColorScheme.ForeColor, IsAntialias = true, TextAlign = SKTextAlign.Center };
             var font = GetCachedFont();
             canvas.DrawText(text, rect.MidX, rect.MidY + font.Size/2 - 2, font, textP);
         }
@@ -419,15 +418,15 @@ public class ColorPicker : ComboBox
         {
             float pad = 12 * ScaleFactor;
             var bounds = ClientRectangle;
-            var svRect = new SKRect(pad, pad, bounds.Width - pad, bounds.Width - pad);
+            var svRect = new SkiaSharp.SKRect(pad, pad, bounds.Width - pad, bounds.Width - pad);
             var hueHeight = 20 * ScaleFactor;
-            var hueRect = new SKRect(pad, svRect.Bottom + pad, bounds.Width - pad, svRect.Bottom + pad + hueHeight);
+            var hueRect = new SkiaSharp.SKRect(pad, svRect.Bottom + pad, bounds.Width - pad, svRect.Bottom + pad + hueHeight);
             
              var btnAreaY = hueRect.Bottom + pad;
              var buttonHeight = 28 * ScaleFactor;
              var w = 80 * ScaleFactor;
-             var cancelRect = new SKRect(bounds.Width - pad - w - 10 - w, btnAreaY, bounds.Width - pad - w - 10, btnAreaY + buttonHeight);
-             var saveRect = new SKRect(bounds.Width - pad - w, btnAreaY, bounds.Width - pad, btnAreaY + buttonHeight);
+             var cancelRect = new SkiaSharp.SKRect(bounds.Width - pad - w - 10 - w, btnAreaY, bounds.Width - pad - w - 10, btnAreaY + buttonHeight);
+             var saveRect = new SkiaSharp.SKRect(bounds.Width - pad - w, btnAreaY, bounds.Width - pad, btnAreaY + buttonHeight);
 
             if (svRect.Contains(e.X, e.Y))
             {
@@ -456,15 +455,15 @@ public class ColorPicker : ComboBox
         {
             float pad = 12 * ScaleFactor;
             var bounds = ClientRectangle;
-             var svRect = new SKRect(pad, pad, bounds.Width - pad, bounds.Width - pad);
+             var svRect = new SkiaSharp.SKRect(pad, pad, bounds.Width - pad, bounds.Width - pad);
              var hueHeight = 20 * ScaleFactor;
-             var hueRect = new SKRect(pad, svRect.Bottom + pad, bounds.Width - pad, svRect.Bottom + pad + hueHeight);
+             var hueRect = new SkiaSharp.SKRect(pad, svRect.Bottom + pad, bounds.Width - pad, svRect.Bottom + pad + hueHeight);
 
             if (_draggingSv) UpdateSv(e.X, e.Y, svRect);
             if (_draggingHue) UpdateHue(e.X, hueRect);
         }
 
-        private void UpdateSv(float x, float y, SKRect rect)
+        private void UpdateSv(float x, float y, SkiaSharp.SKRect rect)
         {
             float s = Math.Clamp((x - rect.Left) / rect.Width, 0f, 1f);
             float v = Math.Clamp(1f - (y - rect.Top) / rect.Height, 0f, 1f);
@@ -473,7 +472,7 @@ public class ColorPicker : ComboBox
             Invalidate();
         }
 
-        private void UpdateHue(float x, SKRect rect)
+        private void UpdateHue(float x, SkiaSharp.SKRect rect)
         {
             float h = Math.Clamp((x - rect.Left) / rect.Width, 0f, 1f) * 360f;
             _currentHsv.H = h;
@@ -492,12 +491,12 @@ public class ColorPicker : ComboBox
 
             public HsvColor(float h, float s, float v) { H = h; S = s; V = v; }
 
-            public SKColor ToColor()
+            public SkiaSharp.SKColor ToColor()
             {
-                return SKColor.FromHsv(H, S, V);
+                return SkiaSharp.SKColor.FromHsv(H, S, V);
             }
 
-            public static HsvColor FromColor(SKColor color)
+            public static HsvColor FromColor(SkiaSharp.SKColor color)
             {
                 color.ToHsv(out var h, out var s, out var v);
 
@@ -513,14 +512,14 @@ public class ColorPicker : ComboBox
         {
              if (Width <= 0 || Height <= 0 || _owner.Items.Count == 0) return;
 
-             var surfaceColor = ColorScheme.Surface.ToSKColor();
+             var surfaceColor = ColorScheme.Surface;
              _bgPaint ??= new SKPaint { Color = surfaceColor, IsAntialias = true };
-             canvas.DrawRect(new SKRect(0, 0, Width, Height), _bgPaint);
+             canvas.DrawRect(new SkiaSharp.SKRect(0, 0, Width, Height), _bgPaint);
              
              var font = GetCachedFont();
-             _textPaint ??= new SKPaint { IsAntialias = true, Color = ColorScheme.ForeColor.ToSKColor() };
+             _textPaint ??= new SKPaint { IsAntialias = true, Color = ColorScheme.ForeColor };
 
-             int startIndex = _scrollOffset;
+             int startIndex = (int)_scrollOffset;
              float currentY = VERTICAL_PADDING;
              
              for (int i = startIndex; i < _owner.Items.Count; i++)
@@ -529,35 +528,35 @@ public class ColorPicker : ComboBox
                  
                  var w = Width - (_scrollBar.Visible ? SCROLL_BAR_WIDTH + 4 : 0);
                  var itemMargin = (int)(10 * ScaleFactor);
-                 var itemRect = new SKRect(itemMargin, currentY, w - itemMargin, currentY + ItemHeight);
+                 var itemRect = new SkiaSharp.SKRect(itemMargin, currentY, w - itemMargin, currentY + ItemHeight);
                  
                  bool isSelected = i == _selectedIndex;
                  bool isHovered = i == _hoveredIndex;
                  
                   if (isSelected || isHovered)
                  {
-                     _selectionPaint ??= new SKPaint { IsAntialias = true, Color = ColorScheme.AccentColor.Alpha(70).ToSKColor() };
+                     _selectionPaint ??= new SKPaint { IsAntialias = true, Color = ColorScheme.AccentColor.WithAlpha(70) };
                      canvas.DrawRoundRect(new SKRoundRect(itemRect, CORNER_RADIUS), _selectionPaint);
                  }
                  
                  var item = _owner.Items[i];
                  
-                 if (item is SKColor c)
+                 if (item is SkiaSharp.SKColor c)
                  {
                      var swatchSize = ItemHeight - 12;
-                     var swatchRect = new SKRect(itemRect.Left + 6, itemRect.Top + 6, itemRect.Left + 6 + swatchSize, itemRect.Top + 6 + swatchSize);
+                     var swatchRect = new SkiaSharp.SKRect(itemRect.Left + 6, itemRect.Top + 6, itemRect.Left + 6 + swatchSize, itemRect.Top + 6 + swatchSize);
                      using var p = new SKPaint { Color = c, IsAntialias = true };
                      canvas.DrawRoundRect(swatchRect, 4, 4, p);
                      using var pb = new SKPaint { Color = SKColors.Gray, IsStroke = true, IsAntialias = true };
                      canvas.DrawRoundRect(swatchRect, 4, 4, pb);
                      
                      string text = $"#{c.Red:X2}{c.Green:X2}{c.Blue:X2}";
-                     TextRenderingHelper.DrawText(canvas, text, swatchRect.Right + 12, currentY + ItemHeight/2 - font.Size/2, font, _textPaint);
+                    TextRenderingHelper.DrawText(canvas, text, swatchRect.Right + 12, currentY + ItemHeight / 2 - font.Size/2, font, _textPaint);
                  }
                  else
                  {
                       string text = item?.ToString() ?? "";
-                      TextRenderingHelper.DrawText(canvas, text, itemRect.Left + 10, currentY + ItemHeight/2 - font.Size/2, font, _textPaint);
+                    TextRenderingHelper.DrawText(canvas, text, itemRect.Left + 10, currentY + ItemHeight / 2 - font.Size/2, font, _textPaint);
                  }
                  
                  currentY += ItemHeight;
@@ -568,12 +567,12 @@ public class ColorPicker : ComboBox
         {
              if (Width <= 0 || Height <= 0 || _owner.Items.Count == 0) return;
 
-             var surfaceColor = ColorScheme.Surface.ToSKColor();
+             var surfaceColor = ColorScheme.Surface;
              _bgPaint ??= new SKPaint { Color = surfaceColor, IsAntialias = true };
-             canvas.DrawRect(new SKRect(0, 0, Width, Height), _bgPaint);
+             canvas.DrawRect(new SkiaSharp.SKRect(0, 0, Width, Height), _bgPaint);
              
              var cellSize = ItemHeight; 
-             int startIndex = _scrollOffset;
+             int startIndex = (int)_scrollOffset;
              
              float currentY = VERTICAL_PADDING;
              float startX = VERTICAL_PADDING;
@@ -591,14 +590,14 @@ public class ColorPicker : ComboBox
                  
                  if (y >= Height - VERTICAL_PADDING) break;
                  
-                 var rect = new SKRect(x + 2, y + 2, x + cellSize - 2, y + cellSize - 2);
+                 var rect = new SkiaSharp.SKRect(x + 2, y + 2, x + cellSize - 2, y + cellSize - 2);
                  
                  bool isSelected = idx == _selectedIndex;
                  bool isHovered = idx == _hoveredIndex;
                  
-                 if (item is Color c)
+                 if (item is SKColor c)
                  {
-                     using var p = new SKPaint { Color = c.ToSKColor(), IsAntialias = true };
+                     using var p = new SKPaint { Color = c, IsAntialias = true };
                      canvas.DrawRoundRect(rect, 4, 4, p);
                      
                       if (isSelected || isHovered)

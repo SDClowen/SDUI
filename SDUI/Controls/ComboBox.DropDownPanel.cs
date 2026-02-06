@@ -1,14 +1,8 @@
 ﻿using SDUI.Animation;
-using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
@@ -50,7 +44,7 @@ public class DropDownPanel : UIElementBase
 
     protected SKPaint? _layerPaint;
     protected bool _openingUpwards;
-    protected int _scrollOffset;
+    protected float _scrollOffset;
     protected int _selectedIndex = -1;
     protected SKPaint? _selectionPaint;
     protected SKPaint? _textPaint;
@@ -59,7 +53,7 @@ public class DropDownPanel : UIElementBase
     public DropDownPanel(ComboBox owner)
     {
         _owner = owner;
-        BackColor = Color.Transparent;
+        BackColor = SKColors.Transparent;
         Visible = false;
         TabStop = false;
 
@@ -100,7 +94,7 @@ public class DropDownPanel : UIElementBase
             _cachedFont?.Dispose();
             _cachedFont = new SKFont
             {
-                Size = font.Size.PtToPx(this),
+                Size = font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
@@ -181,8 +175,8 @@ public class DropDownPanel : UIElementBase
 
         if (needsScrollBar)
         {
-            _scrollBar.Location = new Point(Width - SCROLL_BAR_WIDTH - 2, VERTICAL_PADDING);
-            _scrollBar.Size = new Size(SCROLL_BAR_WIDTH, Height - 2 * VERTICAL_PADDING);
+            _scrollBar.Location = new SKPoint(Width - SCROLL_BAR_WIDTH - 2, VERTICAL_PADDING);
+            _scrollBar.Size = new SKSize(SCROLL_BAR_WIDTH, Height - 2 * VERTICAL_PADDING);
             _scrollBar.Maximum = Math.Max(0, totalItems - maxVisibleItems);
             _scrollBar.LargeChange = maxVisibleItems;
         }
@@ -274,7 +268,7 @@ public class DropDownPanel : UIElementBase
         Parent?.Controls.Remove(this);
     }
 
-    protected virtual int GetItemIndexAtPoint(Point point)
+    protected virtual int GetItemIndexAtPoint(SKPoint point)
     {
         if (point.Y < VERTICAL_PADDING || point.Y > Height - VERTICAL_PADDING)
             return -1;
@@ -283,7 +277,7 @@ public class DropDownPanel : UIElementBase
             return -1;
 
         var relativeY = point.Y - VERTICAL_PADDING;
-        var itemIndex = relativeY / ItemHeight + _scrollOffset;
+        var itemIndex = (int)(relativeY / ItemHeight + _scrollOffset);
 
         return itemIndex >= 0 && itemIndex < _owner.Items.Count ? itemIndex : -1;
     }
@@ -305,7 +299,7 @@ public class DropDownPanel : UIElementBase
         var translateY = (_openingUpwards ? 1f - openProgress : openProgress - 1f) * 8f;
         canvas.Translate(0, translateY);
 
-        var mainRect = new SKRect(0, 0, Width, Height);
+        var mainRect = new SkiaSharp.SKRect(0, 0, Width, Height);
         var mainRoundRect = new SKRoundRect(mainRect, CORNER_RADIUS);
 
         // Multi-layer modern shadow (ContextMenuStrip gibi)
@@ -328,7 +322,7 @@ public class DropDownPanel : UIElementBase
         canvas.Restore();
 
         // High-quality solid background
-        var surfaceColor = ColorScheme.BackColor.ToSKColor().InterpolateColor(SKColors.White, 0.06f);
+        var surfaceColor = ColorScheme.BackColor.InterpolateColor(SKColors.White, 0.06f);
 
         _bgPaint ??= new SKPaint
         {
@@ -363,9 +357,9 @@ public class DropDownPanel : UIElementBase
             StrokeWidth = 1f,
             FilterQuality = SKFilterQuality.High
         };
-        _borderPaint.Color = ColorScheme.BorderColor.Alpha(100).ToSKColor();
+        _borderPaint.Color = ColorScheme.BorderColor.WithAlpha(100);
         var borderRect = new SKRoundRect(
-            new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f),
+            new SkiaSharp.SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f),
             CORNER_RADIUS - 0.5f);
         canvas.DrawRoundRect(borderRect, _borderPaint);
 
@@ -381,15 +375,15 @@ public class DropDownPanel : UIElementBase
 
         float contentRightInset = _scrollBar.Visible ? SCROLL_BAR_WIDTH + 6 : 0;
         float currentY = VERTICAL_PADDING;
-        var startIndex = _scrollOffset;
-        var endIndex = Math.Min(_owner.Items.Count, startIndex + _visibleItemCount);
+        var startIndex = (int)_scrollOffset;
+        var endIndex = (int)Math.Min(_owner.Items.Count, startIndex + _visibleItemCount);
 
         for (var i = startIndex; i < endIndex && currentY < Height - VERTICAL_PADDING; i++)
         {
             // Item rect with proper margins from dropdown edges
             float itemLeftEdge = ITEM_MARGIN;
             var itemRightEdge = Width - ITEM_MARGIN - contentRightInset;
-            var itemRect = new SKRect(
+            var itemRect = new SkiaSharp.SKRect(
                 itemLeftEdge,
                 currentY,
                 itemRightEdge,
@@ -410,7 +404,7 @@ public class DropDownPanel : UIElementBase
                     FilterQuality = SKFilterQuality.High,
                     Style = SKPaintStyle.Fill
                 };
-                _selectionPaint.Color = ColorScheme.AccentColor.Alpha(70).ToSKColor();
+                _selectionPaint.Color = ColorScheme.AccentColor.WithAlpha(70);
                 var selRect = new SKRoundRect(itemRect, itemRadius);
                 canvas.DrawRoundRect(selRect, _selectionPaint);
             }
@@ -424,14 +418,14 @@ public class DropDownPanel : UIElementBase
                     FilterQuality = SKFilterQuality.High,
                     Style = SKPaintStyle.Fill
                 };
-                _hoverPaint.Color = ColorScheme.AccentColor.Alpha(hoverAlpha).ToSKColor();
+                _hoverPaint.Color = ColorScheme.AccentColor.WithAlpha(hoverAlpha);
                 var hoverRect = new SKRoundRect(itemRect, itemRadius);
                 canvas.DrawRoundRect(hoverRect, _hoverPaint);
             }
 
             // High-quality text rendering
             var text = _owner.GetItemText(_owner.Items[i]);
-            _textPaint.Color = ColorScheme.ForeColor.ToSKColor();
+            _textPaint.Color = ColorScheme.ForeColor;
 
             var baseTextY = currentY + ItemHeight / 2f - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
             float textX = ITEM_MARGIN + 8;

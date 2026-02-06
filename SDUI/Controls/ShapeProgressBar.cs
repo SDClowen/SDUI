@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Drawing;
+
 using System.Drawing.Drawing2D;
 using SDUI.Extensions;
 using SDUI.Helpers;
@@ -9,7 +9,7 @@ namespace SDUI.Controls;
 
 public class ShapeProgressBar : UIElementBase
 {
-    private readonly SKColor[] _gradient = new SKColor[2];
+    private readonly SkiaSharp.SKColor[] _gradient = new SkiaSharp.SKColor[2];
 
     private bool _drawHatch;
 
@@ -23,13 +23,13 @@ public class ShapeProgressBar : UIElementBase
 
     public ShapeProgressBar()
     {
-        Size = new Size(100, 100);
+        Size = new SKSize(100, 100);
         Font = new Font("Segoe UI", 15);
-        BackColor = Color.Transparent;
+        BackColor = SKColor.Transparent;
 
         // Varsayılan gradient renkleri
-        _gradient[0] = ColorScheme.AccentColor.ToSKColor();
-        _gradient[1] = ColorScheme.AccentColor.ToSKColor().WithAlpha(200);
+        _gradient[0] = ColorScheme.AccentColor;
+        _gradient[1] = ColorScheme.AccentColor.WithAlpha(200);
 
         UpdateHatchPattern();
     }
@@ -73,13 +73,13 @@ public class ShapeProgressBar : UIElementBase
         }
     }
 
-    public Color[] Gradient
+    public SKColor[] Gradient
     {
-        get => new[] { _gradient[0].ToColor(), _gradient[1].ToColor() };
+        get => new[] { _gradient[0], _gradient[1] };
         set
         {
-            _gradient[0] = value[0].ToSKColor();
-            _gradient[1] = value[1].ToSKColor();
+            _gradient[0] = value[0];
+            _gradient[1] = value[1];
             Invalidate();
         }
     }
@@ -190,7 +190,7 @@ public class ShapeProgressBar : UIElementBase
         var left = centerX - size / 2f;
         var top = centerY - size / 2f;
 
-        var rect = new SKRect(left, top, left + size, top + size);
+        var rect = new SkiaSharp.SKRect(left, top, left + size, top + size);
 
         // Ana gradient çizimi
         using (var paint = new SKPaint
@@ -234,7 +234,7 @@ public class ShapeProgressBar : UIElementBase
             using (var shader = SKShader.CreateLinearGradient(
                        new SKPoint(innerLeft, innerTop),
                        new SKPoint(innerLeft, innerTop + innerSize),
-                       new[] { ColorScheme.BackColor.ToSKColor(), ColorScheme.BackColor2.ToSKColor() },
+                       new[] { ColorScheme.BackColor, ColorScheme.BackColor2 },
                        null,
                        SKShaderTileMode.Clamp))
             {
@@ -249,7 +249,7 @@ public class ShapeProgressBar : UIElementBase
 
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.ForeColor.ToSKColor(),
+                   Color = ColorScheme.ForeColor,
                    IsAntialias = true
                })
         using (var font = new SKFont
@@ -259,7 +259,7 @@ public class ShapeProgressBar : UIElementBase
                    Subpixel = true
                })
         {
-            var textBounds = new SKRect();
+            var textBounds = new SkiaSharp.SKRect();
             font.MeasureText(percentString, out textBounds);
             TextRenderingHelper.DrawText(canvas, percentString, centerX, centerY + textBounds.Height / 3f,
                 SKTextAlign.Center, font, paint);

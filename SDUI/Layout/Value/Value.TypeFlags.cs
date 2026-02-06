@@ -1,8 +1,9 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using SkiaSharp;
 using System;
-using System.Drawing;
+
 
 namespace SDUI;
 
@@ -26,7 +27,7 @@ internal readonly partial struct Value
         internal static UtcDateTimeOffsetFlag UtcDateTimeOffset { get; } = UtcDateTimeOffsetFlag.Instance;
         internal static PackedDateTimeOffsetFlag PackedDateTimeOffset { get; } = PackedDateTimeOffsetFlag.Instance;
         internal static PackedColorFlag PackedColor { get; } = PackedColorFlag.Instance;
-        internal static StraightCastFlag<Size> Size { get; } = StraightCastFlag<Size>.Instance;
-        internal static StraightCastFlag<Point> Point { get; } = StraightCastFlag<Point>.Instance;
+        internal static StraightCastFlag<SKSize> Size { get; } = StraightCastFlag<SKSize>.Instance;
+        internal static StraightCastFlag<SKPoint> SKPoint { get; } = StraightCastFlag<SKPoint>.Instance;
     }
 }

@@ -1,5 +1,5 @@
 using SDUI.Controls;
-using System.Drawing;
+
 using System.Windows.Forms;
 
 using SPanel = SDUI.Controls.Panel;
@@ -36,7 +36,7 @@ namespace SDUI.Demo
             var outer = new SPanel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(230, 230, 255) };
             var topAuto = new SButton { Text = "Top AutoSize", Dock = DockStyle.Top, AutoSize = true, Margin = new Padding(2) };
             var innerContainer = new SPanel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(240, 240, 255) };
-            var anchored = new SButton { Text = "Anchored L+R", Size = new Size(100, 30), Anchor = AnchorStyles.Left | AnchorStyles.Right, Location = new Point(10, 10) };
+            var anchored = new SButton { Text = "Anchored L+R", Size = new Size(100, 30), Anchor = AnchorStyles.Left | AnchorStyles.Right, Location = new SKPoint(10, 10) };
             innerContainer.Controls.Add(anchored);
             outer.Controls.Add(innerContainer);
             outer.Controls.Add(topAuto);

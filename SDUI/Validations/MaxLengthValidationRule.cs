@@ -6,7 +6,7 @@ public class MaxLengthValidationRule : ValidationRule
 {
     public int MaxLength { get; set; }
 
-    public override bool Validate(UIElementBase element, out string errorMessage)
+    public override bool Validate(ElementBase element, out string errorMessage)
     {
         if (element.Text.Length > MaxLength)
         {

@@ -1,11 +1,10 @@
-﻿using System;
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
-using SDUI.Animation;
+﻿using SDUI.Animation;
 using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
+using System;
+using System.ComponentModel;
+
 
 namespace SDUI.Controls;
 
@@ -16,16 +15,16 @@ public class CheckBox : UIElementBase
     private float TextPadding => 4f * ScaleFactor;
 
     // Tik işareti koordinatları - checkbox içinde ortalı olacak şekilde ayarlandı
-    private PointF[] CheckmarkLine
+    private SKPoint[] CheckmarkLine
     {
         get
         {
             var scale = CheckboxSize / 16f;
-            return new PointF[] { 
+            return [ 
                 new(4f * scale, 8f * scale), 
                 new(7f * scale, 11f * scale), 
                 new(12f * scale, 6f * scale) 
-            };
+            ];
         }
     }
 
@@ -38,8 +37,8 @@ public class CheckBox : UIElementBase
     private bool _threeState;
     private bool ripple;
     private float boxOffset;
-    private SKRect boxRectangle;
-    private Point mouseLocation;
+    private SkiaSharp.SKRect boxRectangle;
+    private SKPoint mouseLocation;
 
     public CheckBox()
     {
@@ -63,14 +62,14 @@ public class CheckBox : UIElementBase
             animationManager.StartNewAnimation(Checked ? AnimationDirection.In : AnimationDirection.Out);
 
         Ripple = true;
-        MouseLocation = new Point(-1, -1);
+        MouseLocation = new SKPoint(-1, -1);
         AttachInputHandlers();
     }
 
     [Browsable(false)] public int Depth { get; set; }
 
     [Browsable(false)]
-    public Point MouseLocation
+    public SKPoint MouseLocation
     {
         get => mouseLocation;
         set
@@ -89,7 +88,7 @@ public class CheckBox : UIElementBase
             ripple = value;
             if (AutoSize)
                 AdjustSize();
-            if (value) Margin = new Padding(0);
+            if (value) Margin = new Thickness(0);
             Invalidate();
         }
     }
@@ -152,11 +151,11 @@ public class CheckBox : UIElementBase
         return boxRectangle.Contains(MouseLocation.X, MouseLocation.Y);
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
+    public override SKSize GetPreferredSize(SKSize proposedSize)
     {
         using var font = new SKFont
         {
-            Size = Font.Size.PtToPx(this),
+            Size = Font.Size.Topx(this),
             Typeface = FontManager.GetSKTypeface(Font),
             Edging = SKFontEdging.SubpixelAntialias
         };
@@ -171,7 +170,7 @@ public class CheckBox : UIElementBase
         // Width = boxOffset (left space) + CheckBox + Gap + Text + Padding + Buffer
         var width = boxOffset + CheckboxSize + TextPadding + (float)Math.Ceiling(textWidth) + Padding.Horizontal + 2;
 
-        return new Size((int)Math.Ceiling(width), (int)Math.Ceiling(fullHeight));
+        return new SKSize((int)Math.Ceiling(width), (int)Math.Ceiling(fullHeight));
     }
 
     public override void OnCreateControl()
@@ -191,7 +190,7 @@ public class CheckBox : UIElementBase
         if (Ripple && rippleAnimationManager.IsAnimating()) DrawRippleEffect(canvas, ColorScheme.Primary);
 
         // Checkbox çerçeve ve arka plan
-        var boxRect = new SKRect(
+        var boxRect = new SkiaSharp.SKRect(
             boxOffset,
             boxOffset,
             boxOffset + CheckboxSize - 1,
@@ -202,15 +201,15 @@ public class CheckBox : UIElementBase
         if (Checked || CheckState == CheckState.Indeterminate)
         {
             // Filled state with color interpolation
-            var primaryColor = ColorScheme.Primary.ToSKColor();
-            var containerColor = ColorScheme.PrimaryContainer.ToSKColor();
+            var primaryColor = ColorScheme.Primary;
+            var containerColor = ColorScheme.PrimaryContainer;
             var interpolatedColor = primaryColor.InterpolateColor(containerColor, 1f - animationProgress);
 
             using (var paint = new SKPaint
                    {
                        Color = Enabled
                            ? interpolatedColor
-                           : ColorScheme.OnSurface.Alpha(50).ToSKColor(),
+                           : ColorScheme.OnSurface.WithAlpha(50),
                        IsAntialias = true,
                        Style = SKPaintStyle.Fill
                    })
@@ -227,8 +226,8 @@ public class CheckBox : UIElementBase
             using (var paint = new SKPaint
                    {
                        Color = Enabled
-                           ? ColorScheme.Outline.ToSKColor()
-                           : ColorScheme.OnSurface.Alpha(50).ToSKColor(),
+                           ? ColorScheme.Outline
+                           : ColorScheme.OnSurface.WithAlpha(50),
                        IsAntialias = true,
                        Style = SKPaintStyle.Stroke,
                        StrokeWidth = 2f
@@ -255,7 +254,7 @@ public class CheckBox : UIElementBase
         }
     }
 
-    private void DrawRippleEffect(SKCanvas canvas, Color accentColor)
+    private void DrawRippleEffect(SKCanvas canvas, SKColor accentColor)
     {
         var checkboxCenter = boxOffset + CheckboxSizeHalf - 1;
 
@@ -266,7 +265,7 @@ public class CheckBox : UIElementBase
 
             var rippleColor = (bool)rippleAnimationManager.GetData(i)[0]
                 ? SKColors.Black.WithAlpha((byte)(animationValue * 40))
-                : accentColor.ToSKColor().WithAlpha((byte)(animationValue * 40));
+                : accentColor.WithAlpha((byte)(animationValue * 40));
 
             var rippleHeight = Height % 2 == 0 ? Height - 3f : Height - 2f;
             var rippleSize = rippleAnimationManager.GetDirection(i) == AnimationDirection.InOutIn
@@ -284,12 +283,12 @@ public class CheckBox : UIElementBase
         }
     }
 
-    private void DrawCheckboxFill(SKCanvas canvas, SKRect boxRect, Color accentColor, int colorAlpha,
+    private void DrawCheckboxFill(SKCanvas canvas, SkiaSharp.SKRect boxRect, SKColor accentColor, int colorAlpha,
         float animationProgress)
     {
         using var checkPaint = new SKPaint
         {
-            Color = accentColor.ToSKColor().WithAlpha((byte)colorAlpha),
+            Color = accentColor.WithAlpha((byte)colorAlpha),
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 2f * ScaleFactor,
@@ -309,7 +308,7 @@ public class CheckBox : UIElementBase
         }
         else
         {
-            var checkMarkRect = new SKRect(
+            var checkMarkRect = new SkiaSharp.SKRect(
                 boxOffset,
                 boxOffset,
                 boxOffset + CheckboxSize * animationProgress,
@@ -336,19 +335,19 @@ public class CheckBox : UIElementBase
     {
         using var font = new SKFont
         {
-            Size = Font.Size.PtToPx(this),
+            Size = Font.Size.Topx(this),
             Typeface = FontManager.GetSKTypeface(Font),
             Edging = SKFontEdging.SubpixelAntialias
         };
 
         using var textPaint = new SKPaint
         {
-            Color = (Enabled ? ColorScheme.ForeColor : Color.Gray).ToSKColor(),
+            Color = (Enabled ? ColorScheme.ForeColor : SKColors.Gray),
             IsAntialias = true
         };
 
         float textX = boxOffset + CheckboxSize + TextPadding;
-        var textBounds = SKRect.Create(textX, Padding.Top, Width - textX - Padding.Right, Height - Padding.Vertical);
+        var textBounds = SkiaSharp.SKRect.Create(textX, base.Padding.Top, Width - textX - base.Padding.Right, Height - base.Padding.Vertical);
 
         canvas.DrawControlText(Text, textBounds, textPaint, font, ContentAlignment.MiddleLeft, AutoEllipsis,
             UseMnemonic);
@@ -362,7 +361,7 @@ public class CheckBox : UIElementBase
         MouseEnter += (_, _) => _mouseState = 1;
         MouseLeave += (_, _) =>
         {
-            MouseLocation = new Point(-1, -1);
+            MouseLocation = new SKPoint(-1, -1);
             _mouseState = 0;
         };
         MouseDown += (_, e) =>
@@ -392,7 +391,7 @@ public class CheckBox : UIElementBase
     {
         base.OnSizeChanged(e);
         boxOffset = (Height - CheckboxSize) / 2f;
-        boxRectangle = new SKRect(boxOffset, boxOffset, boxOffset + CheckboxSize - 1, boxOffset + CheckboxSize - 1);
+        boxRectangle = new SkiaSharp.SKRect(boxOffset, boxOffset, boxOffset + CheckboxSize - 1, boxOffset + CheckboxSize - 1);
     }
 
     public override void OnClick(EventArgs e)

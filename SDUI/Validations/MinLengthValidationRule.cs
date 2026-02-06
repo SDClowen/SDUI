@@ -6,7 +6,7 @@ public class MinLengthValidationRule : ValidationRule
 {
     public int MinLength { get; set; }
 
-    public override bool Validate(UIElementBase element, out string errorMessage)
+    public override bool Validate(ElementBase element, out string errorMessage)
     {
         if (element.Text.Length < MinLength)
         {

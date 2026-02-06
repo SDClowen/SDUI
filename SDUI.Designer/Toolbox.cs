@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+
 using SDUI.Controls;
 using SDUI.Extensions;
 
@@ -39,7 +39,7 @@ public class Toolbox : SDUI.Controls.Panel
         {
             Text = "◀",
             Size = new Size(30, 30),
-            Location = new Point(185, 8),
+            Location = new SKPoint(185, 8),
             Font = new Font("Segoe UI", 10, FontStyle.Bold)
         };
         _toggleButton.Click += ToggleButton_Click;
@@ -79,7 +79,7 @@ public class Toolbox : SDUI.Controls.Panel
             _flowPanel.Visible = true;
         }
         
-        _toggleButton.Location = new Point(Width - 45, 8);
+        _toggleButton.Location = new SKPoint(Width - 45, 8);
         
         // Trigger parent layout to adjust surrounding controls
         if (Parent is UIWindow window)

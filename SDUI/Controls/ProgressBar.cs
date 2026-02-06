@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+﻿
 using System.Drawing.Drawing2D;
 using SDUI.Extensions;
 using SDUI.Helpers;
@@ -10,7 +10,7 @@ public class ProgressBar : UIElementBase
 {
     private bool _drawHatch;
 
-    private Color[] _gradient = new Color[2];
+    private SKColor[] _gradient = new SKColor[2];
 
     private HatchStyle _hatchType = HatchStyle.Percent10;
 
@@ -31,7 +31,7 @@ public class ProgressBar : UIElementBase
 
     public ProgressBar()
     {
-        BackColor = Color.Transparent;
+        BackColor = SKColors.Transparent;
         // Modern gradient with Primary color
         _gradient = new[] { ColorScheme.Primary, ColorScheme.PrimaryContainer };
     }
@@ -56,7 +56,7 @@ public class ProgressBar : UIElementBase
         }
     }
 
-    public Color[] Gradient
+    public SKColor[] Gradient
     {
         get => _gradient;
         set
@@ -143,12 +143,12 @@ public class ProgressBar : UIElementBase
         var intValue = _value / (float)_maximum * Width;
         var percent = 100.0f * Value / Maximum;
 
-        var rect = new SKRect(0, 0, Width, Height);
+        var rect = new SkiaSharp.SKRect(0, 0, Width, Height);
 
         // Modern background with SurfaceContainerHigh
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.SurfaceContainerHigh.ToSKColor(),
+                   Color = ColorScheme.SurfaceContainerHigh,
                    IsAntialias = true,
                    Style = SKPaintStyle.Fill
                })
@@ -159,13 +159,13 @@ public class ProgressBar : UIElementBase
         // İlerleme çubuğu çizimi
         if (intValue > 0)
         {
-            var progressRect = new SKRect(0, 0, intValue, Height);
+            var progressRect = new SkiaSharp.SKRect(0, 0, intValue, Height);
 
             // Gradient oluştur
             using var shader = SKShader.CreateLinearGradient(
                 new SKPoint(0, 0),
                 new SKPoint(0, Height),
-                new[] { _gradient[0].ToSKColor(), _gradient[1].ToSKColor() },
+                new[] { _gradient[0], _gradient[1] },
                 null,
                 SKShaderTileMode.Clamp);
 
@@ -198,7 +198,7 @@ public class ProgressBar : UIElementBase
         // Modern subtle border with Outline color
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.OutlineVariant.ToSKColor(),
+                   Color = ColorScheme.OutlineVariant,
                    IsAntialias = true,
                    Style = SKPaintStyle.Stroke,
                    StrokeWidth = 1
@@ -223,8 +223,8 @@ public class ProgressBar : UIElementBase
                 text = $"{_value} / {_maximum}";
             }
 
-            var textColor = percent > 50 ? SKColors.White : ColorScheme.ForeColor.ToSKColor();
-            var shadowColor = percent > 50 ? SKColors.Black : ColorScheme.ForeColor.Determine().ToSKColor();
+            var textColor = percent > 50 ? SKColors.White : ColorScheme.ForeColor;
+            var shadowColor = percent > 50 ? SKColors.Black : ColorScheme.ForeColor.Determine();
 
             // Gölge metni
             using (var paint = new SKPaint
@@ -234,7 +234,7 @@ public class ProgressBar : UIElementBase
                    })
             using (var font = new SKFont
                    {
-                       Size = Font.Size.PtToPx(this),
+                       Size = Font.Size.Topx(this),
                        Typeface = FontManager.GetSKTypeface(Font)
                    })
             {
@@ -250,7 +250,7 @@ public class ProgressBar : UIElementBase
                    })
             using (var font = new SKFont
                    {
-                       Size = Font.Size.PtToPx(this),
+                       Size = Font.Size.Topx(this),
                        Typeface = FontManager.GetSKTypeface(Font)
                    })
             {

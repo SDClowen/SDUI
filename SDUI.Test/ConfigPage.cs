@@ -213,7 +213,7 @@ namespace SDUI.Demo
             try
             {
                 checkBoxPerfOverlay.Checked = parent.ShowPerfOverlay;
-                colorPicker.SelectedColor = parent.TitleColor.ToSKColor();
+                colorPicker.SelectedColor = parent.TitleColor;
 
                 var backendText = parent.RenderBackend.ToString();
                 if (!string.Equals(comboBoxRenderBackend.SelectedItem?.ToString(), backendText, StringComparison.Ordinal))

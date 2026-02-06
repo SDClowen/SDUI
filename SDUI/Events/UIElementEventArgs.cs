@@ -5,10 +5,17 @@ namespace SDUI;
 
 public class UIElementEventArgs : EventArgs
 {
-    public UIElementEventArgs(IUIElement element)
+    /// <summary>
+    /// Initializes a new instance of the UIElementEventArgs class with the specified UI element.
+    /// </summary>
+    /// <param name="element">The UI element associated with the event. Cannot be null.</param>
+    public UIElementEventArgs(IElement element)
     {
         Element = element;
     }
 
-    public IUIElement Element { get; }
+    /// <summary>
+    /// Gets the underlying UI element associated with this instance.
+    /// </summary>
+    public IElement Element { get; }
 }

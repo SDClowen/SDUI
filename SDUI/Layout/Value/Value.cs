@@ -1,10 +1,11 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using SkiaSharp;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
+
 using System.Runtime.CompilerServices;
 
 namespace SDUI;
@@ -400,13 +401,13 @@ internal readonly partial struct Value
     #endregion
 
     #region Size
-    public Value(Size value)
+    public Value(SKSize value)
     {
         _object = TypeFlags.Size;
         _union.Size = value;
     }
 
-    public Value(Size? value)
+    public Value(SKSize? value)
     {
         if (value.HasValue)
         {
@@ -419,25 +420,25 @@ internal readonly partial struct Value
         }
     }
 
-    public static implicit operator Value(Size value) => new(value);
-    public static explicit operator Size(in Value value) => value.GetValue<Size>();
-    public static implicit operator Value(Size? value) => new(value);
-    public static explicit operator Size?(in Value value) => value.GetValue<Size?>();
+    public static implicit operator Value(SKSize value) => new(value);
+    public static explicit operator SKSize(in Value value) => value.GetValue<SKSize>();
+    public static implicit operator Value(SKSize? value) => new(value);
+    public static explicit operator SKSize?(in Value value) => value.GetValue<SKSize?>();
     #endregion
 
-    #region Point
-    public Value(Point value)
+    #region SKPoint
+    public Value(SKPoint value)
     {
-        _object = TypeFlags.Point;
-        _union.Point = value;
+        _object = TypeFlags.SKPoint;
+        _union.SKPoint = value;
     }
 
-    public Value(Point? value)
+    public Value(SKPoint? value)
     {
         if (value.HasValue)
         {
-            _object = TypeFlags.Point;
-            _union.Point = value.Value;
+            _object = TypeFlags.SKPoint;
+            _union.SKPoint = value.Value;
         }
         else
         {
@@ -445,14 +446,14 @@ internal readonly partial struct Value
         }
     }
 
-    public static implicit operator Value(Point value) => new(value);
-    public static explicit operator Point(in Value value) => value.GetValue<Point>();
-    public static implicit operator Value(Point? value) => new(value);
-    public static explicit operator Point?(in Value value) => value.GetValue<Point?>();
+    public static implicit operator Value(SKPoint value) => new(value);
+    public static explicit operator SKPoint(in Value value) => value.GetValue<SKPoint>();
+    public static implicit operator Value(SKPoint? value) => new(value);
+    public static explicit operator SKPoint?(in Value value) => value.GetValue<SKPoint?>();
     #endregion
 
     #region Color
-    public Value(Color value)
+    public Value(SKColor value)
     {
         if (PackedColor.TryCreate(value, out PackedColor packed))
         {
@@ -466,7 +467,7 @@ internal readonly partial struct Value
         }
     }
 
-    public Value(Color? value)
+    public Value(SKColor? value)
     {
         if (!value.HasValue)
         {
@@ -478,10 +479,10 @@ internal readonly partial struct Value
         }
     }
 
-    public static implicit operator Value(Color value) => new(value);
-    public static explicit operator Color(in Value value) => value.GetValue<Color>();
-    public static implicit operator Value(Color? value) => new(value);
-    public static explicit operator Color?(in Value value) => value.GetValue<Color?>();
+    public static implicit operator Value(SKColor value) => new(value);
+    public static explicit operator SKColor(in Value value) => value.GetValue<SKColor>();
+    public static implicit operator Value(SKColor? value) => new(value);
+    public static explicit operator SKColor?(in Value value) => value.GetValue<SKColor?>();
     #endregion
 
     #region DateTimeOffset
@@ -632,8 +633,8 @@ internal readonly partial struct Value
             return new(Unsafe.As<T, DateTime>(ref Unsafe.AsRef(in value)));
         if (typeof(T) == typeof(DateTimeOffset))
             return new(Unsafe.As<T, DateTimeOffset>(ref Unsafe.AsRef(in value)));
-        if (typeof(T) == typeof(Color))
-            return new(Unsafe.As<T, Color>(ref Unsafe.AsRef(in value)));
+        if (typeof(T) == typeof(SKColor))
+            return new(Unsafe.As<T, SKColor>(ref Unsafe.AsRef(in value)));
 
         if (typeof(T) == typeof(bool?))
             return new(Unsafe.As<T, bool?>(ref Unsafe.AsRef(in value)));
@@ -714,16 +715,16 @@ internal readonly partial struct Value
             || (typeof(T) == typeof(ushort) && _object == TypeFlags.UInt16)
             || (typeof(T) == typeof(uint) && _object == TypeFlags.UInt32)
             || (typeof(T) == typeof(ulong) && _object == TypeFlags.UInt64)
-            || (typeof(T) == typeof(Size) && _object == TypeFlags.Size)
-            || (typeof(T) == typeof(Point) && _object == TypeFlags.Point)))
+            || (typeof(T) == typeof(SKSize) && _object == TypeFlags.Size)
+            || (typeof(T) == typeof(SKPoint) && _object == TypeFlags.SKPoint)))
         {
             value = Unsafe.As<Union, T>(ref Unsafe.AsRef(in _union));
             success = true;
         }
-        else if (typeof(T) == typeof(Color) && _object == TypeFlags.PackedColor)
+        else if (typeof(T) == typeof(SKColor) && _object == TypeFlags.PackedColor)
         {
-            Color color = _union.PackedColor.Extract();
-            value = Unsafe.As<Color, T>(ref Unsafe.AsRef(in color));
+            SKColor color = _union.PackedColor.Extract();
+            value = Unsafe.As<SKColor, T>(ref Unsafe.AsRef(in color));
             success = true;
         }
         else if (typeof(T) == typeof(DateTime) && _object == TypeFlags.DateTime)
@@ -881,10 +882,10 @@ internal readonly partial struct Value
             value = Unsafe.As<sbyte?, T>(ref Unsafe.AsRef(in @sbyte));
             result = true;
         }
-        else if (typeof(T) == typeof(Color?) && _object == TypeFlags.PackedColor)
+        else if (typeof(T) == typeof(SKColor?) && _object == TypeFlags.PackedColor)
         {
-            Color? color = _union.PackedColor.Extract();
-            value = Unsafe.As<Color?, T>(ref Unsafe.AsRef(in color));
+            SKColor? color = _union.PackedColor.Extract();
+            value = Unsafe.As<SKColor?, T>(ref Unsafe.AsRef(in color));
             result = true;
         }
         else if (typeof(T) == typeof(DateTime?) && _object == TypeFlags.DateTime)

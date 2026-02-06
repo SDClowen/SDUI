@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Animation;
 using SDUI.Extensions;
@@ -20,16 +20,16 @@ public class NumUpDown : UIElementBase
 
     private readonly AnimationManager upButtonHoverAnimation;
     private readonly AnimationManager upButtonPressAnimation;
-    private RectangleF _downButtonRect;
+    private SkiaSharp.SKRect _downButtonRect;
 
     private bool _inUpButton, _inDownButton;
     private bool _isUsingKeyboard;
     private decimal _max;
     private decimal _min;
-    private Point _mouseLocation;
+    private SKPoint _mouseLocation;
     private bool _upButtonPressed, _downButtonPressed;
 
-    private RectangleF _upButtonRect;
+    private SkiaSharp.SKRect _upButtonRect;
 
     private decimal _value;
 
@@ -37,7 +37,7 @@ public class NumUpDown : UIElementBase
     {
         _min = 0;
         _max = 100;
-        Size = new Size(80, 25);
+        Size = new SKSize(80, 25);
         MinimumSize = Size;
 
         upButtonHoverAnimation = new AnimationManager
@@ -377,31 +377,31 @@ public class NumUpDown : UIElementBase
             return;
 
         // Arka plan çizimi
-        using (var backColorBrush = new SKPaint { Color = ColorScheme.BackColor.Alpha(20).ToSKColor() })
+        using (var backColorBrush = new SKPaint { Color = ColorScheme.BackColor.WithAlpha(20) })
         using (var path = new SKPath())
         {
-            path.AddRoundRect(new SKRect(0, 0, Width, Height), 6 * ScaleFactor, 6 * ScaleFactor);
+            path.AddRoundRect(new SkiaSharp.SKRect(0, 0, Width, Height), 6 * base.ScaleFactor, 6 * base.ScaleFactor);
             canvas.DrawPath(path, backColorBrush);
         }
 
         // Kenarlık çizimi
         using (var borderPaint = new SKPaint
                {
-                   Color = ColorScheme.BorderColor.Alpha(80).ToSKColor(),
+                   Color = ColorScheme.BorderColor.WithAlpha(80),
                    Style = SKPaintStyle.Stroke,
                    StrokeWidth = 1f,
                    IsAntialias = true
                })
         using (var path = new SKPath())
         {
-            path.AddRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 6 * ScaleFactor, 6 * ScaleFactor);
+            path.AddRoundRect(new SkiaSharp.SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 6 * base.ScaleFactor, 6 * base.ScaleFactor);
             canvas.DrawPath(path, borderPaint);
         }
 
         // Buton ayraç çizgileri
         using (var linePaint = new SKPaint
                {
-                   Color = ColorScheme.BorderColor.Alpha(80).ToSKColor(),
+                   Color = ColorScheme.BorderColor.WithAlpha(80),
                    StrokeWidth = 1f,
                    IsAntialias = true
                })
@@ -417,15 +417,15 @@ public class NumUpDown : UIElementBase
         {
             using var buttonPaint = new SKPaint
             {
-                Color = ColorScheme.ForeColor.ToSKColor()
+                Color = ColorScheme.ForeColor
                     .WithAlpha((byte)Math.Max(upHoverProgress * 30, upPressProgress * 80)),
                 IsAntialias = true
             };
 
             using var path = new SKPath();
             var rect = _upButtonRect.ToSKRect();
-            path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top + 1, rect.Right - 1, rect.Bottom),
-                6 * ScaleFactor, 0);
+            path.AddRoundRect(new SkiaSharp.SKRect(rect.Left + 1, rect.Top + 1, rect.Right - 1, rect.Bottom),
+                6 * base.ScaleFactor, 0);
             canvas.DrawPath(path, buttonPaint);
         }
 
@@ -435,28 +435,28 @@ public class NumUpDown : UIElementBase
         {
             using var buttonPaint = new SKPaint
             {
-                Color = ColorScheme.ForeColor.ToSKColor()
+                Color = ColorScheme.ForeColor
                     .WithAlpha((byte)Math.Max(downHoverProgress * 30, downPressProgress * 80)),
                 IsAntialias = true
             };
 
             using var path = new SKPath();
             var rect = _downButtonRect.ToSKRect();
-            path.AddRoundRect(new SKRect(rect.Left + 1, rect.Top, rect.Right - 1, rect.Bottom - 1),
-                6 * ScaleFactor, 0);
+            path.AddRoundRect(new SkiaSharp.SKRect(rect.Left + 1, rect.Top, rect.Right - 1, rect.Bottom - 1),
+                6 * base.ScaleFactor, 0);
             canvas.DrawPath(path, buttonPaint);
         }
 
         // Buton simgeleri
         using (var font = new SKFont
                {
-                   Size = 9f.PtToPx(this),
+                   Size = 9f.Topx(this),
                    Typeface = FontManager.GetSKTypeface(_symbolFont),
                    Subpixel = true
                })
         using (var textPaint = new SKPaint
                {
-                   Color = ColorScheme.ForeColor.ToSKColor(),
+                   Color = ColorScheme.ForeColor,
                    IsAntialias = true
                })
         {
@@ -466,13 +466,13 @@ public class NumUpDown : UIElementBase
             // Up button
             var upColor = ColorScheme.ForeColor;
             if (_upButtonPressed)
-                upColor = upColor.Alpha(255);
+                upColor = upColor.WithAlpha(255);
             else if (_inUpButton)
-                upColor = upColor.Alpha(230);
+                upColor = upColor.WithAlpha(230);
             else
-                upColor = upColor.Alpha(180);
+                upColor = upColor.WithAlpha(180);
 
-            textPaint.Color = upColor.ToSKColor();
+            textPaint.Color = upColor;
             TextRenderingHelper.DrawText(canvas,
                 "▲",
                 _upButtonRect.X + _upButtonRect.Width / 2,
@@ -484,13 +484,13 @@ public class NumUpDown : UIElementBase
             // Down button
             var downColor = ColorScheme.ForeColor;
             if (_downButtonPressed)
-                downColor = downColor.Alpha(255);
+                downColor = downColor.WithAlpha(255);
             else if (_inDownButton)
-                downColor = downColor.Alpha(230);
+                downColor = downColor.WithAlpha(230);
             else
-                downColor = downColor.Alpha(180);
+                downColor = downColor.WithAlpha(180);
 
-            textPaint.Color = downColor.ToSKColor();
+            textPaint.Color = downColor;
             TextRenderingHelper.DrawText(canvas,
                 "▼",
                 _downButtonRect.X + _downButtonRect.Width / 2,
@@ -501,13 +501,13 @@ public class NumUpDown : UIElementBase
         // Değer metni
         using (var font = new SKFont
                {
-                   Size = Font.Size.PtToPx(this),
+                   Size = Font.Size.Topx(this),
                    Typeface = FontManager.GetSKTypeface(Font),
                    Subpixel = true
                })
         using (var textPaint = new SKPaint
                {
-                   Color = ColorScheme.ForeColor.ToSKColor(),
+                   Color = ColorScheme.ForeColor,
                    IsAntialias = true
                })
         {

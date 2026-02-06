@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Extensions;
 using SDUI.Helpers;
@@ -11,7 +11,7 @@ namespace SDUI.Controls;
 
 public class ToolTip : UIElementBase
 {
-    private readonly Color _borderColor = Color.FromArgb(100, 100, 100);
+    private readonly SKColor _borderColor = new SKColor(100, 100, 100);
     private readonly int _cornerRadius = 6;
     private readonly int _maxWidth = 300;
     private readonly int _padding = 8;
@@ -48,8 +48,8 @@ public class ToolTip : UIElementBase
 
     public ToolTip()
     {
-        BackColor = Color.FromArgb(50, 50, 50);
-        ForeColor = Color.White;
+        BackColor = new SKColor(50, 50, 50);
+        ForeColor = SKColor.White;
         Visible = false;
         AutoSize = false;
         TabStop = false;
@@ -233,7 +233,7 @@ public class ToolTip : UIElementBase
         DetachWindowHandlers();
     }
 
-    private void UpdatePosition(Point screenPosition)
+    private void UpdatePosition(SKPoint screenPosition)
     {
         if (_currentControl == null)
             return;
@@ -245,7 +245,7 @@ public class ToolTip : UIElementBase
 
         var offset = 15;
         var windowPoint = window.PointToClient(screenPosition);
-        var target = new Point(windowPoint.X + offset, windowPoint.Y + offset);
+        var target = new SKPoint(windowPoint.X + offset, windowPoint.Y + offset);
 
         target.X = Math.Max(0, Math.Min(target.X, window.Width - Width));
         target.Y = Math.Max(0, Math.Min(target.Y, window.Height - Height));
@@ -347,9 +347,9 @@ public class ToolTip : UIElementBase
         }
     }
 
-    private static Rectangle GetWindowRelativeBounds(UIElementBase element, UIWindow window)
+    private static SkiaSharp.SKRect GetWindowRelativeBounds(UIElementBase element, UIWindow window)
     {
-        var screenLocation = element.PointToScreen(Point.Empty);
+        var screenLocation = element.PointToScreen(SKPoint.Empty);
         var windowPoint = window.PointToClient(screenLocation);
         return new Rectangle(windowPoint, element.Size);
     }
@@ -467,7 +467,7 @@ public class ToolTip : UIElementBase
         var width = (int)Math.Ceiling(Math.Min(_maxWidth, maxLineWidth + _padding * 2));
         var height = (int)Math.Ceiling(lineHeight * lineCount + _padding * 2);
 
-        Size = new Size(Math.Max(width, _padding * 2), Math.Max(height, _padding * 2));
+        Size = new SKSize(Math.Max(width, _padding * 2), Math.Max(height, _padding * 2));
     }
 
     public override void OnPaint(SKCanvas canvas)
@@ -485,28 +485,28 @@ public class ToolTip : UIElementBase
 
             var shadowRect = IsBalloon
                 ? new SKRoundRect(
-                    new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur),
+                    new SkiaSharp.SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur),
                     _cornerRadius)
                 : new SKRoundRect(
-                    new SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur),
+                    new SkiaSharp.SKRect(_shadowBlur, _shadowBlur + _shadowOffsetY, Width - _shadowBlur, Height - _shadowBlur),
                     0);
 
             canvas.DrawRoundRect(shadowRect, _shadowPaint);
         }
 
         // Arkaplan çizimi
-        _bgPaint!.Color = BackColor.ToSKColor();
+        _bgPaint!.Color = BackColor;
         var rect = IsBalloon
-            ? new SKRoundRect(new SKRect(0, 0, Width, Height), _cornerRadius)
-            : new SKRoundRect(new SKRect(0, 0, Width, Height), 0);
+            ? new SKRoundRect(new SkiaSharp.SKRect(0, 0, Width, Height), _cornerRadius)
+            : new SKRoundRect(new SkiaSharp.SKRect(0, 0, Width, Height), 0);
 
         canvas.DrawRoundRect(rect, _bgPaint);
 
         // Kenarlık çizimi
-        _borderPaint!.Color = _borderColor.ToSKColor();
+        _borderPaint!.Color = _borderColor;
         var borderRect = IsBalloon
-            ? new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), _cornerRadius)
-            : new SKRoundRect(new SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 0);
+            ? new SKRoundRect(new SkiaSharp.SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), _cornerRadius)
+            : new SKRoundRect(new SkiaSharp.SKRect(0.5f, 0.5f, Width - 0.5f, Height - 0.5f), 0);
 
         canvas.DrawRoundRect(borderRect, _borderPaint);
 
@@ -514,7 +514,7 @@ public class ToolTip : UIElementBase
         if (!string.IsNullOrEmpty(Text))
         {
             var font = GetDefaultSkFont();
-            _textPaint!.Color = ForeColor.ToSKColor();
+            _textPaint!.Color = ForeColor;
 
             var metrics = font.Metrics;
             var lineHeight = metrics.Descent - metrics.Ascent;
@@ -556,7 +556,7 @@ public class ToolTip : UIElementBase
             _defaultSkFont?.Dispose();
             _defaultSkFont = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true
             };

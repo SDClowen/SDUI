@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+﻿
 using SkiaSharp;
 
 namespace SDUI.Controls;
@@ -9,7 +9,7 @@ public class Separator : UIElementBase
 
     public Separator()
     {
-        Size = new Size((int)(120 * ScaleFactor), (int)(6 * ScaleFactor));
+        Size = new SKSize((int)(120 * ScaleFactor), (int)(6 * ScaleFactor));
     }
 
     public bool IsVertical
@@ -28,7 +28,7 @@ public class Separator : UIElementBase
 
         using var paint = new SKPaint
         {
-            Color = ColorScheme.BorderColor.ToSKColor(),
+            Color = ColorScheme.BorderColor,
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 1f * ScaleFactor

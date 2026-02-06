@@ -1,5 +1,6 @@
-﻿using System;
-using System.Drawing;
+﻿using SkiaSharp;
+using System;
+
 
 namespace SDUI.Animation;
 
@@ -49,7 +50,7 @@ public static class ValueFactories
 
     #endregion
 
-    #region Floating Point Types
+    #region Floating SKPoint Types
 
     public static float FloatFactory(float startValue, float targetValue, double progress)
     {
@@ -65,52 +66,52 @@ public static class ValueFactories
 
     #region Drawing
 
-    public static Point PointFactory(Point startValue, Point targetValue, double progress)
+    public static SKPoint PointFactory(SKPoint startValue, SKPoint targetValue, double progress)
     {
-        return new Point(IntegerFactory(startValue.X, targetValue.X, progress),
-            IntegerFactory(startValue.Y, targetValue.Y, progress));
-    }
-
-    public static PointF PointFFactory(PointF startValue, PointF targetValue, double progress)
-    {
-        return new PointF(FloatFactory(startValue.X, targetValue.X, progress),
+        return new SKPoint(FloatFactory(startValue.X, targetValue.X, progress),
             FloatFactory(startValue.Y, targetValue.Y, progress));
     }
 
-    public static Size SizeFactory(Size startValue, Size targetValue, double progress)
+    public static SKPoint PointFFactory(SKPoint startValue, SKPoint targetValue, double progress)
     {
-        return new Size(IntegerFactory(startValue.Width, targetValue.Width, progress),
-            IntegerFactory(startValue.Height, targetValue.Height, progress));
+        return new SKPoint(FloatFactory(startValue.X, targetValue.X, progress),
+            FloatFactory(startValue.Y, targetValue.Y, progress));
     }
 
-    public static SizeF SizeFFactory(SizeF startValue, SizeF targetValue, double progress)
+    public static SKSize SizeFactory(SKSize startValue, SKSize targetValue, double progress)
     {
-        return new SizeF(FloatFactory(startValue.Width, targetValue.Width, progress),
+        return new SKSize(FloatFactory(startValue.Width, targetValue.Width, progress),
             FloatFactory(startValue.Height, targetValue.Height, progress));
     }
 
-    public static Rectangle RectangleFactory(Rectangle startValue, Rectangle targetValue, double progress)
+    public static SKSize SizeFFactory(SKSize startValue, SKSize targetValue, double progress)
     {
-        return new Rectangle(IntegerFactory(startValue.X, targetValue.X, progress),
-            IntegerFactory(startValue.Y, targetValue.Y, progress),
-            IntegerFactory(startValue.Width, targetValue.Width, progress),
-            IntegerFactory(startValue.Height, targetValue.Height, progress));
+        return new SKSize(FloatFactory(startValue.Width, targetValue.Width, progress),
+            FloatFactory(startValue.Height, targetValue.Height, progress));
     }
 
-    public static RectangleF RectangleFFactory(RectangleF startValue, RectangleF targetValue, double progress)
+    public static SKRect RectangleFactory(SKRect startValue, SKRect targetValue, double progress)
     {
-        return new RectangleF(FloatFactory(startValue.X, targetValue.X, progress),
-            FloatFactory(startValue.Y, targetValue.Y, progress),
+        return new SKRect(FloatFactory(startValue.Location.X, targetValue.Location.X, progress),
+            FloatFactory(startValue.Location.Y, targetValue.Location.Y, progress),
             FloatFactory(startValue.Width, targetValue.Width, progress),
             FloatFactory(startValue.Height, targetValue.Height, progress));
     }
 
-    public static Color ColorRgbFactory(Color startValue, Color targetValue, double progress)
+    public static SKRect RectangleFFactory(SKRect startValue, SKRect targetValue, double progress)
     {
-        return Color.FromArgb(IntegerFactory(startValue.A, targetValue.A, progress),
-            IntegerFactory(startValue.R, targetValue.R, progress),
-            IntegerFactory(startValue.G, targetValue.G, progress),
-            IntegerFactory(startValue.B, targetValue.B, progress));
+        return new SKRect(FloatFactory(startValue.Location.X, targetValue.Location.X, progress),
+            FloatFactory(startValue.Location.Y, targetValue.Location.Y, progress),
+            FloatFactory(startValue.Width, targetValue.Width, progress),
+            FloatFactory(startValue.Height, targetValue.Height, progress));
+    }
+
+    public static SKColor ColorRgbFactory(SKColor startValue, SKColor targetValue, double progress)
+    {
+        return new SKColor(ByteFactory(startValue.Alpha, targetValue.Alpha, progress),
+            ByteFactory(startValue.Red, targetValue.Red, progress),
+            ByteFactory(startValue.Green, targetValue.Green, progress),
+            ByteFactory(startValue.Blue, targetValue.Blue, progress));
     }
 
     #endregion

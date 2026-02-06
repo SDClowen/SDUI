@@ -1,31 +1,21 @@
-using System.Drawing;
+
 using SDUI.Controls;
 using SDUI.Helpers;
 using SkiaSharp;
 
-namespace SDUI.Extensions;
+namespace SDUI;
 
 public static class SKCanvasExtensions
 {
-    public static float PtToPx(this float pt, UIWindow control)
-    {
-        return pt * 1.333f * control.DeviceDpi / 96f;
-    }
-
-    public static float PtToPx(this float pt, UIElementBase control)
-    {
-        return pt * 1.333f * control.ScaleFactor;
-    }
-
-    public static SKPaint CreateTextPaint(this SKCanvas canvas, Font font, Color color, UIElementBase control,
+    public static SKPaint CreateTextPaint(this SKCanvas canvas, Font font, SKColor color, ElementBase control,
         ContentAlignment alignment = ContentAlignment.MiddleCenter)
     {
         var paint = new SKPaint
         {
-            Color = color.ToSKColor(),
-            TextSize = font.Size.PtToPx(control),
+            Color = color,
+            TextSize = font.Size.Topx(control),
             TextAlign = alignment.ToSKTextAlign(),
-            Typeface = FontManager.GetSKTypeface(font)
+            Typeface = font.SKTypeface
         };
 
         var isHighScale = control.ScaleFactor > 1.0f + 0.01f;
@@ -49,7 +39,7 @@ public static class SKCanvasExtensions
         };
     }
 
-    public static void DrawControlText(this SKCanvas canvas, string text, SKRect bounds, SKPaint paint, SKFont font,
+    public static void DrawControlText(this SKCanvas canvas, string text, SkiaSharp.SKRect bounds, SKPaint paint, SKFont font,
         ContentAlignment alignment, bool autoEllipsis = false, bool useMnemonic = false)
     {
         if (string.IsNullOrEmpty(text)) return;
@@ -80,7 +70,7 @@ public static class SKCanvasExtensions
         else if (useMnemonic)
             canvas.DrawTextWithMnemonic(text, x, y, paint, font, skAlignment);
         else
-            TextRenderingHelper.DrawText(canvas, text, x, y, skAlignment, font, paint);
+            TextRenderer.DrawText(canvas, text, x, y, skAlignment, font, paint);
     }
 
     public static void DrawTextWithEllipsis(this SKCanvas canvas, string text, float x, float y, float maxWidth,
@@ -91,7 +81,7 @@ public static class SKCanvasExtensions
             while (font.MeasureText(displayText) > maxWidth && displayText.Length > 3)
                 displayText = displayText[..^4] + "...";
 
-        TextRenderingHelper.DrawText(canvas, displayText, x, y, textAlign, font, paint);
+        TextRenderer.DrawText(canvas, displayText, x, y, textAlign, font, paint);
     }
 
     public static void DrawTextWithEllipsis(this SKCanvas canvas, string text, SKPaint paint, float x, float y,
@@ -103,7 +93,7 @@ public static class SKCanvasExtensions
             while (paint.MeasureText(displayText) > maxWidth && displayText.Length > 3)
                 displayText = displayText[..^4] + "...";
 
-        TextRenderingHelper.DrawText(canvas, displayText, x, y, paint);
+        TextRenderer.DrawText(canvas, displayText, x, y, paint);
 #pragma warning restore CS0618 // Type or member is obsolete
     }
 
@@ -112,7 +102,7 @@ public static class SKCanvasExtensions
     {
         if (!text.Contains('&'))
         {
-            TextRenderingHelper.DrawText(canvas, text, x, y, alignment, font, paint);
+            TextRenderer.DrawText(canvas, text, x, y, alignment, font, paint);
             return;
         }
 
@@ -145,7 +135,7 @@ public static class SKCanvasExtensions
 
             if (parts[i].Length > 0)
             {
-                TextRenderingHelper.DrawText(canvas, parts[i], currentX, y, SKTextAlign.Left, font, paint);
+                TextRenderer.DrawText(canvas, parts[i], currentX, y, SKTextAlign.Left, font, paint);
                 currentX += font.MeasureText(parts[i]);
             }
         }
@@ -156,7 +146,7 @@ public static class SKCanvasExtensions
 #pragma warning disable CS0618 // Type or member is obsolete
         if (!text.Contains('&'))
         {
-            TextRenderingHelper.DrawText(canvas, text, x, y, paint);
+            TextRenderer.DrawText(canvas, text, x, y, paint);
             return;
         }
 
@@ -180,7 +170,7 @@ public static class SKCanvasExtensions
 
             if (parts[i].Length > 0)
             {
-                TextRenderingHelper.DrawText(canvas, parts[i], currentX, y, paint);
+                TextRenderer.DrawText(canvas, parts[i], currentX, y, paint);
                 currentX += paint.MeasureText(parts[i]);
             }
         }
@@ -215,10 +205,10 @@ public static class SKCanvasExtensions
         };
     }
 
-    public static SizeF MeasureText(this SKPaint paint, string text)
+    public static SKSize MeasureText(this SKPaint paint, string text)
     {
         var metrics = paint.FontMetrics;
         var width = paint.MeasureText(text);
-        return new SizeF(width, metrics.Descent - metrics.Ascent);
+        return new SKSize(width, metrics.Descent - metrics.Ascent);
     }
 }

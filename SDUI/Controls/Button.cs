@@ -1,17 +1,12 @@
-﻿using System;
-using System.ComponentModel;
-using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Windows.Forms;
-using SDUI.Animation;
-using SDUI.Extensions;
+﻿using SDUI.Animation;
 using SDUI.Helpers;
 using SkiaSharp;
+using System;
+using System.ComponentModel;
 
 namespace SDUI.Controls;
 
-public class Button : UIElementBase, IButtonControl
+public class Button : UIElementBase
 {
     private readonly AnimationManager animationManager;
     private readonly AnimationManager hoverAnimationManager;
@@ -25,10 +20,10 @@ public class Button : UIElementBase, IButtonControl
     private bool _needsRedraw = true;
 
     private int _radius = 6;
-    private Point? _rippleCenter;
+    private SKPoint? _rippleCenter;
 
     private float _shadowDepth = 4f;
-    private SizeF _textSize;
+    private SkiaSharp.SKSize _textSize;
     
     // DPI Scaled properties
     private int RadiusScaled => (int)(_radius * ScaleFactor);
@@ -66,9 +61,9 @@ public class Button : UIElementBase, IButtonControl
         pressAnimationManager.OnAnimationProgress += sender => Invalidate();
     }
 
-    [Category("Appearance")] public Image Image { get; set; }
+    [Category("Appearance")] public SKImage Image { get; set; }
 
-    [Category("Appearance")] public Color Color { get; set; } = Color.Transparent;
+    [Category("Appearance")] public SkiaSharp.SKColor Color { get; set; } = SKColors.Transparent;
 
     [Category("Behavior")] public bool IsDefault { get; set; }
 
@@ -123,11 +118,6 @@ public class Button : UIElementBase, IButtonControl
         //throw new NotImplementedException();
     }
 
-    void IButtonControl.PerformClick()
-    {
-        PerformClick();
-    }
-
     private void InvalidateCache()
     {
         _needsRedraw = true;
@@ -139,21 +129,23 @@ public class Button : UIElementBase, IButtonControl
     {
         InvalidateCache();
         base.OnTextChanged(e);
+        
+        // Use ProcessedText for measurement (escape sequences already handled)
         using (var paint = new SKPaint())
         {
-            paint.TextSize = Font.Size.PtToPx(this);
+            paint.TextSize = Font.Size.Topx(this);
             paint.Typeface = FontManager.GetSKTypeface(Font);
             var metrics = paint.FontMetrics;
-            _textSize = new SizeF(paint.MeasureText(Text), metrics.Descent - metrics.Ascent);
+            _textSize = new SkiaSharp.SKSize(paint.MeasureText(ProcessedText), metrics.Descent - metrics.Ascent);
         }
 
         if (AutoSize)
-            Size = GetPreferredSize(Size.Empty);
+            base.Size = GetPreferredSize(SkiaSharp.SKSize.Empty);
     }
 
     public override void OnClick(EventArgs e)
     {
-        if (DialogResult != DialogResult.None && FindForm() is Form form) form.DialogResult = DialogResult;
+        if (DialogResult != DialogResult.None && FindForm() is UIWindowBase form) form.DialogResult = DialogResult;
         base.OnClick(e);
     }
 
@@ -225,7 +217,7 @@ public class Button : UIElementBase, IButtonControl
 
         // Use the full bounds for the button body
         // Shadow will be drawn outside thanks to UIElementBase clipping changes
-        var bodyRect = new SKRect(0, 0, Width, Height);
+        var bodyRect = new SkiaSharp.SKRect(0, 0, Width, Height);
 
         canvas.Save();
 
@@ -261,7 +253,7 @@ public class Button : UIElementBase, IButtonControl
                     new SKPoint(_rippleCenter.Value.X, _rippleCenter.Value.Y),
                     Math.Max(bodyRect.Width, bodyRect.Height) * rippleProgress,
                     rippleProgress,
-                    ColorScheme.Primary.Alpha(100));
+                    ColorScheme.Primary.WithAlpha(100));
             }
 
             canvas.Restore();
@@ -270,16 +262,16 @@ public class Button : UIElementBase, IButtonControl
         canvas.Restore();
     }
 
-    private void DrawButton(SKCanvas canvas, SKRect bodyRect, float hoverProgress, float pressProgress)
+    private void DrawButton(SKCanvas canvas, SkiaSharp.SKRect bodyRect, float hoverProgress, float pressProgress)
     {
         // Determine base color - use Primary for filled buttons
-        var fillColor = Color != Color.Transparent
-            ? Color.ToSKColor()
-            : ColorScheme.Primary.ToSKColor();
+        var fillColor = Color != SKColors.Transparent
+            ? Color
+            : ColorScheme.Primary;
 
         if (!Enabled)
             // Material Design 3 Disabled State: OnSurface 12%
-            fillColor = ColorScheme.OnSurface.Alpha(30).ToSKColor();
+            fillColor = ColorScheme.OnSurface.WithAlpha(30);
 
         // Draw base fill
         using (var fillPaint = new SKPaint
@@ -295,17 +287,17 @@ public class Button : UIElementBase, IButtonControl
         // Draw state layer (hover/press)
         if (Enabled)
         {
-            var stateLayerColor = Color.Transparent;
+            var stateLayerColor = SKColors.Transparent;
             if (pressProgress > 0)
                 stateLayerColor = ColorScheme.StateLayerPressed;
             else if (hoverProgress > 0)
                 stateLayerColor = ColorScheme.StateLayerHover;
 
-            if (stateLayerColor.A > 0)
+            if (stateLayerColor.Alpha > 0)
             {
                 using var statePaint = new SKPaint
                 {
-                    Color = stateLayerColor.ToSKColor(),
+                    Color = stateLayerColor,
                     IsAntialias = true,
                     Style = SKPaintStyle.Fill
                 };
@@ -318,7 +310,7 @@ public class Button : UIElementBase, IButtonControl
         {
             using var focusPaint = new SKPaint
             {
-                Color = ColorScheme.OnPrimary.Alpha(90).ToSKColor(),
+                Color = ColorScheme.OnPrimary.WithAlpha(90),
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = 1.5f
@@ -333,22 +325,16 @@ public class Button : UIElementBase, IButtonControl
         if (Image != null)
         {
             var imageSize = 20;
-            var imageRect = new Rectangle(
+            var imageRect = new SkiaSharp.SKRect(
                 (int)contentStartX,
                 (int)(bodyRect.Top + (bodyRect.Height - imageSize) / 2f),
                 imageSize,
                 imageSize);
 
             if (string.IsNullOrEmpty(Text))
-                imageRect.X = (int)(bodyRect.Left + (bodyRect.Width - imageSize) / 2f);
+                imageRect.Offset(bodyRect.Left + (bodyRect.Width - imageSize) / 2f, 0);
 
-            using (var stream = new MemoryStream())
-            {
-                Image.Save(stream, ImageFormat.Png);
-                stream.Position = 0;
-                using var skImage = SKImage.FromEncodedData(SKData.Create(stream));
-                canvas.DrawImage(skImage, SKRect.Create(imageRect.X, imageRect.Y, imageRect.Width, imageRect.Height));
-            }
+            canvas.DrawImage(Image, imageRect);
 
             contentStartX += imageSize + 8f;
         }
@@ -356,12 +342,12 @@ public class Button : UIElementBase, IButtonControl
         // Text drawing with OnPrimary color
         if (!string.IsNullOrEmpty(Text))
         {
-            var textColor = Color != Color.Transparent
-                ? ColorScheme.OnPrimary.ToSKColor()
-                : ColorScheme.OnPrimary.ToSKColor();
+            var textColor = Color != SKColors.Transparent
+                ? ColorScheme.OnPrimary
+                : ColorScheme.OnPrimary;
 
             if (!Enabled)
-                textColor = ColorScheme.OnSurface.Alpha(80).ToSKColor();
+                textColor = ColorScheme.OnSurface.WithAlpha(80);
 
             using var textPaint = new SKPaint
             {
@@ -371,14 +357,16 @@ public class Button : UIElementBase, IButtonControl
 
             using var font = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font) ?? SKTypeface.Default,
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias,
                 Hinting = SKFontHinting.Full
             };
 
-            var textWidth = font.MeasureText(Text);
+            // Use ProcessedText for rendering (escape sequences already processed at property-set time)
+            var displayText = ProcessedText;
+            var textWidth = font.MeasureText(displayText);
             
             // Use bodyRect for text positioning (already accounts for elevation padding)
             var textX = Image == null
@@ -391,13 +379,13 @@ public class Button : UIElementBase, IButtonControl
             var textY = bodyRect.MidY - (font.Metrics.Ascent + font.Metrics.Descent) / 2f;
 
             // DrawText with font parameter - correct SkiaSharp 2.88+ API
-            canvas.DrawText(Text, textX, textY, SKTextAlign.Left, font, textPaint);
+            canvas.DrawText(displayText, textX, textY, SKTextAlign.Left, font, textPaint);
         }
     }
 
-    private void DrawAnimations(SKCanvas canvas, SKRect bodyRect, float hoverProgress, float pressProgress)
+    private void DrawAnimations(SKCanvas canvas, SkiaSharp.SKRect bodyRect, float hoverProgress, float pressProgress)
     {
-        var accentSk = ColorScheme.AccentColor.ToSKColor();
+        var accentSk = ColorScheme.AccentColor;
 
         // Hover parıltısı
         if (hoverProgress > 0f)
@@ -427,7 +415,7 @@ public class Button : UIElementBase, IButtonControl
                 };
 
                 var rippleSize = (float)(animationValue * Math.Max(Width, Height) * 2.2f);
-                var rippleRect = new SKRect(
+                var rippleRect = new SkiaSharp.SKRect(
                     animationSource.X - rippleSize / 2f,
                     animationSource.Y - rippleSize / 2f,
                     animationSource.X + rippleSize / 2f,
@@ -441,7 +429,7 @@ public class Button : UIElementBase, IButtonControl
             }
     }
 
-    private static void RestartAnimation(AnimationManager engine, AnimationDirection direction, Point? source = null)
+    private static void RestartAnimation(AnimationManager engine, AnimationDirection direction, SKPoint? source = null)
     {
         if (engine == null)
             return;
@@ -462,7 +450,7 @@ public class Button : UIElementBase, IButtonControl
             engine.StartNewAnimation(direction);
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
+    public override SKSize GetPreferredSize(SKSize proposedSize)
     {
         var extra = 16;
 
@@ -473,10 +461,12 @@ public class Button : UIElementBase, IButtonControl
         {
             font.Size = Font.Size * 1.5f;
             font.Typeface = FontManager.GetSKTypeface(Font);
-            _textSize = new SizeF(font.MeasureText(Text), font.Metrics.Descent - font.Metrics.Ascent);
+            
+            // Use ProcessedText for measurement
+            _textSize = new SkiaSharp.SKSize(font.MeasureText(ProcessedText), font.Metrics.Descent - font.Metrics.Ascent);
         }
 
-        return new Size((int)Math.Ceiling(_textSize.Width) + extra, 32);
+        return new SKSize((int)Math.Ceiling(_textSize.Width) + extra, 32);
     }
 
     protected override void Dispose(bool disposing)

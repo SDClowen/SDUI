@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using System.Linq;
 using SDUI.Controls;
 using SkiaSharp;
@@ -219,7 +219,7 @@ internal class DesignGuides : UIElementBase
             using var containerPaint = new SKPaint
             {
                 Style = SKPaintStyle.Stroke,
-                Color = ColorScheme.Primary.ToSKColor().WithAlpha(100),
+                Color = ColorScheme.Primary.WithAlpha(100),
                 StrokeWidth = 3,
                 PathEffect = SKPathEffect.CreateDash(new float[] { 8, 4 }, 0)
             };
@@ -236,7 +236,7 @@ internal class DesignGuides : UIElementBase
             using var fillPaint = new SKPaint
             {
                 Style = SKPaintStyle.Fill,
-                Color = ColorScheme.Primary.ToSKColor().WithAlpha(20)
+                Color = ColorScheme.Primary.WithAlpha(20)
             };
             canvas.DrawRect(containerRect, fillPaint);
         }
@@ -322,7 +322,7 @@ internal class DesignGuides : UIElementBase
         }
     }
 
-    public Point SnapToGuides(Point location, Size size)
+    public SKPoint SnapToGuides(SKPoint location, Size size)
     {
         var snappedLocation = location;
         const int snapThreshold = 8;

@@ -67,16 +67,16 @@ public class DesignSurfaceViewModel : ViewModelBase
         // Create control based on type
         UIElementBase? control = controlType switch
         {
-            "Button" => new SDUI.Controls.Button { Text = "Button", Size = new System.Drawing.Size(100, 35) },
-            "Label" => new SDUI.Controls.Label { Text = "Label", Size = new System.Drawing.Size(100, 25) },
-            "TextBox" => new SDUI.Controls.TextBox { Size = new System.Drawing.Size(200, 30) },
-            "Panel" => new SDUI.Controls.Panel { Size = new System.Drawing.Size(200, 150) },
-            "CheckBox" => new SDUI.Controls.CheckBox { Text = "CheckBox", Size = new System.Drawing.Size(120, 25) },
-            "ComboBox" => new SDUI.Controls.ComboBox { Size = new System.Drawing.Size(150, 30) },
-            "ColorPicker" => new SDUI.Controls.ColorPicker { Size = new System.Drawing.Size(180, 32) },
-            "ListBox" => new SDUI.Controls.ListBox { Size = new System.Drawing.Size(150, 100) },
-            "ProgressBar" => new SDUI.Controls.ProgressBar { Size = new System.Drawing.Size(200, 25), Value = 50 },
-            "GroupBox" => new SDUI.Controls.GroupBox { Text = "GroupBox", Size = new System.Drawing.Size(200, 150) },
+            "Button" => new SDUI.Controls.Button { Text = "Button", Size = new SkiaSharp.SKSize(100, 35) },
+            "Label" => new SDUI.Controls.Label { Text = "Label", Size = new SkiaSharp.SKSize(100, 25) },
+            "TextBox" => new SDUI.Controls.TextBox { Size = new SkiaSharp.SKSize(200, 30) },
+            "Panel" => new SDUI.Controls.Panel { Size = new SkiaSharp.SKSize(200, 150) },
+            "CheckBox" => new SDUI.Controls.CheckBox { Text = "CheckBox", Size = new SkiaSharp.SKSize(120, 25) },
+            "ComboBox" => new SDUI.Controls.ComboBox { Size = new SkiaSharp.SKSize(150, 30) },
+            "ColorPicker" => new SDUI.Controls.ColorPicker { Size = new SkiaSharp.SKSize(180, 32) },
+            "ListBox" => new SDUI.Controls.ListBox { Size = new SkiaSharp.SKSize(150, 100) },
+            "ProgressBar" => new SDUI.Controls.ProgressBar { Size = new SkiaSharp.SKSize(200, 25), Value = 50 },
+            "GroupBox" => new SDUI.Controls.GroupBox { Text = "GroupBox", Size = new SkiaSharp.SKSize(200, 150) },
             _ => null
         };
 
@@ -84,7 +84,7 @@ public class DesignSurfaceViewModel : ViewModelBase
             return;
 
         control.Name = $"{controlType.ToLower()}{DesignControls.Count + 1}";
-        control.Location = new System.Drawing.Point(20 + DesignControls.Count * 10, 20 + DesignControls.Count * 10);
+        control.Location = new System.Drawing.SKPoint(20 + DesignControls.Count * 10, 20 + DesignControls.Count * 10);
 
         var designControl = new DesignControl(control)
         {

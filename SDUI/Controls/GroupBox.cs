@@ -1,11 +1,7 @@
-using System;
-using System.Drawing;
-using System.Windows.Forms;
 using SDUI.Animation;
-using SDUI.Enums;
-using SDUI.Extensions;
 using SDUI.Helpers;
 using SkiaSharp;
+using System;
 
 namespace SDUI.Controls;
 
@@ -29,8 +25,8 @@ public class GroupBox : UIElementBase
 
     public GroupBox()
     {
-        BackColor = Color.Transparent;
-        Padding = new Padding(3, 8, 3, 3);
+        BackColor = SKColors.Transparent;
+        Padding = new Thickness(3, 8, 3, 3);
         InitializeCollapseAnimation();
     }
 
@@ -245,10 +241,10 @@ public class GroupBox : UIElementBase
             return;
         }
 
-        var titleHeight = Font.Height + 7;
+        var titleHeight = Font.Size + 7;
         if (e.Y < titleHeight)
         {
-            var arrowHitBox = new Rectangle(0, 0, 25, (int)titleHeight);
+            var arrowHitBox = SKRect.Create(0, 0, 25, titleHeight);
             if (arrowHitBox.Contains(e.Location))
             {
                 ToggleCollapsed();
@@ -265,15 +261,15 @@ public class GroupBox : UIElementBase
 
         if (!_collapsible) return;
 
-        var titleHeight = Font.Height + 7;
-        var arrowHitBox = new Rectangle(0, 0, 25, (int)titleHeight);
+        var titleHeight = Font.Size + 7;
+        var arrowHitBox = SKRect.Create(0, 0, 25, titleHeight);
         
         bool wasHovered = _isHeaderHovered;
         _isHeaderHovered = arrowHitBox.Contains(e.Location);
 
         if (wasHovered != _isHeaderHovered)
         {
-            Cursor = _isHeaderHovered ? System.Windows.Forms.Cursors.Hand : System.Windows.Forms.Cursors.Default;
+            Cursor = _isHeaderHovered ? Cursors.Hand : Cursors.Default;
             Invalidate();
         }
     }
@@ -282,7 +278,7 @@ public class GroupBox : UIElementBase
     {
         base.OnMouseLeave(e);
         _isHeaderHovered = false;
-        Cursor = System.Windows.Forms.Cursors.Default;
+        Cursor = Cursors.Default;
         Invalidate();
     }
 
@@ -305,14 +301,14 @@ public class GroupBox : UIElementBase
             canvas.DrawRect(0, 0, Width - 1, Height - 1, paint);
         }
 
-        var rect = new SKRect(0, 0, Width, Height);
+        var rect = new SkiaSharp.SKRect(0, 0, Width, Height);
         var shadowRect = rect;
 
         // Balk lleri (padding uygulanm genilik)
-        var titleHeight = Font.Height + 7f * ScaleFactor;
+        var titleHeight = Font.Size + 7f * ScaleFactor;
         float titleX = Padding.Left;
         var titleWidth = Math.Max(0, rect.Width - Padding.Horizontal);
-        var titleRect = new SKRect(titleX, 0, titleX + titleWidth, titleHeight);
+        var titleRect = new SkiaSharp.SKRect(titleX, 0, titleX + titleWidth, titleHeight);
 
         // Glge izimi
         using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, ShadowDepthScaled / 2f))
@@ -329,7 +325,7 @@ public class GroupBox : UIElementBase
         // Arka plan �izimi
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.BackColor2.ToSKColor(),
+                   Color = ColorScheme.BackColor2,
                    IsAntialias = true,
                    Style = SKPaintStyle.Fill
                })
@@ -344,7 +340,7 @@ public class GroupBox : UIElementBase
         // Ba�l�k �izgisi
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.BorderColor.ToSKColor(),
+                   Color = ColorScheme.BorderColor,
                    IsAntialias = true,
                    Style = SKPaintStyle.Stroke,
                    StrokeWidth = 1f * ScaleFactor
@@ -356,7 +352,7 @@ public class GroupBox : UIElementBase
         // Ba�l�k arka plan (hafif)
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.BackColor2.ToSKColor().WithAlpha(15),
+                   Color = ColorScheme.BackColor2.WithAlpha(15),
                    IsAntialias = true,
                    Style = SKPaintStyle.Fill
                })
@@ -371,14 +367,14 @@ public class GroupBox : UIElementBase
         {
             using var font = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Edging = SKFontEdging.SubpixelAntialias
             };
 
             using var textPaint = new SKPaint
             {
-                Color = ColorScheme.ForeColor.ToSKColor(),
+                Color = ColorScheme.ForeColor,
                 IsAntialias = true
             };
 
@@ -413,7 +409,7 @@ public class GroupBox : UIElementBase
         // �er�eve �izimi
         using (var paint = new SKPaint
                {
-                   Color = ColorScheme.BorderColor.ToSKColor(),
+                   Color = ColorScheme.BorderColor,
                    IsAntialias = true,
                    Style = SKPaintStyle.Stroke,
                    StrokeWidth = 1f * ScaleFactor
@@ -423,7 +419,7 @@ public class GroupBox : UIElementBase
         }
     }
 
-    public override Size GetPreferredSize(Size proposedSize)
+    public override SKSize GetPreferredSize(SKSize proposedSize)
     {
         var preferredSize = base.GetPreferredSize(proposedSize);
         preferredSize.Width += _shadowDepth;
@@ -441,10 +437,10 @@ public class GroupBox : UIElementBase
         }
 
         // Title height for offset
-        var titleHeight = Font.Height + 7;
+        var titleHeight = Font.Size + 7;
 
         // Apply padding and title offset to child bounds
-        var clientRect = new Rectangle(
+        var clientRect = SKRect.Create(
             Padding.Left,
             Padding.Top + titleHeight,
             Width - Padding.Horizontal - _shadowDepth / 2,
@@ -483,7 +479,7 @@ public class GroupBox : UIElementBase
 
         using var arrowPaint = new SKPaint
         {
-            Color = ColorScheme.ForeColor.ToSKColor(),
+            Color = ColorScheme.ForeColor,
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 2,

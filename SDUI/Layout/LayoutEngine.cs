@@ -1,6 +1,5 @@
-﻿using System;
-using System.Drawing;
-using System.Windows.Forms;
+﻿using SkiaSharp;
+using System;
 
 namespace SDUI.Layout;
 
@@ -16,9 +15,9 @@ public abstract class LayoutEngine
         return element;
     }
 
-    internal virtual Size GetPreferredSize(IArrangedElement container, Size proposedConstraints)
+    internal virtual SKSize GetPreferredSize(IArrangedElement container, SKSize proposedConstraints)
     {
-        return Size.Empty;
+        return SKSize.Empty;
     }
 
     public virtual void InitLayout(object child, BoundsSpecified specified)

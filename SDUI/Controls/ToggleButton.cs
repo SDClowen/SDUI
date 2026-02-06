@@ -1,6 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Animation;
 using SDUI.Extensions;
@@ -13,12 +13,12 @@ public class ToggleButton : UIElementBase
 {
     private readonly AnimationManager animationManager;
     private bool _checked;
-    private Point _mouseLocation;
+    private SKPoint _mouseLocation;
     private int _mouseState;
 
     public ToggleButton()
     {
-        MinimumSize = new Size(56, 22);
+        MinimumSize = new SKSize(56, 22);
         animationManager = new AnimationManager
         {
             AnimationType = AnimationType.EaseInOut,
@@ -29,7 +29,7 @@ public class ToggleButton : UIElementBase
         animationManager.OnAnimationProgress += _ => Invalidate();
     }
 
-    private Rectangle LocalRect => new(0, 0, Width, Height); // local koordinatlar
+    private SkiaSharp.SKRect LocalRect => new(0, 0, Width, Height); // local koordinatlar
 
     [Browsable(true)]
     public override string Text
@@ -71,7 +71,7 @@ public class ToggleButton : UIElementBase
     internal override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
-        _mouseLocation = new Point(-1, -1);
+        _mouseLocation = new SKPoint(-1, -1);
         _mouseState = 0;
         Invalidate();
     }
@@ -112,18 +112,18 @@ public class ToggleButton : UIElementBase
         {
             using var font = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
             };
             using var textPaint = new SKPaint
             {
-                Color = ColorScheme.ForeColor.ToSKColor(),
+                Color = ColorScheme.ForeColor,
                 IsAntialias = true
             };
 
-            var textBounds = new SKRect();
+            var textBounds = new SkiaSharp.SKRect();
             font.MeasureText(Text, out textBounds);
             textWidth = textBounds.Width;
             TextRenderingHelper.DrawText(canvas, Text, 0, Height / 2f + textBounds.Height / 2f, font, textPaint);
@@ -144,7 +144,7 @@ public class ToggleButton : UIElementBase
                    Style = SKPaintStyle.Fill
                })
         {
-            var shadowRect = new SKRect(0, 0, toggleWidth, Height - 1);
+            var shadowRect = new SkiaSharp.SKRect(0, 0, toggleWidth, Height - 1);
             canvas.DrawRoundRect(shadowRect, radius, radius, shadowPaint);
         }
 
@@ -155,19 +155,19 @@ public class ToggleButton : UIElementBase
                    Style = SKPaintStyle.Fill
                })
         {
-            var rect = new SKRect(0, 0, toggleWidth, Height - 1);
+            var rect = new SkiaSharp.SKRect(0, 0, toggleWidth, Height - 1);
             paint.Color = Checked
-                ? ColorScheme.BackColor2.ToSKColor().InterpolateColor(ColorScheme.AccentColor.ToSKColor(), progress)
-                : ColorScheme.AccentColor.ToSKColor()
-                    .InterpolateColor(ColorScheme.BackColor2.ToSKColor(), 1 - progress);
+                ? ColorScheme.BackColor2.InterpolateColor(ColorScheme.AccentColor, progress)
+                : ColorScheme.AccentColor
+                    .InterpolateColor(ColorScheme.BackColor2, 1 - progress);
             canvas.DrawRoundRect(rect, radius, radius, paint);
 
             paint.Style = SKPaintStyle.Stroke;
             paint.StrokeWidth = 1;
             paint.Color = Checked
-                ? ColorScheme.BorderColor.ToSKColor().InterpolateColor(ColorScheme.AccentColor.ToSKColor(), progress)
-                : ColorScheme.AccentColor.ToSKColor()
-                    .InterpolateColor(ColorScheme.BorderColor.ToSKColor(), 1 - progress);
+                ? ColorScheme.BorderColor.InterpolateColor(ColorScheme.AccentColor, progress)
+                : ColorScheme.AccentColor
+                    .InterpolateColor(ColorScheme.BorderColor, 1 - progress);
             canvas.DrawRoundRect(rect, radius, radius, paint);
         }
 

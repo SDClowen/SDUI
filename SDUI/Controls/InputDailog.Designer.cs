@@ -1,3 +1,5 @@
+using SkiaSharp;
+
 namespace SDUI.Controls
 {
     partial class InputDialog
@@ -43,17 +45,17 @@ namespace SDUI.Controls
             // 
             lblTitle.ApplyGradient = false;
             lblTitle.Dock = System.Windows.Forms.DockStyle.Top;
-            lblTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
-            lblTitle.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
-            lblTitle.Gradient = new System.Drawing.Color[]
+            lblTitle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.SKPoint);
+            lblTitle.ForeColor = SkiaSharp.SKColor.FromArgb(0, 0, 0);
+            lblTitle.Gradient = new SkiaSharp.SKColor[]
     {
-    System.Drawing.Color.Gray,
-    System.Drawing.Color.Black
+    SkiaSharp.SKColor.Gray,
+    SkiaSharp.SKColor.Black
     };
             lblTitle.GradientAnimation = false;
-            lblTitle.Location = new System.Drawing.Point(0, 0);
+            lblTitle.Location = new System.Drawing.SKPoint(0, 0);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new System.Drawing.Size(324, 20);
+            lblTitle.Size = new SkiaSharp.SKSize(324, 20);
             lblTitle.TabIndex = 1;
             lblTitle.Text = "Input";
             // 
@@ -61,29 +63,29 @@ namespace SDUI.Controls
             // 
             lblMessage.ApplyGradient = false;
             lblMessage.Dock = System.Windows.Forms.DockStyle.Top;
-            lblMessage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            lblMessage.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
-            lblMessage.Gradient = new System.Drawing.Color[]
+            lblMessage.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.SKPoint);
+            lblMessage.ForeColor = SkiaSharp.SKColor.FromArgb(0, 0, 0);
+            lblMessage.Gradient = new SkiaSharp.SKColor[]
     {
-    System.Drawing.Color.Gray,
-    System.Drawing.Color.Black
+    SkiaSharp.SKColor.Gray,
+    SkiaSharp.SKColor.Black
     };
             lblMessage.GradientAnimation = false;
-            lblMessage.Location = new System.Drawing.Point(0, 20);
+            lblMessage.Location = new System.Drawing.SKPoint(0, 20);
             lblMessage.Name = "lblMessage";
-            lblMessage.Size = new System.Drawing.Size(324, 46);
+            lblMessage.Size = new SkiaSharp.SKSize(324, 46);
             lblMessage.TabIndex = 2;
             lblMessage.Text = "Please enter a value";
             // 
             // txtValue
             // 
-            txtValue.Location = new System.Drawing.Point(11, 83);
+            txtValue.Location = new System.Drawing.SKPoint(11, 83);
             txtValue.MaxLength = 32767;
             txtValue.MultiLine = false;
             txtValue.Name = "txtValue";
             txtValue.PassFocusShow = false;
             txtValue.Radius = 2;
-            txtValue.Size = new System.Drawing.Size(299, 25);
+            txtValue.Size = new SkiaSharp.SKSize(299, 25);
             txtValue.TabIndex = 0;
             txtValue.TextAlignment = System.Windows.Forms.HorizontalAlignment.Left;
             txtValue.UseSystemPasswordChar = false;
@@ -91,14 +93,14 @@ namespace SDUI.Controls
             // 
             // btnOK
             // 
-            btnOK.Color = System.Drawing.Color.DodgerBlue;
-            btnOK.DialogResult = System.Windows.Forms.DialogResult.OK;
-            btnOK.ForeColor = System.Drawing.Color.White;
-            btnOK.Location = new System.Drawing.Point(11, 6);
+            btnOK.Color = SkiaSharp.SKColor.DodgerBlue;
+            btnOK.DialogResult = SDUI.DialogResult.OK;
+            btnOK.ForeColor = SkiaSharp.SKColor.White;
+            btnOK.Location = new System.Drawing.SKPoint(11, 6);
             btnOK.Name = "btnOK";
             btnOK.Radius = 6;
             btnOK.ShadowDepth = 4F;
-            btnOK.Size = new System.Drawing.Size(106, 29);
+            btnOK.Size = new SkiaSharp.SKSize(106, 29);
             btnOK.TabIndex = 0;
             btnOK.Text = "OK";
             btnOK.UseVisualStyleBackColor = true;
@@ -106,65 +108,64 @@ namespace SDUI.Controls
             // 
             // btnCancel
             // 
-            btnCancel.Color = System.Drawing.Color.Firebrick;
-            btnCancel.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            btnCancel.ForeColor = System.Drawing.Color.White;
-            btnCancel.Location = new System.Drawing.Point(223, 6);
+            btnCancel.Color = SkiaSharp.SKColors.Firebrick;
+            btnCancel.DialogResult = SDUI.DialogResult.Cancel;
+            btnCancel.ForeColor = SkiaSharp.SKColors.White;
+            btnCancel.Location = new System.Drawing.SKPoint(223, 6);
             btnCancel.Name = "btnCancel";
             btnCancel.Radius = 6;
             btnCancel.ShadowDepth = 4F;
-            btnCancel.Size = new System.Drawing.Size(91, 29);
+            btnCancel.Size = new SKSize(91, 29);
             btnCancel.TabIndex = 1;
             btnCancel.Text = "Cancel";
             btnCancel.UseVisualStyleBackColor = true;
             // 
             // comboBox
             // 
-            comboBox.DrawMode = System.Windows.Forms.DrawMode.OwnerDrawFixed;
             comboBox.DropDownHeight = 100;
-            comboBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            comboBox.DropDownStyle = ComboBoxStyle.DropDownList;
             comboBox.FormattingEnabled = true;
             comboBox.IntegralHeight = false;
             comboBox.ItemHeight = 23;
-            comboBox.Location = new System.Drawing.Point(12, 80);
+            comboBox.Location = new System.Drawing.SKPoint(12, 80);
             comboBox.Name = "comboBox";
             comboBox.Radius = 5;
             comboBox.ShadowDepth = 4F;
-            comboBox.Size = new System.Drawing.Size(277, 29);
+            comboBox.Size = new SkiaSharp.SKSize(277, 29);
             comboBox.TabIndex = 4;
             comboBox.Visible = false;
             // 
             // numValue
             // 
-            numValue.BackColor = System.Drawing.Color.Transparent;
-            numValue.Font = new System.Drawing.Font("Segoe UI", 9.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            numValue.ForeColor = System.Drawing.Color.FromArgb(0, 0, 0);
-            numValue.Location = new System.Drawing.Point(12, 77);
+            numValue.BackColor = SkiaSharp.SKColor.Transparent;
+            numValue.Font = new System.Drawing.Font("Segoe UI", 9.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.SKPoint);
+            numValue.ForeColor = SkiaSharp.SKColor.FromArgb(0, 0, 0);
+            numValue.Location = new System.Drawing.SKPoint(12, 77);
             numValue.Maximum = new decimal(new int[] { 32765, 0, 0, 0 });
             numValue.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
-            numValue.MinimumSize = new System.Drawing.Size(80, 25);
+            numValue.MinimumSize = new SkiaSharp.SKSize(80, 25);
             numValue.Name = "numValue";
-            numValue.Size = new System.Drawing.Size(156, 34);
+            numValue.Size = new SkiaSharp.SKSize(156, 34);
             numValue.TabIndex = 5;
             numValue.Value = new decimal(new int[] { 1, 0, 0, 0 });
             numValue.KeyUp += numValue_KeyUp;
             // 
             // panel1
             // 
-            panel1.BackColor = System.Drawing.Color.Transparent;
+            panel1.BackColor = SkiaSharp.SKColors.Transparent;
             panel1.Controls.Add(btnOK);
             panel1.Controls.Add(btnCancel);
-            panel1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            panel1.Location = new System.Drawing.Point(0, 125);
+            panel1.Dock = SDUI.DockStyle.Bottom;
+            panel1.Location = new System.Drawing.SKPoint(0, 125);
             panel1.Name = "panel1";
-            panel1.Size = new System.Drawing.Size(324, 39);
+            panel1.Size = new SkiaSharp.SKSize(324, 39);
             panel1.TabIndex = 6;
             // 
             // InputDialog
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            ClientSize = new System.Drawing.Size(324, 164);
+            AutoScaleDimensions = new SkiaSharp.SKSize(120F, 120F);
+            AutoScaleMode = SDUI.AutoScaleMode.Dpi;
+            ClientSize = new SkiaSharp.SKSize(324, 164);
             ControlBox = false;
             Controls.Add(panel1);
             Controls.Add(numValue);
@@ -172,7 +173,7 @@ namespace SDUI.Controls
             Controls.Add(txtValue);
             Controls.Add(lblMessage);
             Controls.Add(lblTitle);
-            ForeColor = System.Drawing.Color.Black;
+            ForeColor = SkiaSharp.SKColors.Black;
             FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             MaximizeBox = false;
             MinimizeBox = false;

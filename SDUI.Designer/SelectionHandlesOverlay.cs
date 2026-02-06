@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+
 using SDUI.Controls;
 using SDUI.Extensions;
 using SkiaSharp;
@@ -13,7 +13,7 @@ internal class SelectionHandlesOverlay : UIElementBase
 {
     private Rectangle _bounds = Rectangle.Empty;
     private ResizeHandle _activeHandle = ResizeHandle.None;
-    private Point _dragStart;
+    private SKPoint _dragStart;
     private Rectangle _originalBounds;
 
     public event EventHandler<Rectangle>? BoundsResized;
@@ -149,7 +149,7 @@ internal class SelectionHandlesOverlay : UIElementBase
         _activeHandle = ResizeHandle.None;
     }
 
-    private ResizeHandle GetHandleAtPoint(Point point)
+    private ResizeHandle GetHandleAtPoint(SKPoint point)
     {
         const int handleSize = 8;
         
@@ -173,7 +173,7 @@ internal class SelectionHandlesOverlay : UIElementBase
         return ResizeHandle.None;
     }
 
-    private bool IsInHandle(Point point, int centerX, int centerY, int handleSize)
+    private bool IsInHandle(SKPoint point, int centerX, int centerY, int handleSize)
     {
         var halfSize = handleSize / 2;
         return point.X >= centerX - halfSize && point.X <= centerX + halfSize &&
@@ -210,7 +210,7 @@ internal class SelectionHandlesOverlay : UIElementBase
         // Draw dashed selection rectangle
         using var paint = new SKPaint
         {
-            Color = ColorScheme.Primary.ToSKColor(),
+            Color = ColorScheme.Primary,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = 2 * scale,
             PathEffect = SKPathEffect.CreateDash(new[] { 5f * scale, 5f * scale }, 0),
@@ -223,7 +223,7 @@ internal class SelectionHandlesOverlay : UIElementBase
         var handleSize = 6 * scale;
         using var handlePaint = new SKPaint
         {
-            Color = ColorScheme.Primary.ToSKColor(),
+            Color = ColorScheme.Primary,
             Style = SKPaintStyle.Fill,
             IsAntialias = true
         };

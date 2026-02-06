@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Linq;
 using System.Windows.Forms;
 using SDUI.Animation;
@@ -25,7 +25,7 @@ public class FlowLayoutPanel : UIElementBase
 
     public FlowLayoutPanel()
     {
-        BackColor = Color.Transparent;
+        BackColor = SKColors.Transparent;
 
         _vScrollBar = new ScrollBar
         {
@@ -137,17 +137,17 @@ public class FlowLayoutPanel : UIElementBase
         var contentOriginY = clientArea.Top - vOffset;
         var currentX = contentOriginX;
         var currentY = contentOriginY;
-        var rowHeight = 0;
-        var columnWidth = 0;
-        var contentMaxWidth = 0;
-        var contentMaxHeight = 0;
+        var rowHeight = 0f;
+        var columnWidth = 0f;
+        var contentMaxWidth = 0f;
+        var contentMaxHeight = 0f;
 
         // Ensure AutoSize children are sized to their preferred sizes before layout calculations
         foreach (var control in controls)
             if (control.AutoSize)
             {
                 // Provide the available client area as proposed size so children can measure accordingly
-                var proposed = control.GetPreferredSize(new Size(clientArea.Width, clientArea.Height));
+                var proposed = control.GetPreferredSize(new SKSize(clientArea.Width, clientArea.Height));
                 if (control.AutoSizeMode == AutoSizeMode.GrowOnly)
                 {
                     proposed.Width = Math.Max(control.Size.Width, proposed.Width);
@@ -185,7 +185,7 @@ public class FlowLayoutPanel : UIElementBase
                     rowHeight = 0;
                 }
 
-                var targetPoint = new Point(currentX, currentY);
+                var targetPoint = new SKPoint(currentX, currentY);
                 _targetLocations[control] = targetPoint;
 
                 // Animasyon başlat
@@ -223,7 +223,7 @@ public class FlowLayoutPanel : UIElementBase
                     columnWidth = 0;
                 }
 
-                var targetPoint = new Point(currentX, currentY);
+                var targetPoint = new SKPoint(currentX, currentY);
                 _targetLocations[control] = targetPoint;
 
                 // Animasyon başlat
@@ -248,13 +248,13 @@ public class FlowLayoutPanel : UIElementBase
         _isLayouting = false;
     }
 
-    private void StartAnimation(UIElementBase control, Point targetPoint)
+    private void StartAnimation(UIElementBase control, SKPoint targetPoint)
     {
         // Animasyonu devre dışı bırak - direkt pozisyon değiştir
         control.Location = targetPoint;
     }
 
-    private void AlignRow(List<UIElementBase> row, int y, int height, Rectangle clientArea)
+    private void AlignRow(List<UIElementBase> row, float y, float height, SkiaSharp.SKRect clientArea)
     {
         if (row.Count == 0) return;
 
@@ -285,12 +285,12 @@ public class FlowLayoutPanel : UIElementBase
                     break;
             }
 
-            _targetLocations[control] = new Point(startX, targetY);
+            _targetLocations[control] = new SKPoint(startX, targetY);
             startX += control.Width + _itemPadding.Left;
         }
     }
 
-    private void AlignColumn(List<UIElementBase> column, int x, int width, Rectangle clientArea)
+    private void AlignColumn(List<UIElementBase> column, float x, float width, SkiaSharp.SKRect clientArea)
     {
         if (column.Count == 0) return;
 
@@ -321,32 +321,32 @@ public class FlowLayoutPanel : UIElementBase
                     break;
             }
 
-            _targetLocations[control] = new Point(targetX, startY);
+            _targetLocations[control] = new SKPoint(targetX, startY);
             startY += control.Height + _itemPadding.Top;
         }
     }
 
-    private Rectangle GetClientArea()
+    private SKRect GetClientArea()
     {
         var area = ClientRectangle;
-        // Respect own Padding as content inset
-        area.X += Padding.Left;
-        area.Y += Padding.Top;
-        area.Width -= Padding.Horizontal;
-        area.Height -= Padding.Vertical;
+
+        float left = area.Left + Padding.Left;
+        float top = area.Top + Padding.Top;
+        float right = area.Right - Padding.Right;
+        float bottom = area.Bottom - Padding.Bottom;
 
         if (_autoScroll)
         {
             if (_vScrollBar.Visible)
-                area.Width -= _vScrollBar.Width;
+                right -= _vScrollBar.Width;
             if (_hScrollBar.Visible)
-                area.Height -= _hScrollBar.Height;
+                bottom -= _hScrollBar.Height;
         }
 
-        return area;
+        return new SKRect(left, top, right, bottom);
     }
 
-    private void UpdateScrollBars(int contentWidth, int contentHeight)
+    private void UpdateScrollBars(float contentWidth, float contentHeight)
     {
         // Determine thresholds combining client area and AutoScrollMinSize
         var clientArea = GetClientArea();
@@ -390,11 +390,11 @@ public class FlowLayoutPanel : UIElementBase
         base.OnPaint(canvas);
 
         // Basit arka plan çizimi - performans için gölge ve rounded corner'ları kaldır
-        if (BackColor != Color.Transparent)
+        if (BackColor != SKColors.Transparent)
         {
             using var paint = new SKPaint
             {
-                Color = BackColor.ToSKColor(),
+                Color = BackColor,
                 IsAntialias = false
             };
             canvas.DrawRect(0, 0, Width, Height, paint);
@@ -403,10 +403,10 @@ public class FlowLayoutPanel : UIElementBase
         // Kenarlık varsa basit çiz
         if (_border.All > 0 || _border.Left > 0 || _border.Top > 0 || _border.Right > 0 || _border.Bottom > 0)
         {
-            var borderColor = _borderColor == Color.Transparent ? ColorScheme.BorderColor : _borderColor;
+            var borderColor = _borderColor == SKColors.Transparent ? ColorScheme.BorderColor : _borderColor;
             using var paint = new SKPaint
             {
-                Color = borderColor.ToSKColor(),
+                Color = borderColor,
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = 1,
                 IsAntialias = false
@@ -452,16 +452,16 @@ public class FlowLayoutPanel : UIElementBase
     #region Variables
 
     private int _radius = 10;
-    private Padding _border;
-    private Color _borderColor = Color.Transparent;
+    private Thickness _border;
+    private SKColor _borderColor = SKColors.Transparent;
     private float _shadowDepth = 4;
     private FlowDirection _flowDirection = FlowDirection.LeftToRight;
     private bool _wrapContents = true;
     private bool _autoScroll;
     private FlowAlignment _verticalAlignment = FlowAlignment.Near;
     private FlowAlignment _horizontalAlignment = FlowAlignment.Near;
-    private Padding _itemPadding = new(3);
-    private readonly Dictionary<IUIElement, Point> _targetLocations = new();
+    private Thickness _itemPadding = new(3);
+    private readonly Dictionary<IUIElement, SKPoint> _targetLocations = new();
     private readonly Dictionary<IUIElement, AnimationManager> _animations = new();
     private readonly ScrollBar _vScrollBar;
     private readonly ScrollBar _hScrollBar;
@@ -487,7 +487,7 @@ public class FlowLayoutPanel : UIElementBase
     }
 
     [Category("Appearance")]
-    public Padding Border
+    public Thickness Border
     {
         get => _border;
         set
@@ -501,7 +501,7 @@ public class FlowLayoutPanel : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color BorderColor
+    public SKColor BorderColor
     {
         get => _borderColor;
         set
@@ -600,7 +600,7 @@ public class FlowLayoutPanel : UIElementBase
     }
 
     [Category("Layout")]
-    public Padding ItemPadding
+    public Thickness ItemPadding
     {
         get => _itemPadding;
         set

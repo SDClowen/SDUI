@@ -1,4 +1,4 @@
-using System.Drawing;
+using SkiaSharp;
 
 namespace SDUI.Layout;
 
@@ -8,17 +8,17 @@ namespace SDUI.Layout;
 /// </summary>
 internal sealed class AnchorInfo
 {
-    public Rectangle DisplayRectangle { get; set; }
+    public SkiaSharp.SKRect DisplayRectangle { get; set; }
 
     /// <summary>Distance from left edge of parent's DisplayRectangle</summary>
-    public int Left { get; set; }
+    public float Left { get; set; }
 
     /// <summary>Distance from top edge of parent's DisplayRectangle</summary>
-    public int Top { get; set; }
+    public float Top { get; set; }
 
     /// <summary>Distance from right edge of parent's DisplayRectangle (negative when control is anchored right)</summary>
-    public int Right { get; set; }
+    public float Right { get; set; }
 
     /// <summary>Distance from bottom edge of parent's DisplayRectangle (negative when control is anchored bottom)</summary>
-    public int Bottom { get; set; }
+    public float Bottom { get; set; }
 }

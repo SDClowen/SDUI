@@ -1,5 +1,5 @@
 using System;
-using System.Drawing;
+
 using SDUI.Controls;
 
 namespace SDUI.Designer.Commands;
@@ -21,10 +21,10 @@ public class AddControlCommand : DesignCommand
 {
     private readonly DesignSurface _surface;
     private readonly string _controlType;
-    private readonly Point _location;
+    private readonly SKPoint _location;
     private DesignControl? _addedControl;
 
-    public AddControlCommand(DesignSurface surface, string controlType, Point location)
+    public AddControlCommand(DesignSurface surface, string controlType, SKPoint location)
     {
         _surface = surface;
         _controlType = controlType;
@@ -83,10 +83,10 @@ public class DeleteControlCommand : DesignCommand
 public class MoveControlCommand : DesignCommand
 {
     private readonly DesignControl _control;
-    private readonly Point _oldLocation;
-    private readonly Point _newLocation;
+    private readonly SKPoint _oldLocation;
+    private readonly SKPoint _newLocation;
 
-    public MoveControlCommand(DesignControl control, Point oldLocation, Point newLocation)
+    public MoveControlCommand(DesignControl control, SKPoint oldLocation, SKPoint newLocation)
     {
         _control = control;
         _oldLocation = oldLocation;
@@ -179,10 +179,10 @@ public class PasteControlCommand : DesignCommand
 {
     private readonly DesignSurface _surface;
     private readonly DesignSurface.ControlSnapshot _snapshot;
-    private readonly Point _location;
+    private readonly SKPoint _location;
     private DesignControl? _addedControl;
 
-    public PasteControlCommand(DesignSurface surface, DesignSurface.ControlSnapshot snapshot, Point location)
+    public PasteControlCommand(DesignSurface surface, DesignSurface.ControlSnapshot snapshot, SKPoint location)
     {
         _surface = surface;
         _snapshot = snapshot;

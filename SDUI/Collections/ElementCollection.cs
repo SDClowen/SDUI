@@ -19,7 +19,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
     private int _maxZOrder;
 
-    public ElementCollection(IUIElement owner)
+    public ElementCollection(ElementBase owner)
     {
         Owner = owner;
     }
@@ -27,12 +27,12 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     /// <summary>
     ///     Who owns this control collection.
     /// </summary>
-    public IUIElement Owner { get; }
+    public ElementBase Owner { get; }
 
     /// <summary>
     ///     Retrieves the child control with the specified index.
     /// </summary>
-    public new virtual UIElementBase this[int index]
+    public new virtual ElementBase this[int index]
     {
         get
         {
@@ -41,7 +41,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
                 throw new ArgumentOutOfRangeException(
                     nameof(index));
 
-            var control = (UIElementBase)InnerList[index]!;
+            var control = (ElementBase)InnerList[index]!;
             Debug.Assert(control is not null, "Why are we returning null controls from a valid index?");
             return control;
         }
@@ -50,7 +50,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     /// <summary>
     ///     Retrieves the child control with the specified key.
     /// </summary>
-    public virtual UIElementBase? this[string? key]
+    public virtual ElementBase? this[string? key]
     {
         get
         {
@@ -78,7 +78,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
     int IList.Add(object? control)
     {
-        if (control is UIElementBase c)
+        if (control is ElementBase c)
         {
             Add(c);
             return IndexOf(c);
@@ -94,7 +94,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
     void IList.Remove(object? control)
     {
-        if (control is UIElementBase c) Remove(c);
+        if (control is ElementBase c) Remove(c);
     }
 
     public void RemoveAt(int index)
@@ -129,7 +129,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     the child control list. If the control is already a child of another control it
     ///     is first removed from that control.
     /// </summary>
-    public virtual void Add(IUIElement value)
+    public virtual void Add(ElementBase value)
     {
         if (value is null) return;
 
@@ -173,11 +173,11 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
             (Owner as IArrangedElement)?.ResumeLayout(true);
         }
 
-        if (Owner is UIElementBase control) control.OnControlAdded(new UIElementEventArgs(value));
+        if (Owner is ElementBase control) control.OnControlAdded(new UIElementEventArgs(value));
     }
 
     [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-    public virtual void AddRange(UIElementBase[] controls)
+    public virtual void AddRange(ElementBase[] controls)
     {
         ArgumentNullException.ThrowIfNull(controls);
 
@@ -195,7 +195,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         }
     }
 
-    public bool Contains(UIElementBase? control)
+    public bool Contains(ElementBase? control)
     {
         return ((IList)InnerList).Contains(control);
     }
@@ -204,9 +204,9 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     Searches for Controls by their Name property, builds up an array
     ///     of all the controls that match.
     /// </summary>
-    public UIElementBase[] Find(string key, bool searchAllChildren)
+    public ElementBase[] Find(string key, bool searchAllChildren)
     {
-        List<UIElementBase> foundControls = new();
+        List<ElementBase> foundControls = new();
         FindInternal(key, searchAllChildren, this, foundControls);
         return foundControls.ToArray();
     }
@@ -216,7 +216,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     of all the controls that match.
     /// </summary>
     private static void FindInternal(string key, bool searchAllChildren, ElementCollection controlsToLookIn,
-        List<UIElementBase> foundControls)
+        List<ElementBase> foundControls)
     {
         try
         {
@@ -246,7 +246,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         }
     }
 
-    public int IndexOf(IUIElement control)
+    public int IndexOf(IElement control)
     {
         return ((IList)InnerList).IndexOf(control);
     }
@@ -289,7 +289,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     Removes control from this control. Inheriting controls should call
     ///     base.remove to ensure that the control is removed.
     /// </summary>
-    public virtual void Remove(IUIElement value)
+    public virtual void Remove(IElement value)
     {
         // Sanity check parameter
         if (value is null) return; // Don't do anything
@@ -302,7 +302,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         value.Parent = null;
 
-        if (Owner is UIElementBase control) control.OnControlRemoved(new UIElementEventArgs(value));
+        if (Owner is ElementBase control) control.OnControlRemoved(new UIElementEventArgs(value));
 
         (Owner as IArrangedElement)?.PerformLayout();
         Owner.Invalidate();
@@ -323,7 +323,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     is thrown if child is not parented to this
     ///     UIElementBase.
     /// </summary>
-    public int GetChildIndex(IUIElement child)
+    public int GetChildIndex(IElement child)
     {
         return GetChildIndex(child, true);
     }
@@ -334,7 +334,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     is thrown if child is not parented to this
     ///     UIElementBase.
     /// </summary>
-    public virtual int GetChildIndex(IUIElement child, bool throwException)
+    public virtual int GetChildIndex(IElement child, bool throwException)
     {
         return IndexOf(child);
     }
@@ -344,7 +344,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     changing
     ///     the child control indices.
     /// </summary>
-    internal virtual void SetChildIndexInternal(IUIElement child, int newIndex)
+    internal virtual void SetChildIndexInternal(IElement child, int newIndex)
     {
         // Sanity check parameters
         ArgumentNullException.ThrowIfNull(child);
@@ -367,12 +367,12 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     ///     is thrown if child is not parented to this
     ///     UIElementBase.
     /// </summary>
-    public virtual void SetChildIndex(IUIElement child, int newIndex)
+    public virtual void SetChildIndex(ElementBase child, int newIndex)
     {
         SetChildIndexInternal(child, newIndex);
     }
 
-    internal void Insert(int index, IUIElement value)
+    internal void Insert(int index, ElementBase value)
     {
         Add(value);
         SetChildIndexInternal(value, index);
@@ -381,7 +381,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
     private class ControlCollectionEnumerator : IEnumerator
     {
         private readonly ElementCollection list;
-        private UIElementBase currentElement;
+        private ElementBase currentElement;
         private int index;
 
         internal ControlCollectionEnumerator(ElementCollection list)
@@ -390,7 +390,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
             index = -1;
         }
 
-        public UIElementBase Current
+        public ElementBase Current
         {
             get
             {

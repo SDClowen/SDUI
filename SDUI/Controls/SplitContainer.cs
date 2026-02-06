@@ -1,6 +1,6 @@
 using System;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SkiaSharp;
 
@@ -9,7 +9,7 @@ namespace SDUI.Controls;
 public class SplitContainer : UIElementBase
 {
     private bool _dragging;
-    private Point _dragStart;
+    private SKPoint _dragStart;
     private int _initialDistance;
     private Orientation _orientation = Orientation.Vertical;
     private int _panel1MinSize = 30;
@@ -19,8 +19,8 @@ public class SplitContainer : UIElementBase
 
     public SplitContainer()
     {
-        Panel1 = new Panel { BackColor = Color.Transparent };
-        Panel2 = new Panel { BackColor = Color.Transparent };
+        Panel1 = new Panel { BackColor = SKColor.Transparent };
+        Panel2 = new Panel { BackColor = SKColor.Transparent };
 
         Controls.Add(Panel1);
         Controls.Add(Panel2);
@@ -100,12 +100,12 @@ public class SplitContainer : UIElementBase
 
         var splitter = GetSplitterRect();
         using var paint = new SKPaint
-            { IsAntialias = true, Color = ColorScheme.BorderColor.ToSKColor(), Style = SKPaintStyle.Fill };
-        canvas.DrawRect(new SKRect(splitter.X, splitter.Y, splitter.Right, splitter.Bottom), paint);
+            { IsAntialias = true, Color = ColorScheme.BorderColor, Style = SKPaintStyle.Fill };
+        canvas.DrawRect(new SkiaSharp.SKRect(splitter.X, splitter.Y, splitter.Right, splitter.Bottom), paint);
 
         // draw a small grabber
         using var grab = new SKPaint
-            { IsAntialias = true, Color = ColorScheme.OnSurface.ToSKColor(), Style = SKPaintStyle.Fill };
+            { IsAntialias = true, Color = ColorScheme.OnSurface, Style = SKPaintStyle.Fill };
         if (Orientation == Orientation.Vertical)
         {
             var lineX = splitter.X + splitter.Width / 2f;
@@ -126,19 +126,19 @@ public class SplitContainer : UIElementBase
         base.OnPaint(canvas);
     }
 
-    private Rectangle GetSplitterRect()
+    private SkiaSharp.SKRect GetSplitterRect()
     {
         if (Orientation == Orientation.Vertical)
         {
             var dist = _splitterDistance <= 0 ? Width / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Width - Panel2MinSize - SplitterWidth));
-            return new Rectangle(dist, 0, SplitterWidth, Height);
+            return new SkiaSharp.SKRect(dist, 0, SplitterWidth, Height);
         }
         else
         {
             var dist = _splitterDistance <= 0 ? Height / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Height - Panel2MinSize - SplitterWidth));
-            return new Rectangle(0, dist, Width, SplitterWidth);
+            return new SkiaSharp.SKRect(0, dist, Width, SplitterWidth);
         }
     }
 
@@ -149,8 +149,8 @@ public class SplitContainer : UIElementBase
             var dist = _splitterDistance <= 0 ? Width / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Width - Panel2MinSize - SplitterWidth));
 
-            Panel1.Bounds = new Rectangle(0, 0, dist, Height);
-            Panel2.Bounds = new Rectangle(dist + SplitterWidth, 0, Width - (dist + SplitterWidth), Height);
+            Panel1.Bounds = new SkiaSharp.SKRect(0, 0, dist, Height);
+            Panel2.Bounds = new SkiaSharp.SKRect(dist + SplitterWidth, 0, Width - (dist + SplitterWidth), Height);
             _splitterDistance = dist; // store the clamped value
         }
         else
@@ -158,8 +158,8 @@ public class SplitContainer : UIElementBase
             var dist = _splitterDistance <= 0 ? Height / 2 : _splitterDistance;
             dist = Math.Max(Panel1MinSize, Math.Min(dist, Height - Panel2MinSize - SplitterWidth));
 
-            Panel1.Bounds = new Rectangle(0, 0, Width, dist);
-            Panel2.Bounds = new Rectangle(0, dist + SplitterWidth, Width, Height - (dist + SplitterWidth));
+            Panel1.Bounds = new SkiaSharp.SKRect(0, 0, Width, dist);
+            Panel2.Bounds = new SkiaSharp.SKRect(0, dist + SplitterWidth, Width, Height - (dist + SplitterWidth));
             _splitterDistance = dist; // store the clamped value
         }
 

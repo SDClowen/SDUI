@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using SDUI.Controls;
 using SDUI.Extensions;
 using SDUI.Designer.ViewModels;
@@ -325,7 +325,7 @@ public partial class DesignerMainWindow : UIWindow
             Title = "Save Design"
         };
 
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        if (dialog.ShowDialog() == SDUI.DialogResult.OK)
         {
             try
             {
@@ -350,7 +350,7 @@ public partial class DesignerMainWindow : UIWindow
             Title = "Load Design"
         };
 
-        if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+        if (dialog.ShowDialog() == SDUI.DialogResult.OK)
         {
             try
             {
@@ -445,7 +445,7 @@ public partial class DesignerMainWindow : UIWindow
             Text = "Design Surface\n\nClick a control in the Toolbox,\nthen click here to add it",
             Dock = System.Windows.Forms.DockStyle.Fill,
             Font = new Font("Segoe UI", 12, FontStyle.Bold),
-            ForeColor = ColorScheme.ForeColor.Alpha(26),
+            ForeColor = ColorScheme.ForeColor.WithAlpha(26),
             TextAlign = ContentAlignment.MiddleCenter
         };
 
@@ -565,7 +565,7 @@ public partial class DesignerMainWindow : UIWindow
         }
     }
 
-    private void ShowLayoutContextMenu(Point location)
+    private void ShowLayoutContextMenu(SKPoint location)
     {
         var contextMenu = new SDUI.Controls.ContextMenuStrip();
 
@@ -601,7 +601,7 @@ public partial class DesignerMainWindow : UIWindow
             if (_designSurface.SelectedControl?.Control != null)
             {
                 var control = _designSurface.SelectedControl.Control;
-                control.Location = new Point(10, control.Location.Y);
+                control.Location = new SKPoint(10, control.Location.Y);
                 _designSurface.Invalidate();
             }
         };
@@ -613,7 +613,7 @@ public partial class DesignerMainWindow : UIWindow
             if (_designSurface.SelectedControl?.Control != null)
             {
                 var control = _designSurface.SelectedControl.Control;
-                control.Location = new Point(control.Location.X, 10);
+                control.Location = new SKPoint(control.Location.X, 10);
                 _designSurface.Invalidate();
             }
         };
@@ -628,7 +628,7 @@ public partial class DesignerMainWindow : UIWindow
             {
                 var control = _designSurface.SelectedControl.Control;
                 var centerX = (_designSurface.Width - control.Width) / 2;
-                control.Location = new Point(centerX, control.Location.Y);
+                control.Location = new SKPoint(centerX, control.Location.Y);
                 _designSurface.Invalidate();
             }
         };
@@ -641,7 +641,7 @@ public partial class DesignerMainWindow : UIWindow
             {
                 var control = _designSurface.SelectedControl.Control;
                 var centerY = (_designSurface.Height - control.Height) / 2;
-                control.Location = new Point(control.Location.X, centerY);
+                control.Location = new SKPoint(control.Location.X, centerY);
                 _designSurface.Invalidate();
             }
         };

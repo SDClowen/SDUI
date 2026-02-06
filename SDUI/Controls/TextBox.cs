@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Drawing;
+
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Timers;
 using System.Windows.Forms;
 using SDUI.Animation;
 using SDUI.Extensions;
@@ -49,7 +50,7 @@ internal static class NativeTextBoxMenu
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     private static extern IntPtr GetFocus();
 
-    public static void ShowContextMenu(TextBox textBox, Point screenLocation)
+    public static void ShowContextMenu(TextBox textBox, SKPoint screenLocation)
     {
         var hMenu = CreatePopupMenu();
         if (hMenu == IntPtr.Zero) return;
@@ -251,11 +252,11 @@ public class TextBox : UIElementBase
 
     private Font? _boldSystemFont;
     private Font? _boldSystemFontSource;
-    private Color _borderColor = ColorScheme.BorderColor;
+    private SKColor _borderColor = ColorScheme.BorderColor;
     private SKPaint? _borderPaint;
     private float _borderWidth = 1.0f;
     private float BorderWidthScaled => _borderWidth * ScaleFactor;
-    private Color _charCountColor = Color.Gray;
+    private SKColor _charCountColor = SKColors.Gray;
     private SKPaint? _charCountPaint;
 
     private SKFont? _charCountSkFont;
@@ -273,7 +274,7 @@ public class TextBox : UIElementBase
 
     // Focus animation
     private AnimationManager _focusAnimation = null!;
-    private Color _focusedBorderColor = ColorScheme.AccentColor;
+    private SKColor _focusedBorderColor = ColorScheme.AccentColor;
     private SKPaint? _focusGlowPaint;
     private bool _hideSelection;
     internal ScrollBar _horizontalScrollBar = null!;
@@ -298,14 +299,14 @@ public class TextBox : UIElementBase
     private int _radius = 2;
     private bool _readOnly;
     private SKPaint? _richTextPaint;
-    private Color _scrollBarColor = Color.FromArgb(150, 150, 150);
-    private Color _scrollBarHoverColor = Color.FromArgb(120, 120, 120);
+    private SKColor _scrollBarColor = new SKColor(150, 150, 150);
+    private SKColor _scrollBarHoverColor = new SKColor(120, 120, 120);
     private SKPaint? _scrollbarPaint;
     private float _scrollPosition;
     private float _scrollSpeed = 1.0f;
     private int _selectionAnchor = -1;
-    private Color _selectionBackColor = Color.Empty;
-    private Color _selectionColor = ColorScheme.AccentColor.Alpha(90);
+    private SKColor _selectionBackColor = SKColor.Empty;
+    private SKColor _selectionColor = ColorScheme.AccentColor.WithAlpha(90);
     private int _selectionLength;
     private SKPaint? _selectionPaint;
     private int _selectionStart;
@@ -314,30 +315,29 @@ public class TextBox : UIElementBase
     private bool _showScrollbar;
 
     private string _text = string.Empty;
-    private HorizontalAlignment _textAlignment = HorizontalAlignment.Left;
+    private Aligment _textAlignment = Aligment.Left;
     private SKPaint? _textPaint;
-    private Color _themeBorderColorSnapshot;
-    private Color _themeFocusedBorderColorSnapshot;
+    private SKColor _themeBorderColorSnapshot;
+    private SKColor _themeFocusedBorderColorSnapshot;
 
     // Theme-driven defaults (only update if user hasn't overridden)
-    private Color _themeForeColorSnapshot;
-    private Color _themeSelectionColorSnapshot;
+    private SKColor _themeForeColorSnapshot;
+    private SKColor _themeSelectionColorSnapshot;
     private bool _useSystemPasswordChar;
     internal ScrollBar _verticalScrollBar = null!;
     private bool _wordWrap = true;
-    public BorderStyle BorderStyle = BorderStyle.Fixed3D; // Not Implemented
 
     public TextBox()
     {
-        MinimumSize = new Size((int)(50 * ScaleFactor), (int)(28 * ScaleFactor));
-        Size = new Size((int)(120 * ScaleFactor), (int)(28 * ScaleFactor));
-        BackColor = Color.Transparent; // Transparent olmalı ki UIElementBase canvas.Clear ile beyaz çizmesin
+        MinimumSize = new SKSize((int)(50 * ScaleFactor), (int)(28 * ScaleFactor));
+        Size = new SKSize((int)(120 * ScaleFactor), (int)(28 * ScaleFactor));
+        BackColor = SKColors.Transparent; // Transparent olmalı ki UIElementBase canvas.Clear ile beyaz çizmesin
         ForeColor = ColorScheme.ForeColor;
         BorderColor = ColorScheme.BorderColor;
         FocusedBorderColor = ColorScheme.AccentColor;
         Cursor = Cursors.IBeam;
         TabStop = true;
-        Padding = new Padding(10, 6, 10, 6);
+        Padding = new Thickness(10, 6, 10, 6);
 
         InitializeCursorBlink();
         InitializeFocusAnimation();
@@ -527,7 +527,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color BorderColor
+    public SKColor BorderColor
     {
         get => _borderColor;
         set
@@ -539,7 +539,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color FocusedBorderColor
+    public SKColor FocusedBorderColor
     {
         get => _focusedBorderColor;
         set
@@ -591,8 +591,8 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    [DefaultValue(typeof(HorizontalAlignment), "Left")]
-    public HorizontalAlignment TextAlignment
+    [DefaultValue(typeof(Aligment), "Left")]
+    public Aligment TextAlignment
     {
         get => _textAlignment;
         set
@@ -604,7 +604,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color SelectionColor
+    public SKColor SelectionColor
     {
         get => _selectionColor;
         set
@@ -616,7 +616,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color SelectionBackColor
+    public SKColor SelectionBackColor
     {
         get => _selectionBackColor;
         set
@@ -710,7 +710,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color ScrollBarColor
+    public SKColor ScrollBarColor
     {
         get => _scrollBarColor;
         set
@@ -722,7 +722,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color ScrollBarHoverColor
+    public SKColor ScrollBarHoverColor
     {
         get => _scrollBarHoverColor;
         set
@@ -747,7 +747,7 @@ public class TextBox : UIElementBase
     }
 
     [Category("Appearance")]
-    public Color CharCountColor
+    public SKColor CharCountColor
     {
         get => _charCountColor;
         set
@@ -813,7 +813,7 @@ public class TextBox : UIElementBase
         _themeForeColorSnapshot = ColorScheme.ForeColor;
         _themeBorderColorSnapshot = ColorScheme.BorderColor;
         _themeFocusedBorderColorSnapshot = ColorScheme.AccentColor;
-        _themeSelectionColorSnapshot = ColorScheme.AccentColor.Alpha(90);
+        _themeSelectionColorSnapshot = ColorScheme.AccentColor.WithAlpha(90);
 
         // Ensure our defaults are aligned with the current theme
         if (ForeColor == default)
@@ -843,7 +843,7 @@ public class TextBox : UIElementBase
             FocusedBorderColor = newFocusedBorder;
         _themeFocusedBorderColorSnapshot = newFocusedBorder;
 
-        var newSelection = ColorScheme.AccentColor.Alpha(90);
+        var newSelection = ColorScheme.AccentColor.WithAlpha(90);
         if (SelectionColor == _themeSelectionColorSnapshot)
             SelectionColor = newSelection;
         _themeSelectionColorSnapshot = newSelection;
@@ -867,7 +867,6 @@ public class TextBox : UIElementBase
     private void InitializeCursorBlink()
     {
         var blinkTime = SystemInformation.CaretBlinkTime;
-        // Eğer blink time -1 ise (blink disabled), default 530ms kullan
         if (blinkTime <= 0)
             blinkTime = 530;
 
@@ -876,7 +875,7 @@ public class TextBox : UIElementBase
             Interval = blinkTime,
             Enabled = false
         };
-        _cursorBlinkTimer.Tick += CursorBlinkTimer_Tick;
+        _cursorBlinkTimer.Elapsed += CursorBlinkTimer_Tick;
     }
 
     private void CursorBlinkTimer_Tick(object sender, EventArgs e)
@@ -1083,7 +1082,7 @@ public class TextBox : UIElementBase
 
         if (ShowScrollbar && MultiLine)
         {
-            var scrollBarBounds = new Rectangle(
+            var scrollBarBounds = new SkiaSharp.SKRect(
                 Width - 12,
                 2,
                 8,
@@ -1289,7 +1288,7 @@ public class TextBox : UIElementBase
 
                         var curLine = lines[lineIndex];
                         var localPos = caret - curLine.StartIndex;
-                        var tmp = new SKRect();
+                        var tmp = new SkiaSharp.SKRect();
                         font.MeasureText(
                             curLine.Line.Substring(0, Math.Max(0, Math.Min(curLine.Line.Length, localPos))), out tmp);
                         _preferredCaretX = tmp.Width;
@@ -1336,7 +1335,7 @@ public class TextBox : UIElementBase
 
                         var curLine = lines[lineIndex];
                         var localPos = caret - curLine.StartIndex;
-                        var tmp = new SKRect();
+                        var tmp = new SkiaSharp.SKRect();
                         font.MeasureText(
                             curLine.Line.Substring(0, Math.Max(0, Math.Min(curLine.Line.Length, localPos))), out tmp);
                         _preferredCaretX = tmp.Width;
@@ -1391,29 +1390,28 @@ public class TextBox : UIElementBase
 
         // 1. Draw Background with theme-aware surface color
         var surfaceColor = ResolveSurfaceColor(Enabled);
-        _bgPaint!.Color = surfaceColor.ToSKColor();
-        var backgroundRect = new SKRect(0, 0, bounds.Width, bounds.Height);
+        _bgPaint!.Color = surfaceColor;
+        var backgroundRect = new SkiaSharp.SKRect(0, 0, bounds.Width, bounds.Height);
         canvas.DrawRoundRect(backgroundRect, CornerRadiusScaled, CornerRadiusScaled, _bgPaint);
 
         if (focusProgress > 0.001f)
         {
-            _focusGlowPaint!.Color = FocusedBorderColor.Alpha((int)Math.Round(35 * focusProgress)).ToSKColor();
+            _focusGlowPaint!.Color = FocusedBorderColor.WithAlpha((int)Math.Round(35 * focusProgress));
 
-            var glowRect = new SKRect(0, 0, bounds.Width, bounds.Height);
+            var glowRect = new SkiaSharp.SKRect(0, 0, bounds.Width, bounds.Height);
             canvas.DrawRoundRect(glowRect, CornerRadiusScaled, CornerRadiusScaled, _focusGlowPaint);
         }
 
         // 2. Draw Border (simple, flat)
-        var borderColor = BorderColor.ToSKColor().InterpolateColor(FocusedBorderColor.ToSKColor(), focusProgress)
-            .ToColor();
+        var borderColor = BorderColor.InterpolateColor(FocusedBorderColor, focusProgress);
         if (!Enabled) borderColor = borderColor.Brightness(ColorScheme.BackColor.IsDark() ? -0.05f : -0.1f);
 
-        _borderPaint!.Color = borderColor.ToSKColor();
+        _borderPaint!.Color = borderColor;
         var focusedStroke = Math.Max(2.0f * ScaleFactor, BorderWidthScaled + 0.5f * ScaleFactor);
         _borderPaint.StrokeWidth = BorderWidthScaled + (focusedStroke - BorderWidthScaled) * focusProgress;
 
         var inset = _borderPaint.StrokeWidth / 2;
-        var borderRect = new SKRect(inset, inset, bounds.Width - inset, bounds.Height - inset);
+        var borderRect = new SkiaSharp.SKRect(inset, inset, bounds.Width - inset, bounds.Height - inset);
         canvas.DrawRoundRect(borderRect, CornerRadiusScaled, CornerRadiusScaled, _borderPaint);
 
         // 5. Determine Text to Draw
@@ -1427,13 +1425,13 @@ public class TextBox : UIElementBase
         var metrics = font.Metrics;
 
         // Draw single-line or multi-line text and selection/caret
-        var activeTextColor = (Enabled ? ForeColor : ForeColor.Alpha(120)).ToSKColor();
-        var placeholderColor = ColorScheme.ForeColor.Alpha(140).ToSKColor();
+        var activeTextColor = (Enabled ? ForeColor : ForeColor.WithAlpha(120));
+        var placeholderColor = ColorScheme.ForeColor.WithAlpha(140);
 
         if (!IsRich && !MultiLine)
         {
             // Single-line behavior (existing)
-            var textBounds = new SKRect();
+            var textBounds = new SkiaSharp.SKRect();
             if (!string.IsNullOrEmpty(textToDraw)) font.MeasureText(textToDraw, out textBounds);
 
             // Center vertically based on CapHeight for better visual alignment than full Ascent/Descent
@@ -1454,24 +1452,24 @@ public class TextBox : UIElementBase
             if (!isPlaceholder && Focused && _selectionLength > 0)
             {
                 var selectedText = displayText.Substring(_selectionStart, _selectionLength);
-                var selectedBounds = new SKRect();
+                var selectedBounds = new SkiaSharp.SKRect();
                 font.MeasureText(selectedText, out selectedBounds);
 
                 var selectionStartX = x;
                 if (_selectionStart > 0)
                 {
                     var preText = displayText.Substring(0, _selectionStart);
-                    var preBounds = new SKRect();
+                    var preBounds = new SkiaSharp.SKRect();
                     font.MeasureText(preText, out preBounds);
                     selectionStartX += preBounds.Width;
                 }
 
                 _selectionPaint!.Color =
-                    (SelectionBackColor != Color.Empty ? SelectionBackColor : SelectionColor).ToSKColor();
+                    (SelectionBackColor != SKColor.Empty ? SelectionBackColor : SelectionColor);
                 var selectionTop = y + metrics.Ascent;
                 var selectionBottom = y + metrics.Descent;
 
-                canvas.DrawRect(new SKRect(selectionStartX, selectionTop,
+                canvas.DrawRect(new SkiaSharp.SKRect(selectionStartX, selectionTop,
                     selectionStartX + selectedBounds.Width,
                     selectionBottom), _selectionPaint);
             }
@@ -1479,14 +1477,14 @@ public class TextBox : UIElementBase
             // Cursor (single-line)
             if (Focused && _showCursor && _selectionLength == 0)
             {
-                _cursorPaint!.Color = ForeColor.ToSKColor();
+                _cursorPaint!.Color = ForeColor;
                 _cursorPaint.StrokeWidth = CaretWidthScaled;
 
                 var cursorX = GetTextX(bounds.Width, textBounds.Width) - hOffset;
                 if (!string.IsNullOrEmpty(displayText))
                 {
                     var preText = displayText.Substring(0, Math.Min(_selectionStart, displayText.Length));
-                    var preBounds = new SKRect();
+                    var preBounds = new SkiaSharp.SKRect();
                     font.MeasureText(preText, out preBounds);
                     cursorX += preBounds.Width;
                 }
@@ -1550,8 +1548,8 @@ public class TextBox : UIElementBase
                         var preText = lineText.Substring(0, localStart);
                         var selText = lineText.Substring(localStart, localLen);
 
-                        var preBounds = new SKRect();
-                        var selBounds = new SKRect();
+                        var preBounds = new SkiaSharp.SKRect();
+                        var selBounds = new SkiaSharp.SKRect();
                         font.MeasureText(preText, out preBounds);
                         font.MeasureText(selText, out selBounds);
 
@@ -1559,9 +1557,9 @@ public class TextBox : UIElementBase
                         var bottom = top + (metrics.Descent - metrics.Ascent);
 
                         _selectionPaint!.Color =
-                            (SelectionBackColor != Color.Empty ? SelectionBackColor : SelectionColor).ToSKColor();
+                            (SelectionBackColor != SKColor.Empty ? SelectionBackColor : SelectionColor);
                         canvas.DrawRect(
-                            new SKRect(xOffset + preBounds.Width, top, xOffset + preBounds.Width + selBounds.Width,
+                            new SkiaSharp.SKRect(xOffset + preBounds.Width, top, xOffset + preBounds.Width + selBounds.Width,
                                 bottom), _selectionPaint);
                     }
                 }
@@ -1586,14 +1584,14 @@ public class TextBox : UIElementBase
                 var caretLine = linesWithIdx[caretLineIdx];
                 var localPos = caretIndex - caretLine.StartIndex;
                 var preText = caretLine.Line.Substring(0, localPos);
-                var preBounds = new SKRect();
+                var preBounds = new SkiaSharp.SKRect();
                 font.MeasureText(preText, out preBounds);
 
                 var cursorX = xOffset + preBounds.Width;
                 var cursorTop = paddingTop - _scrollPosition + caretLineIdx * (font.Size + (LineSpacing * ScaleFactor));
                 var cursorBottom = cursorTop + (metrics.Descent - metrics.Ascent);
 
-                _cursorPaint!.Color = ForeColor.ToSKColor();
+                _cursorPaint!.Color = ForeColor;
                 _cursorPaint.StrokeWidth = CaretWidthScaled;
                 canvas.DrawLine(new SKPoint(cursorX, cursorTop), new SKPoint(cursorX, cursorBottom), _cursorPaint);
             }
@@ -1604,8 +1602,8 @@ public class TextBox : UIElementBase
         {
             var countText = MaxLength > 0 ? $"{Text.Length}/{MaxLength}" : Text.Length.ToString();
             var countFont = GetCharCountSkFont();
-            _charCountPaint!.Color = CharCountColor.ToSKColor();
-            var countBounds = new SKRect();
+            _charCountPaint!.Color = CharCountColor;
+            var countBounds = new SkiaSharp.SKRect();
             countFont.MeasureText(countText, out countBounds);
             TextRenderingHelper.DrawText(
                 canvas,
@@ -1619,13 +1617,13 @@ public class TextBox : UIElementBase
         // 11. Scrollbars
         if (ShowScrollbar && MultiLine)
         {
-            var scrollBarBounds = new SKRect(
+            var scrollBarBounds = new SkiaSharp.SKRect(
                 bounds.Width - 12,
                 2,
                 bounds.Width - 4,
                 bounds.Height - 4);
 
-            _scrollbarPaint!.Color = (_isScrollBarHovered ? ScrollBarHoverColor : ScrollBarColor).ToSKColor();
+            _scrollbarPaint!.Color = (_isScrollBarHovered ? ScrollBarHoverColor : ScrollBarColor);
             canvas.DrawRoundRect(scrollBarBounds, 4, 4, _scrollbarPaint);
         }
 
@@ -1670,15 +1668,15 @@ public class TextBox : UIElementBase
                         var preText = line.Substring(0, overlapStart - lineStart);
                         var selText = line.Substring(overlapStart - lineStart, overlapEnd - overlapStart);
 
-                        var preBounds = new SKRect();
-                        var selBounds = new SKRect();
+                        var preBounds = new SkiaSharp.SKRect();
+                        var selBounds = new SkiaSharp.SKRect();
                         font.MeasureText(preText, out preBounds);
                         font.MeasureText(selText, out selBounds);
 
                         _selectionPaint!.Color =
-                            (SelectionBackColor != Color.Empty ? SelectionBackColor : SelectionColor).ToSKColor();
+                            (SelectionBackColor != SKColor.Empty ? SelectionBackColor : SelectionColor);
                         canvas.DrawRect(
-                            new SKRect(
+                            new SkiaSharp.SKRect(
                                 paddingLeft - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0) +
                                 preBounds.Width, top + metrics.Ascent,
                                 paddingLeft - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0) +
@@ -1717,10 +1715,10 @@ public class TextBox : UIElementBase
                         segFont = GetItalicSkFont();
                     else
                         segFont = font;
-                    _richTextPaint!.Color = segStyle != null ? segStyle.Color.ToSKColor() : ForeColor.ToSKColor();
+                    _richTextPaint!.Color = segStyle != null ? segStyle.Color : ForeColor;
 
                     var xPos = paddingLeft - (_horizontalScrollBar.Visible ? _horizontalScrollBar.Value : 0);
-                    var preBounds = new SKRect();
+                    var preBounds = new SkiaSharp.SKRect();
                     font.MeasureText(line.Substring(0, pos), out preBounds);
 
                     TextRenderingHelper.DrawText(
@@ -1738,7 +1736,7 @@ public class TextBox : UIElementBase
             }
 
             // reset rich paint color
-            _richTextPaint!.Color = ForeColor.ToSKColor();
+            _richTextPaint!.Color = ForeColor;
         }
     }
 
@@ -1769,7 +1767,7 @@ public class TextBox : UIElementBase
             _defaultSkFont?.Dispose();
             _defaultSkFont = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Hinting = SKFontHinting.Full,
                 Edging = SKFontEdging.SubpixelAntialias,
@@ -1792,7 +1790,7 @@ public class TextBox : UIElementBase
             _charCountSkFont?.Dispose();
             _charCountSkFont = new SKFont
             {
-                Size = baseSize.PtToPx(this),
+                Size = baseSize.Topx(this),
                 Typeface = FontManager.GetSKTypeface(Font),
                 Subpixel = true
             };
@@ -1820,7 +1818,7 @@ public class TextBox : UIElementBase
             _boldSkFont?.Dispose();
             _boldSkFont = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(_boldSystemFont),
                 Hinting = SKFontHinting.Full,
                 Edging = SKFontEdging.SubpixelAntialias,
@@ -1849,7 +1847,7 @@ public class TextBox : UIElementBase
             _italicSkFont?.Dispose();
             _italicSkFont = new SKFont
             {
-                Size = Font.Size.PtToPx(this),
+                Size = Font.Size.Topx(this),
                 Typeface = FontManager.GetSKTypeface(_italicSystemFont),
                 Hinting = SKFontHinting.Full,
                 Edging = SKFontEdging.SubpixelAntialias,
@@ -1862,9 +1860,9 @@ public class TextBox : UIElementBase
         return _italicSkFont;
     }
 
-    private Color ResolveSurfaceColor(bool enabled)
+    private SKColor ResolveSurfaceColor(bool enabled)
     {
-        var baseColor = BackColor == Color.Transparent ? GetThemedSurfaceColor() : BackColor;
+        var baseColor = BackColor == SKColor.Transparent ? GetThemedSurfaceColor() : BackColor;
         if (enabled)
             return baseColor;
 
@@ -1872,7 +1870,7 @@ public class TextBox : UIElementBase
         return baseColor.Brightness(adjustment);
     }
 
-    private Color GetThemedSurfaceColor()
+    private SKColor GetThemedSurfaceColor()
     {
         // Use the shared theme primitives so the TextBox background tracks theme transitions.
         return ColorScheme.Surface;
@@ -2003,7 +2001,7 @@ public class TextBox : UIElementBase
         base.OnKeyPress(e);
     }
 
-    private void UpdateSelectionFromMousePosition(Point location, bool extend)
+    private void UpdateSelectionFromMousePosition(SKPoint location, bool extend)
     {
         var font = GetDefaultSkFont();
         var linesWithIdx = GetTextLinesWithIndices(font);
@@ -2035,7 +2033,7 @@ public class TextBox : UIElementBase
         float xOffset;
         if (!IsRich && !MultiLine)
         {
-            var textBounds = new SKRect();
+            var textBounds = new SkiaSharp.SKRect();
             font.MeasureText(Text, out textBounds);
             xOffset = GetTextX(ClientRectangle.Width, textBounds.Width) - hScrollOffset;
         }
@@ -2050,7 +2048,7 @@ public class TextBox : UIElementBase
         for (var i = 0; i <= line.Line.Length; i++)
         {
             var textPart = line.Line.Substring(0, i);
-            var bounds = new SKRect();
+            var bounds = new SkiaSharp.SKRect();
             font.MeasureText(textPart, out bounds);
 
             if (bounds.Width >= clickX || i == line.Line.Length)
@@ -2186,7 +2184,7 @@ public class TextBox : UIElementBase
                     for (; pIdx < paragraph.Length; pIdx++)
                     {
                         sb.Append(paragraph[pIdx]);
-                        var bounds = new SKRect();
+                        var bounds = new SkiaSharp.SKRect();
                         font.MeasureText(sb.ToString(), out bounds);
                         if (bounds.Width > availableWidth)
                         {
@@ -2354,7 +2352,7 @@ public class TextBox : UIElementBase
         Invalidate();
     }
 
-    public void SetSelectionColor(Color color)
+    public void SetSelectionColor(SKColor color)
     {
         if (_selectionLength <= 0) return;
         var selStart = _selectionStart;
@@ -2393,7 +2391,7 @@ public class TextBox : UIElementBase
 
         foreach (var line in lines)
         {
-            var tbounds = new SKRect();
+            var tbounds = new SkiaSharp.SKRect();
             font.MeasureText(line, out tbounds);
             maxWidth = Math.Max(maxWidth, tbounds.Width);
         }
@@ -2404,7 +2402,7 @@ public class TextBox : UIElementBase
 
         if (showVertical)
         {
-            _verticalScrollBar.Location = new Point(Width - 12, 0);
+            _verticalScrollBar.Location = new SKPoint(Width - 12, 0);
             _verticalScrollBar.Height = showHorizontal ? Height - 12 : Height;
             _verticalScrollBar.Minimum = 0;
             _verticalScrollBar.Maximum = (int)(totalHeight - Height);
@@ -2414,7 +2412,7 @@ public class TextBox : UIElementBase
 
         if (showHorizontal)
         {
-            _horizontalScrollBar.Location = new Point(0, Height - 12);
+            _horizontalScrollBar.Location = new SKPoint(0, Height - 12);
             _horizontalScrollBar.Width = showVertical ? Width - 12 : Width;
             _horizontalScrollBar.Minimum = 0;
             _horizontalScrollBar.Maximum = (int)(maxWidth - Width);
@@ -2429,7 +2427,7 @@ public class TextBox : UIElementBase
 
 public class TextStyle
 {
-    public TextStyle(string pattern, Color color, bool isBold = false, bool isItalic = false)
+    public TextStyle(string pattern, SKColor color, bool isBold = false, bool isItalic = false)
     {
         Pattern = pattern;
         Color = color;
@@ -2438,7 +2436,7 @@ public class TextStyle
     }
 
     public string Pattern { get; set; }
-    public Color Color { get; set; }
+    public SKColor Color { get; set; }
     public bool IsBold { get; set; }
     public bool IsItalic { get; set; }
 }

@@ -1,7 +1,8 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Collections;
 using System.ComponentModel;
-using System.Drawing;
+
 
 namespace SDUI.Controls;
 
@@ -185,7 +186,7 @@ public partial class ListViewItem
             return item;
         }
 
-        public ListViewSubItem Add(string? text, Color foreColor, Color backColor, Font font)
+        public ListViewSubItem Add(string? text, SKColor foreColor, SKColor backColor, Font font)
         {
             var item = new ListViewSubItem(_owner, text, foreColor, backColor, font);
             Add(item);
@@ -223,7 +224,7 @@ public partial class ListViewItem
             _owner.UpdateSubItems(-1);
         }
 
-        public void AddRange(string[] items, Color foreColor, Color backColor, Font font)
+        public void AddRange(string[] items, SKColor foreColor, SKColor backColor, Font font)
         {
             ArgumentNullException.ThrowIfNull(items);
 

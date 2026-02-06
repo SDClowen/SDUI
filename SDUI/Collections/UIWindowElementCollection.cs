@@ -6,18 +6,18 @@ using SDUI.Controls;
 
 namespace SDUI.Collections;
 
-public class UIWindowElementCollection : IList<UIElementBase>
+public class UIWindowElementCollection : IList<ElementBase>
 {
-    private readonly List<UIElementBase> _items = new(32);
-    private readonly UIWindow _owner;
+    private readonly List<ElementBase> _items = new(32);
+    private readonly UIWindowBase _owner;
     private int _maxZOrder;
 
-    public UIWindowElementCollection(UIWindow owner)
+    public UIWindowElementCollection(UIWindowBase owner)
     {
         _owner = owner;
     }
 
-    public UIElementBase this[int index]
+    public ElementBase this[int index]
     {
         get => _items[index];
         set
@@ -54,7 +54,7 @@ public class UIWindowElementCollection : IList<UIElementBase>
     public int Count => _items.Count;
     public bool IsReadOnly => false;
 
-    public void Add(UIElementBase item)
+    public void Add(ElementBase item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -94,27 +94,27 @@ public class UIWindowElementCollection : IList<UIElementBase>
         }
     }
 
-    public bool Contains(UIElementBase item)
+    public bool Contains(ElementBase item)
     {
         return _items.Contains(item);
     }
 
-    public void CopyTo(UIElementBase[] array, int arrayIndex)
+    public void CopyTo(ElementBase[] array, int arrayIndex)
     {
         _items.CopyTo(array, arrayIndex);
     }
 
-    public IEnumerator<UIElementBase> GetEnumerator()
+    public IEnumerator<ElementBase> GetEnumerator()
     {
         return _items.GetEnumerator();
     }
 
-    public int IndexOf(UIElementBase item)
+    public int IndexOf(ElementBase item)
     {
         return _items.IndexOf(item);
     }
 
-    public void Insert(int index, UIElementBase item)
+    public void Insert(int index, ElementBase item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -135,7 +135,7 @@ public class UIWindowElementCollection : IList<UIElementBase>
         }
     }
 
-    public bool Remove(UIElementBase item)
+    public bool Remove(ElementBase item)
     {
         if (item == null)
             return false;

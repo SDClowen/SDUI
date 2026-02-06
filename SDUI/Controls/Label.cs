@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Windows.Forms;
-using SDUI.Extensions;
-using SDUI.Helpers;
+﻿using SDUI.Helpers;
 using SkiaSharp;
+using System;
+using System.Collections.Generic;
 
 namespace SDUI.Controls;
 
@@ -14,8 +11,6 @@ public class Label : UIElementBase
     private bool _autoEllipsis;
 
     private bool _autoSize;
-
-    private BorderStyle _borderStyle = BorderStyle.None;
 
     private bool _gradientAnimation;
 
@@ -27,9 +22,8 @@ public class Label : UIElementBase
 
     public Label()
     {
-        // Varsayılan gradient renkleri
-        _gradient[0] = Color.Gray.ToSKColor();
-        _gradient[1] = Color.Black.ToSKColor();
+        _gradient[0] = SKColors.Gray;
+        _gradient[1] = SKColors.Black;
     }
 
     public bool AutoEllipsis
@@ -73,16 +67,6 @@ public class Label : UIElementBase
         }
     }
 
-    public BorderStyle BorderStyle
-    {
-        get => _borderStyle;
-        set
-        {
-            _borderStyle = value;
-            Invalidate();
-        }
-    }
-
     public bool ApplyGradient { get; set; }
 
     public bool GradientAnimation
@@ -95,13 +79,13 @@ public class Label : UIElementBase
         }
     }
 
-    public Color[] Gradient
+    public SKColor[] Gradient
     {
-        get => new[] { _gradient[0].ToColor(), _gradient[1].ToColor() };
+        get => [_gradient[0], _gradient[1]];
         set
         {
-            _gradient[0] = value[0].ToSKColor();
-            _gradient[1] = value[1].ToSKColor();
+            _gradient[0] = value[0];
+            _gradient[1] = value[1];
             Invalidate();
         }
     }
@@ -124,7 +108,7 @@ public class Label : UIElementBase
 
         using var font = new SKFont
         {
-            Size = Font.Size.PtToPx(this),
+            Size = Font.Size.Topx(this),
             Typeface = FontManager.GetSKTypeface(Font),
             Subpixel = true,
             Edging = SKFontEdging.SubpixelAntialias
@@ -173,11 +157,11 @@ public class Label : UIElementBase
             Angle = Angle % 360 + 1;
 
         // Arka plan çizimi
-        if (BackColor != Color.Transparent)
+        if (BackColor != SKColors.Transparent)
         {
             using var paint = new SKPaint
             {
-                Color = BackColor.ToSKColor(),
+                Color = BackColor,
                 Style = SKPaintStyle.Fill
             };
             canvas.DrawRect(0, 0, Width, Height, paint);
@@ -189,7 +173,7 @@ public class Label : UIElementBase
             var strokeWidth = 1f * ScaleFactor;
             using var paint = new SKPaint
             {
-                Color = ColorScheme.BorderColor.ToSKColor(),
+                Color = ColorScheme.BorderColor,
                 Style = SKPaintStyle.Stroke,
                 StrokeWidth = strokeWidth,
                 IsAntialias = true
@@ -202,12 +186,12 @@ public class Label : UIElementBase
             else if (BorderStyle == BorderStyle.Fixed3D)
             {
                 // Üst ve sol kenar - açık renk
-                paint.Color = Color.FromArgb(255, 240, 240, 240).ToSKColor();
+                paint.Color = new SKColor(255, 240, 240, 240);
                 canvas.DrawLine(0, Height - 1, 0, 0, paint);
                 canvas.DrawLine(0, 0, Width - 1, 0, paint);
 
                 // Alt ve sağ kenar - koyu renk
-                paint.Color = Color.FromArgb(255, 120, 120, 120).ToSKColor();
+                paint.Color = new SKColor(255, 120, 120, 120);
                 canvas.DrawLine(0, Height - 1, Width - 1, Height - 1, paint);
                 canvas.DrawLine(Width - 1, Height - 1, Width - 1, 0, paint);
             }
@@ -218,7 +202,7 @@ public class Label : UIElementBase
         // Metin çizimi için paint
         using var font = new SKFont
         {
-            Size = Font.Size.PtToPx(this),
+            Size = Font.Size.Topx(this),
             Typeface = FontManager.GetSKTypeface(Font),
             Subpixel = true,
             Edging = SKFontEdging.SubpixelAntialias
@@ -243,7 +227,7 @@ public class Label : UIElementBase
         }
         else
         {
-            textPaint.Color = ColorScheme.ForeColor.ToSKColor();
+            textPaint.Color = ColorScheme.ForeColor;
         }
 
         var availableWidth = Width - Padding.Horizontal;

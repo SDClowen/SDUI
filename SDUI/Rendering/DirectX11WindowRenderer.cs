@@ -24,9 +24,9 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
     private SKBitmap? _cacheBitmap;
     private SKSurface? _cacheSurface;
     private ID3D11DeviceContext? _context;
-    private int _cpuUploadHeight;
+    private uint _cpuUploadHeight;
     private ID3D11Texture2D? _cpuUploadTexture;
-    private int _cpuUploadWidth;
+    private uint _cpuUploadWidth;
 
     private ID3D11Device? _device;
 
@@ -167,7 +167,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             _context?.Flush();
 
             // ResizeBuffers flags must be 0; the GDI-compatible flag is specified at creation time.
-            _swapChain.ResizeBuffers(0, width, height, Format.Unknown, SwapChainFlags.None);
+            _swapChain.ResizeBuffers(0, (uint)width, (uint)height, Format.Unknown, SwapChainFlags.None);
         }
         catch (Exception ex)
         {
@@ -225,7 +225,7 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         }
 
         // #####################
-        var info = new SKImageInfo(width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
+        var info = new SKImageInfo((int)width, height, SKColorType.Bgra8888, SKAlphaType.Premul, SKColorSpace.CreateSrgb());
 
         // If we have a cached CPU backbuffer (within MaxCpuBackBufferBytes), use it.
         if (_cacheSurface != null && _cacheBitmap != null)
@@ -324,8 +324,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         var desc = gdiCompatible
             ? new SwapChainDescription1
             {
-                Width = width,
-                Height = height,
+                Width = (uint)width,
+                Height = (uint)height,
                 Format = Format.B8G8R8A8_UNorm,
                 Stereo = false,
                 SampleDescription = new SampleDescription(1, 0),
@@ -341,8 +341,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
             }
             : new SwapChainDescription1
             {
-                Width = width,
-                Height = height,
+                Width = (uint)width,
+                Height = (uint)height,
                 Format = Format.B8G8R8A8_UNorm,
                 Stereo = false,
                 SampleDescription = new SampleDescription(1, 0),
@@ -460,8 +460,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
 
         var desc = new Texture2DDescription
         {
-            Width = width,
-            Height = height,
+            Width = (uint)width,
+            Height = (uint)height,
             MipLevels = 1,
             ArraySize = 1,
             Format = Format.B8G8R8A8_UNorm,
@@ -473,8 +473,8 @@ internal sealed class DirectX11WindowRenderer : IWindowRenderer, IGpuWindowRende
         };
 
         _cpuUploadTexture = _device.CreateTexture2D(desc);
-        _cpuUploadWidth = width;
-        _cpuUploadHeight = height;
+        _cpuUploadWidth = (uint)width;
+        _cpuUploadHeight = (uint)height;
     }
 
     private unsafe void PresentFromCpuCacheViaD3D11Upload(SKBitmap srcBitmap, int width, int height)

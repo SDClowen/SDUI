@@ -1,7 +1,6 @@
-using SDUI.Animation;
+using SkiaSharp;
 using System;
 using System.Diagnostics;
-using System.Drawing;
 using System.Timers;
 
 namespace SDUI.Animation;
@@ -13,7 +12,7 @@ public class AnimationManager : IDisposable
 {
     private readonly ValueProvider<double> _valueProvider;
     private object[] _animationData;
-    private Point _animationSource;
+    private SKPoint _animationSource;
     private AnimationDirection _currentDirection;
     private bool _disposed;
     private Timer _timer; // Lazy initialization icin readonly kaldirildi
@@ -79,20 +78,20 @@ public class AnimationManager : IDisposable
 
     public void StartNewAnimation(AnimationDirection direction)
     {
-        StartNewAnimation(direction, Point.Empty, null);
+        StartNewAnimation(direction, SKPoint.Empty, null);
     }
 
-    public void StartNewAnimation(AnimationDirection direction, Point source)
+    public void StartNewAnimation(AnimationDirection direction, SKPoint source)
     {
         StartNewAnimation(direction, source, null);
     }
 
     public void StartNewAnimation(AnimationDirection direction, object[] data)
     {
-        StartNewAnimation(direction, Point.Empty, data);
+        StartNewAnimation(direction, SKPoint.Empty, data);
     }
 
-    public void StartNewAnimation(AnimationDirection direction, Point source, object[] data)
+    public void StartNewAnimation(AnimationDirection direction, SKPoint source, object[] data)
     {
         if (Running && !InterruptAnimation)
             return;
@@ -131,12 +130,12 @@ public class AnimationManager : IDisposable
         return _valueProvider.CurrentValue;
     }
 
-    public Point GetSource()
+    public SKPoint GetSource()
     {
         return GetSource(0);
     }
 
-    public Point GetSource(int index)
+    public SKPoint GetSource(int index)
     {
         return _animationSource;
     }

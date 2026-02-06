@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Forms;
@@ -32,18 +32,18 @@ public class TabControl : UIElementBase
     private readonly AnimationManager _selectionAnim;
     private readonly double _selectionAnimIncrement = 0.18;
     private readonly AnimationType _selectionAnimType = AnimationType.EaseInOut;
-    private readonly List<RectangleF> _tabRects = new();
-    private Color _borderColor = ColorScheme.BorderColor;
+    private readonly List<SkiaSharp.SKRect> _tabRects = new();
+    private SKColor _borderColor = ColorScheme.BorderColor;
     private float _borderWidth = 1.0f;
     private float _cornerRadius = 8.0f;
     private int _draggedTabIndex = -1;
-    private Point _dragStartPoint;
+    private SKPoint _dragStartPoint;
     private bool _suppressPageSync;
 
     // Chrome-like styles and animation
-    private Color _headerBackColor = ColorScheme.BackColor;
+    private SKColor _headerBackColor = ColorScheme.BackColor;
 
-    private Color _headerForeColor = ColorScheme.ForeColor;
+    private SKColor _headerForeColor = ColorScheme.ForeColor;
     private int _headerHeight = 40;
 
     private int _hoveredCloseButtonIndex = -1;
@@ -62,15 +62,15 @@ public class TabControl : UIElementBase
     // Scroll support
     private float _scrollOffset;
     private int _selectedIndex = -1;
-    private Color _selectedTabColor = ColorScheme.BackColor;
-    private Color _selectedTabForeColor = ColorScheme.AccentColor;
+    private SKColor _selectedTabColor = ColorScheme.BackColor;
+    private SKColor _selectedTabForeColor = ColorScheme.AccentColor;
     private bool _showLeftChevron;
     private bool _showRightChevron;
     private int _tabGap;
 
     public TabControl()
     {
-        Size = new Size(500, 320);
+        Size = new SKSize(500, 320);
         BackColor = ColorScheme.BackColor;
 
         _headerBackColor = ColorScheme.BackColor2;
@@ -118,7 +118,7 @@ public class TabControl : UIElementBase
     }
 
     // Appearance properties
-    public Color HeaderBackColor
+    public SKColor HeaderBackColor
     {
         get => _headerBackColor;
         set
@@ -129,7 +129,7 @@ public class TabControl : UIElementBase
         }
     }
 
-    public Color HeaderForeColor
+    public SKColor HeaderForeColor
     {
         get => _headerForeColor;
         set
@@ -140,7 +140,7 @@ public class TabControl : UIElementBase
         }
     }
 
-    public Color SelectedTabColor
+    public SKColor SelectedTabColor
     {
         get => _selectedTabColor;
         set
@@ -151,7 +151,7 @@ public class TabControl : UIElementBase
         }
     }
 
-    public Color SelectedTabForeColor
+    public SKColor SelectedTabForeColor
     {
         get => _selectedTabForeColor;
         set
@@ -162,7 +162,7 @@ public class TabControl : UIElementBase
         }
     }
 
-    public Color BorderColor
+    public SKColor BorderColor
     {
         get => _borderColor;
         set
@@ -570,7 +570,7 @@ public class TabControl : UIElementBase
     {
         var contentY = HeaderHeight;
         var contentH = Math.Max(0, Height - HeaderHeight);
-        var contentRect = new Rectangle(0, contentY, Width, contentH);
+        var contentRect = new SkiaSharp.SKRect(0, contentY, Width, contentH);
 
         for (var i = 0; i < _pages.Count; i++)
         {
@@ -642,26 +642,26 @@ public class TabControl : UIElementBase
         base.OnPaint(canvas);
         var bounds = ClientRectangle;
 
-        // canvas.Clear(BackColor.ToSKColor());
+        // canvas.Clear(BackColor);
 
 
         UpdateTabRects();
 
         var isDarkTheme = ColorScheme.BackColor.IsDark();
         var headerColor = isDarkTheme
-            ? Color.FromArgb(
+            ? new SKColor(
                 Math.Min(255, ColorScheme.BackColor.R + 12),
                 Math.Min(255, ColorScheme.BackColor.G + 12),
                 Math.Min(255, ColorScheme.BackColor.B + 12)
             )
-            : Color.FromArgb(
+            : new SKColor(
                 Math.Max(0, ColorScheme.BackColor.R - 6),
                 Math.Max(0, ColorScheme.BackColor.G - 6),
                 Math.Max(0, ColorScheme.BackColor.B - 6)
             );
-        using (var headerPaint = new SKPaint { Color = headerColor.ToSKColor(), IsAntialias = true })
+        using (var headerPaint = new SKPaint { Color = headerColor, IsAntialias = true })
         {
-            canvas.DrawRect(new SKRect(0, 0, bounds.Width, HeaderHeight), headerPaint);
+            canvas.DrawRect(new SkiaSharp.SKRect(0, 0, bounds.Width, HeaderHeight), headerPaint);
         }
 
         // === TAB AREA CLIPPING ===
@@ -683,7 +683,7 @@ public class TabControl : UIElementBase
             clipEnd = Width - (_showRightChevron ? ChevronWidth + margin : margin);
         }
 
-        canvas.ClipRect(new SKRect(clipStart, 0, clipEnd, HeaderHeight));
+        canvas.ClipRect(new SkiaSharp.SKRect(clipStart, 0, clipEnd, HeaderHeight));
 
         // === DRAW TABS ===
         for (var i = 0; i < _pages.Count; i++)
@@ -722,7 +722,7 @@ public class TabControl : UIElementBase
             var verticalMargin = (HeaderHeight - tabHeight) / 2f;
             var topRadius = fontSize / 2f;
 
-            var tabRect = new SKRect(
+            var tabRect = new SkiaSharp.SKRect(
                 rect.Left + tabPadding,
                 verticalMargin,
                 rect.Right - tabPadding,
@@ -750,14 +750,14 @@ public class TabControl : UIElementBase
                     var selectedColor = ColorScheme.BackColor;
                     var headerBg = headerColor;
 
-                    var blendedColor = Color.FromArgb(
+                    var blendedColor = new SKColor(
                         (int)(headerBg.R + (selectedColor.R - headerBg.R) * selectionProgress),
                         (int)(headerBg.G + (selectedColor.G - headerBg.G) * selectionProgress),
                         (int)(headerBg.B + (selectedColor.B - headerBg.B) * selectionProgress)
                     );
 
-                    bgPaint.Color = Color
-                        .FromArgb((int)(255 * animAlpha), blendedColor.R, blendedColor.G, blendedColor.B).ToSKColor();
+                    bgPaint.Color = SKColor
+                        .FromArgb((int)(255 * animAlpha), blendedColor.R, blendedColor.G, blendedColor.B);
                 }
                 else
                 {
@@ -765,23 +765,23 @@ public class TabControl : UIElementBase
                     var baseBg = headerColor;
 
                     var hoverBg = isDarkTheme
-                        ? Color.FromArgb(
+                        ? new SKColor(
                             Math.Min(255, ColorScheme.BackColor.R + 20),
                             Math.Min(255, ColorScheme.BackColor.G + 20),
                             Math.Min(255, ColorScheme.BackColor.B + 20)
                         )
-                        : Color.FromArgb(
+                        : new SKColor(
                             Math.Max(0, ColorScheme.BackColor.R - 12),
                             Math.Max(0, ColorScheme.BackColor.G - 12),
                             Math.Max(0, ColorScheme.BackColor.B - 12)
                         );
 
-                    var blended = Color.FromArgb(
+                    var blended = new SKColor(
                         (int)(baseBg.R + (hoverBg.R - baseBg.R) * hoverProgress),
                         (int)(baseBg.G + (hoverBg.G - baseBg.G) * hoverProgress),
                         (int)(baseBg.B + (hoverBg.B - baseBg.B) * hoverProgress)
                     );
-                    bgPaint.Color = Color.FromArgb((int)(255 * animAlpha), blended.R, blended.G, blended.B).ToSKColor();
+                    bgPaint.Color = new SKColor((int)(255 * animAlpha), blended.R, blended.G, blended.B);
                 }
 
                 canvas.DrawRoundRect(tabRect, topRadius, topRadius, bgPaint);
@@ -792,7 +792,7 @@ public class TabControl : UIElementBase
             {
                 using var borderPaint = new SKPaint
                 {
-                    Color = ColorScheme.BorderColor.Alpha((int)(animAlpha * 32)).ToSKColor(),
+                    Color = ColorScheme.BorderColor.WithAlpha((int)(animAlpha * 32)),
                     Style = SKPaintStyle.Stroke,
                     StrokeWidth = 1f,
                     IsAntialias = true
@@ -808,15 +808,15 @@ public class TabControl : UIElementBase
                 textSelectionProgress = 1f - (float)_selectionAnim.GetProgress();
 
             var selectedTextColor = ColorScheme.ForeColor;
-            var unselectedTextColor = Color.FromArgb(
+            var unselectedTextColor = new SKColor(
                 Math.Max(0, (int)(ColorScheme.ForeColor.R * 0.6)),
                 Math.Max(0, (int)(ColorScheme.ForeColor.G * 0.6)),
                 Math.Max(0, (int)(ColorScheme.ForeColor.B * 0.6))
             );
 
-            Color textColor;
+            SKColor textColor;
             if (isSelected || (i == _prevSelectedIndex && _selectionAnim.IsAnimating()))
-                textColor = Color.FromArgb(
+                textColor = new SKColor(
                     (int)(unselectedTextColor.R +
                           (selectedTextColor.R - unselectedTextColor.R) * textSelectionProgress),
                     (int)(unselectedTextColor.G +
@@ -843,7 +843,7 @@ public class TabControl : UIElementBase
             using (var textPaint = new SKPaint
                    {
                        Color =
-                           Color.FromArgb((int)(255 * animAlpha), textColor.R, textColor.G, textColor.B).ToSKColor(),
+                           new SKColor((int)(255 * animAlpha), textColor.R, textColor.G, textColor.B),
                        IsAntialias = true
                    })
             {
@@ -857,12 +857,12 @@ public class TabControl : UIElementBase
                     {
                         var iconX = tabRect.Left + sidePadding;
                         var iconY = tabRect.MidY - iconSize / 2f;
-                        var iconRect = new SKRect(iconX, iconY, iconX + iconSize, iconY + iconSize);
+                        var iconRect = new SkiaSharp.SKRect(iconX, iconY, iconX + iconSize, iconY + iconSize);
                         using var iconPaint = new SKPaint
                         {
                             IsAntialias = true,
                             FilterQuality = SKFilterQuality.Medium,
-                            Color = new SKColor(255, 255, 255, (byte)(255 * animAlpha))
+                            Color = new SkiaSharp.SKColor(255, 255, 255, (byte)(255 * animAlpha))
                         };
                         canvas.DrawBitmap(iconBitmap, iconRect, iconPaint);
                     }
@@ -891,31 +891,31 @@ public class TabControl : UIElementBase
                 var closeRightMargin = sidePadding / 2f;
                 var closeX = tabRect.Right - closeSize - closeRightMargin;
                 var closeY = tabRect.MidY - closeSize / 2;
-                var closeRect = new SKRect(closeX, closeY, closeX + closeSize, closeY + closeSize);
+                var closeRect = new SkiaSharp.SKRect(closeX, closeY, closeX + closeSize, closeY + closeSize);
                 var isCloseHovered = i == _hoveredCloseButtonIndex;
 
                 if (isCloseHovered)
                 {
                     var circleColor = isDarkTheme
-                        ? Color.FromArgb(200, 255, 255, 255)
-                        : Color.FromArgb(180, 0, 0, 0);
+                        ? new SKColor(200, 255, 255, 255)
+                        : new SKColor(180, 0, 0, 0);
 
                     using var closeBgPaint = new SKPaint
                     {
-                        Color = Color.FromArgb((int)(circleColor.A * animAlpha), circleColor.R, circleColor.G,
-                            circleColor.B).ToSKColor(),
+                        Color = new SKColor((int)(circleColor.A * animAlpha), circleColor.R, circleColor.G,
+                            circleColor.B),
                         IsAntialias = true
                     };
                     canvas.DrawCircle(closeRect.MidX, closeRect.MidY, closeSize / 2, closeBgPaint);
                 }
 
                 var lineColor = isCloseHovered
-                    ? isDarkTheme ? Color.FromArgb(30, 30, 30) : Color.FromArgb(255, 255, 255)
+                    ? isDarkTheme ? new SKColor(30, 30, 30) : new SKColor(255, 255, 255)
                     : ColorScheme.ForeColor;
 
                 using var linePaint = new SKPaint
                 {
-                    Color = Color.FromArgb((int)(255 * animAlpha), lineColor.R, lineColor.G, lineColor.B).ToSKColor(),
+                    Color = new SKColor((int)(255 * animAlpha), lineColor.R, lineColor.G, lineColor.B),
                     StrokeWidth = 1.2f,
                     IsAntialias = true,
                     StrokeCap = SKStrokeCap.Round
@@ -933,16 +933,16 @@ public class TabControl : UIElementBase
 
         DrawChevrons(canvas, bounds);
 
-        using (var borderPaint = new SKPaint { Color = ColorScheme.BorderColor.ToSKColor(), StrokeWidth = 1f })
+        using (var borderPaint = new SKPaint { Color = ColorScheme.BorderColor, StrokeWidth = 1f })
         {
             canvas.DrawLine(0, HeaderHeight - 1, bounds.Width, HeaderHeight - 1, borderPaint);
         }
 
         DrawNewPageButton(canvas, bounds);
 
-        using (var contentBgPaint = new SKPaint { Color = ColorScheme.BackColor.ToSKColor(), IsAntialias = true })
+        using (var contentBgPaint = new SKPaint { Color = ColorScheme.BackColor, IsAntialias = true })
         {
-            canvas.DrawRect(new SKRect(0, HeaderHeight, bounds.Width, bounds.Height), contentBgPaint);
+            canvas.DrawRect(new SkiaSharp.SKRect(0, HeaderHeight, bounds.Width, bounds.Height), contentBgPaint);
         }
 
         if (_selectedIndex >= 0 && _selectedIndex < _pages.Count)
@@ -950,11 +950,11 @@ public class TabControl : UIElementBase
             var selectedPage = _pages[_selectedIndex];
             if (selectedPage.Visible)
             {
-                selectedPage.Location = new Point(0, HeaderHeight);
-                selectedPage.Size = new Size(bounds.Width, bounds.Height - HeaderHeight);
+                selectedPage.Location = new SKPoint(0, HeaderHeight);
+                selectedPage.Size = new SKSize(bounds.Width, bounds.Height - HeaderHeight);
 
                 canvas.Save();
-                canvas.ClipRect(new SKRect(0, HeaderHeight, bounds.Width, bounds.Height));
+                canvas.ClipRect(new SkiaSharp.SKRect(0, HeaderHeight, bounds.Width, bounds.Height));
                 selectedPage.Render(canvas);
                 canvas.Restore();
             }
@@ -1104,7 +1104,7 @@ public class TabControl : UIElementBase
         }
     }
 
-    private int GetTabIndexAtPoint(Point point)
+    private int GetTabIndexAtPoint(SKPoint point)
     {
         if (point.Y > HeaderHeight) return -1;
 
@@ -1114,7 +1114,7 @@ public class TabControl : UIElementBase
         return -1;
     }
 
-    private int GetCloseButtonIndexAtPoint(Point point)
+    private int GetCloseButtonIndexAtPoint(SKPoint point)
     {
         if (!RenderPageClose || point.Y > HeaderHeight) return -1;
         
@@ -1128,7 +1128,7 @@ public class TabControl : UIElementBase
             var tabHeight = fontSize * 2.2f;
             var verticalMargin = (HeaderHeight - tabHeight) / 2f;
 
-            var tabRect = new SKRect(
+            var tabRect = new SkiaSharp.SKRect(
                 rect.Left + tabPadding,
                 verticalMargin,
                 rect.Right - tabPadding,
@@ -1160,19 +1160,19 @@ public class TabControl : UIElementBase
         Invalidate();
     }
 
-    private void DrawChevrons(SKCanvas canvas, Rectangle bounds)
+    private void DrawChevrons(SKCanvas canvas, SkiaSharp.SKRect bounds)
     {
         var isDarkTheme = ColorScheme.BackColor.IsDark();
 
         // Ensure page bounds are updated when header area changes
         UpdatePagesLayout();
         var chevBg = isDarkTheme
-            ? Color.FromArgb(
+            ? new SKColor(
                 Math.Min(255, ColorScheme.BackColor.R + 12),
                 Math.Min(255, ColorScheme.BackColor.G + 12),
                 Math.Min(255, ColorScheme.BackColor.B + 12)
             )
-            : Color.FromArgb(
+            : new SKColor(
                 Math.Max(0, ColorScheme.BackColor.R - 6),
                 Math.Max(0, ColorScheme.BackColor.G - 6),
                 Math.Max(0, ColorScheme.BackColor.B - 6)
@@ -1180,13 +1180,13 @@ public class TabControl : UIElementBase
 
         if (_showLeftChevron)
         {
-            var leftRect = new SKRect(0, 0, ChevronWidth, HeaderHeight);
-            using var bg = new SKPaint { Color = chevBg.ToSKColor(), IsAntialias = true };
+            var leftRect = new SkiaSharp.SKRect(0, 0, ChevronWidth, HeaderHeight);
+            using var bg = new SKPaint { Color = chevBg, IsAntialias = true };
             canvas.DrawRect(leftRect, bg);
 
             var chevColor = _leftChevronHovered
                 ? ColorScheme.AccentColor
-                : Color.FromArgb(
+                : new SKColor(
                     Math.Max(0, (int)(ColorScheme.ForeColor.R * 0.55)),
                     Math.Max(0, (int)(ColorScheme.ForeColor.G * 0.55)),
                     Math.Max(0, (int)(ColorScheme.ForeColor.B * 0.55))
@@ -1194,7 +1194,7 @@ public class TabControl : UIElementBase
 
             using var p = new SKPaint
             {
-                Color = chevColor.ToSKColor(),
+                Color = chevColor,
                 StrokeWidth = 2.5f,
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
@@ -1212,13 +1212,13 @@ public class TabControl : UIElementBase
 
         if (_showRightChevron)
         {
-            var rightRect = new SKRect(bounds.Width - ChevronWidth, 0, bounds.Width, HeaderHeight);
-            using var bg2 = new SKPaint { Color = chevBg.ToSKColor(), IsAntialias = true };
+            var rightRect = new SkiaSharp.SKRect(bounds.Width - ChevronWidth, 0, bounds.Width, HeaderHeight);
+            using var bg2 = new SKPaint { Color = chevBg, IsAntialias = true };
             canvas.DrawRect(rightRect, bg2);
 
             var chevColor = _rightChevronHovered
                 ? ColorScheme.AccentColor
-                : Color.FromArgb(
+                : new SKColor(
                     Math.Max(0, (int)(ColorScheme.ForeColor.R * 0.55)),
                     Math.Max(0, (int)(ColorScheme.ForeColor.G * 0.55)),
                     Math.Max(0, (int)(ColorScheme.ForeColor.B * 0.55))
@@ -1226,7 +1226,7 @@ public class TabControl : UIElementBase
 
             using var p2 = new SKPaint
             {
-                Color = chevColor.ToSKColor(),
+                Color = chevColor,
                 StrokeWidth = 2.5f,
                 IsAntialias = true,
                 Style = SKPaintStyle.Stroke,
@@ -1243,7 +1243,7 @@ public class TabControl : UIElementBase
         }
     }
 
-    private void DrawNewPageButton(SKCanvas canvas, Rectangle bounds)
+    private void DrawNewPageButton(SKCanvas canvas, SkiaSharp.SKRect bounds)
     {
         if (!RenderNewPageButton) return;
 
@@ -1268,23 +1268,23 @@ public class TabControl : UIElementBase
             buttonX = _showLeftChevron ? ChevronWidth + 8f * ScaleFactor : 8f * ScaleFactor;
         }
 
-        var buttonRect = new SKRect(buttonX, buttonY, buttonX + buttonSize, buttonY + buttonSize);
+        var buttonRect = new SkiaSharp.SKRect(buttonX, buttonY, buttonX + buttonSize, buttonY + buttonSize);
 
         if (_isNewPageButtonHovered)
         {
             var isDarkTheme = ColorScheme.BackColor.IsDark();
             var btnBg = isDarkTheme
-                ? Color.FromArgb(
+                ? new SKColor(
                     Math.Min(255, ColorScheme.BackColor.R + 25),
                     Math.Min(255, ColorScheme.BackColor.G + 25),
                     Math.Min(255, ColorScheme.BackColor.B + 25)
                 )
-                : Color.FromArgb(
+                : new SKColor(
                     Math.Max(0, ColorScheme.BackColor.R - 20),
                     Math.Max(0, ColorScheme.BackColor.G - 20),
                     Math.Max(0, ColorScheme.BackColor.B - 20)
                 );
-            using var bgPaint = new SKPaint { Color = btnBg.ToSKColor(), IsAntialias = true };
+            using var bgPaint = new SKPaint { Color = btnBg, IsAntialias = true };
             canvas.DrawRect(buttonRect, bgPaint);
         }
 
@@ -1294,7 +1294,7 @@ public class TabControl : UIElementBase
 
         using var plusPaint = new SKPaint
         {
-            Color = iconColor.ToSKColor(),
+            Color = iconColor,
             StrokeWidth = 2f,
             IsAntialias = true,
             StrokeCap = SKStrokeCap.Round
@@ -1317,7 +1317,7 @@ public class TabPage : UIElementBase
     {
         Visible = true;
         BackColor = ColorScheme.BackColor;
-        Size = new Size(400, 260);
+        Size = new SKSize(400, 260);
     }
 
     [Category("Appearance")]
@@ -1369,9 +1369,9 @@ public class TabPage : UIElementBase
 
     public override void OnPaint(SKCanvas canvas)
     {
-        if (BackColor != Color.Transparent)
+        if (BackColor != SKColor.Transparent)
         {
-            using var bgPaint = new SKPaint { Color = BackColor.ToSKColor(), IsAntialias = true };
+            using var bgPaint = new SKPaint { Color = BackColor, IsAntialias = true };
             canvas.DrawRect(0, 0, Width, Height, bgPaint);
         }
 

@@ -4,7 +4,7 @@ namespace SDUI.Validations;
 
 public class RequiredFieldValidationRule : ValidationRule
 {
-    public override bool Validate(UIElementBase element, out string errorMessage)
+    public override bool Validate(ElementBase element, out string errorMessage)
     {
         if (string.IsNullOrWhiteSpace(element.Text))
         {

@@ -1,11 +1,12 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.Diagnostics;
-using System.Drawing;
+
 using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
-public class WindowPageControl : UIElementBase
+public class WindowPageControl : ElementBase
 {
     private EventHandler<int> _onSelectedIndexChanged;
 
@@ -13,7 +14,7 @@ public class WindowPageControl : UIElementBase
 
     public WindowPageControl()
     {
-        BackColor = Color.Transparent;
+        BackColor = SKColors.Transparent;
     }
 
     public int SelectedIndex
@@ -63,7 +64,7 @@ public class WindowPageControl : UIElementBase
         base.OnControlAdded(e);
 
         e.Element.Dock = DockStyle.Fill;
-        e.Element.BackColor = Color.Transparent;
+        e.Element.BackColor = SKColors.Transparent;
         e.Element.Visible = Controls.Count == 1;
 
         if (Controls.Count == 1)

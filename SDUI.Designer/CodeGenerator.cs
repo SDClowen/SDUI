@@ -15,7 +15,7 @@ public static class CodeGenerator
 
         // Using statements
         sb.AppendLine("using System;");
-        sb.AppendLine("using System.Drawing;");
+        sb.AppendLine("");
         sb.AppendLine("using SDUI.Controls;");
         sb.AppendLine();
 
@@ -70,7 +70,7 @@ public static class CodeGenerator
         sb.AppendLine("        {");
 
         // Common properties
-        sb.AppendLine($"            Location = new Point({designControl.Control.Location.X}, {designControl.Control.Location.Y}),");
+        sb.AppendLine($"            Location = new SKPoint({designControl.Control.Location.X}, {designControl.Control.Location.Y}),");
         sb.AppendLine($"            Size = new Size({designControl.Control.Size.Width}, {designControl.Control.Size.Height}),");
 
         // Text property

@@ -61,7 +61,7 @@ User Action → DesignSurface Event → ViewModel Update → UI Refresh
 
 **Grid Snapping Algoritması:**
 ```csharp
-Point SnapToGrid(Point p) => new Point(
+SKPoint SnapToGrid(SKPoint p) => new SKPoint(
     (p.X / GridSize) * GridSize,
     (p.Y / GridSize) * GridSize
 );

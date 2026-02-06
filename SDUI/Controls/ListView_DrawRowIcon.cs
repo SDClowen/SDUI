@@ -12,10 +12,10 @@ public partial class ListView
     {
         var backPaint = GetFillPaint();
         var gridPaint = GetGridPaint();
-        gridPaint.Color = ColorScheme.OutlineVariant.ToSKColor();
+        gridPaint.Color = ColorScheme.OutlineVariant;
         gridPaint.StrokeWidth = 0.5f;
         var textPaint = GetTextPaint();
-        textPaint.Color = ColorScheme.OnSurface.ToSKColor();
+        textPaint.Color = ColorScheme.OnSurface;
 
         SKFont rowFont = null;
         var disposeRowFont = false;
@@ -32,12 +32,12 @@ public partial class ListView
         // Row background is expensive; only draw when needed (selection/explicit custom backcolor).
         var hasCustomBack = row.SubItems.Count > 0 && row.SubItems[0].CustomBackColor;
         var shouldFillBackground = row.StateSelected || hasCustomBack;
-        var rect = new SKRect(0, y, Width, y + RowHeight);
+        var rect = new SkiaSharp.SKRect(0, y, Width, y + RowHeight);
         if (shouldFillBackground)
         {
             backPaint.Color = row.StateSelected
-                ? ColorScheme.PrimaryContainer.ToSKColor()
-                : row.SubItems[0].BackColor.ToSKColor();
+                ? ColorScheme.PrimaryContainer
+                : row.SubItems[0].BackColor;
             canvas.DrawRect(rect, backPaint);
         }
 
@@ -74,9 +74,9 @@ public partial class ListView
         for (; i < row.SubItems.Count && i < Columns.Count && x < Width; i++)
         {
             var defaultFore = row.StateSelected
-                ? ColorScheme.OnPrimaryContainer.ToSKColor()
-                : ColorScheme.OnSurface.ToSKColor();
-            var foreColor = !row.ForeColor.IsEmpty ? row.ForeColor.ToSKColor() : defaultFore;
+                ? ColorScheme.OnPrimaryContainer
+                : ColorScheme.OnSurface;
+            var foreColor = !row.ForeColor.IsEmpty ? row.ForeColor : defaultFore;
             textPaint.Color = foreColor;
 
             // Vertical centering using font metrics from SKFont

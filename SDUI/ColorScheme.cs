@@ -1,5 +1,6 @@
-﻿using System;
-using System.Drawing;
+﻿using SkiaSharp;
+using System;
+
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,8 +17,8 @@ public class ColorScheme
     private static int _themeChangedQueued;
 
     // Theme background transition (drives surface + derived colors)
-    private static Color _themeBackgroundFrom = Color.FromArgb(250, 250, 250);
-    private static Color _themeBackgroundTo = Color.FromArgb(250, 250, 250);
+    private static SKColor _themeBackgroundFrom = new SKColor(250, 250, 250);
+    private static SKColor _themeBackgroundTo = new SKColor(250, 250, 250);
     private static int _themeTransitionId;
 
     private static double _accentTransitionProgress = 1.0;
@@ -25,20 +26,20 @@ public class ColorScheme
     private static readonly object _accentLock = new();
 
     // Accent palette transition (light/dark variants)
-    private static Color _primaryLightFrom = Color.FromArgb(33, 150, 243); // #2196F3
-    private static Color _primaryLightTo = Color.FromArgb(33, 150, 243);
-    private static Color _primaryDarkFrom = Color.FromArgb(30, 136, 229); // #1E88E5
-    private static Color _primaryDarkTo = Color.FromArgb(30, 136, 229);
+    private static SKColor _primaryLightFrom = new (33, 150, 243); // #2196F3
+    private static SKColor _primaryLightTo = new(33, 150, 243);
+    private static SKColor _primaryDarkFrom = new SKColor(30, 136, 229); // #1E88E5
+    private static SKColor _primaryDarkTo = new SKColor(30, 136, 229);
 
-    private static Color _primaryContainerLightFrom = Color.FromArgb(227, 242, 253); // #E3F2FD
-    private static Color _primaryContainerLightTo = Color.FromArgb(227, 242, 253);
-    private static Color _primaryContainerDarkFrom = Color.FromArgb(25, 118, 210); // #1976D2
-    private static Color _primaryContainerDarkTo = Color.FromArgb(25, 118, 210);
+    private static SKColor _primaryContainerLightFrom = new SKColor(227, 242, 253); // #E3F2FD
+    private static SKColor _primaryContainerLightTo = new SKColor(227, 242, 253);
+    private static SKColor _primaryContainerDarkFrom = new SKColor(25, 118, 210); // #1976D2
+    private static SKColor _primaryContainerDarkTo = new SKColor(25, 118, 210);
 
-    private static Color _onPrimaryContainerLightFrom = Color.FromArgb(13, 71, 161);
-    private static Color _onPrimaryContainerLightTo = Color.FromArgb(13, 71, 161);
-    private static Color _onPrimaryContainerDarkFrom = Color.FromArgb(227, 242, 253);
-    private static Color _onPrimaryContainerDarkTo = Color.FromArgb(227, 242, 253);
+    private static SKColor _onPrimaryContainerLightFrom = new SKColor(13, 71, 161);
+    private static SKColor _onPrimaryContainerLightTo = new SKColor(13, 71, 161);
+    private static SKColor _onPrimaryContainerDarkFrom = new SKColor(227, 242, 253);
+    private static SKColor _onPrimaryContainerDarkTo = new SKColor(227, 242, 253);
 
     /// <summary>
     ///     Gets or sets debug borders for layout inspection
@@ -62,7 +63,7 @@ public class ColorScheme
 
             // Even if the flag is already equal, user intent may be to jump back to the
             // canonical light/dark background (e.g. after random background theme).
-            var targetBackground = value ? Color.FromArgb(28, 28, 30) : Color.FromArgb(250, 250, 250);
+            var targetBackground = value ? new SKColor(28, 28, 30) : new SKColor(250, 250, 250);
             if (_isDarkMode == value && ThemeTransitionProgress >= 0.999 &&
                 ColorsClose(CurrentThemeBackground, targetBackground))
                 return;
@@ -99,102 +100,102 @@ public class ColorScheme
         }
     }
 
-    private static Color CurrentThemeBackground =>
+    private static SKColor CurrentThemeBackground =>
         Lerp(_themeBackgroundFrom, _themeBackgroundTo, ThemeTransitionProgress);
 
     private static bool CurrentIsDark => RelativeLuminance(CurrentThemeBackground) < 0.45;
 
     // Surface colors (derived from current transitioning background)
-    public static Color Surface => CurrentThemeBackground;
-    public static Color BackColor => CurrentThemeBackground;
-    public static Color ForeColor => ReadableOn(CurrentThemeBackground);
+    public static SKColor Surface => CurrentThemeBackground;
+    public static SKColor BackColor => CurrentThemeBackground;
+    public static SKColor ForeColor => ReadableOn(CurrentThemeBackground);
 
-    public static Color SurfaceVariant => SurfaceAdjust(Surface, 0.10);
-    public static Color SurfaceContainerLowest => SurfaceAdjust(Surface, 0.03);
-    public static Color SurfaceContainerLow => SurfaceAdjust(Surface, 0.06);
-    public static Color SurfaceContainer => SurfaceAdjust(Surface, 0.08);
-    public static Color SurfaceContainerHigh => SurfaceAdjust(Surface, 0.12);
+    public static SKColor SurfaceVariant => SurfaceAdjust(Surface, 0.10);
+    public static SKColor SurfaceContainerLowest => SurfaceAdjust(Surface, 0.03);
+    public static SKColor SurfaceContainerLow => SurfaceAdjust(Surface, 0.06);
+    public static SKColor SurfaceContainer => SurfaceAdjust(Surface, 0.08);
+    public static SKColor SurfaceContainerHigh => SurfaceAdjust(Surface, 0.12);
 
     // Accent colors - DodgerBlue-ish modern palette
-    private static Color PrimaryLightCurrent => Lerp(_primaryLightFrom, _primaryLightTo, AccentTransitionProgress);
-    private static Color PrimaryDarkCurrent => Lerp(_primaryDarkFrom, _primaryDarkTo, AccentTransitionProgress);
+    private static SKColor PrimaryLightCurrent => Lerp(_primaryLightFrom, _primaryLightTo, AccentTransitionProgress);
+    private static SKColor PrimaryDarkCurrent => Lerp(_primaryDarkFrom, _primaryDarkTo, AccentTransitionProgress);
 
-    private static Color PrimaryContainerLightCurrent =>
+    private static SKColor PrimaryContainerLightCurrent =>
         Lerp(_primaryContainerLightFrom, _primaryContainerLightTo, AccentTransitionProgress);
 
-    private static Color PrimaryContainerDarkCurrent =>
+    private static SKColor PrimaryContainerDarkCurrent =>
         Lerp(_primaryContainerDarkFrom, _primaryContainerDarkTo, AccentTransitionProgress);
 
-    private static Color OnPrimaryContainerLightCurrent => Lerp(_onPrimaryContainerLightFrom,
+    private static SKColor OnPrimaryContainerLightCurrent => Lerp(_onPrimaryContainerLightFrom,
         _onPrimaryContainerLightTo, AccentTransitionProgress);
 
-    private static Color OnPrimaryContainerDarkCurrent => Lerp(_onPrimaryContainerDarkFrom, _onPrimaryContainerDarkTo,
+    private static SKColor OnPrimaryContainerDarkCurrent => Lerp(_onPrimaryContainerDarkFrom, _onPrimaryContainerDarkTo,
         AccentTransitionProgress);
 
-    public static Color Primary => CurrentIsDark ? PrimaryDarkCurrent : PrimaryLightCurrent;
-    public static Color PrimaryContainer => CurrentIsDark ? PrimaryContainerDarkCurrent : PrimaryContainerLightCurrent;
-    public static Color OnPrimary => Color.FromArgb(255, 255, 255);
+    public static SKColor Primary => CurrentIsDark ? PrimaryDarkCurrent : PrimaryLightCurrent;
+    public static SKColor PrimaryContainer => CurrentIsDark ? PrimaryContainerDarkCurrent : PrimaryContainerLightCurrent;
+    public static SKColor OnPrimary => new SKColor(255, 255, 255);
 
-    public static Color OnPrimaryContainer =>
+    public static SKColor OnPrimaryContainer =>
         CurrentIsDark ? OnPrimaryContainerDarkCurrent : OnPrimaryContainerLightCurrent;
 
-    public static Color Secondary => CurrentIsDark ? Color.FromArgb(120, 144, 156) : Color.FromArgb(96, 125, 139);
+    public static SKColor Secondary => CurrentIsDark ? new SKColor(120, 144, 156) : new SKColor(96, 125, 139);
 
-    public static Color SecondaryContainer =>
-        CurrentIsDark ? Color.FromArgb(55, 71, 79) : Color.FromArgb(236, 239, 241);
+    public static SKColor SecondaryContainer =>
+        CurrentIsDark ? new SKColor(55, 71, 79) : new SKColor(236, 239, 241);
 
-    public static Color Tertiary => CurrentIsDark ? Color.FromArgb(255, 183, 77) : Color.FromArgb(255, 152, 0);
+    public static SKColor Tertiary => CurrentIsDark ? new SKColor(255, 183, 77) : new SKColor(255, 152, 0);
 
-    public static Color TertiaryContainer =>
-        CurrentIsDark ? Color.FromArgb(239, 108, 0) : Color.FromArgb(255, 243, 224);
+    public static SKColor TertiaryContainer =>
+        CurrentIsDark ? new SKColor(239, 108, 0) : new SKColor(255, 243, 224);
 
     // Semantic colors
-    public static Color Error => CurrentIsDark ? Color.FromArgb(255, 100, 100) : Color.FromArgb(220, 50, 50);
-    public static Color ErrorContainer => CurrentIsDark ? Color.FromArgb(100, 40, 40) : Color.FromArgb(255, 230, 230);
-    public static Color OnError => Color.FromArgb(255, 255, 255);
+    public static SKColor Error => CurrentIsDark ? new SKColor(255, 100, 100) : new SKColor(220, 50, 50);
+    public static SKColor ErrorContainer => CurrentIsDark ? new SKColor(100, 40, 40) : new SKColor(255, 230, 230);
+    public static SKColor OnError => new SKColor(255, 255, 255);
 
-    public static Color Success => CurrentIsDark ? Color.FromArgb(100, 255, 150) : Color.FromArgb(50, 200, 100);
-    public static Color SuccessContainer => CurrentIsDark ? Color.FromArgb(30, 80, 40) : Color.FromArgb(230, 255, 240);
+    public static SKColor Success => CurrentIsDark ? new SKColor(100, 255, 150) : new SKColor(50, 200, 100);
+    public static SKColor SuccessContainer => CurrentIsDark ? new SKColor(30, 80, 40) : new SKColor(230, 255, 240);
 
-    public static Color Warning => CurrentIsDark ? Color.FromArgb(255, 200, 100) : Color.FromArgb(220, 150, 50);
-    public static Color WarningContainer => CurrentIsDark ? Color.FromArgb(100, 70, 30) : Color.FromArgb(255, 245, 230);
+    public static SKColor Warning => CurrentIsDark ? new SKColor(255, 200, 100) : new SKColor(220, 150, 50);
+    public static SKColor WarningContainer => CurrentIsDark ? new SKColor(100, 70, 30) : new SKColor(255, 245, 230);
 
     // Outlines and borders
-    public static Color Outline => SurfaceAdjust(Surface, 0.22);
-    public static Color OutlineVariant => SurfaceAdjust(Surface, 0.16);
+    public static SKColor Outline => SurfaceAdjust(Surface, 0.22);
+    public static SKColor OutlineVariant => SurfaceAdjust(Surface, 0.16);
 
     // Shadows and elevation
-    public static Color Shadow => Color.FromArgb(0, 0, 0);
-    public static Color Scrim => Color.FromArgb(0, 0, 0);
+    public static SKColor Shadow => new SKColor(0, 0, 0);
+    public static SKColor Scrim => new SKColor(0, 0, 0);
 
     // Text colors with proper contrast
-    public static Color OnBackground => ForeColor;
-    public static Color OnSurface => ForeColor;
-    public static Color OnSurfaceVariant => Blend(ForeColor, Surface, 0.35);
+    public static SKColor OnBackground => ForeColor;
+    public static SKColor OnSurface => ForeColor;
+    public static SKColor OnSurfaceVariant => Blend(ForeColor, Surface, 0.35);
 
     // Interactive states
-    public static Color StateLayerHover => ForeColor.Alpha(CurrentIsDark ? 8 : 8);
-    public static Color StateLayerFocus => ForeColor.Alpha(CurrentIsDark ? 12 : 12);
-    public static Color StateLayerPressed => ForeColor.Alpha(CurrentIsDark ? 16 : 16);
-    public static Color StateLayerDragged => ForeColor.Alpha(CurrentIsDark ? 16 : 16);
+    public static SKColor StateLayerHover => ForeColor.WithAlpha(8);
+    public static SKColor StateLayerFocus => ForeColor.WithAlpha(12);
+    public static SKColor StateLayerPressed => ForeColor.WithAlpha(16);
+    public static SKColor StateLayerDragged => ForeColor.WithAlpha(16);
 
     // Legacy aliases for backward compatibility
-    public static Color AccentColor => Primary;
-    public static Color PrimaryColor => Primary;
-    public static Color BorderColor => Outline;
-    public static Color BackColor2 => SurfaceVariant;
-    public static Color ShadowColor => FlatDesign ? Color.Transparent : Shadow.Alpha(CurrentIsDark ? 30 : 20);
+    public static SKColor AccentColor => Primary;
+    public static SKColor PrimaryColor => Primary;
+    public static SKColor BorderColor => Outline;
+    public static SKColor BackColor2 => SurfaceVariant;
+    public static SKColor ShadowColor => FlatDesign ? SKColors.Transparent : Shadow.WithAlpha(30);
 
     /// <summary>
     ///     Theme transition entry point: animates from current accent to target accent color.
     /// </summary>
-    public static void StartThemeTransition(Color targetColor)
+    public static void StartThemeTransition(SKColor targetColor)
     {
         _uiContext ??= SynchronizationContext.Current;
 
         // Random/background-driven theme: adapt foreground + surfaces automatically.
         // Also choose a reasonable accent derived from the background so controls remain visible.
-        var targetBackground = Color.FromArgb(targetColor.R, targetColor.G, targetColor.B);
+        var targetBackground = targetColor;
         var targetIsDark = RelativeLuminance(targetBackground) < 0.45;
         _isDarkMode = targetIsDark;
 
@@ -213,7 +214,7 @@ public class ColorScheme
     {
         _uiContext ??= SynchronizationContext.Current;
         _isDarkMode = dark;
-        var bg = dark ? Color.FromArgb(28, 28, 30) : Color.FromArgb(250, 250, 250);
+        var bg = dark ? new SKColor(28, 28, 30) : new SKColor(250, 250, 250);
         _themeBackgroundFrom = bg;
         _themeBackgroundTo = bg;
         ThemeTransitionProgress = 1.0;
@@ -222,7 +223,7 @@ public class ColorScheme
     private static void StartDarkModeTransition(bool targetDark)
     {
         _isDarkMode = targetDark;
-        var targetBackground = targetDark ? Color.FromArgb(28, 28, 30) : Color.FromArgb(250, 250, 250);
+        var targetBackground = targetDark ? new SKColor(28, 28, 30) : new SKColor(250, 250, 250);
         StartThemeBackgroundTransition(targetBackground);
     }
 
@@ -244,23 +245,23 @@ public class ColorScheme
             Raise();
     }
 
-    private static bool ColorsClose(Color a, Color b, int threshold = 2)
+    private static bool ColorsClose(SKColor a, SKColor b, int threshold = 2)
     {
-        return Math.Abs(a.R - b.R) <= threshold
-               && Math.Abs(a.G - b.G) <= threshold
-               && Math.Abs(a.B - b.B) <= threshold
-               && Math.Abs(a.A - b.A) <= threshold;
+        return Math.Abs(a.Red - b.Red) <= threshold
+               && Math.Abs(a.Green - b.Green) <= threshold
+               && Math.Abs(a.Blue - b.Blue) <= threshold
+               && Math.Abs(a.Alpha - b.Alpha) <= threshold;
     }
 
-    private static Color SurfaceAdjust(Color baseColor, double amount)
+    private static SKColor SurfaceAdjust(SKColor baseColor, double amount)
     {
         // For dark backgrounds we lift surfaces slightly, for light we shade slightly.
         return CurrentIsDark
-            ? Blend(baseColor, Color.FromArgb(255, 255, 255), amount)
-            : Blend(baseColor, Color.FromArgb(0, 0, 0), amount);
+            ? Blend(baseColor, new SKColor(255, 255, 255), amount)
+            : Blend(baseColor, new SKColor(0, 0, 0), amount);
     }
 
-    private static async void StartThemeBackgroundTransition(Color targetBackground)
+    private static async void StartThemeBackgroundTransition(SKColor targetBackground)
     {
         int transitionId;
 
@@ -302,21 +303,21 @@ public class ColorScheme
     }
 
     // Helper for smooth color lerp
-    private static Color Lerp(Color from, Color to, double t)
+    private static SKColor Lerp(SKColor from, SKColor to, double t)
     {
-        var r = (int)Math.Round(from.R + (to.R - from.R) * t);
-        var g = (int)Math.Round(from.G + (to.G - from.G) * t);
-        var b = (int)Math.Round(from.B + (to.B - from.B) * t);
-        var a = (int)Math.Round(from.A + (to.A - from.A) * t);
-        return Color.FromArgb(a, r, g, b);
+        var r = (byte)Math.Round(from.Red + (to.Red - from.Red) * t);
+        var g = (byte)Math.Round(from.Green + (to.Green - from.Green) * t);
+        var b = (byte)Math.Round(from.Blue + (to.Blue - from.Blue) * t);
+        var a = (byte)Math.Round(from.Alpha + (to.Alpha - from.Alpha) * t);
+        return new SKColor(a, r, g, b);
     }
 
-    private static Color Blend(Color a, Color b, double t)
+    private static SKColor Blend(SKColor a, SKColor b, double t)
     {
         return Lerp(a, b, t);
     }
 
-    private static double RelativeLuminance(Color c)
+    private static double RelativeLuminance(SKColor c)
     {
         static double SrgbToLinear(double v)
         {
@@ -324,34 +325,34 @@ public class ColorScheme
             return v <= 0.04045 ? v / 12.92 : Math.Pow((v + 0.055) / 1.055, 2.4);
         }
 
-        var r = SrgbToLinear(c.R);
-        var g = SrgbToLinear(c.G);
-        var b = SrgbToLinear(c.B);
+        var r = SrgbToLinear(c.Red);
+        var g = SrgbToLinear(c.Green);
+        var b = SrgbToLinear(c.Blue);
         return 0.2126 * r + 0.7152 * g + 0.0722 * b;
     }
 
-    private static Color ReadableOn(Color background)
+    private static SKColor ReadableOn(SKColor background)
     {
         // Simple WCAG-ish threshold; good enough for our palette.
-        return RelativeLuminance(background) < 0.45 ? Color.FromArgb(255, 255, 255) : Color.FromArgb(28, 28, 28);
+        return RelativeLuminance(background) < 0.45 ? new SKColor(255, 255, 255) : new SKColor(28, 28, 28);
     }
 
-    private static void ComputePrimaryPalette(Color seed,
-        out Color lightPrimary,
-        out Color darkPrimary,
-        out Color lightContainer,
-        out Color darkContainer,
-        out Color onLightContainer,
-        out Color onDarkContainer)
+    private static void ComputePrimaryPalette(SKColor seed,
+        out SKColor lightPrimary,
+        out SKColor darkPrimary,
+        out SKColor lightContainer,
+        out SKColor darkContainer,
+        out SKColor onLightContainer,
+        out SKColor onDarkContainer)
     {
         // Light primary: seed
-        lightPrimary = Color.FromArgb(seed.R, seed.G, seed.B);
+        lightPrimary = new SKColor(seed.Red, seed.Green, seed.Blue);
         // Dark primary: slightly darkened
-        darkPrimary = Blend(lightPrimary, Color.FromArgb(0, 0, 0), 0.12);
+        darkPrimary = Blend(lightPrimary, new SKColor(0, 0, 0), 0.12);
 
         // Containers: light gets a very light tint, dark gets a stronger tint.
-        lightContainer = Blend(lightPrimary, Color.FromArgb(255, 255, 255), 0.88);
-        darkContainer = Blend(lightPrimary, Color.FromArgb(0, 0, 0), 0.28);
+        lightContainer = Blend(lightPrimary, new SKColor(255, 255, 255), 0.88);
+        darkContainer = Blend(lightPrimary, new SKColor(0, 0, 0), 0.28);
 
         onLightContainer = ReadableOn(lightContainer);
         onDarkContainer = ReadableOn(darkContainer);
@@ -360,7 +361,7 @@ public class ColorScheme
     /// <summary>
     ///     Sets a new primary (accent) seed color with smooth animation.
     /// </summary>
-    public static void SetPrimarySeedColor(Color seed)
+    public static void SetPrimarySeedColor(SKColor seed)
     {
         _uiContext ??= SynchronizationContext.Current;
 
@@ -433,19 +434,19 @@ public class ColorScheme
     /// <summary>
     ///     Elevation levels (0-5) returning appropriate shadow/tint
     /// </summary>
-    public static Color GetElevationTint(int level)
+    public static SKColor GetElevationTint(int level)
     {
-        if (!CurrentIsDark) return Color.Transparent;
+        if (!CurrentIsDark) return SKColors.Transparent;
 
         return level switch
         {
-            0 => Color.Transparent,
-            1 => Color.FromArgb(5, 255, 255, 255),
-            2 => Color.FromArgb(8, 255, 255, 255),
-            3 => Color.FromArgb(11, 255, 255, 255),
-            4 => Color.FromArgb(14, 255, 255, 255),
-            5 => Color.FromArgb(17, 255, 255, 255),
-            _ => Color.FromArgb(20, 255, 255, 255)
+            0 => SKColors.Transparent,
+            1 => new SKColor(5, 255, 255, 255),
+            2 => new SKColor(8, 255, 255, 255),
+            3 => new SKColor(11, 255, 255, 255),
+            4 => new SKColor(14, 255, 255, 255),
+            5 => new SKColor(17, 255, 255, 255),
+            _ => new SKColor(20, 255, 255, 255)
         };
     }
 

@@ -2,7 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
+
 using System.Windows.Forms;
 using SDUI.Animation;
 using SDUI.Helpers;
@@ -24,7 +24,7 @@ public class TreeNode
     public object? Tag { get; set; }
 
     /// <summary>Optional small icon color for simple icon rendering in UI</summary>
-    public Color? IconColor { get; set; }
+    public SKColor? IconColor { get; set; }
 
     public TreeNode Add(string text)
     {
@@ -36,7 +36,7 @@ public class TreeNode
 
 public class TreeNodeMouseClickEventArgs : EventArgs
 {
-    public TreeNodeMouseClickEventArgs(TreeNode node, MouseButtons button, int clicks, Point location)
+    public TreeNodeMouseClickEventArgs(TreeNode node, MouseButtons button, int clicks, SKPoint location)
     {
         Node = node;
         Button = button;
@@ -47,7 +47,7 @@ public class TreeNodeMouseClickEventArgs : EventArgs
     public TreeNode Node { get; }
     public MouseButtons Button { get; }
     public int Clicks { get; }
-    public Point Location { get; }
+    public SKPoint Location { get; }
 }
 
 public class TreeNodeCollection : IEnumerable<TreeNode>
@@ -103,13 +103,13 @@ public class TreeView : UIElementBase
     private readonly Dictionary<TreeNode, AnimationManager> _nodeAnimations = new();
 
 
-    private readonly Dictionary<TreeNode, Rectangle> _nodeBounds = new();
-    private readonly Dictionary<TreeNode, Rectangle> _nodeTextBounds = new();
+    private readonly Dictionary<TreeNode, SkiaSharp.SKRect> _nodeBounds = new();
+    private readonly Dictionary<TreeNode, SkiaSharp.SKRect> _nodeTextBounds = new();
     private readonly HashSet<TreeNode> _pendingCollapse = new();
 
     // Selection (supports multi-select)
     private readonly List<TreeNode> _selectedNodes = new();
-    private readonly Dictionary<TreeNode, Rectangle> _toggleBounds = new();
+    private readonly Dictionary<TreeNode, SkiaSharp.SKRect> _toggleBounds = new();
     private TreeNode? _hoveredNode;
 
     private int _hoverIndex = -1;
@@ -164,7 +164,7 @@ public class TreeView : UIElementBase
     private float GetSkTextSize(Font font)
     {
         var dpi = DeviceDpi > 0 ? DeviceDpi : 96f;
-        var pt = font.Unit == GraphicsUnit.Point ? font.SizeInPoints : font.Size;
+        var pt = font.Unit == GraphicsUnit.SKPoint ? font.SizeInPoints : font.Size;
         return pt * (dpi / 72f);
     }
 
@@ -179,15 +179,15 @@ public class TreeView : UIElementBase
     {
         base.OnPaint(canvas);
         
-        if (BackColor != Color.Transparent)
+        if (BackColor != SKColor.Transparent)
         {
-             using var bgPaint = new SKPaint { Color = BackColor.ToSKColor() };
+             using var bgPaint = new SKPaint { Color = BackColor };
              canvas.DrawRect(0, 0, Width, Height, bgPaint);
         }
 
         var font = CreateFont(Font);
         using var textPaint = new SKPaint
-            { IsAntialias = true, Color = ColorScheme.ForeColor.ToSKColor(), Style = SKPaintStyle.Fill };
+            { IsAntialias = true, Color = ColorScheme.ForeColor, Style = SKPaintStyle.Fill };
 
         float y = 2;
         _nodeBounds.Clear();
@@ -212,7 +212,7 @@ public class TreeView : UIElementBase
         if (hasChildren)
         {
             using var paint = new SKPaint
-                { IsAntialias = true, Color = ColorScheme.OnSurface.ToSKColor(), Style = SKPaintStyle.Fill };
+                { IsAntialias = true, Color = ColorScheme.OnSurface, Style = SKPaintStyle.Fill };
             // center point for the toggle
             var cx = x + toggleSize / 2f;
             var cy = centerY;
@@ -241,7 +241,7 @@ public class TreeView : UIElementBase
             var toggleRectHeight = (int)Math.Ceiling(toggleSize + 6);
             var toggleRectY = (int)Math.Round(centerY - toggleRectHeight / 2f);
             var toggleRectWidth = (int)Math.Ceiling(width + 8);
-            _toggleBounds[node] = new Rectangle((int)x, toggleRectY, toggleRectWidth, toggleRectHeight);
+            _toggleBounds[node] = new SkiaSharp.SKRect((int)x, toggleRectY, toggleRectWidth, toggleRectHeight);
         }
 
         // text
@@ -254,13 +254,13 @@ public class TreeView : UIElementBase
             var iconSize = 10f;
             var iconX = textX + iconSize / 2f;
             using var ip = new SKPaint
-                { IsAntialias = true, Color = node.IconColor.Value.ToSKColor(), Style = SKPaintStyle.Fill };
+                { IsAntialias = true, Color = node.IconColor.Value, Style = SKPaintStyle.Fill };
             canvas.DrawCircle(iconX, centerY, iconSize / 2f, ip);
             textX += iconSize + 6;
         }
 
         var textW = font.MeasureText(text);
-        var textRect = new Rectangle((int)textX, (int)y, (int)Math.Ceiling(textW), _rowHeight);
+        var textRect = new SkiaSharp.SKRect((int)textX, (int)y, (int)Math.Ceiling(textW), _rowHeight);
 
         var isSelected = _selectedNodes.Contains(node) || ReferenceEquals(node, SelectedNode);
 
@@ -269,12 +269,12 @@ public class TreeView : UIElementBase
         {
             using var hover = new SKPaint
             {
-                IsAntialias = true, Color = ColorScheme.AccentColor.ToSKColor().WithAlpha(20), Style = SKPaintStyle.Fill
+                IsAntialias = true, Color = ColorScheme.AccentColor.WithAlpha(20), Style = SKPaintStyle.Fill
             };
             if (FullRowSelect)
-                canvas.DrawRect(new SKRect(0, y, Width, y + _rowHeight), hover);
+                canvas.DrawRect(new SkiaSharp.SKRect(0, y, Width, y + _rowHeight), hover);
             else
-                canvas.DrawRect(new SKRect(textRect.X, textRect.Y, textRect.Width, textRect.Height), hover);
+                canvas.DrawRect(new SkiaSharp.SKRect(textRect.X, textRect.Y, textRect.Width, textRect.Height), hover);
         }
 
         // selection background (supports multi-select and HideSelection)
@@ -282,12 +282,12 @@ public class TreeView : UIElementBase
         {
             using var sel = new SKPaint
             {
-                IsAntialias = true, Color = ColorScheme.AccentColor.ToSKColor().WithAlpha(80), Style = SKPaintStyle.Fill
+                IsAntialias = true, Color = ColorScheme.AccentColor.WithAlpha(80), Style = SKPaintStyle.Fill
             };
             if (FullRowSelect)
-                canvas.DrawRect(new SKRect(0, y, Width, y + _rowHeight), sel);
+                canvas.DrawRect(new SkiaSharp.SKRect(0, y, Width, y + _rowHeight), sel);
             else
-                canvas.DrawRect(new SKRect(textRect.X, textRect.Y, textRect.Width, textRect.Height), sel);
+                canvas.DrawRect(new SkiaSharp.SKRect(textRect.X, textRect.Y, textRect.Width, textRect.Height), sel);
         }
 
         // compute baseline so text is vertically centered in the row using font metrics
@@ -295,7 +295,7 @@ public class TreeView : UIElementBase
         var baseline = centerY - (fm2.Ascent + fm2.Descent) / 2f;
 
         TextRenderingHelper.DrawText(canvas, text, textX, baseline, font, textPaint);
-        _nodeBounds[node] = new Rectangle((int)textX, (int)y, (int)(Width - textX), _rowHeight);
+        _nodeBounds[node] = new SkiaSharp.SKRect((int)textX, (int)y, (int)(Width - textX), _rowHeight);
         _nodeTextBounds[node] = textRect;
 
         y += _rowHeight;

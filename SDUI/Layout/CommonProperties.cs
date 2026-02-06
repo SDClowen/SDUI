@@ -2,10 +2,11 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using SDUI.Controls;
+using SkiaSharp;
 using System;
 using System.Collections.Specialized;
 using System.Diagnostics;
-using System.Drawing;
+
 using System.Windows.Forms;
 
 namespace SDUI.Layout;
@@ -39,9 +40,9 @@ internal partial class CommonProperties
     internal const bool DefaultAutoSize = false;
 
     internal const DockStyle DefaultDock = DockStyle.None;
-    internal static Padding DefaultMargin { get; } = new(3);
-    internal static Size DefaultMinimumSize { get; } = new(0, 0);
-    internal static Size DefaultMaximumSize { get; } = new(0, 0);
+    internal static Thickness DefaultMargin { get; } = new(3, 3, 3, 3);
+    internal static SKSize DefaultMinimumSize { get; } = new(0, 0);
+    internal static SKSize DefaultMaximumSize { get; } = new(0, 0);
 
     // DO NOT MOVE THE FOLLOWING 4 SECTIONS
     // We have done some special arranging here so that if the first 7 bits of state are zero, we know
@@ -92,9 +93,9 @@ internal partial class CommonProperties
     ///   Instead the element sets the margin in its ctor.
     ///  </para>
     /// </remarks>
-    internal static Padding GetMargin(IArrangedElement element)
+    internal static Thickness GetMargin(IArrangedElement element)
     {
-        if (element.Properties.TryGetValue(s_marginProperty, out Padding padding))
+        if (element.Properties.TryGetValue(s_marginProperty, out Thickness padding))
         {
             return padding;
         }
@@ -105,9 +106,9 @@ internal partial class CommonProperties
     /// <summary>
     ///  Returns the maximum size for an element.
     /// </summary>
-    internal static Size GetMaximumSize(IArrangedElement element, Size defaultMaximumSize)
+    internal static SKSize GetMaximumSize(IArrangedElement element, SKSize defaultMaximumSize)
     {
-        if (element.Properties.TryGetValue(s_maximumSizeProperty, out Size size))
+        if (element.Properties.TryGetValue(s_maximumSizeProperty, out SKSize size))
         {
             return size;
         }
@@ -118,9 +119,9 @@ internal partial class CommonProperties
     /// <summary>
     ///  Returns the minimum size for an element.
     /// </summary>
-    internal static Size GetMinimumSize(IArrangedElement element, Size defaultMinimumSize)
+    internal static SKSize GetMinimumSize(IArrangedElement element, SKSize defaultMinimumSize)
     {
-        if (element.Properties.TryGetValue(s_minimumSizeProperty, out Size size))
+        if (element.Properties.TryGetValue(s_minimumSizeProperty, out SKSize size))
         {
             return size;
         }
@@ -134,16 +135,16 @@ internal partial class CommonProperties
     /// <remarks>
     ///  <para>
     ///   Typically the padding is accounted for in either the <see cref="Control.DisplayRectangle"/> calculation
-    ///   and/or the <see cref="Control.GetPreferredSize(Size)"/> calculation of a control.
+    ///   and/or the <see cref="Control.GetPreferredSize(SKSize)"/> calculation of a control.
     ///  </para>
     ///  <para>
-    ///   NOTE:  <see cref="LayoutEngine"/>s should never read this property. Padding gets incorporated into
+    ///   NOTE:  <see cref="LayoutEngine"/>s should never read this property. Thickness gets incorporated into
     ///   layout by modifying what the control reports for preferred size.
     ///  </para>
     /// </remarks>
-    internal static Padding GetPadding(IArrangedElement element, Padding defaultPadding)
+    internal static Thickness GetPadding(IArrangedElement element, Thickness defaultPadding)
     {
-        if (element.Properties.TryGetValue(s_paddingProperty, out Padding padding))
+        if (element.Properties.TryGetValue(s_paddingProperty, out Thickness padding))
         {
             return padding;
         }
@@ -159,8 +160,8 @@ internal partial class CommonProperties
     ///   See <see cref="UpdateSpecifiedBounds(IArrangedElement, int, int, int, int)"/>.
     ///  </para>
     /// </remarks>
-    internal static Rectangle GetSpecifiedBounds(IArrangedElement element) =>
-        element.Properties.TryGetValue(s_specifiedBoundsProperty, out Rectangle rectangle)
+    internal static SkiaSharp.SKRect GetSpecifiedBounds(IArrangedElement element) =>
+        element.Properties.TryGetValue(s_specifiedBoundsProperty, out SkiaSharp.SKRect rectangle)
             && rectangle != LayoutUtils.s_maxRectangle
                 ? rectangle
                 : element.Bounds;
@@ -192,7 +193,7 @@ internal partial class CommonProperties
     /// <summary>
     ///  Sets the margin (exterior space) for an element.
     /// </summary>
-    internal static void SetMargin(IArrangedElement element, Padding value)
+    internal static void SetMargin(IArrangedElement element, Thickness value)
     {
         Debug.Assert(value != GetMargin(element), "PERF: Caller should guard against setting Margin to original value.");
 
@@ -206,45 +207,51 @@ internal partial class CommonProperties
     /// <summary>
     ///  Sets the maximum size for an element.
     /// </summary>
-    internal static void SetMaximumSize(IArrangedElement element, Size value)
+    internal static void SetMaximumSize(IArrangedElement element, SKSize value)
     {
-        Debug.Assert(value != GetMaximumSize(element, new Size(-7109, -7107)),
+        Debug.Assert(value != GetMaximumSize(element, new SKSize(-7109, -7107)),
             "PERF: Caller should guard against setting MaximumSize to original value.");
 
         element.Properties.AddValue(s_maximumSizeProperty, value);
 
         // Element bounds may need to truncated to new maximum
-        Rectangle bounds = element.Bounds;
-        bounds.Width = Math.Min(bounds.Width, value.Width);
-        bounds.Height = Math.Min(bounds.Height, value.Height);
-        element.SetBounds(bounds, BoundsSpecified.Size);
+
+        element.SetBounds(new SkiaSharp.SKRect(
+                element.Bounds.Left,
+                element.Bounds.Top,
+                Math.Min(element.Bounds.Width, value.Width) - element.Bounds.Left,
+                Math.Min(element.Bounds.Height, value.Height) - element.Bounds.Top
+            ), BoundsSpecified.Size);
 
         // element.SetBounds does a SetBoundsCore. We still need to explicitly refresh parent layout.
         LayoutTransaction.DoLayout(element.Container, element, PropertyNames.MaximumSize);
 
-        Debug.Assert(GetMaximumSize(element, new Size(-7109, -7107)) == value, "Error detected setting MaximumSize.");
+        Debug.Assert(GetMaximumSize(element, new SKSize(-7109, -7107)) == value, "Error detected setting MaximumSize.");
     }
 
     /// <summary>
     ///  Sets the minimum size for an element.
     /// </summary>
-    internal static void SetMinimumSize(IArrangedElement element, Size value)
+    internal static void SetMinimumSize(IArrangedElement element, SKSize value)
     {
-        Debug.Assert(value != GetMinimumSize(element, new Size(-7109, -7107)),
+        Debug.Assert(value != GetMinimumSize(element, new SKSize(-7109, -7107)),
             "PERF: Caller should guard against setting MinimumSize to original value.");
 
         element.Properties.AddValue(s_minimumSizeProperty, value);
 
-        using (new LayoutTransaction(element.Container as UIElementBase, element, PropertyNames.MinimumSize))
+        using (new LayoutTransaction(element.Container as ElementBase, element, PropertyNames.MinimumSize))
         {
             // Element bounds may need to inflated to new minimum
-            Rectangle bounds = element.Bounds;
-            bounds.Width = Math.Max(bounds.Width, value.Width);
-            bounds.Height = Math.Max(bounds.Height, value.Height);
-            element.SetBounds(bounds, BoundsSpecified.Size);
+            element.SetBounds(new SkiaSharp.SKRect(
+                element.Bounds.Left,
+                element.Bounds.Top,
+                Math.Max(element.Bounds.Width, value.Width) - element.Bounds.Left,
+                Math.Max(element.Bounds.Height, value.Height) - element.Bounds.Top
+            )
+            , BoundsSpecified.Size);
         }
 
-        Debug.Assert(GetMinimumSize(element, new Size(-7109, -7107)) == value, "Error detected setting MinimumSize.");
+        Debug.Assert(GetMinimumSize(element, new SKSize(-7109, -7107)) == value, "Error detected setting MinimumSize.");
     }
 
     /// <summary>
@@ -252,19 +259,19 @@ internal partial class CommonProperties
     /// </summary>
     /// <remarks>
     ///  <para>
-    ///   See <see cref="GetPadding(IArrangedElement, Padding)"/> for more details. NOTE: It is the callers
-    ///   responsibility to do layout. See <see cref="Control.Padding"/> for details.
+    ///   See <see cref="GetPadding(IArrangedElement, Thickness)"/> for more details. NOTE: It is the callers
+    ///   responsibility to do layout. See <see cref="Control.Thickness"/> for details.
     ///  </para>
     /// </remarks>
-    internal static void SetPadding(IArrangedElement element, Padding value)
+    internal static void SetPadding(IArrangedElement element, Thickness value)
     {
-        Debug.Assert(value != GetPadding(element, new Padding(-7105)),
-            "PERF: Caller should guard against setting Padding to original value.");
+        Debug.Assert(value != GetPadding(element, new Thickness(-7105)),
+            "PERF: Caller should guard against setting Thickness to original value.");
 
         value = LayoutUtils.ClampNegativePaddingToZero(value);
         element.Properties.AddValue(s_paddingProperty, value);
 
-        Debug.Assert(GetPadding(element, new Padding(-7105)) == value, "Error detected setting Padding.");
+        Debug.Assert(GetPadding(element, new Thickness(-7105)) == value, "Error detected setting Thickness.");
     }
 
     /// <summary>
@@ -294,12 +301,12 @@ internal partial class CommonProperties
     /// </remarks>
     internal static void UpdateSpecifiedBounds(IArrangedElement element, int x, int y, int width, int height, BoundsSpecified specified)
     {
-        Rectangle originalBounds = GetSpecifiedBounds(element);
+        var originalBounds = GetSpecifiedBounds(element);
 
         // PERF note: Bitwise operator usage intentional to optimize out branching.
 
-        bool xChangedButNotSpecified = ((specified & BoundsSpecified.X) == BoundsSpecified.None) & x != originalBounds.X;
-        bool yChangedButNotSpecified = ((specified & BoundsSpecified.Y) == BoundsSpecified.None) & y != originalBounds.Y;
+        bool xChangedButNotSpecified = ((specified & BoundsSpecified.X) == BoundsSpecified.None) & x != originalBounds.Left;
+        bool yChangedButNotSpecified = ((specified & BoundsSpecified.Y) == BoundsSpecified.None) & y != originalBounds.Top;
         bool wChangedButNotSpecified = ((specified & BoundsSpecified.Width) == BoundsSpecified.None) & width != originalBounds.Width;
         bool hChangedButNotSpecified = ((specified & BoundsSpecified.Height) == BoundsSpecified.None) & height != originalBounds.Height;
 
@@ -307,27 +314,14 @@ internal partial class CommonProperties
         {
             // If any of them are changed and specified cache the new value.
 
-            if (!xChangedButNotSpecified)
-            {
-                originalBounds.X = x;
-            }
+            float newLeft = xChangedButNotSpecified ? originalBounds.Left : x;
+            float newTop = yChangedButNotSpecified ? originalBounds.Top : y;
+            float newWidth = wChangedButNotSpecified ? originalBounds.Width : width;
+            float newHeight = hChangedButNotSpecified ? originalBounds.Height : height;
 
-            if (!yChangedButNotSpecified)
-            {
-                originalBounds.Y = y;
-            }
+            var updatedBounds = SkiaSharp.SKRect.Create(newLeft, newTop, newWidth, newHeight);
 
-            if (!wChangedButNotSpecified)
-            {
-                originalBounds.Width = width;
-            }
-
-            if (!hChangedButNotSpecified)
-            {
-                originalBounds.Height = height;
-            }
-
-            element.Properties.AddValue(s_specifiedBoundsProperty, originalBounds);
+            element.Properties.AddValue(s_specifiedBoundsProperty, updatedBounds);
         }
         else
         {
@@ -341,22 +335,15 @@ internal partial class CommonProperties
         }
     }
 
-    // Used by ToolStripControlHost.Size.
-    internal static void UpdateSpecifiedBounds(IArrangedElement element, int x, int y, int width, int height)
-    {
-        Rectangle bounds = new(x, y, width, height);
-        element.Properties.AddValue(s_specifiedBoundsProperty, bounds);
-    }
-
     /// <summary>
     ///  Clears the preferred size cached for any control that overrides the internal
-    ///  <see cref="Control.GetPreferredSizeCore(Size)"/> method. DO NOT CALL DIRECTLY
+    ///  <see cref="Control.GetPreferredSizeCore(SKSize)"/> method. DO NOT CALL DIRECTLY
     ///  unless it is understood how the size of the control is going to be updated.
     /// </summary>
     internal static void xClearPreferredSizeCache(IArrangedElement element)
     {
         element.Properties.AddValue(s_preferredSizeCacheProperty, LayoutUtils.s_invalidSize);
-        Debug.Assert(xGetPreferredSizeCache(element) == Size.Empty, "Error detected in xClearPreferredSizeCache.");
+        Debug.Assert(xGetPreferredSizeCache(element) == SKSize.Empty, "Error detected in xClearPreferredSizeCache.");
     }
 
     /// <summary>
@@ -380,26 +367,26 @@ internal partial class CommonProperties
 
     /// <summary>
     ///  This value is the cached result of the return value from a control's
-    ///  <see cref="Control.GetPreferredSizeCore(Size)"/> implementation when asked for a constraining
-    ///  value of <see cref="LayoutUtils.s_maxSize"/> (or <see cref="Size.Empty"/> too).
+    ///  <see cref="Control.GetPreferredSizeCore(SKSize)"/> implementation when asked for a constraining
+    ///  value of <see cref="LayoutUtils.s_maxSize"/> (or <see cref="SKSize.Empty"/> too).
     /// </summary>
-    internal static Size xGetPreferredSizeCache(IArrangedElement element)
+    internal static SKSize xGetPreferredSizeCache(IArrangedElement element)
     {
-        if (element.Properties.TryGetValue(s_preferredSizeCacheProperty, out Size size) && (size != LayoutUtils.s_invalidSize))
+        if (element.Properties.TryGetValue(s_preferredSizeCacheProperty, out SKSize size) && (size != LayoutUtils.s_invalidSize))
         {
             return size;
         }
 
-        return Size.Empty;
+        return SKSize.Empty;
     }
 
     /// <summary>
     ///  Sets a control's preferred size. See <see cref="xGetPreferredSizeCache(IArrangedElement)"/>.
     /// </summary>
-    internal static void xSetPreferredSizeCache(IArrangedElement element, Size value)
+    internal static void xSetPreferredSizeCache(IArrangedElement element, SKSize value)
     {
         Debug.Assert(
-            value == Size.Empty || value != xGetPreferredSizeCache(element),
+            value == SKSize.Empty || value != xGetPreferredSizeCache(element),
             "PERF: Caller should guard against setting PreferredSizeCache to original value.");
         element.Properties.AddValue(s_preferredSizeCacheProperty, value);
         Debug.Assert(xGetPreferredSizeCache(element) == value, "Error detected in xGetPreferredSizeCache.");
@@ -508,7 +495,7 @@ internal partial class CommonProperties
         if (GetAutoSize(element))
         {
             // Check for legacy layout engine
-            if (element.Container is UIElementBase)
+            if (element.Container is ElementBase)
             {
                 return GetSelfAutoSizeInDefaultLayout(element);
             }
@@ -680,14 +667,14 @@ internal partial class CommonProperties
     ///   of how it lays out. Example is TLP in RTL and LTR.
     ///  </para>
     /// </remarks>
-    internal static Size GetLayoutBounds(IArrangedElement element)
+    internal static SKSize GetLayoutBounds(IArrangedElement element)
     {
-        if (element.Properties.TryGetValue(s_layoutBoundsProperty, out Size size))
+        if (element.Properties.TryGetValue(s_layoutBoundsProperty, out SKSize size))
         {
             return size;
         }
 
-        return Size.Empty;
+        return SKSize.Empty;
     }
 
     /// <summary>
@@ -695,7 +682,7 @@ internal partial class CommonProperties
     /// </summary>
     /// <remarks>
     ///  <para>
-    ///   The <see cref="TableLayout"/> engine now calls <see cref="SetLayoutBounds(IArrangedElement, Size)"/> when it
+    ///   The <see cref="TableLayout"/> engine now calls <see cref="SetLayoutBounds(IArrangedElement, SKSize)"/> when it
     ///   is done with its layout. The layout bounds are the total column width and the total row height.
     ///   <see cref="ScrollableControl"/> checks if the layout bounds has been set in the <see cref="CommonProperties"/>
     ///   when it tries to figure out if it should add scrollbars - but only if the layout engine is not the default
@@ -703,7 +690,7 @@ internal partial class CommonProperties
     ///   scrollbars should be added, rather than doing its own magic to figure it out.
     ///  </para>
     /// </remarks>
-    internal static void SetLayoutBounds(IArrangedElement element, Size value)
+    internal static void SetLayoutBounds(IArrangedElement element, SKSize value)
     {
         element.Properties.AddValue(s_layoutBoundsProperty, value);
     }

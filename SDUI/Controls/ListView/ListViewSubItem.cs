@@ -1,9 +1,9 @@
-﻿using System;
+﻿using SkiaSharp;
+using System;
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Drawing;
+
 using System.Runtime.Serialization;
-using System.Windows.Forms;
 
 namespace SDUI.Controls;
 
@@ -11,8 +11,6 @@ public partial class ListViewItem
 {
     public class ListViewSubItem
     {
-        [NonSerialized] private AccessibleObject? _accessibilityObject;
-
         [NonSerialized] internal ListViewItem? _owner;
 
         public ListViewSubItem()
@@ -25,7 +23,7 @@ public partial class ListViewItem
             this.text = text;
         }
 
-        public ListViewSubItem(ListViewItem? owner, string? text, Color foreColor, Color backColor, Font font)
+        public ListViewSubItem(ListViewItem? owner, string? text, SKColor foreColor, SKColor backColor, Font font)
         {
             _owner = owner;
             this.text = text;
@@ -37,23 +35,13 @@ public partial class ListViewItem
             };
         }
 
-        internal AccessibleObject? AccessibilityObject
+        public SKColor BackColor
         {
             get
             {
-                if (_accessibilityObject is null && _owner is not null) _accessibilityObject = null;
+                if (style is not null && style.backColor != SKColor.Empty) return style.backColor;
 
-                return _accessibilityObject;
-            }
-        }
-
-        public Color BackColor
-        {
-            get
-            {
-                if (style is not null && style.backColor != Color.Empty) return style.backColor;
-
-                return _owner?._listView?.BackColor ?? Color.Transparent;
+                return _owner?._listView?.BackColor ?? SKColors.Transparent;
             }
             set
             {
@@ -68,22 +56,22 @@ public partial class ListViewItem
         }
 
         [Browsable(false)]
-        public Rectangle Bounds
+        public SkiaSharp.SKRect Bounds
         {
             get
             {
                 if (_owner?._listView is not null && _owner._listView.IsHandleCreated)
                     return _owner._listView.GetSubItemRect(_owner.Index, _owner.SubItems.IndexOf(this));
 
-                return Rectangle.Empty;
+                return SkiaSharp.SKRect.Empty;
             }
         }
 
-        internal bool CustomBackColor => style is not null && !style.backColor.IsEmpty;
+        internal bool CustomBackColor => style is not null && style.backColor != SKColor.Empty;
 
         internal bool CustomFont => style is not null && style.font is not null;
 
-        internal bool CustomForeColor => style is not null && !style.foreColor.IsEmpty;
+        internal bool CustomForeColor => style is not null && style.foreColor != SKColor.Empty;
 
         internal bool CustomStyle => style is not null;
 
@@ -93,7 +81,7 @@ public partial class ListViewItem
             {
                 if (style is not null && style.font is not null) return style.font;
 
-                return _owner?._listView?.Font ?? Control.DefaultFont;
+                return _owner?._listView?.Font;
             }
             set
             {
@@ -107,11 +95,11 @@ public partial class ListViewItem
             }
         }
 
-        public Color ForeColor
+        public SKColor ForeColor
         {
             get
             {
-                if (style is not null && style.foreColor != Color.Empty) return style.foreColor;
+                if (style is not null && style.foreColor != SKColor.Empty) return style.foreColor;
 
                 return _owner?._listView?.ForeColor ?? ColorScheme.ForeColor;
             }
@@ -202,9 +190,9 @@ public partial class ListViewItem
 
         private class SubItemStyle
         {
-            public Color backColor = Color.Empty; // Do NOT rename (binary serialization).
+            public SKColor backColor = SKColor.Empty; // Do NOT rename (binary serialization).
             public Font? font; // Do NOT rename (binary serialization).
-            public Color foreColor = Color.Empty; // Do NOT rename (binary serialization).
+            public SKColor foreColor = SKColor.Empty; // Do NOT rename (binary serialization).
         }
 #pragma warning disable IDE1006
         private string? text; // Do NOT rename (binary serialization).

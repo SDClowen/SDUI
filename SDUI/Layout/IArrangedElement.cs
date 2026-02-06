@@ -1,9 +1,7 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.ComponentModel;
-using System.Drawing;
-using System.Windows.Forms;
+using SkiaSharp;
 
 namespace SDUI.Layout;
 
@@ -12,28 +10,28 @@ public interface IArrangedElement
     /// <summary>
     ///  Bounding rectangle of the element.
     /// </summary>
-    Rectangle Bounds { get; }
+    SKRect Bounds { get; }
 
     /// <summary>
     ///  Sets the bounds for an element. Implementors should call
     ///  CommonProperties.SetSpecifiedBounds.
     ///  See Control.SetBoundsCore.
     /// </summary>
-    void SetBounds(Rectangle bounds, BoundsSpecified specified);
+    void SetBounds(SKRect bounds, BoundsSpecified specified);
 
     /// <summary>
     ///  Query element for its preferred size. There is no guarantee
     ///  that layout engine will assign the element the returned size.
     ///  ProposedSize is a hint about constraints.
     /// </summary>
-    Size GetPreferredSize(Size proposedSize);
+    SKSize GetPreferredSize(SKSize proposedSize);
 
     /// <summary>
     ///  DisplayRectangle is the client area of a container element.
     ///  Could possibly disappear if we change control to keep an
     ///  up-to-date copy of display rectangle in the property store.
     /// </summary>
-    Rectangle DisplayRectangle { get; }
+    SKRect DisplayRectangle { get; }
 
     /// <summary>
     ///  True if the element is currently visible (some layouts, like
@@ -64,7 +62,6 @@ public interface IArrangedElement
     ///  Returns the element's children (on a control, this forwards to Controls)
     /// </summary>
     ArrangedElementCollection Children { get; }
-
 
     void PerformLayout();
     void SuspendLayout();

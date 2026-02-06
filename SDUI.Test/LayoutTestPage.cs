@@ -1,6 +1,6 @@
 using SDUI.Controls;
 using SkiaSharp;
-using System.Drawing;
+
 using System.Windows.Forms;
 
 namespace SDUI.Demo
@@ -43,7 +43,7 @@ namespace SDUI.Demo
             var dockTestGroup = new SDUI.Controls.GroupBox
             {
                 Text = "Dock Test",
-                Location = new Point(10, 10),
+                Location = new SKPoint(10, 10),
                 Size = new Size(350, 250)
             };
             mainPanel.Controls.Add(dockTestGroup);
@@ -121,7 +121,7 @@ namespace SDUI.Demo
             var anchorTestGroup = new SDUI.Controls.GroupBox
             {
                 Text = "Anchor Test",
-                Location = new Point(370, 10),
+                Location = new SKPoint(370, 10),
                 Size = new Size(350, 250)
             };
             mainPanel.Controls.Add(anchorTestGroup);
@@ -129,7 +129,7 @@ namespace SDUI.Demo
             var topLeftBtn = new SDUI.Controls.Button
             {
                 Text = "Top-Left",
-                Location = new Point(10, 20),
+                Location = new SKPoint(10, 20),
                 Size = new Size(80, 30),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left
             };
@@ -138,7 +138,7 @@ namespace SDUI.Demo
             var topRightBtn = new SDUI.Controls.Button
             {
                 Text = "Top-Right",
-                Location = new Point(260, 20),
+                Location = new SKPoint(260, 20),
                 Size = new Size(80, 30),
                 Anchor = AnchorStyles.Top | AnchorStyles.Right
             };
@@ -147,7 +147,7 @@ namespace SDUI.Demo
             var bottomLeftBtn = new SDUI.Controls.Button
             {
                 Text = "Bottom-L",
-                Location = new Point(10, 210),
+                Location = new SKPoint(10, 210),
                 Size = new Size(80, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Left
             };
@@ -156,7 +156,7 @@ namespace SDUI.Demo
             var bottomRightBtn = new SDUI.Controls.Button
             {
                 Text = "Bottom-R",
-                Location = new Point(260, 210),
+                Location = new SKPoint(260, 210),
                 Size = new Size(80, 30),
                 Anchor = AnchorStyles.Bottom | AnchorStyles.Right
             };
@@ -165,7 +165,7 @@ namespace SDUI.Demo
             var stretchBtn = new SDUI.Controls.Button
             {
                 Text = "Stretch Horizontal",
-                Location = new Point(10, 120),
+                Location = new SKPoint(10, 120),
                 Size = new Size(330, 30),
                 Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right
             };
@@ -175,7 +175,7 @@ namespace SDUI.Demo
             var autoSizeTestGroup = new SDUI.Controls.GroupBox
             {
                 Text = "AutoSize Test",
-                Location = new Point(10, 270),
+                Location = new SKPoint(10, 270),
                 Size = new Size(710, 200)
             };
             mainPanel.Controls.Add(autoSizeTestGroup);
@@ -184,7 +184,7 @@ namespace SDUI.Demo
             {
                 Text = "Short text",
                 AutoSize = true,
-                Location = new Point(10, 30),
+                Location = new SKPoint(10, 30),
                 BackColor = SKColors.LightYellow.ToColor(),
                 Padding = new Padding(5)
             };
@@ -193,7 +193,7 @@ namespace SDUI.Demo
             var changeTextBtn = new SDUI.Controls.Button
             {
                 Text = "Change Text",
-                Location = new Point(10, 70),
+                Location = new SKPoint(10, 70),
                 Size = new Size(120, 30)
             };
             changeTextBtn.Click += (s, e) =>
@@ -209,7 +209,7 @@ namespace SDUI.Demo
             {
                 Text = "Font test",
                 AutoSize = true,
-                Location = new Point(200, 30),
+                Location = new SKPoint(200, 30),
                 BackColor = SKColors.LightCyan.ToColor(),
                 Padding = new Padding(5)
             };
@@ -218,7 +218,7 @@ namespace SDUI.Demo
             var changeFontBtn = new SDUI.Controls.Button
             {
                 Text = "Change Font",
-                Location = new Point(200, 70),
+                Location = new SKPoint(200, 70),
                 Size = new Size(120, 30)
             };
             changeFontBtn.Click += (s, e) =>
@@ -234,7 +234,7 @@ namespace SDUI.Demo
             {
                 Text = "Padding",
                 AutoSize = true,
-                Location = new Point(390, 30),
+                Location = new SKPoint(390, 30),
                 BackColor = SKColors.LightGreen.ToColor(),
                 Padding = new Padding(5)
             };
@@ -243,7 +243,7 @@ namespace SDUI.Demo
             var changePaddingBtn = new SDUI.Controls.Button
             {
                 Text = "Change Padding",
-                Location = new Point(390, 70),
+                Location = new SKPoint(390, 70),
                 Size = new Size(120, 30)
             };
             changePaddingBtn.Click += (s, e) =>
@@ -259,7 +259,7 @@ namespace SDUI.Demo
             var measureBtn = new SDUI.Controls.Button
             {
                 Text = "Test Measure API",
-                Location = new Point(10, 120),
+                Location = new SKPoint(10, 120),
                 Size = new Size(150, 35)
             };
             measureBtn.Click += (s, e) =>

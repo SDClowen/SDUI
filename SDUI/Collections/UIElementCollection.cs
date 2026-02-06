@@ -6,17 +6,17 @@ using SDUI.Controls;
 
 namespace SDUI.Collections;
 
-public class UIElementCollection : IList<UIElementBase>
+public class UIElementCollection : IList<ElementBase>
 {
-    private readonly List<UIElementBase> _items = new(32);
-    private readonly UIElementBase _owner;
+    private readonly List<ElementBase> _items = new(32);
+    private readonly ElementBase _owner;
 
-    public UIElementCollection(UIElementBase owner)
+    public UIElementCollection(ElementBase owner)
     {
         _owner = owner;
     }
 
-    public UIElementBase this[int index]
+    public ElementBase this[int index]
     {
         get => _items[index];
         set
@@ -34,7 +34,7 @@ public class UIElementCollection : IList<UIElementBase>
     public int Count => _items.Count;
     public bool IsReadOnly => false;
 
-    public void Add(UIElementBase item)
+    public void Add(ElementBase item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -50,27 +50,27 @@ public class UIElementCollection : IList<UIElementBase>
         foreach (var item in itemsToRemove) _owner.OnControlRemoved(new UIElementEventArgs(item));
     }
 
-    public bool Contains(UIElementBase item)
+    public bool Contains(ElementBase item)
     {
         return _items.Contains(item);
     }
 
-    public void CopyTo(UIElementBase[] array, int arrayIndex)
+    public void CopyTo(ElementBase[] array, int arrayIndex)
     {
         _items.CopyTo(array, arrayIndex);
     }
 
-    public IEnumerator<UIElementBase> GetEnumerator()
+    public IEnumerator<ElementBase> GetEnumerator()
     {
         return _items.GetEnumerator();
     }
 
-    public int IndexOf(UIElementBase item)
+    public int IndexOf(ElementBase item)
     {
         return _items.IndexOf(item);
     }
 
-    public void Insert(int index, UIElementBase item)
+    public void Insert(int index, ElementBase item)
     {
         if (item == null)
             throw new ArgumentNullException(nameof(item));
@@ -79,7 +79,7 @@ public class UIElementCollection : IList<UIElementBase>
         _owner.OnControlAdded(new UIElementEventArgs(item));
     }
 
-    public bool Remove(UIElementBase item)
+    public bool Remove(ElementBase item)
     {
         if (item == null)
             return false;
@@ -101,7 +101,7 @@ public class UIElementCollection : IList<UIElementBase>
         return GetEnumerator();
     }
 
-    public void AddRange(UIElementBase[] items)
+    public void AddRange(ElementBase[] items)
     {
         foreach (var item in items)
             Add(item);

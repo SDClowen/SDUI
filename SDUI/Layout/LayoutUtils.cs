@@ -1,11 +1,11 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
+using SDUI.Helpers;
+using SkiaSharp;
 using System;
 using System.Collections;
 using System.Diagnostics;
-using System.Drawing;
-using System.Windows.Forms;
 
 namespace SDUI.Layout;
 
@@ -13,10 +13,10 @@ namespace SDUI.Layout;
 // namespace, you should probably move them to WindowsFormsUtils.
 internal partial class LayoutUtils
 {
-    public static readonly Size s_maxSize = new(int.MaxValue, int.MaxValue);
-    public static readonly Size s_invalidSize = new(int.MinValue, int.MinValue);
+    public static readonly SKSize s_maxSize = new(int.MaxValue, int.MaxValue);
+    public static readonly SKSize s_invalidSize = new(int.MinValue, int.MinValue);
 
-    public static readonly Rectangle s_maxRectangle = new(0, 0, int.MaxValue, int.MaxValue);
+    public static readonly SkiaSharp.SKRect s_maxRectangle = new(0, 0, int.MaxValue, int.MaxValue);
 
     public const ContentAlignment AnyTop = ContentAlignment.TopLeft | ContentAlignment.TopCenter | ContentAlignment.TopRight;
     public const ContentAlignment AnyBottom = ContentAlignment.BottomLeft | ContentAlignment.BottomCenter | ContentAlignment.BottomRight;
@@ -43,14 +43,14 @@ internal partial class LayoutUtils
 
     // Returns the size of the largest string in the given collection. Non-string objects are converted
     // with ToString(). Uses OldMeasureString, not GDI+. Does not support multiline.
-    public static Size OldGetLargestStringSizeInCollection(Font? font, ICollection? objects)
+    public static SKSize OldGetLargestStringSizeInCollection(Font? font, ICollection? objects)
     {
-        Size largestSize = Size.Empty;
+        SKSize largestSize = SKSize.Empty;
         if (objects is not null)
         {
             foreach (object obj in objects)
             {
-                Size textSize = TextRenderer.MeasureText(obj.ToString(), font, new Size(short.MaxValue, short.MaxValue), TextFormatFlags.SingleLine);
+                SKSize textSize = TextRenderer.MeasureText(obj.ToString(), font, new SKSize(short.MaxValue, short.MaxValue), new TextRenderOptions { Wrap = TextWrap.None });
                 largestSize.Width = Math.Max(largestSize.Width, textSize.Width);
                 largestSize.Height = Math.Max(largestSize.Height, textSize.Height);
             }
@@ -124,7 +124,7 @@ internal partial class LayoutUtils
         return result;
     }
 
-    public static Size ConvertZeroToUnbounded(Size size)
+    public static SKSize ConvertZeroToUnbounded(SKSize size)
     {
         if (size.Width == 0)
         {
@@ -140,7 +140,7 @@ internal partial class LayoutUtils
     }
 
     // Clamps negative values in Padding struct to zero.
-    public static Padding ClampNegativePaddingToZero(Padding padding)
+    public static Thickness ClampNegativePaddingToZero(Thickness padding)
     {
         // Careful: Setting the LRTB properties causes Padding.All to be -1 even if LRTB all agree.
         if (padding.All < 0)
@@ -205,34 +205,34 @@ internal partial class LayoutUtils
         return (TextImageRelation)GetOppositeAnchor((AnchorStyles)relation);
     }
 
-    public static Size UnionSizes(Size a, Size b)
+    public static SKSize UnionSizes(SKSize a, SKSize b)
     {
-        return new Size(
+        return new SKSize(
             Math.Max(a.Width, b.Width),
             Math.Max(a.Height, b.Height));
     }
 
-    public static Size IntersectSizes(Size a, Size b)
+    public static SKSize IntersectSizes(SKSize a, SKSize b)
     {
-        return new Size(
+        return new SKSize(
             Math.Min(a.Width, b.Width),
             Math.Min(a.Height, b.Height));
     }
 
-    public static bool IsIntersectHorizontally(Rectangle rect1, Rectangle rect2)
+    public static bool IsIntersectHorizontally(SkiaSharp.SKRect rect1, SkiaSharp.SKRect rect2)
     {
         if (!rect1.IntersectsWith(rect2))
         {
             return false;
         }
 
-        if (rect1.X <= rect2.X && rect1.X + rect1.Width >= rect2.X + rect2.Width)
+        if (rect1.Left <= rect2.Left && rect1.Left + rect1.Width >= rect2.Left + rect2.Width)
         {
             // rect 1 contains rect 2 horizontally
             return true;
         }
 
-        if (rect2.X <= rect1.X && rect2.X + rect2.Width >= rect1.X + rect1.Width)
+        if (rect2.Left <= rect1.Left && rect2.Left + rect2.Width >= rect1.Left + rect1.Width)
         {
             // rect 2 contains rect 1 horizontally
             return true;
@@ -241,20 +241,20 @@ internal partial class LayoutUtils
         return false;
     }
 
-    public static bool IsIntersectVertically(Rectangle rect1, Rectangle rect2)
+    public static bool IsIntersectVertically(SkiaSharp.SKRect rect1, SkiaSharp.SKRect rect2)
     {
         if (!rect1.IntersectsWith(rect2))
         {
             return false;
         }
 
-        if (rect1.Y <= rect2.Y && rect1.Y + rect1.Width >= rect2.Y + rect2.Width)
+        if (rect1.Top <= rect2.Top && rect1.Top + rect1.Height >= rect2.Top + rect2.Height)
         {
             // rect 1 contains rect 2 vertically
             return true;
         }
 
-        if (rect2.Y <= rect1.Y && rect2.Y + rect2.Width >= rect1.Y + rect1.Width)
+        if (rect2.Top <= rect1.Top && rect2.Top + rect2.Height >= rect1.Top + rect1.Height)
         {
             // rect 2 contains rect 1 vertically
             return true;
@@ -275,88 +275,103 @@ internal partial class LayoutUtils
         return DefaultLayout.GetAnchor(element);
     }
 
-    public static Rectangle AlignAndStretch(Size fitThis, Rectangle withinThis, AnchorStyles anchorStyles)
+    public static SkiaSharp.SKRect AlignAndStretch(SKSize fitThis, SkiaSharp.SKRect withinThis, AnchorStyles anchorStyles)
     {
         return Align(Stretch(fitThis, withinThis.Size, anchorStyles), withinThis, anchorStyles);
     }
 
-    public static Rectangle Align(Size alignThis, Rectangle withinThis, AnchorStyles anchorStyles)
+    public static SkiaSharp.SKRect Align(SKSize alignThis, SkiaSharp.SKRect withinThis, AnchorStyles anchorStyles)
     {
         return VAlign(alignThis, HAlign(alignThis, withinThis, anchorStyles), anchorStyles);
     }
 
-    public static Rectangle Align(Size alignThis, Rectangle withinThis, ContentAlignment align)
+    public static SkiaSharp.SKRect Align(SKSize alignThis, SkiaSharp.SKRect withinThis, ContentAlignment align)
     {
         return VAlign(alignThis, HAlign(alignThis, withinThis, align), align);
     }
 
-    public static Rectangle HAlign(Size alignThis, Rectangle withinThis, AnchorStyles anchorStyles)
+    public static SkiaSharp.SKRect HAlign(SKSize alignThis, SkiaSharp.SKRect withinThis, AnchorStyles anchorStyles)
     {
         if ((anchorStyles & AnchorStyles.Right) != 0)
         {
-            withinThis.X += withinThis.Width - alignThis.Width;
+            withinThis.Left += withinThis.Width - alignThis.Width;
         }
         else if (anchorStyles == AnchorStyles.None || (anchorStyles & HorizontalAnchorStyles) == 0)
         {
-            withinThis.X += (withinThis.Width - alignThis.Width) / 2;
+            withinThis.Left += (withinThis.Width - alignThis.Width) / 2;
         }
 
-        withinThis.Width = alignThis.Width;
+        withinThis.Right = withinThis.Left + alignThis.Width;
 
         return withinThis;
     }
 
-    private static Rectangle HAlign(Size alignThis, Rectangle withinThis, ContentAlignment align)
+    private static SkiaSharp.SKRect HAlign(SKSize alignThis, SkiaSharp.SKRect withinThis, ContentAlignment align)
     {
+        float newLeft = withinThis.Left;
         if ((align & AnyRight) != 0)
         {
-            withinThis.X += withinThis.Width - alignThis.Width;
+            newLeft = withinThis.Left + (withinThis.Width - alignThis.Width);
         }
         else if ((align & AnyCenter) != 0)
         {
-            withinThis.X += (withinThis.Width - alignThis.Width) / 2;
+            newLeft = withinThis.Left + (withinThis.Width - alignThis.Width) / 2f;
         }
 
-        withinThis.Width = alignThis.Width;
-
-        return withinThis;
+        // SKRect is immutable for Width, so create a new rect with the desired width and new left
+        return new SkiaSharp.SKRect(
+            newLeft,
+            withinThis.Top,
+            newLeft + alignThis.Width,
+            withinThis.Top + withinThis.Height
+        );
     }
 
-    public static Rectangle VAlign(Size alignThis, Rectangle withinThis, AnchorStyles anchorStyles)
+    public static SkiaSharp.SKRect VAlign(SKSize alignThis, SkiaSharp.SKRect withinThis, AnchorStyles anchorStyles)
     {
+        float newTop = withinThis.Top;
         if ((anchorStyles & AnchorStyles.Bottom) != 0)
         {
-            withinThis.Y += withinThis.Height - alignThis.Height;
+            newTop = withinThis.Top + (withinThis.Height - alignThis.Height);
         }
         else if (anchorStyles == AnchorStyles.None || (anchorStyles & VerticalAnchorStyles) == 0)
         {
-            withinThis.Y += (withinThis.Height - alignThis.Height) / 2;
+            newTop = withinThis.Top + (withinThis.Height - alignThis.Height) / 2f;
         }
 
-        withinThis.Height = alignThis.Height;
-
-        return withinThis;
+        // SKRect is immutable for Height, so create a new rect with the desired height and new top
+        return new SkiaSharp.SKRect(
+            withinThis.Left,
+            newTop,
+            withinThis.Right,
+            newTop + alignThis.Height
+        );
     }
 
-    public static Rectangle VAlign(Size alignThis, Rectangle withinThis, ContentAlignment align)
+    public static SkiaSharp.SKRect VAlign(SKSize alignThis, SkiaSharp.SKRect withinThis, ContentAlignment align)
     {
+        float newTop = withinThis.Top;
         if ((align & AnyBottom) != 0)
         {
-            withinThis.Y += withinThis.Height - alignThis.Height;
+            newTop = withinThis.Top + (withinThis.Height - alignThis.Height);
         }
         else if ((align & AnyMiddle) != 0)
         {
-            withinThis.Y += (withinThis.Height - alignThis.Height) / 2;
+            newTop = withinThis.Top + (withinThis.Height - alignThis.Height) / 2f;
         }
 
-        withinThis.Height = alignThis.Height;
-
-        return withinThis;
+        // SKRect is immutable for Height, so create a new rect with the desired height and new top
+        return new SkiaSharp.SKRect(
+            withinThis.Left,
+            newTop,
+            withinThis.Right,
+            newTop + alignThis.Height
+        );
     }
 
-    public static Size Stretch(Size stretchThis, Size withinThis, AnchorStyles anchorStyles)
+    public static SKSize Stretch(SKSize stretchThis, SKSize withinThis, AnchorStyles anchorStyles)
     {
-        Size stretchedSize = new(
+        SKSize stretchedSize = new(
             (anchorStyles & HorizontalAnchorStyles) == HorizontalAnchorStyles ? withinThis.Width : stretchThis.Width,
             (anchorStyles & VerticalAnchorStyles) == VerticalAnchorStyles ? withinThis.Height : stretchThis.Height);
         if (stretchedSize.Width > withinThis.Width)
@@ -372,30 +387,18 @@ internal partial class LayoutUtils
         return stretchedSize;
     }
 
-    public static Rectangle InflateRect(Rectangle rect, Padding padding)
+    public static SkiaSharp.SKRect InflateRect(SkiaSharp.SKRect rect, Thickness padding)
     {
-        rect.X -= padding.Left;
-        rect.Y -= padding.Top;
-        rect.Width += padding.Horizontal;
-        rect.Height += padding.Vertical;
+        rect.Inflate(padding.Left, padding.Top);
         return rect;
     }
 
-    public static Rectangle DeflateRect(Rectangle rect, Padding padding)
-    {
-        rect.X += padding.Left;
-        rect.Y += padding.Top;
-        rect.Width -= padding.Horizontal;
-        rect.Height -= padding.Vertical;
-        return rect;
-    }
-
-    public static Size AddAlignedRegion(Size textSize, Size imageSize, TextImageRelation relation)
+    public static SKSize AddAlignedRegion(SKSize textSize, SKSize imageSize, TextImageRelation relation)
     {
         return AddAlignedRegionCore(textSize, imageSize, IsVerticalRelation(relation));
     }
 
-    public static Size AddAlignedRegionCore(Size currentSize, Size contentSize, bool vertical)
+    public static SKSize AddAlignedRegionCore(SKSize currentSize, SKSize contentSize, bool vertical)
     {
         if (vertical)
         {
@@ -411,7 +414,7 @@ internal partial class LayoutUtils
         return currentSize;
     }
 
-    public static Padding FlipPadding(Padding padding)
+    public static Thickness FlipPadding(Thickness padding)
     {
         // If Padding.All != -1, then TLRB are all the same and there is no work to be done.
         if (padding.All != -1)
@@ -433,34 +436,34 @@ internal partial class LayoutUtils
         return padding;
     }
 
-    public static Point FlipPoint(Point point)
+    public static SKPoint FlipPoint(SKPoint point)
     {
-        // Point is a struct (passed by value, no need to make a copy)
+        // SKPoint is a struct (passed by value, no need to make a copy)
         (point.Y, point.X) = (point.X, point.Y);
         return point;
     }
 
-    public static Rectangle FlipRectangle(Rectangle rect)
+    public static SkiaSharp.SKRect FlipRectangle(SkiaSharp.SKRect rect)
     {
-        // Rectangle is a stuct (passed by value, no need to make a copy)
+        // SKRect is a stuct (passed by value, no need to make a copy)
         rect.Location = FlipPoint(rect.Location);
         rect.Size = FlipSize(rect.Size);
         return rect;
     }
 
-    public static Rectangle FlipRectangleIf(bool condition, Rectangle rect)
+    public static SkiaSharp.SKRect FlipRectangleIf(bool condition, SkiaSharp.SKRect rect)
     {
         return condition ? FlipRectangle(rect) : rect;
     }
 
-    public static Size FlipSize(Size size)
+    public static SKSize FlipSize(SKSize size)
     {
         // Size is a struct (passed by value, no need to make a copy)
         (size.Height, size.Width) = (size.Width, size.Height);
         return size;
     }
 
-    public static Size FlipSizeIf(bool condition, Size size)
+    public static SKSize FlipSizeIf(bool condition, SKSize size)
     {
         return condition ? FlipSize(size) : size;
     }
@@ -488,57 +491,94 @@ internal partial class LayoutUtils
         return (relation & (TextImageRelation.TextAboveImage | TextImageRelation.ImageAboveText)) != 0;
     }
 
-    public static bool IsZeroWidthOrHeight(Rectangle rectangle)
+    public static bool IsZeroWidthOrHeight(SkiaSharp.SKRect rectangle)
     {
         return (rectangle.Width == 0 || rectangle.Height == 0);
     }
 
-    public static bool IsZeroWidthOrHeight(Size size)
+    public static bool IsZeroWidthOrHeight(SKSize size)
     {
         return (size.Width == 0 || size.Height == 0);
     }
 
-    public static bool AreWidthAndHeightLarger(Size size1, Size size2)
+    public static bool AreWidthAndHeightLarger(SKSize size1, SKSize size2)
     {
         return ((size1.Width >= size2.Width) && (size1.Height >= size2.Height));
     }
 
-    public static void SplitRegion(Rectangle bounds, Size specifiedContent, AnchorStyles region1Align, out Rectangle region1, out Rectangle region2)
+    public static void SplitRegion(SkiaSharp.SKRect bounds, SKSize specifiedContent, AnchorStyles region1Align, out SkiaSharp.SKRect region1, out SkiaSharp.SKRect region2)
     {
-        region1 = region2 = bounds;
+        region1 = bounds;
+        region2 = bounds;
         switch (region1Align)
         {
             case AnchorStyles.Left:
-                region1.Width = specifiedContent.Width;
-                region2.X += specifiedContent.Width;
-                region2.Width -= specifiedContent.Width;
+                region1 = new SkiaSharp.SKRect(
+                    bounds.Left,
+                    bounds.Top,
+                    bounds.Left + specifiedContent.Width,
+                    bounds.Bottom
+                );
+                region2 = new SkiaSharp.SKRect(
+                    bounds.Left + specifiedContent.Width,
+                    bounds.Top,
+                    bounds.Right,
+                    bounds.Bottom
+                );
                 break;
             case AnchorStyles.Right:
-                region1.X += bounds.Width - specifiedContent.Width;
-                region1.Width = specifiedContent.Width;
-                region2.Width -= specifiedContent.Width;
+                region1 = new SkiaSharp.SKRect(
+                    bounds.Right - specifiedContent.Width,
+                    bounds.Top,
+                    bounds.Right,
+                    bounds.Bottom
+                );
+                region2 = new SkiaSharp.SKRect(
+                    bounds.Left,
+                    bounds.Top,
+                    bounds.Right - specifiedContent.Width,
+                    bounds.Bottom
+                );
                 break;
             case AnchorStyles.Top:
-                region1.Height = specifiedContent.Height;
-                region2.Y += specifiedContent.Height;
-                region2.Height -= specifiedContent.Height;
+                region1 = new SkiaSharp.SKRect(
+                    bounds.Left,
+                    bounds.Top,
+                    bounds.Right,
+                    bounds.Top + specifiedContent.Height
+                );
+                region2 = new SkiaSharp.SKRect(
+                    bounds.Left,
+                    bounds.Top + specifiedContent.Height,
+                    bounds.Right,
+                    bounds.Bottom
+                );
                 break;
             case AnchorStyles.Bottom:
-                region1.Y += bounds.Height - specifiedContent.Height;
-                region1.Height = specifiedContent.Height;
-                region2.Height -= specifiedContent.Height;
+                region1 = new SkiaSharp.SKRect(
+                    bounds.Left,
+                    bounds.Bottom - specifiedContent.Height,
+                    bounds.Right,
+                    bounds.Bottom
+                );
+                region2 = new SkiaSharp.SKRect(
+                    bounds.Left,
+                    bounds.Top,
+                    bounds.Right,
+                    bounds.Bottom - specifiedContent.Height
+                );
                 break;
             default:
                 Debug.Fail("Unsupported value for region1Align.");
                 break;
         }
 
-        Debug.Assert(Rectangle.Union(region1, region2) == bounds,
+        Debug.Assert(SkiaSharp.SKRect.Union(region1, region2) == bounds,
             "Regions do not add up to bounds.");
     }
 
     // Expands adjacent regions to bounds. region1Align indicates which way the adjacency occurs.
-    public static void ExpandRegionsToFillBounds(Rectangle bounds, AnchorStyles region1Align, ref Rectangle region1, ref Rectangle region2)
+    public static void ExpandRegionsToFillBounds(SkiaSharp.SKRect bounds, AnchorStyles region1Align, ref SkiaSharp.SKRect region1, ref SkiaSharp.SKRect region2)
     {
         switch (region1Align)
         {
@@ -567,15 +607,15 @@ internal partial class LayoutUtils
                 break;
         }
 
-        Debug.Assert(Rectangle.Union(region1, region2) == bounds, "region1 and region2 do not add up to bounds.");
+        Debug.Assert(SkiaSharp.SKRect.Union(region1, region2) == bounds, "region1 and region2 do not add up to bounds.");
     }
 
-    public static Size SubAlignedRegion(Size currentSize, Size contentSize, TextImageRelation relation)
+    public static SKSize SubAlignedRegion(SKSize currentSize, SKSize contentSize, TextImageRelation relation)
     {
         return SubAlignedRegionCore(currentSize, contentSize, IsVerticalRelation(relation));
     }
 
-    public static Size SubAlignedRegionCore(Size currentSize, Size contentSize, bool vertical)
+    public static SKSize SubAlignedRegionCore(SKSize currentSize, SKSize contentSize, bool vertical)
     {
         if (vertical)
         {
@@ -589,21 +629,22 @@ internal partial class LayoutUtils
         return currentSize;
     }
 
-    private static Rectangle SubstituteSpecifiedBounds(Rectangle originalBounds, Rectangle substitutionBounds, AnchorStyles specified)
+    private static SkiaSharp.SKRect SubstituteSpecifiedBounds(SkiaSharp.SKRect originalBounds, SkiaSharp.SKRect substitutionBounds, AnchorStyles specified)
     {
-        int left = (specified & AnchorStyles.Left) != 0 ? substitutionBounds.Left : originalBounds.Left;
-        int top = (specified & AnchorStyles.Top) != 0 ? substitutionBounds.Top : originalBounds.Top;
-        int right = (specified & AnchorStyles.Right) != 0 ? substitutionBounds.Right : originalBounds.Right;
-        int bottom = (specified & AnchorStyles.Bottom) != 0 ? substitutionBounds.Bottom : originalBounds.Bottom;
-        return Rectangle.FromLTRB(left, top, right, bottom);
+        var left = (specified & AnchorStyles.Left) != 0 ? substitutionBounds.Left : originalBounds.Left;
+        var top = (specified & AnchorStyles.Top) != 0 ? substitutionBounds.Top : originalBounds.Top;
+        var right = (specified & AnchorStyles.Right) != 0 ? substitutionBounds.Right : originalBounds.Right;
+        var bottom = (specified & AnchorStyles.Bottom) != 0 ? substitutionBounds.Bottom : originalBounds.Bottom;
+        return new SkiaSharp.SKRect(left, top, unchecked(right - left), unchecked(bottom - top));
     }
 
     // given a rectangle, flip to the other side of (withinBounds)
     //
     // Never call this if you derive from ScrollableControl
-    public static Rectangle RTLTranslate(Rectangle bounds, Rectangle withinBounds)
+    public static SkiaSharp.SKRect RTLTranslate(SkiaSharp.SKRect bounds, SkiaSharp.SKRect withinBounds)
     {
-        bounds.X = withinBounds.Width - bounds.Right;
+        
+        bounds.Left = withinBounds.Width - bounds.Right;
         return bounds;
     }
 }

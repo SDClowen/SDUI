@@ -1,7 +1,9 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
 
-using System.Drawing;
+
+
+using SkiaSharp;
 
 namespace SDUI.Layout;
 
@@ -9,11 +11,11 @@ internal partial class LayoutUtils
 {
     private struct PreferredSizeCache
     {
-        public Size ConstrainingSize;
+        public SKSize ConstrainingSize;
 
-        public Size PreferredSize;
+        public SKSize PreferredSize;
 
-        public PreferredSizeCache(Size constrainingSize, Size preferredSize)
+        public PreferredSizeCache(SKSize constrainingSize, SKSize preferredSize)
         {
             ConstrainingSize = constrainingSize;
             PreferredSize = preferredSize;

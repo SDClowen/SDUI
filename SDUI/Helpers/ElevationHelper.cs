@@ -1,4 +1,4 @@
-using System.Drawing;
+
 using SkiaSharp;
 
 namespace SDUI.Helpers;
@@ -11,25 +11,25 @@ public static class ElevationHelper
     /// <summary>
     ///     Draws elevation shadow and tint for a surface
     /// </summary>
-    public static void DrawElevation(SKCanvas canvas, SKRect bounds, float cornerRadius, int elevation)
+    public static void DrawElevation(SKCanvas canvas, SkiaSharp.SKRect bounds, float cornerRadius, int elevation)
     {
         if (ColorScheme.FlatDesign) return;
         if (elevation <= 0) return;
 
         var blur = ColorScheme.GetElevationBlur(elevation);
         var offset = ColorScheme.GetElevationOffset(elevation);
-        var shadowColor = ColorScheme.Shadow.Alpha(ColorScheme.IsDarkMode ? 40 : 15);
+        var shadowColor = ColorScheme.Shadow.WithAlpha((byte)(ColorScheme.IsDarkMode ? 40 : 15));
 
         // Draw shadow
         using (var shadowMaskFilter = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, blur / 2))
         using (var shadowPaint = new SKPaint
                {
                    IsAntialias = true,
-                   Color = shadowColor.ToSKColor(),
+                   Color = shadowColor,
                    MaskFilter = shadowMaskFilter
                })
         {
-            var shadowBounds = new SKRect(
+            var shadowBounds = new SkiaSharp.SKRect(
                 bounds.Left,
                 bounds.Top + offset,
                 bounds.Right,
@@ -45,7 +45,7 @@ public static class ElevationHelper
             using var tintPaint = new SKPaint
             {
                 IsAntialias = true,
-                Color = tint.ToSKColor()
+                Color = tint
             };
             canvas.DrawRoundRect(bounds, cornerRadius, cornerRadius, tintPaint);
         }
@@ -54,7 +54,7 @@ public static class ElevationHelper
     /// <summary>
     ///     Draws a smooth gradient overlay for glassmorphism effect
     /// </summary>
-    public static void DrawGlassEffect(SKCanvas canvas, SKRect bounds, float cornerRadius, float opacity = 0.1f)
+    public static void DrawGlassEffect(SKCanvas canvas, SkiaSharp.SKRect bounds, float cornerRadius, float opacity = 0.1f)
     {
         if (ColorScheme.FlatDesign) return;
         using var shader = SKShader.CreateLinearGradient(
@@ -62,8 +62,8 @@ public static class ElevationHelper
             new SKPoint(bounds.Right, bounds.Bottom),
             new[]
             {
-                new SKColor(255, 255, 255, (byte)(opacity * 50)),
-                new SKColor(255, 255, 255, (byte)(opacity * 10))
+                new SkiaSharp.SKColor(255, 255, 255, (byte)(opacity * 50)),
+                new SkiaSharp.SKColor(255, 255, 255, (byte)(opacity * 10))
             },
             new[] { 0f, 1f },
             SKShaderTileMode.Clamp
@@ -81,13 +81,13 @@ public static class ElevationHelper
     /// <summary>
     ///     Draws modern ripple effect at specified position
     /// </summary>
-    public static void DrawRipple(SKCanvas canvas, SKPoint center, float radius, float progress, Color color)
+    public static void DrawRipple(SKCanvas canvas, SKPoint center, float radius, float progress, SKColor color)
     {
         var alpha = (byte)(255 * (1 - progress));
         using var paint = new SKPaint
         {
             IsAntialias = true,
-            Color = color.ToSKColor().WithAlpha(alpha)
+            Color = color.WithAlpha(alpha)
         };
 
         canvas.DrawCircle(center, radius * progress, paint);
@@ -96,12 +96,12 @@ public static class ElevationHelper
     /// <summary>
     ///     Creates a smooth state layer for hover/focus/press states
     /// </summary>
-    public static void DrawStateLayer(SKCanvas canvas, SKRect bounds, float cornerRadius, Color stateColor)
+    public static void DrawStateLayer(SKCanvas canvas, SkiaSharp.SKRect bounds, float cornerRadius, SKColor stateColor)
     {
         using var paint = new SKPaint
         {
             IsAntialias = true,
-            Color = stateColor.ToSKColor()
+            Color = stateColor
         };
 
         canvas.DrawRoundRect(bounds, cornerRadius, cornerRadius, paint);

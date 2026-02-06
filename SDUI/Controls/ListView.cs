@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
+
 using System.Linq;
 using System.Timers;
 using System.Windows.Forms;
@@ -56,7 +56,7 @@ public partial class ListView : UIElementBase
     private SKPaint? _paintText;
     private SKPaint? _paintTextCompat;
     private int _resizingColumnIndex = -1;
-    private Point _scrollbarDragStart;
+    private SKPoint _scrollbarDragStart;
 
     private int _selectedIndex = -1;
     private float _verticalScrollOffset;
@@ -75,7 +75,6 @@ public partial class ListView : UIElementBase
 
     public ColumnHeaderStyle HeaderStyle { get; set; } = ColumnHeaderStyle.Clickable;
     public View View { get; set; } = View.Details;
-    public BorderStyle BorderStyle { get; set; } = BorderStyle.None;
     public bool FullRowSelect { get; set; } = false;
     public bool CheckBoxes { get; set; } = false;
     public bool ShowItemToolTips { get; set; } = false;
@@ -238,7 +237,7 @@ public partial class ListView : UIElementBase
         // Use current system DPI for point->pixel to keep 9pt consistent across scales.
         // 1pt = 1/72 inch -> pixels = pt * (DPI / 72)
         var dpi = DeviceDpi > 0 ? DeviceDpi : 96f;
-        var pt = font.Unit == GraphicsUnit.Point ? font.SizeInPoints : font.Size;
+        var pt = font.Unit == GraphicsUnit.SKPoint ? font.SizeInPoints : font.Size;
         return pt * (dpi / 72f);
     }
 
@@ -329,7 +328,7 @@ public partial class ListView : UIElementBase
         return _paintTextCompat ??= new SKPaint { IsAntialias = true, Style = SKPaintStyle.Fill };
     }
 
-    private void DrawTextCompat(SKCanvas canvas, string text, float x, float y, SKFont font, SKColor color)
+    private void DrawTextCompat(SKCanvas canvas, string text, float x, float y, SKFont font, SkiaSharp.SKColor color)
     {
         var p = GetTextCompatPaint();
         p.Color = color;
@@ -341,15 +340,15 @@ public partial class ListView : UIElementBase
     {
         // Always fill full header width
         var headerBack = GetHeaderBackPaint();
-        headerBack.Color = ColorScheme.SurfaceContainerHigh.ToSKColor();
-        canvas.DrawRect(new SKRect(0, 0, Width, 30), headerBack);
+        headerBack.Color = ColorScheme.SurfaceContainerHigh;
+        canvas.DrawRect(new SkiaSharp.SKRect(0, 0, Width, 30), headerBack);
 
         var gridPaint = GetGridPaint();
-        gridPaint.Color = ColorScheme.OutlineVariant.ToSKColor();
+        gridPaint.Color = ColorScheme.OutlineVariant;
         gridPaint.StrokeWidth = 0.5f;
         var headerFont = GetDefaultSkFont();
         var textPaint = GetTextPaint();
-        textPaint.Color = ColorScheme.OnSurface.ToSKColor();
+        textPaint.Color = ColorScheme.OnSurface;
 
         // horizontal culling for columns
         var colIndex = 0;
@@ -421,7 +420,7 @@ public partial class ListView : UIElementBase
         const float HEADER_HEIGHT = 30f;
         var font = GetDefaultSkFont();
         var textPaint = GetTextPaint();
-        textPaint.Color = ColorScheme.OnSurface.ToSKColor();
+        textPaint.Color = ColorScheme.OnSurface;
 
         // Header arka planını her zaman tam genişlikte çiz, scrollbar sağda üstüne binsin.
         var contentHeightAll = GetContentHeight();
@@ -479,11 +478,11 @@ public partial class ListView : UIElementBase
             if (headerY >= HEADER_HEIGHT && headerY <= Height)
             {
                 var bg = GetFillPaint();
-                bg.Color = ColorScheme.SurfaceContainer.ToSKColor();
+                bg.Color = ColorScheme.SurfaceContainer;
                 canvas.DrawRect(0, headerY, Width, RowHeight, bg);
 
                 var border = GetGridPaint();
-                border.Color = ColorScheme.OutlineVariant.ToSKColor();
+                border.Color = ColorScheme.OutlineVariant;
                 border.StrokeWidth = group == sticky ? 1.5f : 1f;
                 canvas.DrawLine(0, headerY + RowHeight, Width, headerY + RowHeight, border);
 
@@ -494,7 +493,7 @@ public partial class ListView : UIElementBase
                 var s = 4.5f;
                 var rotation = (float)((1.0 - prog) * -90.0f); // prog=1 -> 0° (down V), prog=0 -> -90° (right arrow)
                 var chevPaint = GetChevronPaint();
-                chevPaint.Color = ColorScheme.OnSurfaceVariant.ToSKColor();
+                chevPaint.Color = ColorScheme.OnSurfaceVariant;
                 var path = GetChevronPath();
                 path.Reset();
                 // Aşağı bakan V
@@ -529,7 +528,7 @@ public partial class ListView : UIElementBase
     private void DrawScrollBars(SKCanvas canvas)
     {
         var paint = GetScrollBarPaint();
-        paint.Color = ColorScheme.OutlineVariant.Alpha(140).ToSKColor();
+        paint.Color = ColorScheme.OutlineVariant.WithAlpha(140);
 
         // Horizontal (içerik üstüne overlay)
         var totalColumnsWidth = GetTotalColumnsWidth();
@@ -537,7 +536,7 @@ public partial class ListView : UIElementBase
         {
             var scrollbarWidth = Width * (Width / (float)totalColumnsWidth);
             var scrollbarX = _horizontalScrollOffset * (Width - scrollbarWidth) / (totalColumnsWidth - Width);
-            var rect = new SKRect(scrollbarX + 5, Height - 15, scrollbarX + scrollbarWidth - 5, Height - 5);
+            var rect = new SkiaSharp.SKRect(scrollbarX + 5, Height - 15, scrollbarX + scrollbarWidth - 5, Height - 5);
             canvas.DrawRoundRect(rect, 4, 4, paint);
         }
 
@@ -549,7 +548,7 @@ public partial class ListView : UIElementBase
             var scrollbarHeight = viewportHeight * (viewportHeight / (float)contentHeight);
             var scrollbarY = _verticalScrollOffset * (viewportHeight - scrollbarHeight) /
                              (contentHeight - viewportHeight);
-            var rect = new SKRect(Width - 15, 30 + scrollbarY, Width - 5, 30 + scrollbarY + scrollbarHeight);
+            var rect = new SkiaSharp.SKRect(Width - 15, 30 + scrollbarY, Width - 5, 30 + scrollbarY + scrollbarHeight);
             canvas.DrawRoundRect(rect, 8, 8, paint);
         }
     }
@@ -626,10 +625,10 @@ public partial class ListView : UIElementBase
         return GetContentRows() * RowHeight;
     }
 
-    internal Rectangle GetItemRect(int index, ItemBoundsPortion portion = ItemBoundsPortion.Entire)
+    internal SkiaSharp.SKRect GetItemRect(int index, ItemBoundsPortion portion = ItemBoundsPortion.Entire)
     {
         if (_listViewItems == null || index < 0 || index >= _listViewItems.Count)
-            return Rectangle.Empty;
+            return SkiaSharp.SKRect.Empty;
 
         var y = 30f;
         var currentIndex = 0;
@@ -643,7 +642,7 @@ public partial class ListView : UIElementBase
                 {
                     if (currentIndex == index)
                     {
-                        var baseRect = new Rectangle(0, (int)(y - _verticalScrollOffset), Width, RowHeight);
+                        var baseRect = new SkiaSharp.SKRect(0, (int)(y - _verticalScrollOffset), Width, RowHeight);
                         return GetItemRectPortion(baseRect, portion);
                     }
 
@@ -657,7 +656,7 @@ public partial class ListView : UIElementBase
             {
                 if (currentIndex == index)
                 {
-                    var baseRect = new Rectangle(0, (int)(y - _verticalScrollOffset), Width, RowHeight);
+                    var baseRect = new SkiaSharp.SKRect(0, (int)(y - _verticalScrollOffset), Width, RowHeight);
                     return GetItemRectPortion(baseRect, portion);
                 }
 
@@ -665,22 +664,22 @@ public partial class ListView : UIElementBase
                 currentIndex++;
             }
 
-        return Rectangle.Empty;
+        return SkiaSharp.SKRect.Empty;
     }
 
-    private Rectangle GetItemRectPortion(Rectangle baseRect, ItemBoundsPortion portion)
+    private SkiaSharp.SKRect GetItemRectPortion(SkiaSharp.SKRect baseRect, ItemBoundsPortion portion)
     {
         return portion switch
         {
             ItemBoundsPortion.Entire => baseRect,
-            ItemBoundsPortion.Icon => new Rectangle(baseRect.X + 5, baseRect.Y + 5, RowHeight - 10, RowHeight - 10),
-            ItemBoundsPortion.Label => new Rectangle(baseRect.X + RowHeight, baseRect.Y, baseRect.Width - RowHeight,
+            ItemBoundsPortion.Icon => new SkiaSharp.SKRect(baseRect.X + 5, baseRect.Y + 5, RowHeight - 10, RowHeight - 10),
+            ItemBoundsPortion.Label => new SkiaSharp.SKRect(baseRect.X + RowHeight, baseRect.Y, baseRect.Width - RowHeight,
                 baseRect.Height),
             _ => throw new ArgumentOutOfRangeException(nameof(portion), portion, "Invalid ItemBoundsPortion value.")
         };
     }
 
-    internal Rectangle GetSubItemRect(int index, int subItemIndex)
+    internal SkiaSharp.SKRect GetSubItemRect(int index, int subItemIndex)
     {
         var item = Items.Cast<ListViewItem>().ElementAt(index).SubItems[subItemIndex];
         return item.Bounds;
@@ -806,7 +805,7 @@ public partial class ListView : UIElementBase
         if (index < 0 || index >= Items.Count)
             throw new ArgumentOutOfRangeException(nameof(index));
         var itemRect = GetItemRect(index);
-        var visibleArea = new Rectangle(0, 30, Width, Height - 30);
+        var visibleArea = new SkiaSharp.SKRect(0, 30, Width, Height - 30);
         if (!visibleArea.Contains(itemRect))
         {
             _verticalScrollOffset = Math.Max(0, itemRect.Y - visibleArea.Height / 2);
@@ -820,13 +819,13 @@ public partial class ListView : UIElementBase
         return item;
     }
 
-    internal ListViewItem GetItemAt(Point point)
+    internal ListViewItem GetItemAt(SKPoint point)
     {
         var item = Items.Cast<ListViewItem>().FirstOrDefault(i => i.Bounds.Contains(point.X, point.Y));
         return item;
     }
 
-    internal ListViewItem GetSubItemAt(Point point)
+    internal ListViewItem GetSubItemAt(SKPoint point)
     {
         var item = Items.Cast<ListViewItem>().FirstOrDefault(i =>
             i.SubItems.OfType<ListViewItem>().Any(s => s.Bounds.Contains(point.X, point.Y)));
@@ -892,7 +891,7 @@ public partial class ListView : UIElementBase
         foreach (ListViewGroup group in Groups)
         {
             // Header rect
-            var headerRect = new SKRect(0, y, Width, y + RowHeight);
+            var headerRect = new SkiaSharp.SKRect(0, y, Width, y + RowHeight);
             if (headerRect.Contains(e.X, e.Y))
             {
                 var isExpanded = group.CollapsedState == ListViewGroupCollapsedState.Expanded;
@@ -930,7 +929,7 @@ public partial class ListView : UIElementBase
                     var item = group.Items[i];
                     var slide = (float)(1.0 - prog) * (RowHeight * 0.3f);
                     var itemY = y - slide;
-                    var itemRect = new SKRect(0, itemY, Width, itemY + RowHeight);
+                    var itemRect = new SkiaSharp.SKRect(0, itemY, Width, itemY + RowHeight);
                     if (itemRect.Contains(e.X, e.Y))
                     {
                         // Clear previous selection
@@ -964,7 +963,7 @@ public partial class ListView : UIElementBase
             foreach (var item in _listViewItems)
                 if (item._group == null)
                 {
-                    var itemRect = new SKRect(0, y, Width, y + RowHeight);
+                    var itemRect = new SkiaSharp.SKRect(0, y, Width, y + RowHeight);
                     if (itemRect.Contains(e.X, e.Y))
                     {
                         foreach (var r in _listViewItems) r.StateSelected = false;
@@ -1062,7 +1061,7 @@ public partial class ListView : UIElementBase
         // Treat Transparent as "no explicit background" for this control so it
         // doesn't visually fall back to the host window's (often white) background.
         var bgColor = BackColor.IsEmpty || BackColor.A == 0 ? ColorScheme.Surface : BackColor;
-        bg.Color = bgColor.ToSKColor();
+        bg.Color = bgColor;
         canvas.DrawRect(0, 0, Width, Height, bg);
 
         EnsureGroupAnimations();
@@ -1170,6 +1169,49 @@ public partial class ListView : UIElementBase
         }
 
         if (needInvalidate) Invalidate();
+    }
+
+
+    /// <summary>
+    ///     Move the selected items by <seealso cref="MoveDirection" />
+    /// </summary>
+    /// <param name="direction">The move direction</param>
+    public static void MoveSelectedItems(MoveDirection direction)
+    {
+        var valid = SelectedItems.Count > 0 &&
+                    ((direction == MoveDirection.Down && SelectedItems[SelectedItems.Count - 1].Index <
+                         Items.Count - 1)
+                     || (direction == MoveDirection.Up && SelectedItems[0].Index > 0));
+
+        if (valid)
+        {
+            var firstIndex = SelectedItems[0].Index;
+            var selectedItems = SelectedItems.ToList();
+
+
+            for (var i = 0; i < SelectedIndices.Count; i++)
+                Items.RemoveAt(SelectedIndices[i]);
+
+
+            if (direction == MoveDirection.Up)
+            {
+                var insertTo = firstIndex - 1;
+                foreach (var item in selectedItems)
+                {
+                    sender.Items.Insert(insertTo, item);
+                    insertTo++;
+                }
+            }
+            else
+            {
+                var insertTo = firstIndex + 1;
+                foreach (var item in selectedItems)
+                {
+                    sender.Items.Insert(insertTo, item);
+                    insertTo++;
+                }
+            }
+        }
     }
 
     // Enhanced hit test with smaller padding and respect to horizontal scroll offset
