@@ -14,8 +14,8 @@ namespace SDUI.Controls;
 public abstract partial class ElementBase : IElement, IArrangedElement, IDisposable
 {
     private static int s_globalLayoutPassId;
-    public bool _childControlsNeedAnchorLayout { get; set; }
-    public bool _forceAnchorCalculations { get; set; }
+    internal bool _childControlsNeedAnchorLayout { get; set; }
+    internal bool _forceAnchorCalculations { get; set; }
 
     // Layout pass tracking for Measure/Arrange caching
     private SKSize? _cachedMeasure;
@@ -51,7 +51,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         _font = new Font("Segoe UI", 9f);
         _cursor = Cursors.Default;
         _currentDpi = DpiHelper.GetSystemDpi();
-        
+
         InitializeScrollBars();
     }
 
@@ -242,7 +242,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
     /// DELETE
     /// </summary>
     /// <param name="element"></param>
-    public void BringToFront(ElementBase element) {}
+    public void BringToFront(ElementBase element) { }
     public void SendToBack(ElementBase element) { }
 
     public void BringToFront()
@@ -337,7 +337,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
 
     public void SendToBack()
     {
-        if(Parent == null)
+        if (Parent == null)
             return;
 
         var siblings = Parent.Controls.OfType<ElementBase>().ToList();
@@ -432,7 +432,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
             if (_minimumSize == value) return;
             _minimumSize = value;
             if (Size.Width < _minimumSize.Width || Size.Height < _minimumSize.Height)
-                Size = new (
+                Size = new(
                     Math.Max(Size.Width, _minimumSize.Width),
                     Math.Max(Size.Height, _minimumSize.Height)
                 );
@@ -666,11 +666,11 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
                 return;
 
             _processEscapes = value;
-            
+
             // Reprocess current text with new setting
             if (!string.IsNullOrEmpty(_text))
             {
-                _processedText = _processEscapes 
+                _processedText = _processEscapes
                     ? TextRenderer.ProcessEscapeSequences(_text)
                     : _text;
                 Invalidate();
@@ -849,7 +849,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
     /// <summary>
     /// Gets or sets the stacking order of the element within its parent container.
     /// </summary>
-    [Browsable(false)] 
+    [Browsable(false)]
     public int ZOrder { get; set; }
 
     /// <summary>
@@ -990,7 +990,6 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         }
     }
 
-    protected bool IsCreated { get; private set; }
 
     [Browsable(false)] public virtual int DeviceDpi => (int)Math.Round(_currentDpi);
 
@@ -1034,7 +1033,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         get => _focusedElement;
         set
         {
-            if (_focusedElement == value) return;
+            if (_focusedElement == value || value is UIWindowBase) return;
 
             var oldFocus = _focusedElement;
             _focusedElement = value;
@@ -1060,8 +1059,13 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         get => _lastHoveredElement;
         internal set
         {
+            if (value is UIWindowBase)
+                return;
+
             if (_lastHoveredElement != value) _lastHoveredElement = value;
-            //UpdateCursor(value);
+            
+            if(_parent is UIWindowBase windowBase)
+                windowBase.UpdateCursor(this);
         }
     }
 
@@ -1209,7 +1213,6 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
     public event CancelEventHandler Validating;
 
     public event EventHandler CursorChanged;
-    public event EventHandler CreateControl;
 
     public event UILayoutEventHandler Layout;
     public event UIElementEventHandler ControlAdded;
@@ -1325,7 +1328,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
     protected void MarkDirty()
     {
         NeedsRedraw = true;
-        
+
         // DEBUG: Log excessive invalidations
         if (DebugSettings.EnableRenderLogging)
         {
@@ -1438,7 +1441,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
 
             OnPaint(targetCanvas);
 
-            if(!_border.IsEmpty)
+            if (!_border.IsEmpty)
             {
 
             }
@@ -1732,9 +1735,9 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
             if (control.Bounds.Contains(hitPoint))
             {
                 hoveredElement = control;
-                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks, 
+                var childEventArgs = new MouseEventArgs(e.Button, e.Clicks,
                     (int)(hitPoint.X - control.Location.X),
-                    (int)(hitPoint.Y - control.Location.Y), 
+                    (int)(hitPoint.Y - control.Location.Y),
                     e.Delta);
                 control.OnMouseMove(childEventArgs);
                 break; // İlk eşleşenden sonra dur
@@ -1781,7 +1784,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
 
                 var childEventArgs = new MouseEventArgs(e.Button, e.Clicks,
                     (int)(hitPoint.X - control.Location.X),
-                    (int)(hitPoint.Y - control.Location.Y), 
+                    (int)(hitPoint.Y - control.Location.Y),
                     e.Delta);
                 control.OnMouseDown(childEventArgs);
 
@@ -1806,7 +1809,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
 
                 break; // İlk eşleşenden sonra dur
             }
-            }
+        }
 
         if (!elementClicked)
         {
@@ -1888,7 +1891,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         }
     }
 
-    internal virtual void OnMouseClick(MouseEventArgs e)
+    protected internal virtual void OnMouseClick(MouseEventArgs e)
     {
         MouseClick?.Invoke(this, e);
 
@@ -1920,7 +1923,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
                     _focusedElement = control;
                 break; // İlk eşleşenden sonra dur
             }
-            }
+        }
     }
 
     internal virtual void OnMouseDoubleClick(MouseEventArgs e)
@@ -2174,15 +2177,8 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
     internal virtual void OnCursorChanged(EventArgs e)
     {
         CursorChanged?.Invoke(this, e);
-        if (Parent is UIWindowBase parentWindow) 
+        if (Parent is UIWindowBase parentWindow)
             parentWindow.UpdateCursor(this);
-    }
-
-    public virtual void OnCreateControl()
-    {
-        if (IsCreated) return;
-        IsCreated = true;
-        CreateControl?.Invoke(this, EventArgs.Empty);
     }
 
     internal virtual void OnMouseWheel(MouseEventArgs e)
@@ -2462,7 +2458,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
             s_globalLayoutPassId++;
             _cachedMeasure = null;
 
-            OnLayout(new UILayoutEventArgs(null!));
+            OnLayout(new LayoutEventArgs(null!));
         }
         finally
         {
@@ -2472,11 +2468,11 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
 
     public virtual void PerformLayout(ElementBase affectedElement, string? propertyName)
     {
-        var args = new UILayoutEventArgs(affectedElement, propertyName);
+        var args = new LayoutEventArgs(affectedElement, propertyName);
         PerformLayout(args);
     }
 
-    public virtual void PerformLayout(UILayoutEventArgs args)
+    public virtual void PerformLayout(LayoutEventArgs args)
     {
         if (_layoutSuspendCount > 0)
             return;
@@ -2495,12 +2491,12 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         }
     }
 
-    protected virtual void OnLayout(UILayoutEventArgs e)
+    protected virtual void OnLayout(LayoutEventArgs e)
     {
         Layout?.Invoke(this, e);
-        
+
         UpdateScrollBars();
-        
+
         // Use DisplayRectangle for child layout area (already excludes padding)
         var clientArea = DisplayRectangle;
         var remainingArea = clientArea;
@@ -2518,7 +2514,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         }
     }
 
-    internal virtual void OnControlAdded(UIElementEventArgs e)
+    internal virtual void OnControlAdded(ElementEventArgs e)
     {
         ControlAdded?.Invoke(this, e);
 
@@ -2531,7 +2527,7 @@ public abstract partial class ElementBase : IElement, IArrangedElement, IDisposa
         }
     }
 
-    internal virtual void OnControlRemoved(UIElementEventArgs e)
+    internal virtual void OnControlRemoved(ElementEventArgs e)
     {
         ControlRemoved?.Invoke(this, e);
 

@@ -27,8 +27,6 @@ public interface IElement
     int TabIndex { get; set; }
     bool TabStop { get; set; }
     int LayoutSuspendCount { get; set; }
-    bool _childControlsNeedAnchorLayout { get; set; }
-    bool _forceAnchorCalculations { get; set; }
     SKRect DisplayRectangle { get; }
 
     void Render(SKCanvas canvas);
@@ -36,7 +34,6 @@ public interface IElement
     void Refresh();
     void UpdateZOrder();
     void BringToFront();
-    void OnCreateControl();
     UIWindowBase GetParentWindow();
     void EnsureLoadedRecursively();
     void EnsureUnloadedRecursively();

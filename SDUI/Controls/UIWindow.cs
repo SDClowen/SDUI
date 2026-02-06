@@ -1,5 +1,6 @@
 ﻿using SDUI.Animation;
 using SDUI.Collections;
+using SDUI.Extensions;
 using SDUI.Helpers;
 using SDUI.Layout;
 using SDUI.Native.Windows;
@@ -10,14 +11,16 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
 using System.Timers;
+using System.Windows.Forms;
 using static SDUI.Native.Windows.Methods;
 
 namespace SDUI.Controls;
 
 
-public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
+public partial class UIWindow : UIWindowBase
 {
     public enum TabDesingMode
     {
@@ -35,8 +38,8 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     private const int WM_ERASEBKGND = 0x0014;
 
     // Hot-path caches (avoid per-frame LINQ allocations)
-    private readonly List<UIElementBase> _frameElements = new();
-    private readonly List<UIElementBase> _hitTestElements = new();
+    private readonly List<ElementBase> _frameElements = new();
+    private readonly List<ElementBase> _hitTestElements = new();
     private readonly Dictionary<string, SKPaint> _paintCache = new();
     private readonly object _softwareCacheLock = new();
     private readonly List<ZOrderSortItem> _zOrderSortBuffer = new();
@@ -120,8 +123,6 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// </summary>
     private SkiaSharp.SKRect _extendBoxRect;
 
-    private UIElementBase _focusedElement;
-
     /// <summary>
     ///     The rectangle of extend box
     /// </summary>
@@ -150,7 +151,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// </summary>
     private bool _isActive;
 
-    private UIElementBase _lastHoveredElement;
+    private ElementBase _lastHoveredElement;
 
     private int _layoutSuspendCount;
 
@@ -163,25 +164,6 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     ///     The position of the window before it is maximized
     /// </summary>
     private SKPoint _locationOfBeforeMaximized;
-
-    /// <summary>
-    /// Gets or sets whether to display the control buttons of the form
-    /// </summary>
-    /*public new bool ControlBox
-    {
-        get => controlBox;
-        set
-        {
-            controlBox = value;
-            if (!controlBox)
-            {
-                MinimizeBox = MaximizeBox = false;
-            }
-
-            CalcSystemBoxPos();
-            Invalidate();
-        }
-    }*/
 
     /// <summary>
     ///     Whether to show the maximize button of the form
@@ -206,7 +188,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     private SkiaSharp.SKRect _minimizeBoxRect;
 
     // Element that has explicitly captured mouse input (via SetMouseCapture)
-    private UIElementBase? _mouseCapturedElement;
+    private ElementBase? _mouseCapturedElement;
 
     /// <summary>
     ///     The position of the mouse when the left mouse button is pressed
@@ -315,7 +297,6 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     /// </summary>
     public UIWindow()
     {
-        Controls = new ElementCollection(this);
         AutoScaleMode = AutoScaleMode.None;
 
         // WinForms double-buffering can cause visible flicker when the window is presented by
@@ -678,33 +659,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     public SKSize CanvasSize =>
         _cacheBitmap == null ? SKSize.Empty : new SKSize(_cacheBitmap.Width, _cacheBitmap.Height);
 
-    public UIElementBase FocusedElement
-    {
-        get => _focusedElement;
-        set
-        {
-            if (_focusedElement == value) return;
-
-            var oldFocus = _focusedElement;
-            _focusedElement = value;
-
-            if (oldFocus != null)
-            {
-                oldFocus.Focused = false;
-                oldFocus.OnLostFocus(EventArgs.Empty);
-                oldFocus.OnLeave(EventArgs.Empty);
-            }
-
-            if (_focusedElement != null)
-            {
-                _focusedElement.Focused = true;
-                _focusedElement.OnGotFocus(EventArgs.Empty);
-                _focusedElement.OnEnter(EventArgs.Empty);
-            }
-        }
-    }
-
-    public UIElementBase LastHoveredElement
+    public ElementBase LastHoveredElement
     {
         get => _lastHoveredElement;
         internal set
@@ -811,48 +766,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    public ElementCollection Controls { get; }
-
-    // Explicit implementations to satisfy IUIElement interface contracts that differ from internal types
-    IUIElement IUIElement.FocusedElement
-    {
-        get => _focusedElement;
-        set => FocusedElement = value as UIElementBase;
-    }
-
-    int IUIElement.ZOrder { get; set; }
-
-    void IUIElement.OnCreateControl()
-    {
-        // Forward to the Form's protected OnCreateControl
-        OnCreateControl();
-    }
-
-    UIWindowBase IUIElement.GetParentWindow()
-    {
-        return this;
-    }
-
-    void IUIElement.EnsureLoadedRecursively()
-    {
-        foreach (var c in Controls)
-            if (c is IUIElement el)
-                el.EnsureLoadedRecursively();
-    }
-
-    void IUIElement.EnsureUnloadedRecursively()
-    {
-        foreach (var c in Controls)
-            if (c is IUIElement el)
-                el.EnsureUnloadedRecursively();
-    }
-
-    public new IUIElement Parent { get; set; }
-    public int LayoutSuspendCount { get; set; }
-    public bool _childControlsNeedAnchorLayout { get; set; }
-    public bool _forceAnchorCalculations { get; set; }
-
-    public void Invalidate()
+    public override void Invalidate()
     {
         // Avoid synchronous Update() storms (especially with multiple animations). In software
         // backend we still want snappy repaint, but we coalesce to one Update per message loop.
@@ -861,7 +775,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 QueueSoftwareUpdate();
     }
 
-    void IUIElement.Render(SKCanvas canvas)
+    new void Render(SKCanvas canvas)
     {
         var w = (int)ClientSize.Width;
         var h = (int)ClientSize.Height;
@@ -869,44 +783,6 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             return;
         var info = new SKImageInfo(w, h, SKColorType.Bgra8888, SKAlphaType.Premul);
         RenderScene(canvas, info);
-    }
-
-    public void PerformLayout()
-    {
-        if (_layoutSuspendCount > 0)
-            return;
-
-        foreach (UIElementBase element in Controls)
-            element.PerformLayout();
-
-        Invalidate();
-    }
-
-    public void ResumeLayout()
-    {
-        ResumeLayout(true);
-    }
-
-    public void SuspendLayout()
-    {
-        _layoutSuspendCount++;
-    }
-
-    public void ResumeLayout(bool performLayout)
-    {
-        if (_layoutSuspendCount > 0)
-            _layoutSuspendCount--;
-
-        if (performLayout && _layoutSuspendCount == 0)
-        {
-            _needsFullRedraw = true;
-            PerformLayout();
-            Invalidate();
-        }
-    }
-
-    public void UpdateZOrder()
-    {
     }
 
     /// <summary>
@@ -955,7 +831,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             // Invalidate measurements recursively before DPI notification
             InvalidateMeasureRecursive();
 
-            foreach (UIElementBase element in Controls)
+            foreach (ElementBase element in Controls)
                 element.OnDpiChanged(newDpi, oldDpi);
 
             // Invalidate layout measurements on DPI change
@@ -973,22 +849,22 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
     private void InvalidateMeasureRecursive()
     {
         // Recursively invalidate all children
-        foreach (UIElementBase child in Controls) InvalidateMeasureRecursiveInternal(child);
+        foreach (ElementBase child in Controls) InvalidateMeasureRecursiveInternal(child);
     }
 
-    private static void InvalidateMeasureRecursiveInternal(UIElementBase element)
+    private static void InvalidateMeasureRecursiveInternal(ElementBase element)
     {
         element.InvalidateMeasure();
-        foreach (UIElementBase child in element.Controls) InvalidateMeasureRecursiveInternal(child);
+        foreach (ElementBase child in element.Controls) InvalidateMeasureRecursiveInternal(child);
     }
 
-    public override void SetMouseCapture(UIElementBase element)
+    public override void SetMouseCapture(ElementBase element)
     {
         _mouseCapturedElement = element;
         SetCapture(Handle);
     }
 
-    public override void ReleaseMouseCapture(UIElementBase element)
+    public override void ReleaseMouseCapture(ElementBase element)
     {
         if (_mouseCapturedElement == element)
         {
@@ -1088,7 +964,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    private void StableSortByZOrderAscending(List<UIElementBase> list)
+    private void StableSortByZOrderAscending(List<ElementBase> list)
     {
         _zOrderSortBuffer.Clear();
         for (var i = 0; i < list.Count; i++)
@@ -1107,7 +983,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             list[i] = _zOrderSortBuffer[i].Element;
     }
 
-    private void StableSortByZOrderDescending(List<UIElementBase> list)
+    private void StableSortByZOrderDescending(List<ElementBase> list)
     {
         _zOrderSortBuffer.Clear();
         for (var i = 0; i < list.Count; i++)
@@ -1135,7 +1011,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         // Initial DPI sync: Ensure controls match the window's actual DPI 
         // (which might differ from System DPI captured during initialization).
         var dpi = DpiHelper.GetDpiForWindowInternal(Handle);
-        foreach (var control in Controls.OfType<UIElementBase>())
+        foreach (var control in Controls.OfType<ElementBase>())
         {
             var oldDpi = control.ScaleFactor * 96f;
             if (Math.Abs(oldDpi - dpi) > 0.001f)
@@ -1192,7 +1068,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    private static MouseEventArgs CreateChildMouseEvent(MouseEventArgs source, UIElementBase element)
+    private static MouseEventArgs CreateChildMouseEvent(MouseEventArgs source, ElementBase element)
     {
         var elementWindowRect = GetWindowRelativeBoundsStatic(element);
         return new MouseEventArgs(
@@ -1203,19 +1079,19 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             source.Delta);
     }
 
-    private static SkiaSharp.SKRect GetWindowRelativeBoundsStatic(UIElementBase element)
+    private static SkiaSharp.SKRect GetWindowRelativeBoundsStatic(ElementBase element)
     {
         if (element?.Parent == null)
-            return new Rectangle(element?.Location ?? SKPoint.Empty, element?.Size ?? SKSize.Empty);
+            return SKRect.Create(element?.Location ?? SKPoint.Empty, element?.Size ?? SKSize.Empty);
 
         if (element.Parent is UIWindowBase window && !window.IsDisposed)
         {
             var screenLoc = element.PointToScreen(SKPoint.Empty);
             var clientLoc = window.PointToClient(screenLoc);
-            return new Rectangle(clientLoc, element.Size);
+            return SKRect.Create(clientLoc, element.Size);
         }
 
-        if (element.Parent is UIElementBase parentElement)
+        if (element.Parent is ElementBase parentElement)
         {
             var screenLoc = element.PointToScreen(SKPoint.Empty);
             // Pencereyi zincirden bul
@@ -1229,17 +1105,17 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     break;
                 }
 
-                current = current.Parent as UIElementBase;
+                current = current.Parent as ElementBase;
             }
 
             if (parentWindow != null)
             {
                 var clientLoc = parentWindow.PointToClient(screenLoc);
-                return new Rectangle(clientLoc, element.Size);
+                return SKRect.Create(clientLoc, element.Size);
             }
         }
 
-        return new Rectangle(element.Location, element.Size);
+        return SKRect.Create(element.Location, element.Size);
     }
 
     private void CreateOrUpdateCache(SKImageInfo info)
@@ -1307,22 +1183,12 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         graphics.DrawImageUnscaled(gdiBitmap, 0, 0);
     }
 
-    protected override void OnBackColorChanged(EventArgs e)
-    {
-        base.OnBackColorChanged(e);
-    }
-
-    protected override void OnControlAdded(ControlEventArgs e)
+    protected override void OnControlAdded(ElementEventArgs e)
     {
         base.OnControlAdded(e);
 
-        if (ShowTitle && !AllowAddControlOnTitle && e.Control.Top < TitleHeight)
-            e.Control.Top = Padding.Top;
-    }
-
-    protected override void OnControlRemoved(ControlEventArgs e)
-    {
-        base.OnControlRemoved(e);
+        if (ShowTitle && !AllowAddControlOnTitle && e.Element.Location.Y < TitleHeight)
+            e.Element.Location.Y = Padding.Top;
     }
 
     private void CalcSystemBoxPos()
@@ -1331,24 +1197,24 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
         if (controlBox)
         {
-            _controlBoxRect = new RectangleF(Width - _iconWidthDPI, 0, _iconWidthDPI, _titleHeightDPI);
+            _controlBoxRect = SKRect.Create(Width - _iconWidthDPI, 0, _iconWidthDPI, _titleHeightDPI);
             _controlBoxLeft = _controlBoxRect.Left - 2;
 
             if (MaximizeBox)
             {
-                _maximizeBoxRect = new RectangleF(_controlBoxRect.Left - _iconWidthDPI, _controlBoxRect.Top,
+                _maximizeBoxRect = SKRect.Create(_controlBoxRect.Left - _iconWidthDPI, _controlBoxRect.Top,
                     _iconWidthDPI, _titleHeightDPI);
                 _controlBoxLeft = _maximizeBoxRect.Left - 2;
             }
             else
             {
-                _maximizeBoxRect = new RectangleF(Width + 1, Height + 1, 1, 1);
+                _maximizeBoxRect = SKRect.Create(Width + 1, Height + 1, 1, 1);
             }
 
             if (MinimizeBox)
             {
                 _minimizeBoxRect =
-                    new RectangleF(
+                    SKRect.Create(
                         MaximizeBox
                             ? _maximizeBoxRect.Left - _iconWidthDPI - 2
                             : _controlBoxRect.Left - _iconWidthDPI - 2, _controlBoxRect.Top, _iconWidthDPI,
@@ -1357,91 +1223,29 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             }
             else
             {
-                _minimizeBoxRect = new Rectangle(Width + 1, Height + 1, 1, 1);
+                _minimizeBoxRect = SKRect.Create(Width + 1, Height + 1, 1, 1);
             }
 
             if (ExtendBox)
             {
                 if (MinimizeBox)
-                    _extendBoxRect = new RectangleF(_minimizeBoxRect.Left - _iconWidthDPI - 2, _controlBoxRect.Top,
+                    _extendBoxRect = SKRect.Create(_minimizeBoxRect.Left - _iconWidthDPI - 2, _controlBoxRect.Top,
                         _iconWidthDPI, _titleHeightDPI);
                 else
-                    _extendBoxRect = new RectangleF(_controlBoxRect.Left - _iconWidthDPI - 2, _controlBoxRect.Top,
+                    _extendBoxRect = SKRect.Create(_controlBoxRect.Left - _iconWidthDPI - 2, _controlBoxRect.Top,
                         _iconWidthDPI, _titleHeightDPI);
             }
         }
         else
         {
             _extendBoxRect = _maximizeBoxRect =
-                _minimizeBoxRect = _controlBoxRect = new Rectangle(Width + 1, Height + 1, 1, 1);
+                _minimizeBoxRect = _controlBoxRect = SKRect.Create(Width + 1, Height + 1, 1, 1);
         }
 
         var titleIconSize = 24 * DPI;
-        _formMenuRect = new RectangleF(10, _titleHeightDPI / 2 - titleIconSize / 2, titleIconSize, titleIconSize);
+        _formMenuRect = SKRect.Create(10, _titleHeightDPI / 2 - titleIconSize / 2, titleIconSize, titleIconSize);
 
         Padding = new Thickness(Padding.Left, (int)(showTitle ? _titleHeightDPI : 0), Padding.Right, Padding.Bottom);
-    }
-
-    private void HandleTabKey(bool isShift)
-    {
-        var tabbableElements = Controls.OfType<UIElementBase>()
-            .Where(e => e.Visible && e.Enabled && e.TabStop)
-            .OrderBy(e => e.TabIndex)
-            .ToList();
-
-        if (tabbableElements.Count == 0) return;
-
-        var currentIndex = _focusedElement != null ? tabbableElements.IndexOf(_focusedElement) : -1;
-
-        if (isShift)
-        {
-            currentIndex--;
-            if (currentIndex < 0) currentIndex = tabbableElements.Count - 1;
-        }
-        else
-        {
-            currentIndex++;
-            if (currentIndex >= tabbableElements.Count) currentIndex = 0;
-        }
-
-        FocusedElement = tabbableElements[currentIndex];
-    }
-
-    protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
-    {
-        // If the focused element is a TextBox that accepts tabs, treat Tab as input (not navigation).
-        if (keyData == Keys.Tab && _focusedElement is TextBox tb && tb.AcceptsTab)
-        {
-            tb.OnKeyPress(new KeyPressEventArgs(Keys.Tab));
-            return true;
-        }
-
-        if (keyData == Keys.Tab || keyData == (Keys.Tab | Keys.Shift))
-            if (FocusManager.ProcessKeyNavigation(new KeyEventArgs(keyData)))
-                return true;
-
-        return base.ProcessCmdKey(ref msg, keyData);
-    }
-
-    protected override void OnKeyDown(KeyEventArgs e)
-    {
-        base.OnKeyDown(e);
-
-        if (_focusedElement != null) _focusedElement.OnKeyDown(e);
-    }
-
-    protected override void OnKeyUp(KeyEventArgs e)
-    {
-        base.OnKeyUp(e);
-
-        if (_focusedElement != null) _focusedElement.OnKeyUp(e);
-    }
-
-    protected override void OnKeyPress(KeyPressEventArgs e)
-    {
-        base.OnKeyPress(e);
-
-        if (_focusedElement != null) _focusedElement.OnKeyPress(e);
     }
 
     private void BuildHitTestList(bool requireEnabled)
@@ -1449,7 +1253,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         _hitTestElements.Clear();
         for (var i = 0; i < Controls.Count; i++)
         {
-            if (Controls[i] is not UIElementBase element)
+            if (Controls[i] is not ElementBase element)
                 continue;
             if (!element.Visible)
                 continue;
@@ -1473,6 +1277,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             var element = _hitTestElements[i];
             if (!GetWindowRelativeBoundsStatic(element).Contains(e.Location))
                 continue;
+
             var localEvent = CreateChildMouseEvent(e, element);
             element.OnMouseClick(localEvent);
             break;
@@ -1562,7 +1367,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             }
     }
 
-    protected override void OnMouseDown(MouseEventArgs e)
+    internal override void OnMouseDown(MouseEventArgs e)
     {
         base.OnMouseDown(e);
 
@@ -1589,14 +1394,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
             if (FocusedElement == prevFocus)
             {
-                static bool IsDescendantOf(UIElementBase? maybeChild, UIElementBase ancestor)
+                static bool IsDescendantOf(ElementBase? maybeChild, ElementBase ancestor)
                 {
                     var current = maybeChild;
                     while (current != null)
                     {
                         if (ReferenceEquals(current, ancestor))
                             return true;
-                        current = current.Parent as UIElementBase;
+                        current = current.Parent as ElementBase;
                     }
 
                     return false;
@@ -1634,7 +1439,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         if (!ShowTitle)
             return;
 
-        if (e.Y > Thickness.Top)
+        if (e.Y > Padding.Top)
             return;
 
         if (e.Button == MouseButtons.Left && Movable)
@@ -1645,7 +1450,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    protected override void OnMouseDoubleClick(MouseEventArgs e)
+    internal override void OnMouseDoubleClick(MouseEventArgs e)
     {
         base.OnMouseDoubleClick(e);
 
@@ -1696,7 +1501,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         ShowMaximize();
     }
 
-    protected override void OnMouseUp(MouseEventArgs e)
+    internal override void OnMouseUp(MouseEventArgs e)
     {
         // If an element captured the mouse, forward the mouse up to it and release capture if left button
         if (_mouseCapturedElement != null)
@@ -1730,7 +1535,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
         // Z-order'a g�re tersten kontrol et
         var elementClicked = false;
-        UIElementBase? hitElement = null;
+        ElementBase? hitElement = null;
         BuildHitTestList(true);
         for (var i = 0; i < _hitTestElements.Count; i++)
         {
@@ -1747,14 +1552,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
         if (e.Button == MouseButtons.Right && ContextMenuStrip != null)
         {
-            static bool HasContextMenuInChain(UIElementBase? start)
+            static bool HasContextMenuInChain(ElementBase? start)
             {
                 var current = start;
                 while (current != null)
                 {
                     if (current.ContextMenuStrip != null)
                         return true;
-                    current = current.Parent as UIElementBase;
+                    current = current.Parent as ElementBase;
                 }
 
                 return false;
@@ -1780,7 +1585,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    protected override void OnMouseMove(MouseEventArgs e)
+    internal override void OnMouseMove(MouseEventArgs e)
     {
         // If an element has captured mouse, forward all mouse move events to it (so dragging continues even when cursor leaves its bounds)
         if (_mouseCapturedElement != null)
@@ -1910,10 +1715,10 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                 Invalidate();
         }
 
-        UIElementBase hoveredElement = null;
+        ElementBase hoveredElement = null;
 
         // Z-order'a g�re tersten kontrol et
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder)
+        foreach (var element in Controls.OfType<ElementBase>().OrderByDescending(el => el.ZOrder)
                      .Where(el => el.Visible && el.Enabled))
             if (GetWindowRelativeBoundsStatic(element).Contains(e.Location))
             {
@@ -1939,7 +1744,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         base.OnMouseMove(e);
     }
 
-    protected override void OnMouseLeave(EventArgs e)
+    internal override void OnMouseLeave(EventArgs e)
     {
         base.OnMouseLeave(e);
         _inExtendBox = _inCloseBox = _inMaxBox = _inMinBox = _inTabCloseBox = _inNewTabBox = _inFormMenuBox = false;
@@ -1962,7 +1767,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         base.OnMouseEnter(e);
 
         // Z-order'a g�re tersten kontrol et
-        foreach (var element in Controls.OfType<UIElementBase>().OrderByDescending(el => el.ZOrder)
+        foreach (var element in Controls.OfType<ElementBase>().OrderByDescending(el => el.ZOrder)
                      .Where(el => el.Visible && el.Enabled))
         {
             var mousePos = PointToClient(MousePosition);
@@ -1982,14 +1787,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         var mousePos = PointToClient(MousePosition);
 
         // Recursive olarak do�ru child'� bul ve wheel olay�n� ilet
-        if (PropagateMouseWheel(Controls.OfType<UIElementBase>(), mousePos, e))
+        if (PropagateMouseWheel(Controls.OfType<ElementBase>(), mousePos, e))
             return; // Event i�lendi
     }
 
     /// <summary>
     ///     Recursive olarak child elementlere mouse wheel olay�n� iletir
     /// </summary>
-    private bool PropagateMouseWheel(IEnumerable<UIElementBase> elements, SKPoint windowMousePos, MouseEventArgs e)
+    private bool PropagateMouseWheel(IEnumerable<ElementBase> elements, SKPoint windowMousePos, MouseEventArgs e)
     {
         // Z-order'a g�re tersten kontrol et - en �stteki element �nce
         foreach (var element in elements.OrderByDescending(el => el.ZOrder).Where(el => el.Visible && el.Enabled))
@@ -2001,7 +1806,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             // �nce bu elementin child'lar�n� kontrol et (daha spesifik -> daha genel)
             if (element.Controls != null && element.Controls.Count > 0)
             {
-                var childElements = element.Controls.OfType<UIElementBase>();
+                var childElements = element.Controls.OfType<ElementBase>();
                 if (PropagateMouseWheel(childElements, windowMousePos, e))
                     return true; // Child i�ledi
             }
@@ -2091,7 +1896,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         base.WndProc(ref m);
     }
 
-    internal override void OnLayout(LayoutEventArgs levent)
+    protected override void OnLayout(LayoutEventArgs levent)
     {
         base.OnLayout(levent);
 
@@ -2109,7 +1914,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         // This matches WinForms DefaultLayout behavior where docking is z-order dependent
         // and processed in reverse (children.Count - 1 down to 0)
         for (var i = Controls.Count - 1; i >= 0; i--)
-            if (Controls[i] is UIElementBase control && control.Visible)
+            if (Controls[i] is ElementBase control && control.Visible)
                 PerformDefaultLayout(control, clientArea, ref remainingArea);
     }
 
@@ -2275,7 +2080,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         GRContext? gr = null;
 
         // Only use GPU context if the renderer is actually actively using it for this frame.
-        // Prevents UIElementBase from creating GPU surfaces when we are falling back to CPU rendering
+        // Prevents ElementBase from creating GPU surfaces when we are falling back to CPU rendering
         // (which causes slow readbacks "weak rendering" and potential access violations).
         if (_renderer is DirectX11WindowRenderer dx && dx.IsSkiaGpuActive)
         {
@@ -2291,7 +2096,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             gr = (_renderer as IGpuWindowRenderer)?.GrContext;
         }
 
-        var gpuScope = gr != null ? UIElementBase.PushGpuContext(gr) : null;
+        var gpuScope = gr != null ? PushGpuContext(gr) : null;
         try
         {
             canvas.Save();
@@ -2306,14 +2111,14 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             if (_needsFullRedraw)
             {
                 for (var i = 0; i < Controls.Count; i++)
-                    if (Controls[i] is UIElementBase child)
+                    if (Controls[i] is ElementBase child)
                         child.InvalidateRenderTree();
                 _needsFullRedraw = false;
             }
 
             _frameElements.Clear();
             for (var i = 0; i < Controls.Count; i++)
-                if (Controls[i] is UIElementBase element)
+                if (Controls[i] is ElementBase element)
                     _frameElements.Add(element);
 
             // Match LINQ OrderBy stability (ties keep original order).
@@ -2689,7 +2494,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             using var font = new SKFont
             {
                 Size = Font.Size.Topx(this),
-                Typeface = FontManager.GetSKTypeface(Font),
+                Typeface = Font.SKTypeface,
                 Subpixel = true,
                 Edging = SKFontEdging.SubpixelAntialias
             };
@@ -2758,7 +2563,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             var x = previousActivePageRect.Left + (activePageRect.Left - previousActivePageRect.Left) * (float)animationProgress;
             var width = previousActivePageRect.Width +
                         (activePageRect.Width - previousActivePageRect.Width) * (float)animationProgress;
-
+            
             if (_tabDesingMode == TabDesingMode.Rectangle)
             {
                 using var tabPaint = new SKPaint
@@ -2767,7 +2572,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     IsAntialias = true
                 };
 
-                canvas.DrawRect(activePageRect.X, 0, width, _titleHeightDPI, tabPaint);
+                canvas.DrawRect(activePageRect.Location.X, 0, width, _titleHeightDPI, tabPaint);
                 canvas.DrawRect(x, 0, width, _titleHeightDPI, tabPaint);
 
                 using var indicatorPaint = new SKPaint
@@ -2816,7 +2621,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
             }
 
             // Draw tab headers
-            foreach (UIElementBase page in _windowPageControl.Controls)
+            foreach (ElementBase page in _windowPageControl.Controls)
             {
                 var currentTabIndex = _windowPageControl.Controls.IndexOf(page);
                 var rect = pageRect[currentTabIndex];
@@ -2827,7 +2632,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     using var font = new SKFont
                     {
                         Size = 12f.Topx(this),
-                        Typeface = FontManager.GetSKTypeface(Font),
+                        Typeface = Font.SKTypeface,
                         Subpixel = true,
                         Edging = SKFontEdging.SubpixelAntialias
                     };
@@ -2858,7 +2663,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
                     using var font = new SKFont
                     {
                         Size = 9f.Topx(this),
-                        Typeface = FontManager.GetSKTypeface(Font),
+                        Typeface = Font.SKTypeface,
                         Subpixel = true,
                         Edging = SKFontEdging.SubpixelAntialias
                     };
@@ -2870,7 +2675,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
                     var bounds = new SkiaSharp.SKRect();
                     font.MeasureText(page.Text, out bounds);
-                    var textX = rect.X + rect.Width / 2;
+                    var textX = rect.Location.X + rect.Width / 2;
                     var textY = _titleHeightDPI / 2 + Math.Abs(font.Metrics.Ascent + font.Metrics.Descent) / 2;
                     TextRenderer.DrawText(canvas, page.Text, textX, textY, SKTextAlign.Center, font, textPaint);
                 }
@@ -3040,7 +2845,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         using var font = new SKFont
         {
             Size = (_drawTabIcons ? 12f : 9f).Topx(this),
-            Typeface = FontManager.GetSKTypeface(Font),
+            Typeface = Font.SKTypeface,
             Subpixel = true,
             Edging = SKFontEdging.SubpixelAntialias
         };
@@ -3048,7 +2853,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         var desiredWidths = new List<float>();
         float totalDesiredWidth = 0;
 
-        foreach (UIElementBase page in _windowPageControl.Controls)
+        foreach (ElementBase page in _windowPageControl.Controls)
         {
             var bounds = new SkiaSharp.SKRect();
             font.MeasureText(page.Text ?? "", out bounds);
@@ -3092,7 +2897,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    public override void UpdateCursor(UIElementBase element)
+    public override void UpdateCursor(ElementBase element)
     {
         if (element == null || !element.Enabled || !element.Visible)
         {
@@ -3109,7 +2914,7 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         }
     }
 
-    public void BringToFront(UIElementBase element)
+    public void BringToFront(ElementBase element)
     {
         if (!Controls.Contains(element)) return;
 
@@ -3118,16 +2923,16 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
         InvalidateElement(element);
     }
 
-    public void SendToBack(UIElementBase element)
+    public void SendToBack(ElementBase element)
     {
         if (!Controls.Contains(element)) return;
 
-        var minZOrder = Controls.OfType<UIElementBase>().Min(e => e.ZOrder);
+        var minZOrder = Controls.OfType<ElementBase>().Min(e => e.ZOrder);
         element.ZOrder = minZOrder - 1;
         InvalidateElement(element);
     }
 
-    private void InvalidateElement(UIElementBase element)
+    private void InvalidateElement(ElementBase element)
     {
         if (_layoutSuspendCount > 0) return;
 
@@ -3156,11 +2961,11 @@ public partial class UIWindow : UIWindowBase, IUIElement, IArrangedElement
 
     private readonly struct ZOrderSortItem
     {
-        public readonly UIElementBase Element;
+        public readonly ElementBase Element;
         public readonly int ZOrder;
         public readonly int Sequence;
 
-        public ZOrderSortItem(UIElementBase element, int zOrder, int sequence)
+        public ZOrderSortItem(ElementBase element, int zOrder, int sequence)
         {
             Element = element;
             ZOrder = zOrder;

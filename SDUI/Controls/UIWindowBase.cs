@@ -24,7 +24,9 @@ public partial class UIWindowBase : ElementBase, IDisposable
     private FocusManager? _focusManager;
     private bool _mouseInClient;
     protected bool enableFullDraggable;
-    private SKPoint location;
+
+    public SKPoint MousePosition { get; private set; }
+
 
     private FormBorderStyle _formBorderStyle = FormBorderStyle.Sizable;
     public FormBorderStyle FormBorderStyle
@@ -34,9 +36,9 @@ public partial class UIWindowBase : ElementBase, IDisposable
         {
             if (_formBorderStyle == value)
                 return;
-                
+
             _formBorderStyle = value;
-            
+
             // Apply border style to native window if handle is created
             if (IsHandleCreated)
             {
@@ -44,7 +46,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
             }
         }
     }
-    
+
     /// <summary>
     /// Applies the current FormBorderStyle to the native window.
     /// </summary>
@@ -52,9 +54,9 @@ public partial class UIWindowBase : ElementBase, IDisposable
     {
         if (!IsHandleCreated)
             return;
-            
+
         var (style, exStyle) = GetWindowStylesForBorderStyle(_formBorderStyle);
-        
+
         // Set window style
         if (IntPtr.Size == 8)
         {
@@ -66,14 +68,14 @@ public partial class UIWindowBase : ElementBase, IDisposable
             SetWindowLong32(Handle, (int)WindowLongIndexFlags.GWL_STYLE, (int)style);
             SetWindowLong32(Handle, (int)WindowLongIndexFlags.GWL_EXSTYLE, (int)exStyle);
         }
-        
+
         // Update window to reflect style changes
         SetWindowPos(Handle, IntPtr.Zero, 0, 0, 0, 0,
-            SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOMOVE | 
-            SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER | 
+            SetWindowPosFlags.SWP_FRAMECHANGED | SetWindowPosFlags.SWP_NOMOVE |
+            SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER |
             SetWindowPosFlags.SWP_NOACTIVATE);
     }
-    
+
     /// <summary>
     /// Gets the native Windows styles for the specified FormBorderStyle.
     /// </summary>
@@ -81,64 +83,64 @@ public partial class UIWindowBase : ElementBase, IDisposable
     {
         uint style = (uint)WindowStyles.WS_VISIBLE;
         uint exStyle = 0;
-        
+
         switch (borderStyle)
         {
             case FormBorderStyle.None:
                 // Borderless popup window
                 style |= (uint)WindowStyles.WS_POPUP;
                 break;
-                
+
             case FormBorderStyle.FixedSingle:
                 // Fixed size window with caption and system menu
-                style |= (uint)(WindowStyles.WS_OVERLAPPED | 
-                               WindowStyles.WS_CAPTION | 
+                style |= (uint)(WindowStyles.WS_OVERLAPPED |
+                               WindowStyles.WS_CAPTION |
                                WindowStyles.WS_SYSMENU |
                                WindowStyles.WS_MINIMIZEBOX);
                 exStyle |= (uint)SetWindowLongFlags.WS_EX_WINDOWEDGE;
                 break;
-                
+
             case FormBorderStyle.Fixed3D:
                 // Fixed size with 3D border
-                style |= (uint)(WindowStyles.WS_OVERLAPPED | 
-                               WindowStyles.WS_CAPTION | 
+                style |= (uint)(WindowStyles.WS_OVERLAPPED |
+                               WindowStyles.WS_CAPTION |
                                WindowStyles.WS_SYSMENU |
                                WindowStyles.WS_MINIMIZEBOX |
                                WindowStyles.WS_BORDER);
-                exStyle |= (uint)(SetWindowLongFlags.WS_EX_WINDOWEDGE | 
+                exStyle |= (uint)(SetWindowLongFlags.WS_EX_WINDOWEDGE |
                                  SetWindowLongFlags.WS_EX_CLIENTEDGE);
                 break;
-                
+
             case FormBorderStyle.FixedDialog:
                 // Dialog style - fixed size with thick caption
-                style |= (uint)(WindowStyles.WS_POPUP | 
-                               WindowStyles.WS_CAPTION | 
+                style |= (uint)(WindowStyles.WS_POPUP |
+                               WindowStyles.WS_CAPTION |
                                WindowStyles.WS_SYSMENU);
-                exStyle |= (uint)(SetWindowLongFlags.WS_EX_DLGMODALFRAME | 
+                exStyle |= (uint)(SetWindowLongFlags.WS_EX_DLGMODALFRAME |
                                  SetWindowLongFlags.WS_EX_WINDOWEDGE);
                 break;
-                
+
             case FormBorderStyle.Sizable:
                 // Standard resizable window
                 style |= (uint)WindowStyles.WS_OVERLAPPEDWINDOW;
                 break;
-                
+
             case FormBorderStyle.FixedToolWindow:
                 // Fixed size tool window (small caption)
-                style |= (uint)(WindowStyles.WS_POPUP | 
-                               WindowStyles.WS_CAPTION | 
+                style |= (uint)(WindowStyles.WS_POPUP |
+                               WindowStyles.WS_CAPTION |
                                WindowStyles.WS_SYSMENU);
-                exStyle |= (uint)(SetWindowLongFlags.WS_EX_TOOLWINDOW | 
+                exStyle |= (uint)(SetWindowLongFlags.WS_EX_TOOLWINDOW |
                                  SetWindowLongFlags.WS_EX_WINDOWEDGE);
                 break;
-                
+
             case FormBorderStyle.SizableToolWindow:
                 // Resizable tool window (small caption)
                 style |= (uint)WindowStyles.WS_OVERLAPPEDWINDOW;
                 exStyle |= (uint)SetWindowLongFlags.WS_EX_TOOLWINDOW;
                 break;
         }
-        
+
         return (style, exStyle);
     }
 
@@ -149,7 +151,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
         set
         {
             _formStartPosition = value;
-            
+
             // If handle is already created, apply position change immediately
             if (IsHandleCreated)
             {
@@ -220,8 +222,6 @@ public partial class UIWindowBase : ElementBase, IDisposable
     /// </summary>
     public bool IsLoaded { get; private set; }
 
-    // Z-order için yeni özellikler
-
     public int DwmMargin { get; set; } = -1;
 
     /// <summary>
@@ -275,7 +275,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
             var cp = new CreateParams();
             cp.ClassName = "CoreWindow_" + Guid.NewGuid().ToString();
             cp.Caption = Text;
-            
+
             // Apply FormStartPosition
             switch (_formStartPosition)
             {
@@ -299,16 +299,16 @@ public partial class UIWindowBase : ElementBase, IDisposable
                     cp.Y = CW_USEDEFAULT;
                     break;
             }
-            
+
             // Set size - use current Size property values
             cp.Width = Width > 0 ? Width : 800;  // Default width if not set
             cp.Height = Height > 0 ? Height : 600; // Default height if not set
-            
+
             // Get native styles based on FormBorderStyle
             var (style, exStyle) = GetWindowStylesForBorderStyle(_formBorderStyle);
             cp.Style = (int)style;
             cp.ExStyle = exStyle;
-            
+
             // Class styles
             if (!_aeroEnabled)
                 cp.ClassStyle |= CS_DROPSHADOW;
@@ -378,7 +378,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
     {
         // Set default window size (ElementBase default is 100x23 which is too small for a window)
         Size = new SKSize(800, 600);
-        
+
         _hInstance = Methods.GetModuleHandle(null);
         _wndProcDelegate = new WndProc(WndProc);
         CreateHandle();
@@ -401,7 +401,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
             if (IsHandleCreated && !_updatingFromNative)
             {
                 SetWindowPos(Handle, IntPtr.Zero, (int)value.X, (int)value.Y, 0, 0,
-                    SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER | 
+                    SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOZORDER |
                     SetWindowPosFlags.SWP_NOACTIVATE);
             }
         }
@@ -424,7 +424,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
             if (IsHandleCreated && !_updatingFromNative)
             {
                 SetWindowPos(Handle, IntPtr.Zero, 0, 0, (int)value.Width, (int)value.Height,
-                    SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOZORDER | 
+                    SetWindowPosFlags.SWP_NOMOVE | SetWindowPosFlags.SWP_NOZORDER |
                     SetWindowPosFlags.SWP_NOACTIVATE);
             }
         }
@@ -432,7 +432,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
 
     public void CreateHandle()
     {
-        if (IsHandleCreated) 
+        if (IsHandleCreated)
             return;
 
         CreateParams cp = this.CreateParams;
@@ -440,7 +440,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
         var wc = new WNDCLASSEX
         {
             cbSize = (uint)Marshal.SizeOf(typeof(WNDCLASSEX)),
-            style = (uint)cp.ClassStyle, 
+            style = (uint)cp.ClassStyle,
             lpfnWndProc = _wndProcDelegate,
             hInstance = GetModuleHandle(null),
             hCursor = LoadCursor(IntPtr.Zero, 32512),
@@ -485,14 +485,10 @@ public partial class UIWindowBase : ElementBase, IDisposable
         int screenWidth = GetSystemMetrics(SM_CXSCREEN);
         int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-        Rect rect;
-        GetWindowRect(_hWnd, out rect);
+        var rect = GetWindowRect();
 
-        int windowWidth = rect.Right - rect.Left;
-        int windowHeight = rect.Bottom - rect.Top;
-
-        int x = (screenWidth - windowWidth) / 2;
-        int y = (screenHeight - windowHeight) / 2;
+        int x = (screenWidth - rect.Width) / 2;
+        int y = (screenHeight - rect.Height) / 2;
 
         SetWindowPos(_hWnd, IntPtr.Zero, x, y, 0, 0,
             SWP_NOSIZE | SWP_NOZORDER);
@@ -654,19 +650,13 @@ public partial class UIWindowBase : ElementBase, IDisposable
         {
             case WindowMessage.WM_NCHITTEST:
                 {
-                    // lParam contains screen coordinates for WM_NCHITTEST - convert to client once
-                    int screenX = (short)(lParam.ToInt64() & 0xFFFF);
-                    int screenY = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
-                    
-                    POINT pt = new POINT { X = screenX, Y = screenY };
-                    ScreenToClient(Handle, ref pt);
-                    var clientPt = new SKPoint(pt.X, pt.Y);
-                    
+                    var clientPt = GetMousePosition(lParam);
+
                     if (WindowState != FormWindowState.Maximized)
                     {
                         var gripDist = 10;
                         var clientSize = ClientSize;
-                        
+
                         // Allow resize on the lower right corner
                         if (clientPt.X >= clientSize.Width - gripDist && clientPt.Y >= clientSize.Height - gripDist &&
                             clientSize.Height >= gripDist)
@@ -721,64 +711,10 @@ public partial class UIWindowBase : ElementBase, IDisposable
                     // Dragging is handled by UIWindow via DragForm() in mouse event handlers
                     return (IntPtr)HTCLIENT;
                 }
-           /* case WindowMessage.WM_NCCALCSIZE:
-
-                var handle = Handle;
-
-                var lpwp = (WINDOWPOS)Marshal.PtrToStructure(lParam, typeof(WINDOWPOS));
-                if (lpwp.HWND == IntPtr.Zero)
-                    return DefWindowProc(hWnd, msg, wParam, lParam);
-
-                if ((lpwp.flags & (SetWindowPosFlags.SWP_NOSIZE | SetWindowPosFlags.SWP_NOREDRAW)) != 0)
-                    return DefWindowProc(hWnd, msg, wParam, lParam);
-
-                var bits = GetWindowLong(handle, WindowLongIndexFlags.GWL_STYLE).ToInt64();
-                if ((bits & TCS_MULTILINE) != 0)
-                {
-                    InvalidateRect(handle, new Rect(), true);
-                    return DefWindowProc(hWnd, msg, wParam, lParam);
-                }
-
-                var rect = new Rect();
-                SetRect(rect, 0, 0, lpwp.cx, lpwp.cy);
-
-                SendMessage(handle, (int)WindowMessage.WM_NCCALCSIZE, 0, ref rect);
-                var newWidth = rect.Right - rect.Left;
-                var newHeight = rect.Bottom - rect.Top;
-                GetClientRect(handle, ref rect);
-                var oldWidth = rect.Right - rect.Left;
-                var oldHeight = rect.Bottom - rect.Top;
-                if (newWidth == oldWidth && newHeight == oldHeight)
-                    return DefWindowProc(hWnd, msg, wParam, lParam);
-
-                var inset = new Rect();
-                SendMessage(handle, TCM_ADJUSTRECT, 0, ref inset);
-                int marginX = -inset.Right, marginY = -inset.Bottom;
-                if (newWidth != oldWidth)
-                {
-                    var left = oldWidth;
-                    if (newWidth < oldWidth)
-                        left = newWidth;
-                    SetRect(rect, left - marginX, 0, newWidth, newHeight);
-                    InvalidateRect(handle, rect, true);
-                }
-
-                if (newHeight != oldHeight)
-                {
-                    var bottom = oldHeight;
-                    if (newHeight < oldHeight)
-                        bottom = newHeight;
-                    if (newWidth < oldWidth)
-                        oldWidth -= marginX;
-                    SetRect(rect, 0, bottom - marginY, oldWidth, newHeight);
-                    InvalidateRect(handle, rect, true);
-                }
-
-                return DefWindowProc(hWnd, msg, wParam, lParam);
-                */
             case WindowMessage.WM_MOUSEMOVE:
                 {
                     var point = GetClientMousePosition(lParam);
+                    MousePosition = point;
                     var args = new MouseEventArgs(MouseButtons.None, 0, (int)point.X, (int)point.Y, 0);
                     OnMouseMove(args);
 
@@ -991,32 +927,32 @@ public partial class UIWindowBase : ElementBase, IDisposable
                 OnLostFocus(EventArgs.Empty);
                 return IntPtr.Zero;
             case WindowMessage.WM_ACTIVATE:
-            {
-                var activateType = wParam.ToInt32() & 0xFFFF;
-                if (activateType != 0) // WA_INACTIVE = 0
                 {
-                    Application.SetActiveForm(this);
-                    Activated?.Invoke(this, EventArgs.Empty);
+                    var activateType = wParam.ToInt32() & 0xFFFF;
+                    if (activateType != 0) // WA_INACTIVE = 0
+                    {
+                        Application.SetActiveForm(this);
+                        OnActivated(EventArgs.Empty);
+                    }
+                    else
+                    {
+                        OnDeactivate(EventArgs.Empty);
+                    }
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
                 }
-                else
-                {
-                    Deactivated?.Invoke(this, EventArgs.Empty);
-                }
-                return DefWindowProc(hWnd, msg, wParam, lParam);
-            }
             case WindowMessage.WM_NCACTIVATE:
-            {
-                if (wParam != IntPtr.Zero)
                 {
-                    Application.SetActiveForm(this);
+                    if (wParam != IntPtr.Zero)
+                    {
+                        Application.SetActiveForm(this);
+                    }
+                    return DefWindowProc(hWnd, msg, wParam, lParam);
                 }
-                return DefWindowProc(hWnd, msg, wParam, lParam);
-            }
             case WindowMessage.WM_MOVE:
                 {
                     int x = (short)(lParam.ToInt64() & 0xFFFF);
                     int y = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
-                    
+
                     // Prevent recursion when updating from native window
                     _updatingFromNative = true;
                     try
@@ -1036,7 +972,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
                     var sizeType = wParam.ToInt32();
                     int width = (short)(lParam.ToInt64() & 0xFFFF);
                     int height = (short)((lParam.ToInt64() >> 16) & 0xFFFF);
-                    
+
                     // Update WindowState from native notification without triggering ShowWindow
                     switch (sizeType)
                     {
@@ -1050,7 +986,7 @@ public partial class UIWindowBase : ElementBase, IDisposable
                             _windowState = FormWindowState.Maximized;
                             break;
                     }
-                    
+
                     // Prevent recursion when updating from native window
                     _updatingFromNative = true;
                     try
@@ -1090,10 +1026,24 @@ public partial class UIWindowBase : ElementBase, IDisposable
                 OnFormClosed(new FormClosedEventArgs(CloseReason.UserClosing));
                 PostQuitMessage(0);
                 return IntPtr.Zero;
-
+            case WindowMessage.WM_PAINT:
+                {
+                    // Native rendering - delegate to rendering partial class
+                    return HandlePaint(hWnd);
+                }
         }
 
         return DefWindowProc(hWnd, msg, wParam, lParam);
+    }
+
+    protected virtual void OnDeactivate(EventArgs e)
+    {
+        Deactivated?.Invoke(this, e);
+    }
+
+    protected virtual void OnActivated(EventArgs e)
+    {
+        Activated?.Invoke(this, e);
     }
 
     protected virtual void OnHandleCreated(EventArgs e)
@@ -1252,12 +1202,12 @@ public partial class UIWindowBase : ElementBase, IDisposable
         if (!IsHandleCreated)
             return clientPoint;
 
-        POINT pt = new POINT 
-        { 
-            X = (int)clientPoint.X, 
-            Y = (int)clientPoint.Y 
+        POINT pt = new POINT
+        {
+            X = (int)clientPoint.X,
+            Y = (int)clientPoint.Y
         };
-        
+
         ClientToScreen(Handle, ref pt);
         return new SKPoint(pt.X, pt.Y);
     }
@@ -1270,12 +1220,12 @@ public partial class UIWindowBase : ElementBase, IDisposable
         if (!IsHandleCreated)
             return screenPoint;
 
-        POINT pt = new POINT 
-        { 
-            X = (int)screenPoint.X, 
-            Y = (int)screenPoint.Y 
+        POINT pt = new POINT
+        {
+            X = (int)screenPoint.X,
+            Y = (int)screenPoint.Y
         };
-        
+
         ScreenToClient(Handle, ref pt);
         return new SKPoint(pt.X, pt.Y);
     }

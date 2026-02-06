@@ -1,35 +1,34 @@
 ﻿using SDUI.Controls;
 using System;
-using System.ComponentModel;
 
 namespace SDUI;
 
 public sealed class LayoutEventArgs : EventArgs
 {
-    private readonly WeakReference<IComponent>? _affectedComponent;
+    private readonly WeakReference<IElement>? _affectedComponent;
 
-    public LayoutEventArgs(IComponent? affectedComponent, string? affectedProperty)
+    public LayoutEventArgs(IElement? affectedComponent, string? affectedProperty)
     {
         _affectedComponent = affectedComponent is not null ? new(affectedComponent) : null;
         AffectedProperty = affectedProperty;
     }
-
-    public LayoutEventArgs(IElement? affectedControl, string? affectedProperty)
-        : this((IComponent?)affectedControl, affectedProperty)
+    public LayoutEventArgs(IElement? affectedComponent)
     {
+        _affectedComponent = affectedComponent is not null ? new(affectedComponent) : null;
+        AffectedProperty = string.Empty;
     }
 
-    public IComponent? AffectedComponent
+    public IElement? AffectedComponent
     {
         get
         {
-            IComponent? target = null;
+            IElement? target = null;
             _affectedComponent?.TryGetTarget(out target);
             return target;
         }
     }
 
-    public IElement? AffectedControl => AffectedComponent as IElement;
+    public IElement? AffectedControl => AffectedComponent;
 
     public string? AffectedProperty { get; }
 }

@@ -1,11 +1,10 @@
+using SDUI.Controls;
+using SDUI.Layout;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
-using SDUI.Controls;
-using SDUI.Layout;
-using SDUI.Layout;
 
 namespace SDUI.Collections;
 
@@ -104,7 +103,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
     public virtual void Clear()
     {
-        (Owner as IArrangedElement)?.SuspendLayout();
+        Owner.SuspendLayout();
 
         try
         {
@@ -112,7 +111,7 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         }
         finally
         {
-            (Owner as IArrangedElement)?.ResumeLayout();
+            Owner.ResumeLayout();
         }
     }
 
@@ -142,14 +141,14 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         // Remove the new control from its old parent (if any)
         value.Parent?.Controls.Remove(value);
 
-        (Owner as IArrangedElement)?.SuspendLayout();
+        Owner.SuspendLayout();
 
         try
         {
             InnerList.Add(value);
 
             value.Parent = Owner;
-            value.OnCreateControl();
+            Owner.OnControlAdded(new ElementEventArgs(value));
 
             if (value.TabIndex == -1)
             {
@@ -170,27 +169,26 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
         }
         finally
         {
-            (Owner as IArrangedElement)?.ResumeLayout(true);
+            Owner.ResumeLayout(true);
         }
 
-        if (Owner is ElementBase control) control.OnControlAdded(new UIElementEventArgs(value));
+        
     }
 
-    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public virtual void AddRange(ElementBase[] controls)
     {
         ArgumentNullException.ThrowIfNull(controls);
 
         if (controls.Length > 0)
         {
-            (Owner as IArrangedElement)?.SuspendLayout();
+            Owner.SuspendLayout();
             try
             {
                 for (var i = 0; i < controls.Length; ++i) Add(controls[i]);
             }
             finally
             {
-                (Owner as IArrangedElement)?.ResumeLayout(true);
+                Owner.ResumeLayout(true);
             }
         }
     }
@@ -302,9 +300,9 @@ public class ElementCollection : ArrangedElementCollection, IList, ICloneable
 
         value.Parent = null;
 
-        if (Owner is ElementBase control) control.OnControlRemoved(new UIElementEventArgs(value));
+        if (Owner is ElementBase control) control.OnControlRemoved(new ElementEventArgs(value));
 
-        (Owner as IArrangedElement)?.PerformLayout();
+        Owner.PerformLayout();
         Owner.Invalidate();
     }
 

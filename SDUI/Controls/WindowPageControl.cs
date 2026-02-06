@@ -59,7 +59,7 @@ public class WindowPageControl : ElementBase
         remove => _onSelectedIndexChanged -= value;
     }
 
-    internal override void OnControlAdded(UIElementEventArgs e)
+    internal override void OnControlAdded(ElementEventArgs e)
     {
         base.OnControlAdded(e);
 
@@ -71,7 +71,7 @@ public class WindowPageControl : ElementBase
             _selectedIndex = 0;
     }
 
-    internal override void OnControlRemoved(UIElementEventArgs e)
+    internal override void OnControlRemoved(ElementEventArgs e)
     {
         base.OnControlRemoved(e);
 
