@@ -27,7 +27,8 @@ public class ListView : System.Windows.Forms.ListView
         : base()
     {
         SetStyle(
-            ControlStyles.Opaque
+            ControlStyles.Opaque |
+            ControlStyles.UserPaint
                 | ControlStyles.AllPaintingInWmPaint
                 | ControlStyles.ResizeRedraw
                 | ControlStyles.OptimizedDoubleBuffer
